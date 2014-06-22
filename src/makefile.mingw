@@ -60,7 +60,7 @@
 #
 
 USE_UPNP?=-
-BOOST_SUFFIX?=-mgw46-mt-sd-1_52
+BOOST_SUFFIX?=-mgw46-mt-s-1_47
 
 INCLUDEPATHS?= \
  -I"C:\boost-1.47.0-mgw" \
