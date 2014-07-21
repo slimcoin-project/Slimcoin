@@ -38,6 +38,7 @@ enum txnouttype
   TX_PUBKEYHASH,
   TX_SCRIPTHASH,
   TX_MULTISIG,
+  TX_NULL_DATA,
 };
 
 const char* GetTxnOutputType(txnouttype t);
@@ -600,8 +601,23 @@ bool EvalScript(std::vector<std::vector<unsigned char> > &stack, const CScript &
 int ScriptSigArgsExpected(txnouttype t, const std::vector<std::vector<unsigned char> > &vSolutions);
 bool IsStandard(const CScript &scriptPubKey);
 bool IsMine(const CKeyStore &keystore, const CScript &scriptPubKey);
-bool ExtractAddresses(const CScript &scriptPubKey, txnouttype &typeRet, std::vector<CBitcoinAddress> &addressRet, int &nRequiredRet);
-bool SignSignature(const CKeyStore &keystore, const CTransaction &txFrom, CTransaction &txTo, unsigned int nIn, int nHashType=SIGHASH_ALL);
-bool VerifySignature(const CTransaction &txFrom, const CTransaction &txTo, unsigned int nIn, bool fValidatePayToScriptHash, int nHashType);
+
+bool ExtractAddresses(const CScript &scriptPubKey, txnouttype &typeRet, 
+                      std::vector<CBitcoinAddress> &addressRet, int &nRequiredRet);
+
+bool SignSignature(const CKeyStore &keystore, const CScript &fromPubKey, 
+                   CTransaction& txTo, unsigned int nIn, int nHashType);
+
+bool SignSignature(const CKeyStore &keystore, const CTransaction &txFrom, 
+                   CTransaction &txTo, unsigned int nIn, int nHashType=SIGHASH_ALL);
+
+bool VerifySignature(const CTransaction &txFrom, const CTransaction &txTo, 
+                     unsigned int nIn, bool fValidatePayToScriptHash, int nHashType);
+
+bool VerifyScript(const CScript &scriptSig, const CScript &scriptPubKey, const CTransaction &txTo, 
+                  unsigned int nIn, bool fValidatePayToScriptHash, int nHashType);
+
+CScript CombineSignatures(CScript scriptPubKey, const CTransaction& txTo, unsigned int nIn,
+                          const CScript& scriptSig1, const CScript& scriptSig2);
 
 #endif

@@ -54,6 +54,7 @@ static const int COINBASE_MATURITY_SLM = 500;
 // Threshold for nLockTime: below this value it is interpreted as block number, otherwise as UNIX timestamp.
 static const int LOCKTIME_THRESHOLD = 500000000; // Tue Nov  5 00:53:20 1985 UTC
 static const int STAKE_TARGET_SPACING = 90; // 90 second block spacing 
+static const int POB_TARGET_SPACING = 3;    // 3 PoW block spacing target between each PoB block
 static const int STAKE_MIN_AGE = 60 * 60 * 24 * 7; // minimum age for coin age
 static const int STAKE_MAX_AGE = 60 * 60 * 24 * 90; // stake age of full weight
 
@@ -64,7 +65,7 @@ static const int fHaveUPnP = false;
 #endif
 
 static const uint256 hashGenesisBlockOfficial("0x00000766be5a4bb74c040b85a98d2ba2b433c5f4c673912b3331ea6f18d61bea");
-static const uint256 hashGenesisBlockTestNet("0x0000340e7843564f3591c67325512c05d48e468285aa1f1df76353ff61462743");
+static const uint256 hashGenesisBlockTestNet("0x00000d7e8a80fec4057cb6d560822705596040bf41f0ebb2465dcdf46e4c517e");
 
 static const int64 nMaxClockDrift = 2 * 60 * 60;        // two hours
 
@@ -130,7 +131,7 @@ const CBitcoinAddress burnTestnetAddress("mmSLiMCoinTestnetBurnAddress1XU5fu");
 #error BURN_MIN_CONFIRMS must be greater than or equal to 1
 #endif
 
-//ADDED PATCHES
+//PATCHES
 
 //Rounds down the burn hash for all hashes after block 10500, not really needed though
 // has became a legacy thing
@@ -145,7 +146,13 @@ inline bool use_burn_hash_intermediate(s32int nHeight)
   return nHeight >= BURN_INTERMEDIATE_HEIGHT ? true : false;
 }
 
-//ADDED PATCHES
+//Adjusts the trust values for PoW and PoB blocks
+#define CHAINCHECKS_SWITCH_TIME          2403654400 //Sometime in the future
+
+//Adjusts PoB and PoS targets
+#define POB_POS_TARGET_SWITCH_TIME       2403654400 //Sometime in the future
+
+//PATCHES
 
 void SlimCoinAfterBurner(CWallet *pwallet);
 bool HashBurnData(uint256 burnBlockHash, uint256 hashPrevBlock, uint256 burnTxHash,
@@ -218,6 +225,7 @@ class CTxIndex;
 
 void RegisterWallet(CWallet* pwalletIn);
 void UnregisterWallet(CWallet* pwalletIn);
+void SyncWithWallets(const CTransaction& tx, const CBlock* pblock=NULL, bool fUpdate=false, bool fConnect=true);
 bool ProcessBlock(CNode* pfrom, CBlock* pblock);
 bool CheckDiskSpace(uint64 nAdditionalBytes=0);
 FILE* OpenBlockFile(unsigned int nFile, unsigned int nBlockPos, const char* pszMode="rb");
@@ -235,11 +243,12 @@ bool CheckWork(CBlock* pblock, CWallet& wallet, CReserveKey& reservekey);
 bool CheckProofOfWork(uint256 hash, u32int nBits);
 bool CheckProofOfBurnHash(uint256 hash, u32int nBurnBits);
 int64 GetProofOfWorkReward(u32int nBits, bool fProofOfBurn=false);
-int64 GetProofOfStakeReward(int64 nCoinAge);
+int64 GetProofOfStakeReward(int64 nCoinAge, u32int nTime);
 unsigned int ComputeMinWork(unsigned int nBase, int64 nTime);
 int GetNumBlocksOfPeers();
 bool IsInitialBlockDownload();
 std::string GetWarnings(std::string strFor);
+bool GetTransaction(const uint256 &hash, CTransaction &tx, uint256 &hashBlock);
 uint256 WantedByOrphan(const CBlock* pblockOrphan);
 const CBlockIndex* GetLastBlockIndex(const CBlockIndex* pindex, bool fProofOfStake);
 void SlimCoinMiner(CWallet *pwallet, bool fProofOfStake);
@@ -1569,14 +1578,7 @@ public:
     return (int64)nTime;
   }
 
-  CBigNum GetBlockTrust() const
-  {
-    CBigNum bnTarget;
-    bnTarget.SetCompact(nBits);
-    if (bnTarget <= 0)
-      return 0;
-    return (IsProofOfStake() ? (CBigNum(1)<<256) / (bnTarget+1) : 1);
-  }
+  CBigNum GetBlockTrust() const;
 
   bool IsInMainChain() const
   {
@@ -1585,9 +1587,9 @@ public:
 
   bool CheckIndex() const
   {
-    printf("%5d ------------------------------- %d %d %d %d %d %d %d\n",
+    /*printf("%5d ------------------------------- %d %d %d %d %d %d %d\n",
            nHeight, IsProofOfWork(), IsProofOfBurn(), IsProofOfStake(), 
-           fProofOfBurn, burnBlkHeight, burnCTx, burnCTxOut);
+           fProofOfBurn, burnBlkHeight, burnCTx, burnCTxOut);*/
 
     //The burn and stake data will be checked after all block indexes have been loaded
 
@@ -1723,6 +1725,9 @@ public:
 /** Used to marshal pointers into hashes for db storage. */
 class CDiskBlockIndex : public CBlockIndex
 {
+private:
+  uint256 blockHash;
+
 public:
   uint256 hashPrev;
   uint256 hashNext;
@@ -1731,6 +1736,8 @@ public:
   {
     hashPrev = 0;
     hashNext = 0;
+    blockHash = 0;
+
   }
 
   explicit CDiskBlockIndex(CBlockIndex* pindex) : CBlockIndex(*pindex)
@@ -1781,10 +1788,16 @@ public:
       READWRITE(burnCTxOut);
       READWRITE(nEffectiveBurnCoins);
       READWRITE(nBurnBits);
+
+      //cached hash of the block
+      READWRITE(blockHash);
       )
 
     uint256 GetBlockHash() const
   {
+    if(fUseFastIndex && (nTime < GetAdjustedTime() - 24 * 60 * 60) && blockHash != 0)
+      return blockHash;
+
     CBlock block;
     block.nVersion        = nVersion;
     block.hashPrevBlock   = hashPrev;
@@ -1792,7 +1805,11 @@ public:
     block.nTime           = nTime;
     block.nBits           = nBits;
     block.nNonce          = nNonce;
-    return block.GetHash();
+
+    //assign the cached value to be written a value
+    const_cast<CDiskBlockIndex*>(this)->blockHash = block.GetHash();
+
+    return blockHash;
   }
 
 

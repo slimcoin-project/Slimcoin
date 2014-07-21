@@ -28,7 +28,20 @@ typedef          char       s8int;
 #include <sys/resource.h>
 #include <stdlib.h> //for malloc in the hash function
 
+#define TIMER_START                             \
+  struct timeval  tv1, tv2;                     \
+  gettimeofday(&tv1, NULL)
+
+#define TIMER_END                                               \
+  gettimeofday(&tv2, NULL);                                     \
+  printf("Total time = %.10f seconds\n",                        \
+         (double) (tv2.tv_usec - tv1.tv_usec) / 1000000 +       \
+         (double) (tv2.tv_sec - tv1.tv_sec))
+
 #else
+
+#define TIMER_START
+#define TIMER_END
 
 typedef int pid_t; /* define for windows compatiblity */
 
@@ -149,6 +162,7 @@ extern std::string strMiscWarning;
 extern bool fTestNet;
 extern bool fNoListen;
 extern bool fLogTimestamps;
+extern bool fUseFastIndex;
 
 void RandAddSeed();
 void RandAddSeedPerfmon();

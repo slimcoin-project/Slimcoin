@@ -103,9 +103,21 @@ extern std::deque<std::pair<int64, CInv> > vRelayExpiration;
 extern CCriticalSection cs_mapRelay;
 extern std::map<CInv, int64> mapAlreadyAskedFor;
 
-
-
-
+class CNodeStats
+{
+public:
+    uint64 nServices;
+    int64 nLastSend;
+    int64 nLastRecv;
+    int64 nTimeConnected;
+    std::string addrName;
+    int nVersion;
+    std::string strSubVer;
+    bool fInbound;
+    int64 nReleaseTime;
+    int nStartingHeight;
+    int nMisbehavior;
+};
 
 
 /** Information about a peer */
@@ -126,6 +138,7 @@ public:
   int nHeaderStart;
   unsigned int nMessageStart;
   CAddress addr;
+  std::string addrName;
   int nVersion;
   std::string strSubVer;
   bool fClient;
@@ -176,6 +189,7 @@ CNode(SOCKET hSocketIn, CAddress addrIn, bool fInboundIn=false) : vSend(SER_NETW
     nHeaderStart = -1;
     nMessageStart = -1;
     addr = addrIn;
+    addrName = addr.ToStringIPPort();
     nVersion = 0;
     strSubVer = "";
     fClient = false; // set by version message
@@ -594,6 +608,8 @@ public:
   static void ClearBanned(); // needed for unit testing
   static bool IsBanned(CNetAddr ip);
   bool Misbehaving(int howmuch); // 1 == a little, 100 == a lot
+
+  void copyStats(CNodeStats &stats);
 };
 
 

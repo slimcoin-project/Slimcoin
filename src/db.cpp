@@ -521,7 +521,7 @@ bool CTxDB::WriteCheckpointPubKey(const string& strPubKey)
   return Write(string("strCheckpointPubKey"), strPubKey);
 }
 
-CBlockIndex static *InsertBlockIndex(uint256 hash)
+static CBlockIndex *InsertBlockIndex(uint256 hash)
 {
   if(!hash)
     return NULL;
@@ -552,9 +552,8 @@ bool CTxDB::LoadBlockIndex()
 
   // Load mapBlockIndex
   unsigned int fFlags = DB_SET_RANGE;
-
   for(;;)
-  {
+  {    
     // Read next record
     CDataStream ssKey(SER_DISK, CLIENT_VERSION);
     if(fFlags == DB_SET_RANGE)
@@ -569,7 +568,7 @@ bool CTxDB::LoadBlockIndex()
       return false;
 
     // Unserialize
-
+    
     try
     {
       string strType;
@@ -579,10 +578,13 @@ bool CTxDB::LoadBlockIndex()
         CDiskBlockIndex diskindex;
         ssValue >> diskindex;
 
+        uint256 blockHash = diskindex.GetBlockHash();
+
         // Construct block index object
-        CBlockIndex *pindexNew = InsertBlockIndex(diskindex.GetBlockHash());
+        CBlockIndex *pindexNew    = InsertBlockIndex(blockHash);
         pindexNew->pprev          = InsertBlockIndex(diskindex.hashPrev);
         pindexNew->pnext          = InsertBlockIndex(diskindex.hashNext);
+
         pindexNew->nFile          = diskindex.nFile;
         pindexNew->nBlockPos      = diskindex.nBlockPos;
         pindexNew->nHeight        = diskindex.nHeight;
@@ -609,7 +611,7 @@ bool CTxDB::LoadBlockIndex()
         pindexNew->nBurnBits      = diskindex.nBurnBits;
 
         // Watch for genesis block
-        if(pindexGenesisBlock == NULL && diskindex.GetBlockHash() == hashGenesisBlock)
+        if(pindexGenesisBlock == NULL && blockHash == hashGenesisBlock)
           pindexGenesisBlock = pindexNew;
 
         if(!pindexNew->CheckIndex())
@@ -691,8 +693,9 @@ bool CTxDB::LoadBlockIndex()
     for(const CBlockIndex *pindex = pindexBest; pindex && pindex->pprev; pindex = pindex->pprev)
     {
 
-      //if this index is a proof-of-burn, check it
-      if(pindex->IsProofOfBurn())
+      //check it if the fUseFastIndex is false or
+      // if this index is a proof-of-burn as was found within the last 24 hours, check it
+      if(!fUseFastIndex || (pindex->IsProofOfBurn() && pindex->nTime > GetAdjustedTime() - 24 * 60 * 60))
       {
 
         uint256 burnHashRet;
@@ -734,9 +737,10 @@ bool CTxDB::LoadBlockIndex()
   printf("Verifying last %i blocks at level %i\n", nCheckDepth, nCheckLevel);
   CBlockIndex* pindexFork = NULL;
   map<pair<unsigned int, unsigned int>, CBlockIndex*> mapBlockPos;
+
   for(CBlockIndex* pindex = pindexBest; pindex && pindex->pprev; pindex = pindex->pprev)
   {
-    if(pindex->nHeight < nBestHeight - nCheckDepth)
+    if(fRequestShutdown || pindex->nHeight < nBestHeight - nCheckDepth)
       break;
 
     CBlock block;

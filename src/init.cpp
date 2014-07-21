@@ -199,6 +199,8 @@ bool AppInit2(int argc, char *argv[])
     return false;
   }
 
+  fUseFastIndex = GetBoolArg("-fastindex", true);
+
   fTestNet = GetBoolArg("-testnet");
   if(fTestNet)
   {

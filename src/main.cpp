@@ -37,7 +37,10 @@ map<uint256, CBlockIndex*> mapBlockIndex;
 uint256 hashGenesisBlock = hashGenesisBlockOfficial;
 static CBigNum bnProofOfWorkLimit(~uint256(0) >> 20); //5 preceding 0s, 20/4 since every hex = 4 bits
 static CBigNum bnProofOfBurnLimit(~uint256(0) >> 16); //4 preceding 0s, 16/4 since every hex = 4 bits
-static CBigNum bnInitialHashTarget(~uint256(0) >> 21); //0x000007ffff....
+static CBigNum bnProofOfStakeLimit(~uint256(0) >> 27); //0x0000001ffff....fff
+static CBigNum bnInitialHashTarget(~uint256(0) >> 21); //0x000007fffff....fff
+static uint256 nPoWBase(~uint256(0) >> 24); //6 preceding 0s, 24/4 since every hex = 4 bits
+static uint256 nPoBBase(~uint256(0) >> 20); //5 preceding 0s, 20/4 since every hex = 4 bits
 unsigned int nStakeMinAge = STAKE_MIN_AGE;
 int nCoinbaseMaturity = COINBASE_MATURITY_SLM;
 CBlockIndex *pindexGenesisBlock = NULL;
@@ -112,8 +115,35 @@ bool static IsFromMe(CTransaction& tx)
 bool static GetTransaction(const uint256& hashTx, CWalletTx& wtx)
 {
   BOOST_FOREACH(CWallet* pwallet, setpwalletRegistered)
-    if(pwallet->GetTransaction(hashTx,wtx))
+    if(pwallet->GetTransaction(hashTx, wtx))
       return true;
+  return false;
+}
+
+// Return transaction in tx, and if it was found inside a block, its hash is placed in hashBlock
+bool GetTransaction(const uint256 &hash, CTransaction &tx, uint256 &hashBlock)
+{
+  {
+    LOCK(cs_main);
+    {
+      LOCK(mempool.cs);
+      if(mempool.exists(hash))
+      {
+        tx = mempool.lookup(hash);
+        return true;
+      }
+    }
+
+    CTxDB txdb("r");
+    CTxIndex txindex;
+    if (tx.ReadFromDisk(txdb, COutPoint(hash, 0), txindex))
+    {
+      CBlock block;
+      if (block.ReadFromDisk(txindex.pos.nFile, txindex.pos.nBlockPos, false))
+        hashBlock = block.GetHash();
+      return true;
+    }
+  }
   return false;
 }
 
@@ -125,7 +155,7 @@ void static EraseFromWallets(uint256 hash)
 }
 
 // make sure all wallets know about the given transaction, in the given block
-void static SyncWithWallets(const CTransaction& tx, const CBlock* pblock = NULL, bool fUpdate = false, bool fConnect = true)
+void SyncWithWallets(const CTransaction& tx, const CBlock* pblock, bool fUpdate, bool fConnect)
 {
   if(!fConnect)
   {
@@ -959,9 +989,9 @@ int64 GetProofOfWorkReward(u32int nBits, bool fProofOfBurn)
 }
 
 // slimcoin: miner's coin stake is rewarded based on coin age spent (coin-days)
-int64 GetProofOfStakeReward(int64 nCoinAge)
+int64 GetProofOfStakeReward(int64 nCoinAge, u32int nTime)
 {
-  static int64 nRewardCoinYear = CENT;  // creation amount per coin-year
+  int64 nRewardCoinYear = nTime > POB_POS_TARGET_SWITCH_TIME ? (10 * CENT) : CENT;  // creation amount per coin-year
   int64 nSubsidy = nCoinAge * nRewardCoinYear * 33 / (365 * 33 + 8);
 
   if(fDebug && GetBoolArg("-printcreation"))
@@ -975,6 +1005,9 @@ int64 GetProofOfBurnReward(u32int nBurnBits)
 {
   return GetProofOfWorkReward(nBurnBits, true);
 }
+
+//Target time span for PoB is 30 PoW blocks
+static const int64 nPoBTargetTimespan = 30;
 
 static inline int64 getTargetTimespan(s32int lastNHeight)
 {
@@ -991,24 +1024,52 @@ static inline int64 getTargetTimespan(s32int lastNHeight)
 
 static const int64 nTargetSpacingWorkMax = 10 * STAKE_TARGET_SPACING; // 15 minutes
 
+// select stake target limit according to hard-coded conditions
+static inline CBigNum GetProofOfStakeLimit(u32int nTime)
+{
+  if(fTestNet || nTime > POB_POS_TARGET_SWITCH_TIME)
+    return bnProofOfStakeLimit;
+
+  return bnProofOfWorkLimit; // return bnProofOfWorkLimit of none matched
+}
+
 //
-// minimum amount of work that could possibly be required nTime after
-// minimum work required was nBase
+// maximum nBits value could possible be required nTime after
 //
-u32int ComputeMinWork(u32int nBase, int64 nTime)
+u32int ComputeMaxBits(CBigNum bnTargetLimit, u32int nBase, int64 nTime)
 {
   CBigNum bnResult;
   bnResult.SetCompact(nBase);
   bnResult *= 2;
-  while(nTime > 0 && bnResult < bnProofOfWorkLimit)
+  while(nTime > 0 && bnResult < bnTargetLimit)
   {
     // Maximum 200% adjustment per day...
     bnResult *= 2;
     nTime -= 24 * 60 * 60;
   }
-  if(bnResult > bnProofOfWorkLimit)
-    bnResult = bnProofOfWorkLimit;
+
+  if(bnResult > bnTargetLimit)
+    bnResult = bnTargetLimit;
+
   return bnResult.GetCompact();
+}
+
+//
+// minimum amount of work that could possibly be required nTime after
+// minimum proof-of-work required was nBase
+//
+unsigned int ComputeMinWork(unsigned int nBase, int64 nTime)
+{
+  return ComputeMaxBits(bnProofOfWorkLimit, nBase, nTime);
+}
+
+//
+// minimum amount of stake that could possibly be required nTime after
+// minimum proof-of-stake required was nBase
+//
+unsigned int ComputeMinStake(unsigned int nBase, int64 nTime, unsigned int nBlockTime)
+{
+  return ComputeMaxBits(GetProofOfStakeLimit(nBlockTime), nBase, nTime);
 }
 
 // slimcoin: find last block index up to pindex
@@ -1023,8 +1084,10 @@ const CBlockIndex *GetLastBlockIndex(const CBlockIndex *pindex, bool fProofOfSta
 
 static u32int GetNextTargetRequired(const CBlockIndex *pindexLast, bool fProofOfStake)
 {
+  const CBigNum bnTargetLimit = fProofOfStake ? GetProofOfStakeLimit(pindexLast->nTime) : bnProofOfWorkLimit;
+
   if(pindexLast == NULL)
-    return bnProofOfWorkLimit.GetCompact(); // genesis block
+    return bnTargetLimit.GetCompact(); // genesis block
 
   const CBlockIndex* pindexPrev = GetLastBlockIndex(pindexLast, fProofOfStake);
   if(pindexPrev->pprev == NULL)
@@ -1038,7 +1101,7 @@ static u32int GetNextTargetRequired(const CBlockIndex *pindexLast, bool fProofOf
   // slimcoin: target change every block
   // slimcoin: retarget with exponential moving toward target spacing
 
-  //use the last blocks target as a seed
+  //use the last block's target as a seed
   CBigNum bnNew;
   bnNew.SetCompact(pindexPrev->nBits);
 
@@ -1050,38 +1113,87 @@ static u32int GetNextTargetRequired(const CBlockIndex *pindexLast, bool fProofOf
   bnNew /= ((nInterval + 1) * nTargetSpacing);
 
   //we can't make it too easy
-  if(bnNew <= 0 || bnNew > bnProofOfWorkLimit)
-    bnNew = bnProofOfWorkLimit;
+  if(bnNew > bnTargetLimit)
+    bnNew = bnTargetLimit;
 
   return bnNew.GetCompact();
 }
 
 static u32int GetNextBurnTargetRequired(const CBlockIndex *pindexLast)
 {
-  //go back BURN_MIN_CONFIRMS PoW blocks
-  const CBlockIndex *pindexBack = pindexLast;
-
-  s32int i;
-  for(i = 0; i < BURN_MIN_CONFIRMS && pindexBack; i++)
+  //new protocol has a target PoW blocks between each PoB block
+  if(fTestNet || pindexLast->nTime > POB_POS_TARGET_SWITCH_TIME)
   {
-    //GetLastBlockIndex with false returns the last proof of work block index
-    pindexBack = GetLastBlockIndex(pindexBack, false);
+    const CBigNum bnTargetLimit = bnProofOfBurnLimit;
+
+    if(pindexLast == NULL)
+      return bnTargetLimit.GetCompact(); // genesis block
+
+    //go backwards and find the last PoB block in the blockchain
+    // once it exits, pindex is the last PoB block in the blockchain
+    // and nPoW is the number of PoW blocks between pindexLast (inclusive) and the final pindex
+    u32int nPoW = 0;
+    const CBlockIndex *pindex = pindexLast;
+    for(; pindex && !pindex->IsProofOfBurn(); pindex = pindex->pprev)
+      if(pindex->IsProofOfWork())
+        nPoW++;
+
+    //if pindex is NULL, that means that there were no PoB blocks found and it got to the genesis block
+    if(!pindex)
+      return bnTargetLimit.GetCompact();
+
+    //if there were no PoW blocks between, return the pindexLast's nBurnBits
+    if(!nPoW)
+      return pindexLast->nBurnBits;
+
+    // slimcoin: target change every block
+    // slimcoin: retarget with exponential moving toward target spacing
+
+    //use the last PoB block's target as a seed
+    CBigNum bnNew;
+    bnNew.SetCompact(pindex->nBurnBits);
+
+    //target spacing is 3 PoW blocks inbetween each PoB block
+    const int64 nTargetSpacing = POB_TARGET_SPACING;
+    const int64 nInterval = nPoBTargetTimespan / nTargetSpacing;
+
+    bnNew *= ((nInterval - 1) * nTargetSpacing + nPoW + nPoW);
+    bnNew /= ((nInterval + 1) * nTargetSpacing);
+
+    //we can't make it too easy
+    if(bnNew > bnTargetLimit)
+      bnNew = bnTargetLimit;
+
+    return bnNew.GetCompact();    
+
+  }else{  //old prototcol is based off of nEffective burnt coins
+    
+    //go back BURN_MIN_CONFIRMS PoW blocks
+    const CBlockIndex *pindexBack = pindexLast;
+
+    s32int i;
+    for(i = 0; i < BURN_MIN_CONFIRMS && pindexBack; i++)
+    {
+      //GetLastBlockIndex with false returns the last proof of work block index
+      pindexBack = GetLastBlockIndex(pindexBack, false);
+    }
+
+    if(pindexBack == NULL || !pindexBack->nEffectiveBurnCoins)
+      return CBigNum(0).GetCompact();
+
+    CBigNum bnNew(~uint256(0));
+  
+    //formula for difficulty where take 0xffffff... and apply multiplier that is the same
+    // as the hash burn data's, excluding the decay factor
+    bnNew = (bnNew * BURN_HARDER_TARGET * BURN_CONSTANT) / pindexBack->nEffectiveBurnCoins;
+
+    //we can't make it too easy
+    if(bnNew > bnProofOfBurnLimit)
+      bnNew = bnProofOfBurnLimit;
+  
+    return bnNew.GetCompact();
+
   }
-
-  if(pindexBack == NULL || !pindexBack->nEffectiveBurnCoins)
-    return CBigNum(0).GetCompact();
-
-  CBigNum bnNew(~uint256(0));
-  
-  //formula for difficulty where take 0xffffff... and apply multiplier that is the same
-  // as the hash burn data's, excluding the decay factor
-  bnNew = (bnNew * BURN_HARDER_TARGET * BURN_CONSTANT) / pindexBack->nEffectiveBurnCoins;
-
-  //we can't make it too easy
-  if(bnNew <= 0 || bnNew > bnProofOfBurnLimit)
-    bnNew = bnProofOfBurnLimit;
-  
-  return bnNew.GetCompact();
 }
 
 bool CheckProofOfWork(uint256 hash, u32int nBits)
@@ -1387,7 +1499,8 @@ unsigned int CTransaction::GetP2SHSigOpCount(const MapPrevTx& inputs) const
 
 bool CTransaction::ConnectInputs(CTxDB& txdb, MapPrevTx inputs,
                                  map<uint256, CTxIndex>& mapTestPool, const CDiskTxPos& posThisTx,
-                                 const CBlockIndex* pindexBlock, bool fBlock, bool fMiner, bool fStrictPayToScriptHash)
+                                 const CBlockIndex* pindexBlock, bool fBlock, 
+                                 bool fMiner, bool fStrictPayToScriptHash)
 {
   // Take over previous transactions' spent pointers
   // fBlock is true when this is called from AcceptBlock when a new best-block is added to the blockchain
@@ -1473,7 +1586,7 @@ bool CTransaction::ConnectInputs(CTxDB& txdb, MapPrevTx inputs,
       if(!GetCoinAge(txdb, nCoinAge))
         return error("ConnectInputs() : %s unable to get coin age for coinstake", GetHash().ToString().substr(0,10).c_str());
       int64 nStakeReward = GetValueOut() - nValueIn;
-      if(nStakeReward > GetProofOfStakeReward(nCoinAge) - GetMinFee() + MIN_TX_FEE)
+      if(nStakeReward > GetProofOfStakeReward(nCoinAge, nTime) - GetMinFee() + MIN_TX_FEE)
         return DoS(100, error("ConnectInputs() : %s stake reward exceeded", GetHash().ToString().substr(0,10).c_str()));
     }
     else
@@ -1992,9 +2105,8 @@ bool CBlock::GetCoinAge(uint64& nCoinAge) const
 
 //MYTODO: 
 //
-//GetProofOfBurnReward() uses GetPoWReward inside
+//Empty...
 //
-
 
 bool CBlock::AddToBlockIndex(unsigned int nFile, unsigned int nBlockPos)
 {
@@ -2261,6 +2373,101 @@ bool CBlock::AcceptBlock()
   return true;
 }
 
+CBigNum CBlockIndex::GetBlockTrust() const
+{
+
+  /* New protocol */
+  if(fTestNet || GetBlockTime() > CHAINCHECKS_SWITCH_TIME)
+  {
+
+    CBigNum bnTarget;
+    bnTarget.SetCompact(IsProofOfBurn() ? nBurnBits : nBits);
+
+    if(bnTarget <= 0)
+      return 0;
+
+    // Calculate work amount for block
+    uint256 nBlkBase = IsProofOfBurn() ? nPoBBase : nPoWBase;
+    CBigNum nBlkTrust = CBigNum(nBlkBase) / (bnTarget + 1);
+
+    // Set nPowTrust to 1 if we are checking PoS block or PoW difficulty is too low
+    nBlkTrust = (IsProofOfStake() || nBlkTrust < 1) ? 1 : nBlkTrust;
+
+    // Return nBlkTrust for the first 12 blocks
+    if(pprev == NULL || pprev->nHeight < 12)
+      return nBlkTrust;
+
+    const CBlockIndex* currentIndex = pprev;
+
+    if(IsProofOfStake())
+    {
+      CBigNum bnNewTrust = (CBigNum(1)<<256) / (bnTarget + 1);
+
+      // Return 1/3 of score if parent block is not the PoW block
+      if(!pprev->IsProofOfWork())
+        return bnNewTrust / 3;
+
+      int nPoWCount = 0;
+
+      // Check last 12 blocks type
+      while (pprev->nHeight - currentIndex->nHeight < 12)
+      {
+        if(currentIndex->IsProofOfWork())
+          nPoWCount++;
+        currentIndex = currentIndex->pprev;
+      }
+
+      // Return 1/3 of score if less than 3 PoW blocks found
+      if (nPoWCount < 3)
+        return bnNewTrust / 3;
+
+      return bnNewTrust;
+    }else{
+      CBigNum bnLastBlockTrust = CBigNum(pprev->bnChainTrust - pprev->pprev->bnChainTrust);
+
+      // Return nBlkTrust + 2/3 of previous block score if two parent blocks are not PoS blocks
+      if (!(pprev->IsProofOfStake() && pprev->pprev->IsProofOfStake()))
+        return nBlkTrust + (2 * bnLastBlockTrust / 3);
+
+      int nPoSCount = 0;
+
+      // Check last 12 blocks type
+      while(pprev->nHeight - currentIndex->nHeight < 12)
+      {
+        if(currentIndex->IsProofOfStake())
+          nPoSCount++;
+        currentIndex = currentIndex->pprev;
+      }
+
+      // Return nBlkTrust + 2/3 of previous block score if less than 7 PoS blocks found
+      if(nPoSCount < 7)
+        return nBlkTrust + (2 * bnLastBlockTrust / 3);
+
+      bnTarget.SetCompact(IsProofOfBurn() ? pprev->nBurnBits : pprev->nBits);
+
+      if(bnTarget <= 0)
+        return 0;
+
+      CBigNum bnNewTrust = (CBigNum(1) << 256) / (bnTarget + 1);
+
+      // Return nBlkTrust + full trust score for previous block nBits or nBurnBits
+      return nBlkTrust + bnNewTrust;
+    }
+
+  }else{
+
+    /* Old protocol */
+
+    CBigNum bnTarget;
+    bnTarget.SetCompact(nBits);
+
+    if(bnTarget <= 0)
+      return 0;
+
+    return (IsProofOfStake() ? (CBigNum(1) << 256) / (bnTarget + 1) : 1);
+  }
+}
+
 bool ProcessBlock(CNode *pfrom, CBlock *pblock)
 {
   // Check for duplicate
@@ -2337,7 +2544,12 @@ bool ProcessBlock(CNode *pfrom, CBlock *pblock)
     CBigNum bnNewBlock;
     bnNewBlock.SetCompact(pblock->nBits);
     CBigNum bnRequired;
-    bnRequired.SetCompact(ComputeMinWork(GetLastBlockIndex(pcheckpoint, pblock->IsProofOfStake())->nBits, deltaTime));
+
+    if(pblock->IsProofOfStake())
+      bnRequired.SetCompact(
+        ComputeMinStake(GetLastBlockIndex(pcheckpoint, true)->nBits, deltaTime, pblock->nTime));
+    else
+      bnRequired.SetCompact(ComputeMinWork(GetLastBlockIndex(pcheckpoint, false)->nBits, deltaTime));
 
     if(bnNewBlock > bnRequired)
     {
@@ -2477,7 +2689,10 @@ bool CBlock::SignBlock(const CKeyStore &keystore)
 // slimcoin: check block signature
 bool CBlock::CheckBlockSignature() const
 {
-  if(GetHash() == hashGenesisBlock)
+  //if it is the genesis block, first checks if the prev block's hash is 0 since
+  // it should only be that for the genesis block, then check the actual hash,
+  // that is done because checking the actual hash is very intensive
+  if(hashPrevBlock == 0 && GetHash() == hashGenesisBlock)
     return vchBlockSig.empty();
 
   vector<valtype> vSolutions;
@@ -2608,11 +2823,15 @@ bool LoadBlockIndex(bool fAllowNew)
   if(fTestNet)
   {
     hashGenesisBlock = hashGenesisBlockTestNet;
-    bnProofOfWorkLimit = CBigNum(~uint256(0) >> 16); //4 preceding 0s, 16/4 since every hex = 4 bits
-    bnProofOfBurnLimit = CBigNum(~uint256(0) >> 16); //4 preceding 0s, 16/4 since every hex = 4 bits
+    bnProofOfWorkLimit = CBigNum(~uint256(0) >> 16);  //4 preceding 0s, 16/4 since every hex = 4 bits
+    bnInitialHashTarget = CBigNum(~uint256(0) >> 17); //0x00007ffff.....
+    bnProofOfBurnLimit = CBigNum(~uint256(0) >> 16);  //4 preceding 0s, 16/4 since every hex = 4 bits
+    bnProofOfStakeLimit = CBigNum(~uint256(0) >> 16); //4 preceding 0s, 16/4 since every hex = 4 bits
+    nPoWBase = (~uint256(0) >> 20);                   //5 preceding 0s, 20/4 since every hex = 4 bits
+    nPoBBase = (~uint256(0) >> 20);                   //5 preceding 0s, 20/4 since every hex = 4 bits
+
     nStakeMinAge = 60 * 60 * 24; // test net min age is 1 day
     nCoinbaseMaturity = 60;
-    bnInitialHashTarget = CBigNum(~uint256(0) >> 17); //0x00007ffff.....
     nModifierInterval = 60 * 20; // test net modifier interval is 20 minutes
   }
 
@@ -2663,7 +2882,7 @@ bool LoadBlockIndex(bool fAllowNew)
     block.nVersion = 1;
     block.nTime    = !fTestNet ? 1399578460 : 1390500425;
     block.nBits    = bnProofOfWorkLimit.GetCompact();
-    block.nNonce   = !fTestNet ? 116872 : 3098;
+    block.nNonce   = !fTestNet ? 116872 : 63626;
 
     // debug print
     printf("block.GetHash() = %s\n", block.GetHash().ToString().c_str());

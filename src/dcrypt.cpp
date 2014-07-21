@@ -148,6 +148,18 @@ uint64 mix_hashed_nums(uint8_t *hashed_nums, const uint8_t *unhashedData, size_t
 
 uint256 dcrypt(const uint8_t *data, size_t data_sz, uint8_t *hash_digest)
 {
+  //dcrypt is really intense, don't use it for testnet hashes, 
+  // it is too slow and takes more time to test, just use the traditional double sha256
+  if(fTestNet)
+  {
+    uint256 hash1, hash2;
+
+    sha256(data, data_sz, &hash1);
+    sha256((const u8int*)&hash1, sizeof(uint256), &hash2);
+
+    return hash2;
+  }
+  
   uint8_t hashed_nums[SHA256_LEN + 1], *mix_hash;
   uint256 hash;
 

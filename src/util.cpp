@@ -76,6 +76,7 @@ string strMiscWarning;
 bool fTestNet = false;
 bool fNoListen = false;
 bool fLogTimestamps = false;
+bool fUseFastIndex = true;
 CMedianFilter<int64> vTimeOffsets(200,0);
 
 // Init openssl library multithreading support
@@ -916,6 +917,7 @@ const boost::filesystem::path &GetDataDir(bool fNetSpecific)
   if(mapArgs.count("-datadir")) 
   {
     path = fs::system_complete(mapArgs["-datadir"]);
+
     if(!fs::is_directory(path))
     {
       path = "";
