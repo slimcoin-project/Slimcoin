@@ -3422,6 +3422,12 @@ bool static ProcessMessage(CNode* pfrom, string strCommand, CDataStream& vRecv)
         Checkpoints::checkpointMessage.RelayTo(pfrom);
     }
 
+    if (pfrom->nStartingHeight == 15164) {
+     pfrom->fDisconnect = true;
+     printf("Obsolete client stuck at block 15164, disconnecting.");
+     return false;
+    }
+
     pfrom->fSuccessfullyConnected = true;
 
     printf("version message: version %d, blocks=%d\n", pfrom->nVersion, pfrom->nStartingHeight);
@@ -3644,6 +3650,14 @@ bool static ProcessMessage(CNode* pfrom, string strCommand, CDataStream& vRecv)
       pindex = pindex->pnext;
     int nLimit = 500 + locator.GetDistanceBack();
     printf("getblocks %d to %s limit %d\n", (pindex ? pindex->nHeight : -1), hashStop.ToString().substr(0,20).c_str(), nLimit);
+
+  
+    if(pindex) 
+     if (pindex->nHeight < 60000) {
+      pfrom->Misbehaving(1);	
+      printf("  likely old client, incrementing misbehaviour count.");
+     }
+
     for(; pindex; pindex = pindex->pnext)
     {
       if(pindex->GetBlockHash() == hashStop)

@@ -17,6 +17,7 @@
 #include <string.h>
 #endif
 
+#undef USE_UPNP
 #ifdef USE_UPNP
 #include <miniupnpc/miniwget.h>
 #include <miniupnpc/miniupnpc.h>
@@ -720,8 +721,10 @@ void ThreadSocketHandler2(void* parg)
           unsigned int nPos = vRecv.size();
 
           if(nPos > ReceiveBufferSize()) {
-            if(!pnode->fDisconnect)
+            if(!pnode->fDisconnect) {
               printf("socket recv flood control disconnect (%d bytes)\n", vRecv.size());
+              pnode->Misbehaving(50);
+            }
             pnode->CloseSocketDisconnect();
           }
           else {
@@ -786,8 +789,10 @@ void ThreadSocketHandler2(void* parg)
               }
             }
             if(vSend.size() > SendBufferSize()) {
-              if(!pnode->fDisconnect)
+              if(!pnode->fDisconnect) {
                 printf("socket send flood control disconnect (%d bytes)\n", vSend.size());
+              	pnode->Misbehaving(100);
+	      }
               pnode->CloseSocketDisconnect();
             }
           }
