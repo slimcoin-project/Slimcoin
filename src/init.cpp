@@ -539,6 +539,8 @@ bool AppInit2(int argc, char *argv[])
       ThreadSafeMessageBox(_("Invalid amount for -reservebalance=<amount>"), _("Slimcoin"), wxOK | wxMODAL);
       return false;
     }
+  } else {
+   mapArgs["-reservebalance"] = "1000000";
   }
 
   if(mapArgs.count("-checkpointkey")) // slimcoin: checkpoint master priv key
