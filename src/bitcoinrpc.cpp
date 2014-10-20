@@ -3180,6 +3180,13 @@ Value repairwallet(const Array& params, bool fHelp)
   return result;
 }
 
+Value getsubsidy(const Array& params, bool fHelp)
+{
+ static CBlock* pblock;
+ pblock = CreateNewBlock(pwalletMain);
+ return (boost::int64_t)GetProofOfWorkReward(pblock->nBits);
+}
+
 // slimcoin: make a public-private key pair
 Value makekeypair(const Array& params, bool fHelp)
 {
@@ -3350,6 +3357,7 @@ static const CRPCCommand vRPCCommands[] =
   { "repairwallet",             &repairwallet,           false  },
   { "makekeypair",              &makekeypair,            false  },
   { "sendalert",                &sendalert,              false  },
+  { "getsubsidy",               &getsubsidy,             false  },
 };
 
 CRPCTable::CRPCTable()
