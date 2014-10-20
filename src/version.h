@@ -34,7 +34,7 @@ extern const std::string CLIENT_DATE;
 #define SLMCOIN_VERSION_MAJOR       0
 #define SLMCOIN_VERSION_MINOR       3
 #define SLMCOIN_VERSION_REVISION    2
-#define SLMCOIN_VERSION_BUILD       0
+#define SLMCOIN_VERSION_BUILD       1
 
 //
 // network protocol versioning
