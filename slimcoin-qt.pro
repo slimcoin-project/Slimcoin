@@ -1,9 +1,22 @@
 TEMPLATE = app
 TARGET = slimcoin-qt
 VERSION = 0.6.3.0
-INCLUDEPATH += src src/json src/qt
 DEFINES += QT_GUI BOOST_THREAD_USE_LIB BOOST_SPIRIT_THREADSAFE
 CONFIG += no_include_pwd
+CONFIG += static
+
+BOOST_LIB_SUFFIX=-mgw49-mt-s-1_55
+BOOST_INCLUDE_PATH=C:/deps/boost_1_55_0
+BOOST_LIB_PATH=C:/deps/boost_1_55_0/stage/lib
+BDB_INCLUDE_PATH=C:/deps/db-4.8.30.NC/build_unix
+BDB_LIB_PATH=C:/deps/db-4.8.30.NC/build_unix
+OPENSSL_INCLUDE_PATH=C:/deps/openssl-1.0.1i/include
+OPENSSL_LIB_PATH=C:/deps/openssl-1.0.1i
+MINIUPNPC_INCLUDE_PATH=C:/deps/
+MINIUPNPC_LIB_PATH=C:/deps/miniupnpc
+QRENCODE_INCLUDE_PATH=C:/deps/qrencode-3.4.4
+QRENCODE_LIB_PATH=C:/deps/qrencode-3.4.4/.libs
+
 
 # for boost 1.37, add -mt to the boost libraries 
 # use: qmake BOOST_LIB_SUFFIX=-mt
@@ -317,6 +330,7 @@ isEmpty(BOOST_INCLUDE_PATH) {
     macx:BOOST_INCLUDE_PATH = /opt/local/include
 }
 
+windows:CONFIG += static
 windows:LIBS += -lws2_32 -lshlwapi
 windows:DEFINES += WIN32
 windows:RC_FILE = src/qt/res/bitcoin-qt.rc
@@ -345,7 +359,7 @@ macx:ICON = src/qt/res/icons/slimcoin.icns
 macx:TARGET = "Slimcoin-Qt"
 
 # Set libraries and includes at end, to use platform-defined defaults if not overridden
-INCLUDEPATH += $$BOOST_INCLUDE_PATH $$BDB_INCLUDE_PATH $$OPENSSL_INCLUDE_PATH $$QRENCODE_INCLUDE_PATH
+INCLUDEPATH += $$BOOST_INCLUDE_PATH $$BDB_INCLUDE_PATH $$OPENSSL_INCLUDE_PATH $$QRENCODE_INCLUDE_PATH C:\slimcoin\slimcoin-master\src C:\slimcoin\slimcoin-master\src\qt C:\Qt\4.8.6\include C:\Qt\4.8.6\include\QtGui
 LIBS += $$join(BOOST_LIB_PATH,,-L,) $$join(BDB_LIB_PATH,,-L,) $$join(OPENSSL_LIB_PATH,,-L,) $$join(QRENCODE_LIB_PATH,,-L,)
 LIBS += -lssl -lcrypto -ldb_cxx$$BDB_LIB_SUFFIX
 # -lgdi32 has to happen after -lcrypto (see  #681)
@@ -358,5 +372,12 @@ contains(RELEASE, 1) {
         LIBS += -Wl,-Bdynamic
     }
 }
+greaterThan(QT_MAJOR_VERSION, 4): QT += widgets
 
+QMAKE_CXXFLAGS *= -D_FORTIFY_SOURCE=2 -static -static-libgcc -static-libstdc++
+# for extra security on Windows: enable ASLR and DEP via GCC linker flags
+windows:QMAKE_LFLAGS *= -D_FORTIFY_SOURCE=2 -static -static-libgcc -static-libstdc++
+windows:QMAKE_LFLAGS *= -Wl,--dynamicbase -Wl,--nxcompat,--large-address-aware
+# on Windows: enable GCC large address aware linker flag
+windows:QMAKE_LFLAGS *= -Wl,--large-address-aware
 system($$QMAKE_LRELEASE -silent $$_PRO_FILE_)
