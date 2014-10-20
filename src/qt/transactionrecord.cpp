@@ -43,7 +43,7 @@ QList<TransactionRecord> TransactionRecord::decomposeTransaction(const CWallet *
 
   if(showTransaction(wtx))
   {
-    if(fBurnMint)
+    if(fBurnMint && wtx.IsCoinBase())
       parts.append(TransactionRecord(hash, nTime, TransactionRecord::BurnMint, "", -nDebit, wtx.GetValueOut()));
     else if(wtx.IsCoinStake()) // slimcoin: coinstake transaction
       parts.append(TransactionRecord(hash, nTime, TransactionRecord::StakeMint, "", -nDebit, wtx.GetValueOut()));
