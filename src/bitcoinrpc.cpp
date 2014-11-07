@@ -56,6 +56,7 @@ static CCriticalSection cs_nWalletUnlockTime;
 
 extern Value dumpprivkey(const Array& params, bool fHelp);
 extern Value importprivkey(const Array& params, bool fHelp);
+extern Value importpassphrase(const Array& params, bool fHelp);
 
 Object JSONRPCError(int code, const string& message)
 {
@@ -3372,6 +3373,7 @@ static const CRPCCommand vRPCCommands[] =
   { "listsinceblock",           &listsinceblock,         false  },
   { "dumpprivkey",              &dumpprivkey,            false  },
   { "importprivkey",            &importprivkey,          false  },
+  { "importpassphrase",         &importpassphrase,       false  },
   { "getrawtransaction",        &getrawtransaction,      false  },
   { "sendrawtransaction",       &sendrawtransaction,     false  },
   { "signrawtransaction",       &signrawtransaction,     false  },
