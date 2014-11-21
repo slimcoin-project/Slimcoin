@@ -24,28 +24,28 @@ If the group is missing:
 
 Once you've got the right hardware and software:
 
-    git clone git://github.com/(user)/slimcoin.git
-    git clone git://github.com/devrandom/gitian-builder.git
-    mkdir gitian-builder/inputs
+	git clone git://github.com/(user)/slimcoin.git
+	git clone git://github.com/devrandom/gitian-builder.git
+	mkdir gitian-builder/inputs
 
-    # Create base images
-    cd gitian-builder
-    bin/make-base-vm --suite precise --arch i386
-    bin/make-base-vm --suite precise --arch amd64  # needed for SLM?
-    cd ..
+	# Create base images
+	cd gitian-builder
+	bin/make-base-vm --suite precise --arch i386
+	bin/make-base-vm --suite precise --arch amd64  # needed for SLM?
+	cd ..
 
-    # Get inputs (see doc/release-process.md for exact inputs needed and where to get them)
-    ...
+	# Get inputs (see doc/release-process.md for exact inputs needed and where to get them)
+	...
 
-    # For further build instructions see doc/release-notes.md
-    ...
+	# For further build instructions see doc/release-notes.md
+	...
 
-    # To build
-    cd slimcoin
-    git pull
-    cd ../gitian-builder
-    git pull
-    ./bin/gbuild --commit slimcoin=HEAD ../slimcoin/contrib/gitian-descriptors/gitian.yml
+	# To build
+	cd slimcoin
+	git pull
+	cd ../gitian-builder
+	git pull
+	./bin/gbuild --commit slimcoin=HEAD ../slimcoin/contrib/gitian-descriptors/gitian.yml
 
 ---------------------
 
