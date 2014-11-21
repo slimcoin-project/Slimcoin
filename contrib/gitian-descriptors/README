@@ -5,27 +5,34 @@ You need the right hardware: you need a 64-bit-capable CPU with hardware virtual
 You probably need to enable hardware virtualization in your machine's BIOS.
 
 You need to be running a recent version of 64-bit-Ubuntu, and you need to install several prerequisites:
-  sudo apt-get install apache2 git apt-cacher-ng python-vm-builder qemu-kvm
+  sudo apt-get install apache2 git apt-cacher-ng python-vm-builder qemu-kvm ruby
 
 Sanity checks:
   sudo service apt-cacher-ng status   # Should return apt-cacher-ng is running
   ls -l /dev/kvm   # Should show a /dev/kvm device
 
+Check that you have the 'kvm' group, or you won't have permissions to use kvm:
+  groups    # should include 'kvm' in the list
+If the group is missing:
+  sudo usermod -aG kvm <your_username>    # will need to log out and back in to take effect
+
 Once you've got the right hardware and software:
 
-    git clone git://github.com/bitcoin/bitcoin.git
+    git clone git://github.com/(user)/slimcoin.git
     git clone git://github.com/devrandom/gitian-builder.git
     mkdir gitian-builder/inputs
-    wget 'http://miniupnp.tuxfamily.org/files/download.php?file=miniupnpc-1.6.tar.gz' -O gitian-builder/inputs/miniupnpc-1.6.tar.gz
+    ## wget 'http://miniupnp.tuxfamily.org/files/download.php?file=miniupnpc-1.6.tar.gz' -O gitian-builder/inputs/miniupnpc-1.6.tar.gz
+    # Download all the deps and put them in the 'inputs' directory; I need to make a list of what they are
+    #  but for now check the 'files' sections of the YML files to see what it looks for.
 
     cd gitian-builder
     bin/make-base-vm --arch i386
-    bin/make-base-vm --arch amd64
+    bin/make-base-vm --arch amd64  # needed?
     cd ..
 
     # To build
-    cd bitcoin
+    cd slimcoin
     git pull
     cd ../gitian-builder
     git pull
-    ./bin/gbuild --commit bitcoin=HEAD ../bitcoin/contrib/gitian.yml
+    ./bin/gbuild --commit slimcoin=HEAD ../slimcoin/contrib/gitian-descriptors/gitian.yml
