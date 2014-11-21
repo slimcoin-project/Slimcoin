@@ -70,8 +70,24 @@ Here's a description of Gavin's setup on OSX 10.6:
 
 	sudo apt-get install debootstrap lxc ruby apache2 git apt-cacher-ng python-vm-builder
 
+4.5 If you are running Ubuntu 14.04 (Trusty) as your VM, you will need to set the following (you may want to add it to your `.profile`):
+	
+	export LXC_EXECUTE=lxc-execute
+	
+4.6 You'll probably also need to set these:
+
+	export LXC_BRIDGE=lxcbr0
+	export GITIAN_HOST_IP=`ifconfig $LXC_BRIDGE|grep 'inet addr:'|sed 's/^.*inet addr:\([^ ]*\) .*$/\1/'`
+	export LXC_GUEST_IP=`echo $GITIAN_HOST_IP|sed 's/^\(\([^.]*\.\)*\).*$/\15/'`
+
+4.7 And add the following to `/etc/sudooers.d/gitian-lxc` to avoid having to type your password for every build:
+
+	%sudo ALL=NOPASSWD: /usr/bin/lxc-start
+	%sudo ALL=NOPASSWD: /usr/bin/lxc-execute
+
 5. Still inside Ubuntu, tell gitian-builder to use LXC, then follow the "Once you've got the right hardware and software" instructions above:
 
 	export USE_LXC=1
 	git clone git://github.com/bitcoin/bitcoin.git
 	... etc
+
