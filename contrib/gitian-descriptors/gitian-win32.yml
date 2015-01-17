@@ -16,8 +16,6 @@ remotes:
   "dir": "slimcoin"
 files:
 - "qt-win32-4.8.6-gitian.zip"
-# - "qt-win32-5.2.0-gitian-r3.zip"
-# - "boost-win32-1.47.0-gitian.zip"
 - "boost-win32-1.57.0-gitian-r6.zip"
 - "slimcoin-deps-win32-gitian-r1.zip"
 script: |
