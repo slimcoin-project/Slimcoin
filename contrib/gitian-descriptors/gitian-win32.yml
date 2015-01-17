@@ -1,7 +1,7 @@
 ---
 name: "slimcoin"
 suites:
-- "lucid"
+- "precise"
 architectures:
 - "i386"
 packages: 
@@ -15,21 +15,23 @@ remotes:
 - "url": "https://github.com/slimcoin/slimcoin.git"
   "dir": "slimcoin"
 files:
-- "qt-win32-4.7.4-gitian.zip"
-- "boost-win32-1.47.0-gitian.zip"
-- "slimcoin-deps-0.0.1.zip"
+- "qt-win32-4.8.6-gitian.zip"
+# - "qt-win32-5.2.0-gitian-r3.zip"
+# - "boost-win32-1.47.0-gitian.zip"
+- "boost-win32-1.57.0-gitian-r6.zip"
+- "slimcoin-deps-win32-gitian-r1.zip"
 script: |
   #
   mkdir $HOME/qt
   cd $HOME/qt
-  unzip ../build/qt-win32-4.7.4-gitian.zip
+  unzip ../build/qt-win32-4.8.6-gitian.zip
   cd $HOME/build/
   export PATH=$PATH:$HOME/qt/bin/
   #
-  mkdir boost_1_47_0
-  cd boost_1_47_0
+  mkdir boost_1_57_0
+  cd boost_1_57_0
   mkdir -p stage/lib
-  unzip ../boost-win32-1.47.0-gitian.zip
+  unzip ../boost-win32-1.57.0-gitian.zip
   cd bin/$GBUILD_BITS
   for lib in *; do
     i586-mingw32msvc-ar rc ../../stage/lib/libboost_${lib}-mt-s.a $lib/*.o
@@ -39,7 +41,7 @@ script: |
   mv include/boost .
   cd ..
   #
-  unzip slimcoin-deps-0.0.1.zip
+  unzip slimcoin-deps-win32-gitian-r1.zip
   #
   find -type f | xargs touch --date="$REFERENCE_DATETIME"
   #

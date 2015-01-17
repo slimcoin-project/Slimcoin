@@ -1,7 +1,7 @@
 ---
 name: "boost"
 suites:
-- "lucid"
+- "precise"
 architectures:
 - "i386"
 - "amd64"
@@ -17,8 +17,12 @@ packages:
 reference_datetime: "2011-01-30 00:00:00"
 remotes: []
 files:
-- "boost_1_47_0.tar.bz2"
+- "boost_1_57_0.tar.bz2"
 script: |
+  # inserted these to avoid doing a find-replace every time we change version
+  BOOSTVER=1.57.0
+  BOOST_VER=1_57_0
+
   STAGING="$HOME/install"
   TEMPDIR="$HOME/tmp"
   export LIBRARY_PATH="$STAGING/lib"
@@ -26,12 +30,13 @@ script: |
   export FAKETIME=$REFERENCE_DATETIME
   export TZ=UTC
   # Input Integrity Check
-  echo "815a5d9faac4dbd523fbcf3fe1065e443c0bbf43427c44aa423422c6ec4c2e31  boost_1_47_0.tar.bz2" | sha256sum -c
+  # echo "815a5d9faac4dbd523fbcf3fe1065e443c0bbf43427c44aa423422c6ec4c2e31  boost_1_47_0.tar.bz2" | sha256sum -c
+  #echo INSERT-SHASUM-HERE boost_1_57_0.tar.bz2 | shasum -c
 
   mkdir -p "$STAGING"
-  #tar --warning=no-timestamp -xjf boost_1_47_0.tar.bz2
-  tar -xjf boost_1_47_0.tar.bz2
-  cd boost_1_47_0
+  #tar --warning=no-timestamp -xjf boost_$BOOST_VER.tar.bz2
+  tar -xjf boost_$BOOST_VER.tar.bz2
+  cd boost_$BOOST_VER
   GCCVERSION=$(g++ -E -dM $(mktemp --suffix=.h) | grep __VERSION__ | cut -d ' ' -f 3 | cut -d '"' -f 2)
   # note: bjam with -d+2 reveals that -O3 is implied by default, no need to provide it in cxxflags
   echo "using gcc : $GCCVERSION : g++
@@ -53,4 +58,4 @@ script: |
   done
   #
   cd "$STAGING"
-  find | sort | zip -X@ $OUTDIR/boost-linux${GBUILD_BITS}-1.47.0-gitian-r1.zip
+  find | sort | zip -X@ $OUTDIR/boost-linux${GBUILD_BITS}-$BOOSTVER-gitian-r1.zip
