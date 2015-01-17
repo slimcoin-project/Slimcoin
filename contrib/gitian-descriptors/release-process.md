@@ -109,7 +109,8 @@ Release Process
     512bc0622c883e2e0f4cbc3fedfd8c2402d06c004ce6fb32303cc2a6f405b6df  osx-native-depends-r3.tar.gz
     927e4b222be6d590b4bc2fc185872a5d0ca5c322adb983764d3ed84be6bdbc81  osx-depends-r4.tar.gz
     ec95abef1df2b096a970359787c01d8c45e2a4475b7ae34e12c022634fbdba8a  osx-depends-qt-5.2.1-r4.tar.gz
-
+    f6907d4e35b4974afcfafc8ec6e95bf9e789b9c5949eb8cbdc45f0a5e93974cb  boost-linux32-1.57.0-gitian-r1.zip
+    5e94b6913b01a22f75837375f3184af4900b0e4d67fe2089f8b9e9918541356c  boost-linux64-1.57.0-gitian-r1.zip
 
  Build Bitcoin Core for Linux, Windows, and OS X:
   
