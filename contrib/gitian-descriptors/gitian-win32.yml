@@ -12,13 +12,16 @@ packages:
 - "faketime"
 reference_datetime: "2011-01-30 00:00:00"
 remotes:
-- "url": "https://github.com/slimcoin/slimcoin.git"
+- "url": "https://github.com/tbartlett0/slimcoin.git"
   "dir": "slimcoin"
 files:
 - "qt-win32-4.8.6-gitian.zip"
-- "boost-win32-1.57.0-gitian-r6.zip"
+- "boost-win32-1.57.0-gitian.zip"
 - "bitcoin-deps-win32-gitian-r13.zip"
 script: |
+  #
+  #
+  # 4154a46256df1c1461e56bf16777cc5e33a9fd94b51880fd47959aae8371c6b8  qt-win32-4.8.6-gitian.zip
   #
   mkdir $HOME/qt
   cd $HOME/qt
@@ -39,7 +42,7 @@ script: |
   mv include/boost .
   cd ..
   #
-  unzip slimcoin-deps-win32-gitian-r1.zip
+  unzip bitcoin-deps-win32-gitian-r13.zip
   #
   find -type f | xargs touch --date="$REFERENCE_DATETIME"
   #
@@ -51,8 +54,27 @@ script: |
   export LD_PRELOAD=/usr/lib/faketime/libfaketime.so.1
   export FAKETIME=$REFERENCE_DATETIME
   export TZ=UTC
-  $HOME/qt/src/bin/qmake -spec unsupported/win32-g++-cross MINIUPNPC_LIB_PATH=$HOME/build/miniupnpc MINIUPNPC_INCLUDE_PATH=$HOME/build/ BDB_LIB_PATH=$HOME/build/db-4.8.30.NC/build_unix BDB_INCLUDE_PATH=$HOME/build/db-4.8.30.NC/build_unix BOOST_LIB_PATH=$HOME/build/boost_1_47_0/stage/lib BOOST_INCLUDE_PATH=$HOME/build/boost_1_47_0 BOOST_LIB_SUFFIX=-mt-s BOOST_THREAD_LIB_SUFFIX=_win32-mt-s OPENSSL_LIB_PATH=$HOME/build/openssl-1.0.1g OPENSSL_INCLUDE_PATH=$HOME/build/openssl-1.0.1g/include QRENCODE_LIB_PATH=$HOME/build/qrencode-3.2.0/.libs QRENCODE_INCLUDE_PATH=$HOME/build/qrencode-3.2.0 USE_QRCODE=1 INCLUDEPATH=$HOME/build DEFINES=BOOST_THREAD_USE_LIB BITCOIN_NEED_QT_PLUGINS=1 QMAKE_LRELEASE=lrelease QMAKE_CXXFLAGS=-frandom-seed=slimcoin QMAKE_LFLAGS=-frandom-seed=slimcoin USE_BUILD_INFO=1
+
+  ls -la $HOME/qt/bin/qmake
+  # $HOME/qt/bin/qmake -spec unsupported/win32-g++-cross MINIUPNPC_LIB_PATH=$HOME/build/miniupnpc MINIUPNPC_INCLUDE_PATH=$HOME/build/ BDB_LIB_PATH=$HOME/build/db-4.8.30.NC/build_unix BDB_INCLUDE_PATH=$HOME/build/db-4.8.30.NC/build_unix BOOST_LIB_PATH=$HOME/build/boost_1_47_0/stage/lib BOOST_INCLUDE_PATH=$HOME/build/boost_1_47_0 BOOST_LIB_SUFFIX=-mt-s BOOST_THREAD_LIB_SUFFIX=_win32-mt-s OPENSSL_LIB_PATH=$HOME/build/openssl-1.0.1g OPENSSL_INCLUDE_PATH=$HOME/build/openssl-1.0.1g/include QRENCODE_LIB_PATH=$HOME/build/qrencode-3.2.0/.libs QRENCODE_INCLUDE_PATH=$HOME/build/qrencode-3.2.0 USE_QRCODE=1 INCLUDEPATH=$HOME/build DEFINES=BOOST_THREAD_USE_LIB BITCOIN_NEED_QT_PLUGINS=1 QMAKE_LRELEASE=lrelease QMAKE_CXXFLAGS=-frandom-seed=slimcoin QMAKE_LFLAGS=-frandom-seed=slimcoin USE_BUILD_INFO=1
+
+  $HOME/qt/bin/qmake -spec unsupported/win32-g++-cross \
+    SLIMCOIN_SRC_PATH=$HOME/slimcoin/src \
+    QT_INCLUDE_PATH=$HOME/qt/include \
+    LIB_PATH=$HOME/build/lib \
+    INCLUDEPATH=$HOME/build/include \
+    BDB_INCLUDE_PATH=$HOME/build/include \
+    MINIUPNPC_INCLUDE_PATH=$HOME/build/include/miniupnpc \
+    OPENSSL_INCLUDE_PATH=$HOME/build/include/openssl \
+    BOOST_LIB_PATH=$HOME/build/boost_1_57_0/stage/lib \
+    BOOST_INCLUDE_PATH=$HOME/build/boost_1_57_0 \
+    BOOST_LIB_SUFFIX=-mt-s BOOST_THREAD_LIB_SUFFIX=_win32-mt-s \
+    USE_QRCODE=1 DEFINES=BOOST_THREAD_USE_LIB BITCOIN_NEED_QT_PLUGINS=1 \
+    QMAKE_LRELEASE=lrelease QMAKE_CXXFLAGS=-frandom-seed=slimcoin QMAKE_LFLAGS=-frandom-seed=slimcoin \
+    USE_BUILD_INFO=1
+
   make $MAKEOPTS
+  # The above doesn't work.... :/   added $HOME/slimcoin/src since it wasn't finding include files there
   cp release/slimcoin-qt.exe $OUTDIR/
   #
   cd src
