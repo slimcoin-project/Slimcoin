@@ -378,7 +378,7 @@ INCLUDEPATH += $$BOOST_INCLUDE_PATH \
 		$$QT_INCLUDE_PATH/QtGui
 
 LIBS += \
-	$$join(LIBPATH,,-L,) \
+	$$join(LIB_PATH,,-L,) \
 	$$join(BOOST_LIB_PATH,,-L,) \
 	$$join(BDB_LIB_PATH,,-L,) \
 	$$join(OPENSSL_LIB_PATH,,-L,) \
