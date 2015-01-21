@@ -377,7 +377,12 @@ INCLUDEPATH += $$BOOST_INCLUDE_PATH \
 		$$QT_INCLUDE_PATH \
 		$$QT_INCLUDE_PATH/QtGui
 
-LIBS += $$join(BOOST_LIB_PATH,,-L,) $$join(BDB_LIB_PATH,,-L,) $$join(OPENSSL_LIB_PATH,,-L,) $$join(QRENCODE_LIB_PATH,,-L,)
+LIBS += \
+	$$join(LIBPATH,,-L,) \
+	$$join(BOOST_LIB_PATH,,-L,) \
+	$$join(BDB_LIB_PATH,,-L,) \
+	$$join(OPENSSL_LIB_PATH,,-L,) \
+	$$join(QRENCODE_LIB_PATH,,-L,)
 LIBS += -lssl -lcrypto -ldb_cxx$$BDB_LIB_SUFFIX
 # -lgdi32 has to happen after -lcrypto (see  #681)
 windows:LIBS += -lole32 -luuid -lgdi32
