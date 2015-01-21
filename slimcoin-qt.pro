@@ -5,22 +5,25 @@ DEFINES += QT_GUI BOOST_THREAD_USE_LIB BOOST_SPIRIT_THREADSAFE
 CONFIG += no_include_pwd
 CONFIG += static
 
-# These can all be overridden by passing arguments to qmake.
-# The gitian descriptors for building on Linux will do it that way.
-BOOST_LIB_SUFFIX=-mgw49-mt-s-1_55
-BOOST_INCLUDE_PATH=C:/deps/boost_1_55_0
-BOOST_LIB_PATH=C:/deps/boost_1_55_0/stage/lib
-BDB_INCLUDE_PATH=C:/deps/db-4.8.30.NC/build_unix
-BDB_LIB_PATH=C:/deps/db-4.8.30.NC/build_unix
-OPENSSL_INCLUDE_PATH=C:/deps/openssl-1.0.1i/include
-OPENSSL_LIB_PATH=C:/deps/openssl-1.0.1i
-MINIUPNPC_INCLUDE_PATH=C:/deps/
-MINIUPNPC_LIB_PATH=C:/deps/miniupnpc
-QRENCODE_INCLUDE_PATH=C:/deps/qrencode-3.4.4
-QRENCODE_LIB_PATH=C:/deps/qrencode-3.4.4/.libs
+# Commented out, as these override command-line settings needed for gitian
+# building of slimcoin-qt-win32. They should really be passed to qmake directly
+# if building manually, though they could also be added as platform defaults
+# below. (See: isEmpty (BDB_LIB_PATH) { ... } etc)
 
-SLIMCOIN_SRC_PATH=c:/slimcoin/slimcoin-master/src
-QT_INCLUDE_PATH=C:/Qt/4.8.6/include
+# BOOST_LIB_SUFFIX=-mgw49-mt-s-1_55
+# BOOST_INCLUDE_PATH=C:/deps/boost_1_55_0
+# BOOST_LIB_PATH=C:/deps/boost_1_55_0/stage/lib
+# BDB_INCLUDE_PATH=C:/deps/db-4.8.30.NC/build_unix
+# BDB_LIB_PATH=C:/deps/db-4.8.30.NC/build_unix
+# OPENSSL_INCLUDE_PATH=C:/deps/openssl-1.0.1i/include
+# OPENSSL_LIB_PATH=C:/deps/openssl-1.0.1i
+# MINIUPNPC_INCLUDE_PATH=C:/deps/
+# MINIUPNPC_LIB_PATH=C:/deps/miniupnpc
+# QRENCODE_INCLUDE_PATH=C:/deps/qrencode-3.4.4
+# QRENCODE_LIB_PATH=C:/deps/qrencode-3.4.4/.libs
+
+# SLIMCOIN_SRC_PATH=c:/slimcoin/slimcoin-master/src
+# QT_INCLUDE_PATH=C:/Qt/4.8.6/include
 
 
 # for boost 1.37, add -mt to the boost libraries 
@@ -365,7 +368,15 @@ macx:TARGET = "Slimcoin-Qt"
 
 # Set libraries and includes at end, to use platform-defined defaults if not overridden
 # INCLUDEPATH += $$BOOST_INCLUDE_PATH $$BDB_INCLUDE_PATH $$OPENSSL_INCLUDE_PATH $$QRENCODE_INCLUDE_PATH C:\slimcoin\slimcoin-master\src C:\slimcoin\slimcoin-master\src\qt C:\Qt\4.8.6\include C:\Qt\4.8.6\include\QtGui
-INCLUDEPATH += $$BOOST_INCLUDE_PATH $$BDB_INCLUDE_PATH $$OPENSSL_INCLUDE_PATH $$QRENCODE_INCLUDE_PATH $$SLIMCOIN_SRC_PATH $$SLIMCOIN_SRC_PATH/qt $$QT_INCLUDE_PATH $$QT_INCLUDE_PATH/QtGui
+INCLUDEPATH += $$BOOST_INCLUDE_PATH \
+		$$BDB_INCLUDE_PATH \
+		$$OPENSSL_INCLUDE_PATH \
+		$$QRENCODE_INCLUDE_PATH \
+		$$SLIMCOIN_SRC_PATH \
+		$$SLIMCOIN_SRC_PATH/qt \
+		$$QT_INCLUDE_PATH \
+		$$QT_INCLUDE_PATH/QtGui
+
 LIBS += $$join(BOOST_LIB_PATH,,-L,) $$join(BDB_LIB_PATH,,-L,) $$join(OPENSSL_LIB_PATH,,-L,) $$join(QRENCODE_LIB_PATH,,-L,)
 LIBS += -lssl -lcrypto -ldb_cxx$$BDB_LIB_SUFFIX
 # -lgdi32 has to happen after -lcrypto (see  #681)
