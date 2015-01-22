@@ -1,5 +1,5 @@
 ---
-name: "bitcoin-deps"
+name: "slimcoin-deps"
 suites:
 - "precise"
 architectures:
@@ -14,18 +14,15 @@ packages:
 reference_datetime: "2011-01-30 00:00:00"
 remotes: []
 files:
-- "openssl-1.0.1h.tar.gz"
+- "openssl-1.0.1l.tar.gz"
 - "db-4.8.30.NC.tar.gz"
 - "miniupnpc-1.9.tar.gz"
 - "zlib-1.2.8.tar.gz"
 - "libpng-1.6.8.tar.gz"
 - "qrencode-3.4.3.tar.bz2"
 script: |
-  ## NOTE: This script is currently identical to the script for building bitcoin's deps packages,
-  #  and the resulting package should be identical and interchangeable as input to the final build.
-  #  If the slimcoin deps need to be changed significantly (eg adding a package),
-  #  you should also update the name to 'slimcoin-deps' and change gitian-(win,linux).yml and
-  #  qt-win32.yml input sections accordingly.
+  ## NOTE: This script is almoust identical to the script for building bitcoin's deps packages;
+  #  the resulting packages should be interchangeable as input to the final build.
   #
   export LD_PRELOAD=/usr/lib/faketime/libfaketime.so.1
   export FAKETIME=$REFERENCE_DATETIME
@@ -33,7 +30,8 @@ script: |
   INDIR=$HOME/build
   TEMPDIR=$HOME/tmp
   # Input Integrity Check
-  echo "9d1c8a9836aa63e2c6adb684186cbd4371c9e9dcc01d6e3bb447abf2d4d3d093  openssl-1.0.1h.tar.gz"  | sha256sum -c
+  #echo "9d1c8a9836aa63e2c6adb684186cbd4371c9e9dcc01d6e3bb447abf2d4d3d093  openssl-1.0.1h.tar.gz"  | sha256sum -c
+  echo "b2cf4d48fe5d49f240c61c9e624193a6f232b5ed0baf010681e725963c40d1d4  openssl-1.0.1l.tar.gz"  | sha256sum -c
   echo "12edc0df75bf9abd7f82f821795bcee50f42cb2e5f76a6a281b85732798364ef  db-4.8.30.NC.tar.gz"    | sha256sum -c
   echo "2923e453e880bb949e3d4da9f83dd3cb6f08946d35de0b864d0339cf70934464  miniupnpc-1.9.tar.gz"   | sha256sum -c
   echo "36658cb768a54c1d4dec43c3116c27ed893e88b02ecfcb44f2166f9c0b7f2a0d  zlib-1.2.8.tar.gz"      | sha256sum -c
@@ -53,8 +51,8 @@ script: |
     mkdir -p $INSTALLPREFIX $BUILDDIR
     cd $BUILDDIR
     #
-    tar xzf $INDIR/openssl-1.0.1h.tar.gz
-    cd openssl-1.0.1h
+    tar xzf $INDIR/openssl-1.0.1l.tar.gz
+    cd openssl-1.0.1l
     if [ "x$BITS" = "x32" ]; then
       OPENSSL_TGT=mingw
     else
@@ -129,5 +127,5 @@ script: |
     done
     #
     cd $INSTALLPREFIX
-    find include lib | sort | zip -X@ $OUTDIR/bitcoin-deps-win$BITS-gitian-r13.zip
+    find include lib | sort | zip -X@ $OUTDIR/slimcoin-deps-win$BITS-gitian-r1.zip
   done # for BITS in
