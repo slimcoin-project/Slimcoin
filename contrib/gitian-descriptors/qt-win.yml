@@ -57,9 +57,9 @@ script: |
     sed --posix "s|QMAKE_LFLAGS\t\t=|QMAKE_LFLAGS\t\t= -L$DEPSDIR/lib|" -i ${SPECFILE}
     sed 's/QMAKE_CXXFLAGS_EXCEPTIONS_ON = -fexceptions -mthreads/QMAKE_CXXFLAGS_EXCEPTIONS_ON = -fexceptions/' -i ${SPECFILE}
     sed 's/QMAKE_LFLAGS_EXCEPTIONS_ON = -mthreads/QMAKE_LFLAGS_EXCEPTIONS_ON = -lmingwthrd/' -i ${SPECFILE}
-    #sed --posix "s/QMAKE_MOC\t\t= $HOST-moc/QMAKE_MOC\t\t= moc/" -i ${SPECFILE}
-    #sed --posix "s/QMAKE_RCC\t\t= $HOST-rcc/QMAKE_RCC\t\t= rcc/" -i ${SPECFILE}
-    #sed --posix "s/QMAKE_UIC\t\t= $HOST-uic/QMAKE_UIC\t\t= uic/" -i ${SPECFILE}
+    sed --posix "s/QMAKE_MOC\t\t= $HOST-moc/QMAKE_MOC\t\t= moc/" -i ${SPECFILE}
+    sed --posix "s/QMAKE_RCC\t\t= $HOST-rcc/QMAKE_RCC\t\t= rcc/" -i ${SPECFILE}
+    sed --posix "s/QMAKE_UIC\t\t= $HOST-uic/QMAKE_UIC\t\t= uic/" -i ${SPECFILE}
 
     # Before we tried to pass arguments to ar (static linking) in using QMAKE_LIB, however
     #  qt removes the arguments for ar and provides a script which makes it impossible to pass the determinism flag -
