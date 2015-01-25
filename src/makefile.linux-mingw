@@ -4,7 +4,7 @@
 
 # Changing to be in line with the Gitian build locations
 ifndef DEPSDIR
-  DEPSDIR=$(HOME)/build
+  DEPSDIR=$(HOME)/staging
 endif
 
 ifndef HOST
@@ -21,7 +21,8 @@ INCLUDEPATHS= \
  -I"$(DEPSDIR)/include/boost" \
  -I"$(DEPSDIR)/include/libpng16" \
  -I"$(DEPSDIR)/include/miniupnpc" \
- -I"$(DEPSDIR)/include/openssl"
+ -I"$(DEPSDIR)/include/openssl" \
+ -I"obj"  # required to find 'build.h'
 
 LIBPATHS= -L"$(DEPSDIR)/lib"
 # -L"$(DEPSDIR)/boost_1_47_0/stage/lib" \
@@ -107,6 +108,6 @@ clean:
 	-rm -f slimcoind.exe
 	-rm -f obj-test/*.o
 	-rm -f test_bitcoin.exe
-	-rm -f src/build.h
+	-rm -f obj/build.h
 
 FORCE:
