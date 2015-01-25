@@ -1,6 +1,6 @@
 TEMPLATE = app
 TARGET = slimcoin-qt
-VERSION = 0.6.3.0
+VERSION = 0.3.2.3
 DEFINES += QT_GUI BOOST_THREAD_USE_LIB BOOST_SPIRIT_THREADSAFE
 CONFIG += no_include_pwd
 CONFIG += static
@@ -399,7 +399,10 @@ greaterThan(QT_MAJOR_VERSION, 4): QT += widgets
 QMAKE_CXXFLAGS *= -D_FORTIFY_SOURCE=2 -static -static-libgcc -static-libstdc++
 # for extra security on Windows: enable ASLR and DEP via GCC linker flags
 windows:QMAKE_LFLAGS *= -D_FORTIFY_SOURCE=2 -static -static-libgcc -static-libstdc++
-windows:QMAKE_LFLAGS *= -Wl,--dynamicbase -Wl,--nxcompat,--large-address-aware
+windows:QMAKE_LFLAGS *= -Wl,--dynamicbase -Wl,--nxcompat
+
 # on Windows: enable GCC large address aware linker flag
-windows:QMAKE_LFLAGS *= -Wl,--large-address-aware
+# hack: when compiling 64-bit, pass 64BIT=1 to qmake to avoid incompatible large-address flag
+windows:!contains(64BIT, 1) QMAKE_LFLAGS *= -Wl,--large-address-aware
+
 system($$QMAKE_LRELEASE -silent $$_PRO_FILE_)
