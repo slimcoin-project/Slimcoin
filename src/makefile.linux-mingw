@@ -5,14 +5,14 @@
 # Changing to be in line with the Gitian build locations
 # DEPSDIR:=/usr/i586-mingw32msvc/src
 ifndef BUILDDIR
-  BUILDDIR:=$(HOME)/build
+  BUILDDIR=$(HOME)/build
 endif
 
 ifndef HOST
-  HOST:=i586-mingw32msvc
+  HOST=i586-mingw32msvc
 endif
 
-GPP:=$(HOST)-g++
+GPP=$(HOST)-g++
 
 
 USE_UPNP:=0
@@ -90,18 +90,18 @@ version.cpp: obj/build.h
 DEFS += -DHAVE_BUILD_INFO
 
 obj/%.o: %.cpp $(HEADERS)
-	$GPP -c $(CFLAGS) -o $@ $<
+	$(GPP) -c $(CFLAGS) -o $@ $<
 
 slimcoind.exe: $(OBJS:obj/%=obj/%)
-	$GPP $(CFLAGS) -o $@ $(LIBPATHS) $^ $(LIBS)
+	$(GPP) $(CFLAGS) -o $@ $(LIBPATHS) $^ $(LIBS)
 
 TESTOBJS := $(patsubst test/%.cpp,obj-test/%.o,$(wildcard test/*.cpp))
 
 obj-test/%.o: test/%.cpp $(HEADERS)
-	$GPP -c $(TESTDEFS) $(CFLAGS) -o $@ $<
+	$(GPP) -c $(TESTDEFS) $(CFLAGS) -o $@ $<
 
 test_slimcoin.exe: $(TESTOBJS) $(filter-out obj/init.o,$(OBJS:obj/%=obj/%))
-	$GPP $(CFLAGS) -o $@ $(LIBPATHS) $^ -lboost_unit_test_framework $(LIBS)
+	$(GPP) $(CFLAGS) -o $@ $(LIBPATHS) $^ -lboost_unit_test_framework $(LIBS)
 
 
 clean:
