@@ -25,7 +25,7 @@
 #include <ifaddrs.h>
 #endif
 
-# typedef u_int SOCKET;
+// typedef u_int SOCKET;
 typedef UINT_PTR SOCKET;
 
 #ifdef WIN32

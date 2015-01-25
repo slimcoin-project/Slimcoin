@@ -43,7 +43,7 @@ typedef          char       s8int;
 #define TIMER_START
 #define TIMER_END
 
-# typedef int pid_t; /* define for windows compatiblity */
+// typedef int pid_t; /* define for windows compatiblity */
 
 #endif
 
