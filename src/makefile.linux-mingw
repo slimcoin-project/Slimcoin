@@ -3,9 +3,8 @@
 # file license.txt or http://www.opensource.org/licenses/mit-license.php.
 
 # Changing to be in line with the Gitian build locations
-# DEPSDIR:=/usr/i586-mingw32msvc/src
-ifndef BUILDDIR
-  BUILDDIR=$(HOME)/build
+ifndef DEPSDIR
+  DEPSDIR=$(HOME)/build
 endif
 
 ifndef HOST
@@ -18,14 +17,13 @@ GPP=$(HOST)-g++
 USE_UPNP:=0
 
 INCLUDEPATHS= \
- -I"$(BUILDDIR)/include" \
- -I"$(BUILDDIR)/include/boost" \
- -I"$(BUILDDIR)/include/libpng16" \
- -I"$(BUILDDIR)/include/miniupnpc" \
- -I"$(BUILDDIR)/include/openssl"
-# -I"$(CURDIR)"/obj \
+ -I"$(DEPSDIR)/include" \
+ -I"$(DEPSDIR)/include/boost" \
+ -I"$(DEPSDIR)/include/libpng16" \
+ -I"$(DEPSDIR)/include/miniupnpc" \
+ -I"$(DEPSDIR)/include/openssl"
 
-LIBPATHS= -L"$(BUILDDIR)/lib"
+LIBPATHS= -L"$(DEPSDIR)/lib"
 # -L"$(DEPSDIR)/boost_1_47_0/stage/lib" \
 # -L"$(DEPSDIR)/db-4.8.30.NC/build_unix" \
 # -L"$(DEPSDIR)/openssl-1.0.1g"
