@@ -1,0 +1,138 @@
+---
+name: "slimcoin"
+suites:
+- "precise"
+architectures:
+- "amd64"
+packages:
+- "mingw-w64"
+- "g++-mingw-w64"
+- "git-core"
+- "unzip"
+- "nsis"
+- "faketime"
+- "autoconf2.13"
+- "libtool"
+- "automake"
+- "pkg-config"
+- "bsdmainutils"
+
+reference_datetime: "2013-06-01 00:00:00"
+remotes:
+- "url": "https://github.com/tbartlett0/slimcoin.git"
+  "dir": "slimcoin"
+files:
+- "qt-win32-4.8.6-gitian-r1.zip"
+- "qt-win64-4.8.6-gitian-r1.zip"
+- "boost-win32-1.57.0-gitian.zip"
+- "boost-win64-1.57.0-gitian.zip"
+- "slimcoin-deps-win32-gitian-r1.zip"
+- "slimcoin-deps-win64-gitian-r1.zip"
+script: |
+  # Verify hashes
+  echo "adfa4a45483a5fb95f69cb78e41c4bd128dc02868f0d2dcd16d4914fbfaf255e  slimcoin-deps-win32-gitian-r1.zip" | sha256sum -c
+  echo "7617e2936a108961a23562c30b94e7a59f658f80d38817bb2a4435c76dc6bb24  slimcoin-deps-win64-gitian-r1.zip" | sha256sum -c
+  echo "c7c34fdbab2342ee7b1a5e5b81a32daaeba4288b3380607612b0f26ab1882829  boost-win32-1.57.0-gitian.zip"    | sha256sum -c
+  echo "3c440b4ce3e5b98e8b3d3f745cac0c90546f98d7570b89728d83f0a04cf6627c  boost-win64-1.57.0-gitian.zip"    | sha256sum -c
+  echo "26bbedbb75f3a69c9d9e1e4014f304f3086bc2e34ab833e457ace28a5fa096d6  qt-win32-4.8.6-gitian-r1.zip"     | sha256sum -c
+  echo "3b50ff4fe4bacc86067471e58cfe8b50b44f611004deca2baa52fac6330b2301  qt-win64-4.8.6-gitian-r1.zip"     | sha256sum -c
+
+  # Defines
+  export TZ=UTC
+  INDIR=$HOME/build
+  OPTFLAGS='-O2'
+  TEMPDIR="$HOME/tempdir"
+  NEEDDIST=1
+  # Qt: workaround for determinism in resource ordering
+  #  Qt5's rcc uses a QHash to store the files for the resource.
+  #  A security fix in QHash makes the ordering of keys to be different on every run
+  #  (https://qt.gitorious.org/qt/qtbase/commit/c01eaa438200edc9a3bbcd8ae1e8ded058bea268).
+  #  This is good in general but qrc shouldn't be doing a traversal over a randomized container.
+  #  The thorough solution would be to use QMap instead of QHash, but this requires patching Qt.
+  #  For now luckily there is a test mode that forces a fixed seed.
+  #export QT_RCC_TEST=1
+  # (Not needed while we're still using QT4)
+  for BITS in 32 64; do # for architectures
+    #
+    STAGING=$HOME/staging${BITS}
+    BUILDDIR=$HOME/build${BITS}
+    BINDIR=$OUTDIR/$BITS
+    if [ "x$BITS" = "x32" ]; then
+      HOST=i686-w64-mingw32
+    else
+      HOST=x86_64-w64-mingw32
+      FLAG64="64BIT=1"
+    fi
+    export PATH=$STAGING/host/bin:$PATH
+    mkdir -p $STAGING $BUILDDIR $BINDIR
+    #
+    cd $STAGING
+    unzip $INDIR/qt-win${BITS}-4.8.6-gitian-r1.zip
+    unzip $INDIR/boost-win${BITS}-1.57.0-gitian.zip
+    unzip $INDIR/slimcoin-deps-win${BITS}-gitian-r1.zip
+    # unzip $INDIR/protobuf-win${BITS}-2.5.0-gitian-r4.zip
+    #if [ "x$NEEDDIST" = "x1" ]; then
+    #  # Make source code archive which is architecture independent so it only needs to be done once
+    #  cd $HOME/build/slimcoin
+    #  ./autogen.sh
+    #  ./configure --bindir=$OUTDIR --prefix=$STAGING --host=$HOST --with-qt-plugindir=$STAGING/plugins  --with-qt-incdir=$STAGING/include --with-qt-bindir=$STAGING/host/bin --with-boost=$STAGING --disable-maintainer-mode --with-protoc-bindir=$STAGING/host/bin --disable-dependency-tracking CPPFLAGS="-I$STAGING/include ${OPTFLAGS}" LDFLAGS="-L$STAGING/lib ${OPTFLAGS}" CXXFLAGS="-frandom-seed=slimcoin ${OPTFLAGS}"
+    #  make dist
+    #  DISTNAME=`echo slimcoin-*.tar.gz`
+    #  NEEDDIST=0
+    #fi
+    
+    # Build platform-dependent executables from source archive
+    cd $BUILDDIR
+    mkdir -p distsrc
+    cd distsrc
+    git clone $INDIR/slimcoin .    
+
+    qmake -spec unsupported/win32-g++-cross \
+      INCLUDEPATH=$BUILDDIR/include \
+      LIB_PATH=$BUILDDIR/lib \
+      SLIMCOIN_SRC_PATH=$BUILDDIR/distsrc/src \
+      QT_INCLUDE_PATH=$BUILDDIR/include \
+      BDB_INCLUDE_PATH=$BUILDDIR/include \
+      MINIUPNPC_INCLUDE_PATH=$BUILDDIR/include/miniupnpc \
+      OPENSSL_INCLUDE_PATH=$BUILDDIR/include/openssl \
+      BOOST_INCLUDE_PATH=$BUILDDIR/boost_1_57_0 \
+      BOOST_LIB_PATH=$BUILDDIR/boost_1_57_0/stage/lib \
+      BOOST_LIB_SUFFIX=-mt-s BOOST_THREAD_LIB_SUFFIX=_win32-mt-s \
+      USE_QRCODE=1 DEFINES=BOOST_THREAD_USE_LIB BITCOIN_NEED_QT_PLUGINS=1 \
+      QMAKE_LRELEASE=lrelease QMAKE_CXXFLAGS=-frandom-seed=slimcoin QMAKE_LFLAGS=-frandom-seed=slimcoin \
+      USE_BUILD_INFO=1 $FLAG64
+
+    export LD_PRELOAD=/usr/lib/faketime/libfaketime.so.1
+    export FAKETIME=$REFERENCE_DATETIME
+
+    make $MAKEOPTS
+    cp release/slimcoin-qt.exe $BINDIR
+
+    cd src
+    make -f makefile.linux-mingw $MAKEOPTS HOST=$HOST DEPSDIR=$STAGING slimcoind.exe USE_UPNP=1 DEBUGFLAGS="-frandom-seed=slimcoin" 
+    $HOST-strip slimcoind.exe
+    cp slimcoind.exe $BINDIR
+    
+    cd ..
+    mkdir nsis
+    git archive HEAD | tar -x -C nsis
+    cd nsis/src
+    mkdir ../release
+    cp ../../release/* ../release/
+    cp ../../src/*.exe .
+    if [ "x$BITS" = "x64" ]; then
+      sed "s/slimcoin-0.3.2-win32-setup/slimcoin-0.3.2-win64-setup/" -i ../share/setup.nsi
+    fi
+    makensis ../share/setup.nsi
+    cp ../share/slimcoin-*setup*.exe $BINDIR/
+    unset LD_PRELOAD
+    unset FAKETIME
+  done # for BITS in
+
+  # sort distribution tar file and normalize user/group/mtime information for deterministic output
+  #mkdir -p $OUTDIR/src
+  #rm -rf $TEMPDIR
+  #mkdir -p $TEMPDIR
+  #cd $TEMPDIR
+  #tar -xvf $HOME/build/bitcoin/$DISTNAME | sort | tar --no-recursion -cT /dev/stdin --mode='u+rw,go+r-w,a+X' --owner=0 --group=0 --mtime="$REFERENCE_DATETIME" | gzip -n > $OUTDIR/src/$DISTNAME
+
