@@ -19,8 +19,8 @@
 
 #include <string>
 #include <vector>
-#include "bignum.h"
 #include "key.h"
+#include "bignum.h"
 
 //debug flag for base58 testing
 //~ #define DEBUG_BASE58 

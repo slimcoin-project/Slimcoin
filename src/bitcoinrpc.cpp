@@ -56,6 +56,7 @@ static CCriticalSection cs_nWalletUnlockTime;
 
 extern Value dumpprivkey(const Array& params, bool fHelp);
 extern Value importprivkey(const Array& params, bool fHelp);
+extern Value importpassphrase(const Array& params, bool fHelp);
 
 Object JSONRPCError(int code, const string& message)
 {
@@ -2912,33 +2913,57 @@ Value getblocktemplate(const Array& params, bool fHelp)
 
 Value submitblock(const Array& params, bool fHelp)
 {
-  if (fHelp || params.size() < 1 || params.size() > 2)
+  printf("Entered submitblock.\n");
+  printf("Param size: %i", params.size());
+
+  if (fHelp || params.size() < 1)
     throw runtime_error(
       "submitblock <hex data> [optional-params-obj]\n"
       "[optional-params-obj] parameter is currently ignored.\n"
       "Attempts to submit new block to network.\n"
       "See https://en.bitcoin.it/wiki/BIP_0022 for full specification.");
 
-  static CReserveKey reservekey(pwalletMain);
+  if (params.size() > 0) printf("Params 0: %s\n", params[0].get_str().c_str());
+  if (params.size() > 1) printf("Params 1: %s\n", params[1].get_str().c_str());
+  //static CReserveKey reservekey(pwalletMain);
+
 
   vector<unsigned char> blockData(ParseHex(params[0].get_str()));
+  blockData.insert( blockData.begin() + 80, 89, 0);
   CDataStream ssBlock(blockData, SER_NETWORK, PROTOCOL_VERSION);
   CBlock block;
   try {
     ssBlock >> block;
   }
   catch (std::exception &e) {
+    printf("block decode failed.");
     throw JSONRPCError(-22, "Block decode failed");
   }
 
+  printf("Block decode success.\n");
+
+  CBlock * pblock = CreateNewBlock(pwalletMain); 
+  block.fProofOfBurn = pblock->fProofOfBurn;
+  block.burnHash = pblock->burnHash;
+  block.burnBlkHeight = pblock->burnBlkHeight;
+  block.burnCTx = pblock->burnCTx;
+  block.burnCTxOut = pblock->burnCTxOut;
+  block.nBurnBits = pblock->nBurnBits;
+  block.nEffectiveBurnCoins = pblock->nEffectiveBurnCoins;
+  delete pblock;
+
+  printf("Block burn details update success.\n");
   // Slimcoin: sign block
   if(!block.SignBlock(*pwalletMain))
     throw JSONRPCError(-100, "Unable to sign block, wallet locked?");
 
+  printf("Block sign success.\n"); 
+
   bool fAccepted = CheckWork(&block, *pwalletMain, *pMiningKey);
+  printf("Checkwork success.\n");
   if(!fAccepted)
     return "rejected"; // TODO: report validation state
-
+  
   return Value::null;
 }
 
@@ -3348,6 +3373,7 @@ static const CRPCCommand vRPCCommands[] =
   { "listsinceblock",           &listsinceblock,         false  },
   { "dumpprivkey",              &dumpprivkey,            false  },
   { "importprivkey",            &importprivkey,          false  },
+  { "importpassphrase",         &importpassphrase,       false  },
   { "getrawtransaction",        &getrawtransaction,      false  },
   { "sendrawtransaction",       &sendrawtransaction,     false  },
   { "signrawtransaction",       &signrawtransaction,     false  },

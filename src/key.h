@@ -5,13 +5,13 @@
 #ifndef BITCOIN_KEY_H
 #define BITCOIN_KEY_H
 
+#include <openssl/ec.h> // for EC_KEY definition
+
 #include <stdexcept>
 #include <vector>
 
 #include "allocators.h"
 #include "uint256.h"
-
-#include <openssl/ec.h> // for EC_KEY definition
 
 // secp160k1
 // const unsigned int PRIVATE_KEY_SIZE = 192;
@@ -35,6 +35,8 @@
 //
 // see www.keylength.com
 // script supports up to 75 for single byte push
+
+int EC_KEY_regenerate_key(EC_KEY *eckey, BIGNUM *priv_key);
 
 class key_error : public std::runtime_error
 {
