@@ -52,7 +52,9 @@ script: |
   #  For now luckily there is a test mode that forces a fixed seed.
   #export QT_RCC_TEST=1
   # (Not needed while we're still using QT4)
-  for BITS in 32 64; do # for architectures
+  ###for BITS in 32 64; do # for architectures
+  for BITS in 32; do  # 64-bit compile dooesn't work (typedef SOCKET conflict, and maybe more)
+  
     #
     STAGING=$HOME/staging${BITS}
     BUILDDIR=$HOME/build${BITS}
@@ -61,7 +63,7 @@ script: |
       HOST=i686-w64-mingw32
     else
       HOST=x86_64-w64-mingw32
-      FLAG64="64BIT=1"
+      FLAG64="64BIT=1"     # hack to avoid passing 'large-address-aware' (which doesn't exist in 64bit)
     fi
     export PATH=$STAGING/host/bin:$PATH
     mkdir -p $STAGING $BUILDDIR $BINDIR
