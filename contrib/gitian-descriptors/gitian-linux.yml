@@ -1,0 +1,67 @@
+---
+name: "bitcoin"
+suites:
+- "lucid"
+architectures:
+- "i386"
+- "amd64"
+packages: 
+- "g++"
+- "git-core"
+- "unzip"
+- "pkg-config"
+- "autoconf2.13"
+- "libtool"
+- "automake"
+- "faketime"
+- "bsdmainutils"
+- "qt4-qmake"
+- "libqt4-dev"
+- "libxext-dev"
+- "zlib1g-dev"
+reference_datetime: "2013-06-01 00:00:00"
+remotes:
+- "url": "https://github.com/slimcoin/slimcoin.git"
+  "dir": "slimcoin"
+files:
+- "slimcoin-deps-linux32-gitian-r5.zip"
+- "slimcoin-deps-linux64-gitian-r5.zip"
+- "boost-linux32-1.47.0-gitian-r1.zip"
+- "boost-linux64-1.47.0-gitian-r1.zip"
+script: |
+  BINDIR="${OUTDIR}/bin/${GBUILD_BITS}" # 32/64 bit build specific output directory
+  mkdir -p ${BINDIR}
+  #
+  mkdir boost_1_47_0
+  cd boost_1_47_0
+  #mkdir -p stage/lib
+  unzip ../boost-linux${GBUILD_BITS}-1.47.0-gitian-r1.zip
+  mv include/boost .
+  cd ..
+  #
+  unzip slimcoin-deps-linux${GBUILD_BITS}-gitian-r5.zip
+  DEPS_INCLUDE_DIR=$HOME/build/include 
+  DEPS_LIB_DIR=$HOME/build/lib
+  #
+  find -type f | xargs touch --date="$REFERENCE_DATETIME"
+  #
+  cd slimcoin
+  mkdir -p $OUTDIR/src
+  git archive HEAD | tar -x -C $OUTDIR/src
+  cp $OUTDIR/src/doc/README $OUTDIR/README
+  cp $OUTDIR/src/COPYING $OUTDIR/COPYING
+  export LD_PRELOAD=/usr/lib/faketime/libfaketime.so.1
+  export FAKETIME=$REFERENCE_DATETIME
+  export TZ=UTC
+
+  qmake MINIUPNPC_LIB_PATH=$HOME/build/miniupnpc MINIUPNPC_INCLUDE_PATH=$DEPS_INCLUDE_DIR BDB_LIB_PATH=$DEPS_LIB_DIR BDB_INCLUDE_PATH=$DEPS_INCLUDE_DIR BOOST_LIB_PATH=$HOME/build/boost_1_47_0/lib BOOST_LIB_SUFFIX=-mt BOOST_INCLUDE_PATH=$HOME/build/boost_1_47_0 OPENSSL_LIB_PATH=$DEPS_LIB_DIR OPENSSL_INCLUDE_PATH=$DEPS_INCLUDE_DIR QRENCODE_LIB_PATH=$DEPS_LIB_DIR QRENCODE_INCLUDE_PATH=$DEPS_INCLUDE_DIR USE_QRCODE=1 RELEASE=1 INCLUDEPATH=$HOME/build DEFINES=BOOST_THREAD_USE_LIB BITCOIN_NEED_QT_PLUGINS=0 QMAKE_LRELEASE=lrelease QMAKE_CXXFLAGS=-frandom-seed=slimcoin QMAKE_LFLAGS=-frandom-seed=slimcoin USE_BUILD_INFO=1
+  make $MAKEOPTS
+  cp slimcoin-qt $BINDIR/
+  #
+  cd src
+  export LD_PRELOAD=/usr/lib/faketime/libfaketime.so.1
+  export FAKETIME=$REFERENCE_DATETIME
+  export TZ=UTC
+  make -f makefile.unix $MAKEOPTS STATIC=1 DEPSDIR=$HOME/build slimcoind USE_UPNP=1 DEBUGFLAGS="-frandom-seed=slimcoin" MINIUPNPC_LIB_PATH=$HOME/build/miniupnpc MINIUPNPC_INCLUDE_PATH=$DEPS_INCLUDE_DIR BDB_LIB_PATH=$DEPS_LIB_DIR BDB_INCLUDE_PATH=$DEPS_INCLUDE_DIR BOOST_LIB_PATH=$HOME/build/boost_1_47_0/lib BOOST_LIB_SUFFIX=-mt BOOST_INCLUDE_PATH=$HOME/build/boost_1_47_0 OPENSSL_LIB_PATH=$DEPS_LIB_DIR OPENSSL_INCLUDE_PATH=$DEPS_INCLUDE_DIR
+  strip slimcoind
+  cp slimcoind $BINDIR

@@ -7,7 +7,7 @@
     <x>0</x>
     <y>0</y>
     <width>552</width>
-    <height>342</height>
+    <height>493</height>
    </rect>
   </property>
   <property name="windowTitle">
@@ -34,6 +34,20 @@
         <property name="verticalSpacing">
          <number>12</number>
         </property>
+        <item row="1" column="0">
+         <widget class="QLabel" name="label_5">
+          <property name="font">
+           <font>
+            <pointsize>11</pointsize>
+            <weight>75</weight>
+            <bold>true</bold>
+           </font>
+          </property>
+          <property name="text">
+           <string>Wallet</string>
+          </property>
+         </widget>
+        </item>
         <item row="2" column="0">
          <widget class="QLabel" name="label">
           <property name="text">
@@ -44,7 +58,35 @@
         <item row="2" column="1">
          <widget class="QLabel" name="labelBalance">
           <property name="text">
-           <string notr="true">0 BTC</string>
+           <string notr="true">0 SLM</string>
+          </property>
+         </widget>
+        </item>
+        <item row="3" column="0">
+         <widget class="QLabel" name="label_6">
+          <property name="text">
+           <string>Stake:</string>
+          </property>
+         </widget>
+        </item>
+        <item row="3" column="1">
+         <widget class="QLabel" name="labelStake">
+          <property name="text">
+           <string notr="true">0 SLM</string>
+          </property>
+         </widget>
+        </item>
+        <item row="4" column="0">
+         <widget class="QLabel" name="label_3">
+          <property name="text">
+           <string>Unconfirmed:</string>
+          </property>
+         </widget>
+        </item>
+        <item row="4" column="1">
+         <widget class="QLabel" name="labelUnconfirmed">
+          <property name="text">
+           <string notr="true">0 SLM</string>
           </property>
          </widget>
         </item>
@@ -62,44 +104,87 @@
           </property>
          </widget>
         </item>
-        <item row="4" column="0">
-         <widget class="QLabel" name="label_3">
+        <item row="7" column="0">
+         <widget class="QLabel" name="label_7">
+          <property name="toolTip">
+           <string/>
+          </property>
           <property name="text">
-           <string>Unconfirmed:</string>
+           <string>Net Burnt Coins:</string>
           </property>
          </widget>
         </item>
-        <item row="4" column="1">
-         <widget class="QLabel" name="labelUnconfirmed">
+        <item row="7" column="1">
+         <widget class="QLabel" name="labelNetBurnCoins">
           <property name="text">
-           <string notr="true">0 BTC</string>
+           <string>0 SLM</string>
           </property>
          </widget>
         </item>
-        <item row="3" column="0">
-         <widget class="QLabel" name="label_6">
+        <item row="6" column="1">
+         <spacer name="verticalSpacer_3">
+          <property name="orientation">
+           <enum>Qt::Vertical</enum>
+          </property>
+          <property name="sizeType">
+           <enum>QSizePolicy::Expanding</enum>
+          </property>
+          <property name="sizeHint" stdset="0">
+           <size>
+            <width>20</width>
+            <height>40</height>
+           </size>
+          </property>
+         </spacer>
+        </item>
+        <item row="8" column="0">
+         <widget class="QLabel" name="label_8">
+          <property name="toolTip">
+           <string/>
+          </property>
           <property name="text">
-           <string>Stake:</string>
+           <string>Effective Burnt Coins:</string>
           </property>
          </widget>
         </item>
-        <item row="3" column="1">
-         <widget class="QLabel" name="labelStake">
+        <item row="8" column="1">
+         <widget class="QLabel" name="labelEffBurnCoins">
           <property name="text">
-           <string notr="true">0 BTC</string>
+           <string>0 SLM</string>
           </property>
          </widget>
         </item>
-        <item row="1" column="0">
-         <widget class="QLabel" name="label_5">
-          <property name="font">
-           <font>
-            <pointsize>11</pointsize>
-            <bold>true</bold>
-           </font>
+        <item row="9" column="0">
+         <widget class="QLabel" name="label_10">
+          <property name="toolTip">
+           <string/>
           </property>
           <property name="text">
-           <string>Wallet</string>
+           <string>Immature Burnt Coins:</string>
+          </property>
+         </widget>
+        </item>
+        <item row="9" column="1">
+         <widget class="QLabel" name="labelImmBurnCoins">
+          <property name="text">
+           <string>0 SLM</string>
+          </property>
+         </widget>
+        </item>
+        <item row="10" column="0">
+         <widget class="QLabel" name="label_12">
+          <property name="toolTip">
+           <string/>
+          </property>
+          <property name="text">
+           <string>Decayed Burnt Coins:</string>
+          </property>
+         </widget>
+        </item>
+        <item row="10" column="1">
+         <widget class="QLabel" name="labelDecayBurnCoins">
+          <property name="text">
+           <string>0 SLM</string>
           </property>
          </widget>
         </item>
@@ -118,6 +203,31 @@
         </size>
        </property>
       </spacer>
+     </item>
+     <item>
+      <widget class="QLabel" name="wallet_bgcoin">
+       <property name="minimumSize">
+        <size>
+         <width>0</width>
+         <height>0</height>
+        </size>
+       </property>
+       <property name="text">
+        <string/>
+       </property>
+       <property name="pixmap">
+        <pixmap resource="../bitcoin.qrc">:/icons/wallet_bgcoin</pixmap>
+       </property>
+       <property name="scaledContents">
+        <bool>false</bool>
+       </property>
+       <property name="alignment">
+        <set>Qt::AlignCenter</set>
+       </property>
+       <property name="margin">
+        <number>50</number>
+       </property>
+      </widget>
      </item>
     </layout>
    </item>
@@ -172,6 +282,8 @@
    </item>
   </layout>
  </widget>
- <resources/>
+ <resources>
+  <include location="../bitcoin.qrc"/>
+ </resources>
  <connections/>
 </ui>

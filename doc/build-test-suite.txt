@@ -1,0 +1,16 @@
+Copyright (c) 2013-2014 Slimcoin Developers
+Distributed under the MIT/X11 software license, see the accompanying
+file license.txt or http://www.opensource.org/licenses/mit-license.php.
+This product includes software developed by the OpenSSL Project for use in
+the OpenSSL Toolkit (http://www.openssl.org/).  This product includes
+cryptographic software written by Eric Young (eay@cryptsoft.com) and UPnP
+software written by Thomas Bernard.
+
+In order to build the test suite, append "test_slimcoin" to the end of the make
+command that corresponds to your operating system. See build-*.txt for information
+on how to make the slimcoin project (the * represents your corresponding operating
+system).
+
+Example Building Test Suite on Linux:
+
+make -f makefile.unix test_slimcoin

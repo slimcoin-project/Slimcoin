@@ -76,6 +76,8 @@ TransactionView::TransactionView(QWidget *parent) :
     typeWidget->addItem(tr("To yourself"), TransactionFilterProxy::TYPE(TransactionRecord::SendToSelf));
     typeWidget->addItem(tr("Mined"), TransactionFilterProxy::TYPE(TransactionRecord::Generated));
     typeWidget->addItem(tr("Mint by stake"), TransactionFilterProxy::TYPE(TransactionRecord::StakeMint));
+    typeWidget->addItem(tr("Mint by burn"), TransactionFilterProxy::TYPE(TransactionRecord::BurnMint));
+    typeWidget->addItem(tr("Burned"), TransactionFilterProxy::TYPE(TransactionRecord::Burned));
     typeWidget->addItem(tr("Other"), TransactionFilterProxy::TYPE(TransactionRecord::Other));
 
     hlayout->addWidget(typeWidget);
@@ -269,7 +271,7 @@ void TransactionView::exportClicked()
             tr("Export Transaction Data"), QString(),
             tr("Comma separated file (*.csv)"));
 
-    if (filename.isNull()) return;
+    if(filename.isNull()) return;
 
     CSVModelWriter writer(filename);
 

@@ -1,5 +1,5 @@
 // Copyright (c) 2012 The Bitcoin developers
-// Copyright (c) 2012-2013 The PPCoin developers
+// Copyright (c) 2012-2013 The SLIMCoin developers
 // Distributed under the MIT/X11 software license, see the accompanying
 // file COPYING or http://www.opensource.org/licenses/mit-license.php.
 #ifndef BITCOIN_VERSION_H
@@ -23,15 +23,18 @@ static const int CLIENT_VERSION =
                          +     100 * CLIENT_VERSION_REVISION
                          +       1 * CLIENT_VERSION_BUILD;
 
+// Set to true for release, false for prerelease or test build
+#define CLIENT_VERSION_IS_RELEASE  true
+
 extern const std::string CLIENT_NAME;
 extern const std::string CLIENT_BUILD;
 extern const std::string CLIENT_DATE;
 
-// ppcoin version - intended for display purpose ONLY
-#define PPCOIN_VERSION_MAJOR       0
-#define PPCOIN_VERSION_MINOR       3
-#define PPCOIN_VERSION_REVISION    0
-#define PPCOIN_VERSION_BUILD       0
+// slimcoin version - intended for display purpose ONLY
+#define SLMCOIN_VERSION_MAJOR       0
+#define SLMCOIN_VERSION_MINOR       3
+#define SLMCOIN_VERSION_REVISION    2
+#define SLMCOIN_VERSION_BUILD       0
 
 //
 // network protocol versioning

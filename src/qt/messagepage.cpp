@@ -69,7 +69,7 @@ void MessagePage::on_signMessage_clicked()
     QString address = ui->signFrom->text();
 
     CBitcoinAddress addr(address.toStdString());
-    if (!addr.IsValid())
+    if(!addr.IsValid())
     {
         QMessageBox::critical(this, tr("Error signing"), tr("%1 is not a valid address.").arg(address),
                               QMessageBox::Abort, QMessageBox::Abort);
@@ -84,7 +84,7 @@ void MessagePage::on_signMessage_clicked()
     }
 
     CKey key;
-    if (!pwalletMain->GetKey(addr, key))
+    if(!pwalletMain->GetKey(addr, key))
     {
         QMessageBox::critical(this, tr("Error signing"), tr("Private key for %1 is not available.").arg(address),
                               QMessageBox::Abort, QMessageBox::Abort);
@@ -96,7 +96,7 @@ void MessagePage::on_signMessage_clicked()
     ss << ui->message->document()->toPlainText().toStdString();
 
     std::vector<unsigned char> vchSig;
-    if (!key.SignCompact(Hash(ss.begin(), ss.end()), vchSig))
+    if(!key.SignCompact(Hash(ss.begin(), ss.end()), vchSig))
     {
         QMessageBox::critical(this, tr("Error signing"), tr("Sign failed"),
                               QMessageBox::Abort, QMessageBox::Abort);

@@ -1,5 +1,5 @@
 // Copyright (c) 2009-2012 The Bitcoin developers
-// Copyright (c) 2011-2013 The PPCoin developers
+// Copyright (c) 2011-2013 The SLIMCoin developers
 // Distributed under the MIT/X11 software license, see the accompanying
 // file COPYING or http://www.opensource.org/licenses/mit-license.php.
 #ifndef BITCOIN_CHECKPOINT_H
@@ -20,122 +20,125 @@ class CSyncCheckpoint;
  */
 namespace Checkpoints
 {
-    // Returns true if block passes checkpoint checks
-    bool CheckHardened(int nHeight, const uint256& hash);
+  // Returns true if block passes checkpoint checks
+  bool CheckHardened(int nHeight, const uint256& hash);
 
-    // Return conservative estimate of total number of blocks, 0 if unknown
-    int GetTotalBlocksEstimate();
+  // Returns true if a checkpoint of height nHeight exists
+  bool CheckpointExists(s32int nHeight);
 
-    // Returns last CBlockIndex* in mapBlockIndex that is a checkpoint
-    CBlockIndex* GetLastCheckpoint(const std::map<uint256, CBlockIndex*>& mapBlockIndex);
+  // Return conservative estimate of total number of blocks, 0 if unknown
+  int GetTotalBlocksEstimate();
 
-    extern uint256 hashSyncCheckpoint;
-    extern CSyncCheckpoint checkpointMessage;
-    extern uint256 hashInvalidCheckpoint;
-    extern CCriticalSection cs_hashSyncCheckpoint;
+  // Returns last CBlockIndex* in mapBlockIndex that is a checkpoint
+  CBlockIndex* GetLastCheckpoint(const std::map<uint256, CBlockIndex*>& mapBlockIndex);
 
-    CBlockIndex* GetLastSyncCheckpoint();
-    bool WriteSyncCheckpoint(const uint256& hashCheckpoint);
-    bool AcceptPendingSyncCheckpoint();
-    uint256 AutoSelectSyncCheckpoint();
-    bool CheckSync(const uint256& hashBlock, const CBlockIndex* pindexPrev);
-    bool WantedByPendingSyncCheckpoint(uint256 hashBlock);
-    bool ResetSyncCheckpoint();
-    void AskForPendingSyncCheckpoint(CNode* pfrom);
-    bool SetCheckpointPrivKey(std::string strPrivKey);
-    bool SendSyncCheckpoint(uint256 hashCheckpoint);
-    bool IsMatureSyncCheckpoint();
-    bool IsSyncCheckpointTooOld(unsigned int nSeconds);
+  extern uint256 hashSyncCheckpoint;
+  extern CSyncCheckpoint checkpointMessage;
+  extern uint256 hashInvalidCheckpoint;
+  extern CCriticalSection cs_hashSyncCheckpoint;
+
+  CBlockIndex* GetLastSyncCheckpoint();
+  bool WriteSyncCheckpoint(const uint256& hashCheckpoint);
+  bool AcceptPendingSyncCheckpoint();
+  uint256 AutoSelectSyncCheckpoint();
+  bool CheckSync(const uint256& hashBlock, const CBlockIndex* pindexPrev);
+  bool WantedByPendingSyncCheckpoint(uint256 hashBlock);
+  bool ResetSyncCheckpoint();
+  void AskForPendingSyncCheckpoint(CNode* pfrom);
+  bool SetCheckpointPrivKey(std::string strPrivKey);
+  bool SendSyncCheckpoint(uint256 hashCheckpoint);
+  bool IsMatureSyncCheckpoint();
+  bool IsSyncCheckpointTooOld(unsigned int nSeconds);
 }
 
-// ppcoin: synchronized checkpoint
+// slimcoin: synchronized checkpoint
 class CUnsignedSyncCheckpoint
 {
 public:
-    int nVersion;
-    uint256 hashCheckpoint;      // checkpoint block
+  int nVersion;
+  uint256 hashCheckpoint;      // checkpoint block
 
-    IMPLEMENT_SERIALIZE
+  IMPLEMENT_SERIALIZE
     (
-        READWRITE(this->nVersion);
-        nVersion = this->nVersion;
-        READWRITE(hashCheckpoint);
-    )
+      READWRITE(this->nVersion);
+      nVersion = this->nVersion;
+      READWRITE(hashCheckpoint);
+      )
 
     void SetNull()
-    {
-        nVersion = 1;
-        hashCheckpoint = 0;
-    }
+  {
+    nVersion = 1;
+    hashCheckpoint = 0;
+  }
 
-    std::string ToString() const
-    {
-        return strprintf(
-                "CSyncCheckpoint(\n"
-                "    nVersion       = %d\n"
-                "    hashCheckpoint = %s\n"
-                ")\n",
-            nVersion,
-            hashCheckpoint.ToString().c_str());
-    }
+  std::string ToString() const
+  {
+    return strprintf(
+      "CSyncCheckpoint(\n"
+      "    nVersion       = %d\n"
+      "    hashCheckpoint = %s\n"
+      ")\n",
+      nVersion,
+      hashCheckpoint.ToString().c_str());
+  }
 
-    void print() const
-    {
-        printf("%s", ToString().c_str());
-    }
+  void print() const
+  {
+    printf("%s", ToString().c_str());
+  }
 };
 
 class CSyncCheckpoint : public CUnsignedSyncCheckpoint
 {
 public:
-    static const std::string strMasterPubKey;
-    static std::string strMasterPrivKey;
+  static const std::string strMasterPubKey;
+  static std::string strMasterPrivKey;
 
-    std::vector<unsigned char> vchMsg;
-    std::vector<unsigned char> vchSig;
+  std::vector<unsigned char> vchMsg;
+  std::vector<unsigned char> vchSig;
 
-    CSyncCheckpoint()
-    {
-        SetNull();
-    }
+  CSyncCheckpoint()
+  {
+    SetNull();
+  }
 
-    IMPLEMENT_SERIALIZE
+  IMPLEMENT_SERIALIZE
     (
-        READWRITE(vchMsg);
-        READWRITE(vchSig);
-    )
+      READWRITE(vchMsg);
+      READWRITE(vchSig);
+      )
 
     void SetNull()
-    {
-        CUnsignedSyncCheckpoint::SetNull();
-        vchMsg.clear();
-        vchSig.clear();
-    }
+  {
+    CUnsignedSyncCheckpoint::SetNull();
+    vchMsg.clear();
+    vchSig.clear();
+  }
 
-    bool IsNull() const
-    {
-        return (hashCheckpoint == 0);
-    }
+  bool IsNull() const
+  {
+    return (hashCheckpoint == 0);
+  }
 
-    uint256 GetHash() const
-    {
-        return SerializeHash(*this);
-    }
+  uint256 GetHash() const
+  {
+    return SerializeHash(*this);
+  }
 
-    bool RelayTo(CNode* pnode) const
+  bool RelayTo(CNode* pnode) const
+  {
+    // returns true if wasn't already sent
+    if (pnode->hashCheckpointKnown != hashCheckpoint)
     {
-        // returns true if wasn't already sent
-        if (pnode->hashCheckpointKnown != hashCheckpoint)
-        {
-            pnode->hashCheckpointKnown = hashCheckpoint;
-            pnode->PushMessage("checkpoint", *this);
-            return true;
-        }
-        return false;
+      pnode->hashCheckpointKnown = hashCheckpoint;
+      pnode->PushMessage("checkpoint", *this);
+      return true;
     }
+    return false;
+  }
 
-    bool CheckSignature();
-    bool ProcessSyncCheckpoint(CNode* pfrom);
+  bool CheckSignature();
+  bool ProcessSyncCheckpoint(CNode* pfrom);
 };
 
 #endif

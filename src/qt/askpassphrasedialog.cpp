@@ -99,7 +99,7 @@ void AskPassphraseDialog::accept()
             break;
         }
         QMessageBox::StandardButton retval = QMessageBox::question(this, tr("Confirm wallet encryption"),
-                 tr("WARNING: If you encrypt your wallet and lose your passphrase, you will <b>LOSE ALL OF YOUR PPCOINS</b>!\nAre you sure you wish to encrypt your wallet?"),
+                 tr("WARNING: If you encrypt your wallet and lose your passphrase, you will <b>LOSE ALL OF YOUR SLIMCOINS</b>!\nAre you sure you wish to encrypt your wallet?"),
                  QMessageBox::Yes|QMessageBox::Cancel,
                  QMessageBox::Cancel);
         if(retval == QMessageBox::Yes)
@@ -109,7 +109,7 @@ void AskPassphraseDialog::accept()
                 if(model->setWalletEncrypted(true, newpass1))
                 {
                     QMessageBox::warning(this, tr("Wallet encrypted"),
-                                         tr("PPCoin will close now to finish the encryption process. Remember that encrypting your wallet cannot fully protect your bitcoins from being stolen by malware infecting your computer."));
+                                         tr("SLIMCoin will close now to finish the encryption process. Remember that encrypting your wallet cannot fully protect your bitcoins from being stolen by malware infecting your computer."));
                     QApplication::quit();
                 }
                 else
@@ -199,12 +199,12 @@ void AskPassphraseDialog::textChanged()
 bool AskPassphraseDialog::event(QEvent *event)
 {
     // Detect Caps Lock key press.
-    if (event->type() == QEvent::KeyPress) {
+    if(event->type() == QEvent::KeyPress) {
         QKeyEvent *ke = static_cast<QKeyEvent *>(event);
-        if (ke->key() == Qt::Key_CapsLock) {
+        if(ke->key() == Qt::Key_CapsLock) {
             fCapsLock = !fCapsLock;
         }
-        if (fCapsLock) {
+        if(fCapsLock) {
             ui->capsLabel->setText(tr("Warning: The Caps Lock key is on."));
         } else {
             ui->capsLabel->clear();
@@ -221,16 +221,16 @@ bool AskPassphraseDialog::eventFilter(QObject *, QEvent *event)
      * Shift key is down and the result is a lower case character, or
      * Shift key is not down and the result is an upper case character.
      */
-    if (event->type() == QEvent::KeyPress) {
+    if(event->type() == QEvent::KeyPress) {
         QKeyEvent *ke = static_cast<QKeyEvent *>(event);
         QString str = ke->text();
-        if (str.length() != 0) {
+        if(str.length() != 0) {
             const QChar *psz = str.unicode();
             bool fShift = (ke->modifiers() & Qt::ShiftModifier) != 0;
-            if ((fShift && psz->isLower()) || (!fShift && psz->isUpper())) {
+            if((fShift && psz->isLower()) || (!fShift && psz->isUpper())) {
                 fCapsLock = true;
                 ui->capsLabel->setText(tr("Warning: The Caps Lock key is on."));
-            } else if (psz->isLetter()) {
+            } else if(psz->isLetter()) {
                 fCapsLock = false;
                 ui->capsLabel->clear();
             }

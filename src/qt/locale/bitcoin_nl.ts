@@ -4,25 +4,25 @@
     <name>AboutDialog</name>
     <message>
         <location filename="../forms/aboutdialog.ui" line="14"/>
-        <source>About PPCoin</source>
-        <translation>Over PPCoin
+        <source>About SLIMCoin</source>
+        <translation>Over SLIMCoin
 </translation>
     </message>
     <message>
         <location filename="../forms/aboutdialog.ui" line="53"/>
-        <source>&lt;b&gt;PPCoin&lt;/b&gt; version</source>
-        <translation>&lt;b&gt;PPCoin&lt;/b&gt; versie</translation>
+        <source>&lt;b&gt;SLIMCoin&lt;/b&gt; version</source>
+        <translation>&lt;b&gt;SLIMCoin&lt;/b&gt; versie</translation>
     </message>
     <message>
         <location filename="../forms/aboutdialog.ui" line="85"/>
-        <source>Copyright © 2011-2013 PPCoin Developers
+        <source>Copyright © 2011-2013 SLIMCoin Developers
 
 This is experimental software.
 
 Distributed under the MIT/X11 software license, see the accompanying file license.txt or http://www.opensource.org/licenses/mit-license.php.
 
 This product includes software developed by the OpenSSL Project for use in the OpenSSL Toolkit (http://www.openssl.org/) and cryptographic software written by Eric Young (eay@cryptsoft.com) and UPnP software written by Thomas Bernard.</source>
-        <translation>Copyright © 2011-2013 PPCoin Ontwikkelaars
+        <translation>Copyright © 2011-2013 SLIMCoin Ontwikkelaars
 
 Dit is experimentele software.
 
@@ -40,8 +40,8 @@ Dit product bevat software ontwikkeld door het OpenSSL Project voor gebruik in d
     </message>
     <message>
         <location filename="../forms/addressbookpage.ui" line="20"/>
-        <source>These are your PPCoin addresses for receiving payments.  You may want to give a different one to each sender so you can keep track of who is paying you.</source>
-        <translation>Dit zijn uw PPCoin-adressen om betalingen te ontvangen. U kunt er voor kiezen om een adres aan te maken voor elke afzender. Op deze manier kunt u bijhouden wie al aan u betaald heeft.</translation>
+        <source>These are your SLIMCoin addresses for receiving payments.  You may want to give a different one to each sender so you can keep track of who is paying you.</source>
+        <translation>Dit zijn uw SLIMCoin-adressen om betalingen te ontvangen. U kunt er voor kiezen om een adres aan te maken voor elke afzender. Op deze manier kunt u bijhouden wie al aan u betaald heeft.</translation>
     </message>
     <message>
         <location filename="../forms/addressbookpage.ui" line="33"/>
@@ -227,9 +227,9 @@ Dit product bevat software ontwikkeld door het OpenSSL Project voor gebruik in d
     </message>
     <message>
         <location filename="../askpassphrasedialog.cpp" line="102"/>
-        <source>WARNING: If you encrypt your wallet and lose your passphrase, you will &lt;b&gt;LOSE ALL OF YOUR PPCoinS&lt;/b&gt;!
+        <source>WARNING: If you encrypt your wallet and lose your passphrase, you will &lt;b&gt;LOSE ALL OF YOUR SLIMCoinS&lt;/b&gt;!
 Are you sure you wish to encrypt your wallet?</source>
-        <translation>WAARSCHUWING: Wanneer uw portemonnee wordt versleuteld en u verliest uw wachtwoord, dan verliest u&lt;b&gt;AL UW PPCoinS&lt;/b&gt;!
+        <translation>WAARSCHUWING: Wanneer uw portemonnee wordt versleuteld en u verliest uw wachtwoord, dan verliest u&lt;b&gt;AL UW SLIMCoinS&lt;/b&gt;!
 Bent u er zeker van uw dat u uw portemonnee wilt versleutelen?</translation>
     </message>
     <message>
@@ -240,8 +240,8 @@ Bent u er zeker van uw dat u uw portemonnee wilt versleutelen?</translation>
     </message>
     <message>
         <location filename="../askpassphrasedialog.cpp" line="112"/>
-        <source>PPCoin will close now to finish the encryption process. Remember that encrypting your wallet cannot fully protect your PPCoins from being stolen by malware infecting your computer.</source>
-        <translation>PPCoin zal nu afsluiten om het versleutelingsproces te voltooien. Onthoud dat het versleutelen van uw portemonnee u niet volledig kan beschermen: Malware kan uw computer infecteren en uw PPCoins stelen.</translation>
+        <source>SLIMCoin will close now to finish the encryption process. Remember that encrypting your wallet cannot fully protect your SLIMCoins from being stolen by malware infecting your computer.</source>
+        <translation>SLIMCoin zal nu afsluiten om het versleutelingsproces te voltooien. Onthoud dat het versleutelen van uw portemonnee u niet volledig kan beschermen: Malware kan uw computer infecteren en uw SLIMCoins stelen.</translation>
     </message>
     <message>
         <location filename="../askpassphrasedialog.cpp" line="208"/>
@@ -292,11 +292,11 @@ Bent u er zeker van uw dat u uw portemonnee wilt versleutelen?</translation>
     </message>
 </context>
 <context>
-    <name>PPCoinGUI</name>
+    <name>SLIMCoinGUI</name>
     <message>
         <location filename="../bitcoingui.cpp" line="69"/>
-        <source>PPCoin Wallet</source>
-        <translation>PPCoin-portemonnee</translation>
+        <source>SLIMCoin Wallet</source>
+        <translation>SLIMCoin-portemonnee</translation>
     </message>
     <message>
         <location filename="../bitcoingui.cpp" line="142"/>
@@ -356,8 +356,8 @@ Bent u er zeker van uw dat u uw portemonnee wilt versleutelen?</translation>
     </message>
     <message>
         <location filename="../bitcoingui.cpp" line="201"/>
-        <source>Send coins to a PPCoin address</source>
-        <translation>Verstuur munten naar een PPCoin-adres</translation>
+        <source>Send coins to a SLIMCoin address</source>
+        <translation>Verstuur munten naar een SLIMCoin-adres</translation>
     </message>
     <message>
         <location filename="../bitcoingui.cpp" line="206"/>
@@ -386,8 +386,8 @@ Bent u er zeker van uw dat u uw portemonnee wilt versleutelen?</translation>
     </message>
     <message>
         <location filename="../bitcoingui.cpp" line="231"/>
-        <source>Show information about PPCoin</source>
-        <translation>Laat informatie zien over PPCoin</translation>
+        <source>Show information about SLIMCoin</source>
+        <translation>Laat informatie zien over SLIMCoin</translation>
     </message>
     <message>
         <location filename="../bitcoingui.cpp" line="233"/>
@@ -406,18 +406,18 @@ Bent u er zeker van uw dat u uw portemonnee wilt versleutelen?</translation>
     </message>
     <message>
         <location filename="../bitcoingui.cpp" line="237"/>
-        <source>Modify configuration options for PPCoin</source>
-        <translation>Wijzig instellingen van PPCoin</translation>
+        <source>Modify configuration options for SLIMCoin</source>
+        <translation>Wijzig instellingen van SLIMCoin</translation>
     </message>
     <message>
         <location filename="../bitcoingui.cpp" line="239"/>
-        <source>Open &amp;PPCoin</source>
-        <translation>Open &amp;PPCoin</translation>
+        <source>Open &amp;SLIMCoin</source>
+        <translation>Open &amp;SLIMCoin</translation>
     </message>
     <message>
         <location filename="../bitcoingui.cpp" line="240"/>
-        <source>Show the PPCoin window</source>
-        <translation>Toon PPCoin-venster </translation>
+        <source>Show the SLIMCoin window</source>
+        <translation>Toon SLIMCoin-venster </translation>
     </message>
     <message>
         <location filename="../bitcoingui.cpp" line="241"/>
@@ -491,13 +491,13 @@ Bent u er zeker van uw dat u uw portemonnee wilt versleutelen?</translation>
     </message>
     <message>
         <location filename="../bitcoingui.cpp" line="407"/>
-        <source>PPCoin-qt</source>
-        <translation>PPCoin-qt</translation>
+        <source>SLIMCoin-qt</source>
+        <translation>SLIMCoin-qt</translation>
     </message>
     <message numerus="yes">
         <location filename="../bitcoingui.cpp" line="449"/>
-        <source>%n active connection(s) to PPCoin network</source>
-        <translation><numerusform>%n actieve connectie naar PPCoinnetwerk</numerusform><numerusform>%n actieve connecties naar PPCoinnetwerk</numerusform></translation>
+        <source>%n active connection(s) to SLIMCoin network</source>
+        <translation><numerusform>%n actieve connectie naar SLIMCoinnetwerk</numerusform><numerusform>%n actieve connecties naar SLIMCoinnetwerk</numerusform></translation>
     </message>
     <message>
         <location filename="../bitcoingui.cpp" line="475"/>
@@ -680,8 +680,8 @@ Adres: %4
     </message>
     <message>
         <location filename="../editaddressdialog.cpp" line="96"/>
-        <source>The entered address &quot;%1&quot; is not a valid PPCoin address.</source>
-        <translation>Het opgegeven adres &quot;%1&quot; is een ongeldig PPCoinadres</translation>
+        <source>The entered address &quot;%1&quot; is not a valid SLIMCoin address.</source>
+        <translation>Het opgegeven adres &quot;%1&quot; is een ongeldig SLIMCoinadres</translation>
     </message>
     <message>
         <location filename="../editaddressdialog.cpp" line="101"/>
@@ -698,13 +698,13 @@ Adres: %4
     <name>MainOptionsPage</name>
     <message>
         <location filename="../optionsdialog.cpp" line="170"/>
-        <source>&amp;Start PPCoin on window system startup</source>
-        <translation>Start &amp;PPCoin wanneer het systeem opstart</translation>
+        <source>&amp;Start SLIMCoin on window system startup</source>
+        <translation>Start &amp;SLIMCoin wanneer het systeem opstart</translation>
     </message>
     <message>
         <location filename="../optionsdialog.cpp" line="171"/>
-        <source>Automatically start PPCoin after the computer is turned on</source>
-        <translation>Start PPCoin automatisch wanneer de computer wordt aangezet</translation>
+        <source>Automatically start SLIMCoin after the computer is turned on</source>
+        <translation>Start SLIMCoin automatisch wanneer de computer wordt aangezet</translation>
     </message>
     <message>
         <location filename="../optionsdialog.cpp" line="175"/>
@@ -723,8 +723,8 @@ Adres: %4
     </message>
     <message>
         <location filename="../optionsdialog.cpp" line="181"/>
-        <source>Automatically open the PPCoin client port on the router. This only works when your router supports UPnP and it is enabled.</source>
-        <translation>Open de PPCoin-poort automatisch op de router. Dit werkt alleen als de router UPnP ondersteunt.</translation>
+        <source>Automatically open the SLIMCoin client port on the router. This only works when your router supports UPnP and it is enabled.</source>
+        <translation>Open de SLIMCoin-poort automatisch op de router. Dit werkt alleen als de router UPnP ondersteunt.</translation>
     </message>
     <message>
         <location filename="../optionsdialog.cpp" line="185"/>
@@ -744,7 +744,7 @@ Adres: %4
     <message>
         <location filename="../optionsdialog.cpp" line="191"/>
         <source>Connect to the Bitcon network through a SOCKS4 proxy (e.g. when connecting through Tor)</source>
-        <translation>Verbind met het PPCoin-netwerk door een SOCKS4 proxy (bijv. wanneer Tor gebruikt wordt)</translation>
+        <translation>Verbind met het SLIMCoin-netwerk door een SOCKS4 proxy (bijv. wanneer Tor gebruikt wordt)</translation>
     </message>
     <message>
         <location filename="../optionsdialog.cpp" line="196"/>
@@ -1184,8 +1184,8 @@ p, li { white-space: pre-wrap; }
     </message>
     <message>
         <location filename="../sendcoinsentry.cpp" line="25"/>
-        <source>Enter a PPCoin address (e.g. 1NS17iag9jJgTHD1VXjvLCEnZuQ3rJDE9L)</source>
-        <translation>Vul een PPCoinadres in (bijv. 1NS17iag9jJgTHD1VXjvLCEnZuQ3rJDE9L)</translation>
+        <source>Enter a SLIMCoin address (e.g. 1NS17iag9jJgTHD1VXjvLCEnZuQ3rJDE9L)</source>
+        <translation>Vul een SLIMCoinadres in (bijv. 1NS17iag9jJgTHD1VXjvLCEnZuQ3rJDE9L)</translation>
     </message>
 </context>
 <context>
@@ -1633,11 +1633,11 @@ p, li { white-space: pre-wrap; }
     </message>
 </context>
 <context>
-    <name>PPCoin-core</name>
+    <name>SLIMCoin-core</name>
     <message>
         <location filename="../bitcoinstrings.cpp" line="3"/>
-        <source>PPCoin version</source>
-        <translation>PPCoinversie</translation>
+        <source>SLIMCoin version</source>
+        <translation>SLIMCoinversie</translation>
     </message>
     <message>
         <location filename="../bitcoinstrings.cpp" line="4"/>
@@ -1646,8 +1646,8 @@ p, li { white-space: pre-wrap; }
     </message>
     <message>
         <location filename="../bitcoinstrings.cpp" line="5"/>
-        <source>Send command to -server or ppcoind</source>
-        <translation>Stuur commando naar -server of ppcoind
+        <source>Send command to -server or slimcoind</source>
+        <translation>Stuur commando naar -server of slimcoind
 </translation>
     </message>
     <message>
@@ -1670,14 +1670,14 @@ p, li { white-space: pre-wrap; }
     </message>
     <message>
         <location filename="../bitcoinstrings.cpp" line="9"/>
-        <source>Specify configuration file (default: PPCoin.conf)</source>
-        <translation>Specifieer configuratiebestand (standaard: PPCoin.conf)
+        <source>Specify configuration file (default: SLIMCoin.conf)</source>
+        <translation>Specifieer configuratiebestand (standaard: SLIMCoin.conf)
 </translation>
     </message>
     <message>
         <location filename="../bitcoinstrings.cpp" line="10"/>
-        <source>Specify pid file (default: ppcoind.pid)</source>
-        <translation>Specifieer pid-bestand (standaard: ppcoind.pid)
+        <source>Specify pid file (default: slimcoind.pid)</source>
+        <translation>Specifieer pid-bestand (standaard: slimcoind.pid)
 </translation>
     </message>
     <message>
@@ -1874,9 +1874,9 @@ p, li { white-space: pre-wrap; }
     <message>
         <location filename="../bitcoinstrings.cpp" line="47"/>
         <source>
-SSL options: (see the PPCoin Wiki for SSL setup instructions)</source>
+SSL options: (see the SLIMCoin Wiki for SSL setup instructions)</source>
         <translation>
-SSL opties: (zie de PPCoin wiki voor SSL instructies)
+SSL opties: (zie de SLIMCoin wiki voor SSL instructies)
 </translation>
     </message>
     <message>
@@ -1910,8 +1910,8 @@ SSL opties: (zie de PPCoin wiki voor SSL instructies)
     </message>
     <message>
         <location filename="../bitcoinstrings.cpp" line="57"/>
-        <source>Cannot obtain a lock on data directory %s.  PPCoin is probably already running.</source>
-        <translation>Kan geen lock op de gegevensdirectory %s verkrijgen. PPCoin draait vermoedelijk reeds.</translation>
+        <source>Cannot obtain a lock on data directory %s.  SLIMCoin is probably already running.</source>
+        <translation>Kan geen lock op de gegevensdirectory %s verkrijgen. SLIMCoin draait vermoedelijk reeds.</translation>
     </message>
     <message>
         <location filename="../bitcoinstrings.cpp" line="60"/>
@@ -1935,13 +1935,13 @@ SSL opties: (zie de PPCoin wiki voor SSL instructies)
     </message>
     <message>
         <location filename="../bitcoinstrings.cpp" line="66"/>
-        <source>Error loading wallet.dat: Wallet requires newer version of PPCoin</source>
-        <translation>Fout bij laden wallet.dat: Portemonnee vereist een nieuwere versie van PPCoin</translation>
+        <source>Error loading wallet.dat: Wallet requires newer version of SLIMCoin</source>
+        <translation>Fout bij laden wallet.dat: Portemonnee vereist een nieuwere versie van SLIMCoin</translation>
     </message>
     <message>
         <location filename="../bitcoinstrings.cpp" line="67"/>
-        <source>Wallet needed to be rewritten: restart PPCoin to complete</source>
-        <translation>Portemonnee moest herschreven worden: Herstart PPCoin om te voltooien</translation>
+        <source>Wallet needed to be rewritten: restart SLIMCoin to complete</source>
+        <translation>Portemonnee moest herschreven worden: Herstart SLIMCoin om te voltooien</translation>
     </message>
     <message>
         <location filename="../bitcoinstrings.cpp" line="68"/>
@@ -1995,13 +1995,13 @@ SSL opties: (zie de PPCoin wiki voor SSL instructies)
     </message>
     <message>
         <location filename="../bitcoinstrings.cpp" line="78"/>
-        <source>Unable to bind to port %d on this computer.  PPCoin is probably already running.</source>
-        <translation>Kan niet binden aan poort %d op deze computer. PPCoin draait vermoedelijk reeds.</translation>
+        <source>Unable to bind to port %d on this computer.  SLIMCoin is probably already running.</source>
+        <translation>Kan niet binden aan poort %d op deze computer. SLIMCoin draait vermoedelijk reeds.</translation>
     </message>
     <message>
         <location filename="../bitcoinstrings.cpp" line="81"/>
-        <source>Warning: Please check that your computer&apos;s date and time are correct.  If your clock is wrong PPCoin will not work properly.</source>
-        <translation>Waarschuwing: Controleer dat de datum en tijd op uw computer correct zijn ingesteld. Als uw klok fout staat zal PPCoin niet correct werken.</translation>
+        <source>Warning: Please check that your computer&apos;s date and time are correct.  If your clock is wrong SLIMCoin will not work properly.</source>
+        <translation>Waarschuwing: Controleer dat de datum en tijd op uw computer correct zijn ingesteld. Als uw klok fout staat zal SLIMCoin niet correct werken.</translation>
     </message>
     <message>
         <location filename="../bitcoinstrings.cpp" line="84"/>

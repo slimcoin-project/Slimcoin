@@ -5,26 +5,26 @@
 #include "version.h"
 
 AboutDialog::AboutDialog(QWidget *parent) :
-    QDialog(parent),
-    ui(new Ui::AboutDialog)
+  QDialog(parent),
+  ui(new Ui::AboutDialog)
 {
-    ui->setupUi(this);
+  ui->setupUi(this);
 }
 
 void AboutDialog::setModel(ClientModel *model)
 {
-    if(model)
-    {
-        ui->versionLabel->setText(model->formatFullVersion());
-    }
+  if(model)
+  {
+    ui->versionLabel->setText(model->formatFullVersion());
+  }
 }
 
 AboutDialog::~AboutDialog()
 {
-    delete ui;
+  delete ui;
 }
 
 void AboutDialog::on_buttonBox_accepted()
 {
-    close();
+  close();
 }

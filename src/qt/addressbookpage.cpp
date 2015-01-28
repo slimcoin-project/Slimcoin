@@ -168,7 +168,7 @@ void AddressBookPage::on_signMessage_clicked()
 
     QObject *qoGUI = parent()->parent();
     BitcoinGUI *gui = qobject_cast<BitcoinGUI *>(qoGUI);
-    if (gui)
+    if(gui)
         gui->gotoMessagePage(addr);
 }
 
@@ -283,7 +283,7 @@ void AddressBookPage::exportClicked()
             tr("Export Address Book Data"), QString(),
             tr("Comma separated file (*.csv)"));
 
-    if (filename.isNull()) return;
+    if(filename.isNull()) return;
 
     CSVModelWriter writer(filename);
 

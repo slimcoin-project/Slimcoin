@@ -121,7 +121,7 @@ QVariant AddressTableModel::data(const QModelIndex &index, int role) const
             return rec->address;
         }
     }
-    else if (role == Qt::FontRole)
+    else if(role == Qt::FontRole)
     {
         QFont font;
         if(index.column() == Address)
@@ -130,7 +130,7 @@ QVariant AddressTableModel::data(const QModelIndex &index, int role) const
         }
         return font;
     }
-    else if (role == TypeRole)
+    else if(role == TypeRole)
     {
         switch(rec->type)
         {
@@ -319,7 +319,7 @@ QString AddressTableModel::labelForAddress(const QString &address) const
         LOCK(wallet->cs_wallet);
         CBitcoinAddress address_parsed(address.toStdString());
         std::map<CBitcoinAddress, std::string>::iterator mi = wallet->mapAddressBook.find(address_parsed);
-        if (mi != wallet->mapAddressBook.end())
+        if(mi != wallet->mapAddressBook.end())
         {
             return QString::fromStdString(mi->second);
         }

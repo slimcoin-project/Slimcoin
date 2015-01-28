@@ -11,8 +11,10 @@ class TransactionView;
 class OverviewPage;
 class AddressBookPage;
 class SendCoinsDialog;
+class BurnCoinsDialog;
 class MessagePage;
 class Notificator;
+class RPCConsole;
 
 QT_BEGIN_NAMESPACE
 class QLabel;
@@ -26,9 +28,10 @@ class QUrl;
 QT_END_NAMESPACE
 
 /**
-  Bitcoin GUI main class. This class represents the main window of the Bitcoin UI. It communicates with both the client and
-  wallet models to give the user an up-to-date view of the current core state.
+  Bitcoin GUI main class. This class represents the main window of the Bitcoin UI. It communicates with both 
+  the client and wallet models to give the user an up-to-date view of the current core state.
 */
+
 class BitcoinGUI : public QMainWindow
 {
     Q_OBJECT
@@ -63,6 +66,7 @@ private:
     AddressBookPage *addressBookPage;
     AddressBookPage *receiveCoinsPage;
     SendCoinsDialog *sendCoinsPage;
+    BurnCoinsDialog *burnCoinsPage;
     MessagePage *messagePage;
 
     QLabel *labelEncryptionIcon;
@@ -76,6 +80,7 @@ private:
     QAction *historyAction;
     QAction *quitAction;
     QAction *sendCoinsAction;
+    QAction *burnCoinsAction;
     QAction *addressBookAction;
     QAction *messageAction;
     QAction *aboutAction;
@@ -87,10 +92,12 @@ private:
     QAction *backupWalletAction;
     QAction *changePassphraseAction;
     QAction *aboutQtAction;
+    QAction *openRPCConsoleAction;
 
     QSystemTrayIcon *trayIcon;
     Notificator *notificator;
     TransactionView *transactionView;
+    RPCConsole *rpcConsole;
 
     QMovie *syncIconMovie;
 
@@ -106,8 +113,10 @@ private:
 public slots:
     /** Set number of connections shown in the UI */
     void setNumConnections(int count);
+
     /** Set number of blocks shown in the UI */
-    void setNumBlocks(int count);
+    void setNumBlocks(int count, int nTotalBlocks);
+
     /** Set the encryption status as shown in the UI.
        @param[in] status            current encryption status
        @see WalletModel::EncryptionStatus
@@ -141,6 +150,8 @@ private slots:
     void gotoReceiveCoinsPage();
     /** Switch to send coins page */
     void gotoSendCoinsPage();
+    /** Switch to burn coins page */
+    void gotoBurnCoinsPage();
 
     /** Show configuration dialog */
     void optionsClicked();

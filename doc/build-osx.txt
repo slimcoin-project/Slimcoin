@@ -1,3 +1,4 @@
+Copyright (c) 2013-2014 SLIMCoin Developers
 Copyright (c) 2012-2013 PPCoin Developers
 Copyright (c) 2009-2012 Bitcoin Developers
 Distributed under the MIT/X11 software license, see the accompanying file
@@ -12,13 +13,13 @@ Mac OS X bitcoind build instructions
 Laszlo Hanyecz <solar@heliacal.net>
 Douglas Huff <dhuff@jrbobdobbs.org>
 
-Modified for PPCoin by Jeff Larkin <jefflarkin@gmail.com>
+Modified for Slimcoin by P4Titan <p4titan@anche.no>
 
 
-See readme-qt.rst for instructions on building PPCoin QT, the
+See readme-qt.rst for instructions on building SLIMCoin QT, the
 graphical user interface.
 
-Tested on 10.5 and 10.6 intel.  PPC is not supported because it's big-endian.
+Tested on 10.5 and 10.6 intel.  SLM is not supported because it's big-endian.
 
 All of the commands should be executed in Terminal.app.. it's in
 /Applications/Utilities
@@ -30,7 +31,7 @@ but you can get the current version from http://developer.apple.com
 
 1.  Clone the github tree to get the source code:
 
-git clone git@github.com:ppcoin/ppcoin.git ppcoin
+git clone git@github.com:slimcoin/slimcoin.git slimcoin
 
 2.  Download and install MacPorts from http://www.macports.org/
 
@@ -46,14 +47,14 @@ sudo port install qrencode
 
 4.  Now you should be able to build bitcoind:
 
-cd ppcoin/src
+cd slimcoin/src
 make -f makefile.osx
 # To build 64-bit binaies:
 make -f makefile.osx RELEASE=true 64BIT=true
 
 Run:
-  ./ppcoind --help  # for a list of command-line options.
+  ./slimcoind --help  # for a list of command-line options.
 Run
-  ./ppcoind -daemon # to start the bitcoin daemon.
+  ./slimcoind -daemon # to start the slimcoin daemon.
 Run
-  ./ppcoind help # When the daemon is running, to get a list of RPC commands
+  ./slimcoind help # When the daemon is running, to get a list of RPC commands

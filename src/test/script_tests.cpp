@@ -30,12 +30,12 @@ ParseScript(string s)
 
     static map<string, opcodetype> mapOpNames;
 
-    if (mapOpNames.size() == 0)
+    if(mapOpNames.size() == 0)
     {
-        for (int op = OP_NOP; op <= OP_NOP10; op++)
+        for(int op = OP_NOP; op <= OP_NOP10; op++)
         {
             const char* name = GetOpName((opcodetype)op);
-            if (strcmp(name, "OP_UNKNOWN") == 0)
+            if(strcmp(name, "OP_UNKNOWN") == 0)
                 continue;
             string strName(name);
             mapOpNames[strName] = (opcodetype)op;
@@ -50,25 +50,25 @@ ParseScript(string s)
 
     BOOST_FOREACH(string w, words)
     {
-        if (all(w, is_digit()) ||
+        if(all(w, is_digit()) ||
             (starts_with(w, "-") && all(string(w.begin()+1, w.end()), is_digit())))
         {
             // Number
             int64 n = atoi64(w);
             result << n;
         }
-        else if (starts_with(w, "0x") && IsHex(string(w.begin()+2, w.end())))
+        else if(starts_with(w, "0x") && IsHex(string(w.begin()+2, w.end())))
         {
             // Hex data:
             result << ParseHex(string(w.begin()+2, w.end()));
         }
-        else if (s.size() >= 2 && starts_with(w, "'") && ends_with(w, "'"))
+        else if(s.size() >= 2 && starts_with(w, "'") && ends_with(w, "'"))
         {
             // Single-quoted string, pushed as data:
             std::vector<unsigned char> value(s.begin()+1, s.end()-1);
             result << value;
         }
-        else if (mapOpNames.count(w))
+        else if(mapOpNames.count(w))
         {
             // opcode, e.g. OP_ADD or OP_1:
             result << mapOpNames[w];
@@ -90,7 +90,7 @@ read_json(const std::string& filename)
     fs::path testFile = fs::current_path() / "test" / "data" / filename;
 
 #ifdef TEST_DATA_DIR
-    if (!fs::exists(testFile))
+    if(!fs::exists(testFile))
     {
         testFile = fs::path(BOOST_PP_STRINGIZE(TEST_DATA_DIR)) / filename;
     }
@@ -98,12 +98,12 @@ read_json(const std::string& filename)
 
     ifstream ifs(testFile.string().c_str(), ifstream::in);
     Value v;
-    if (!read_stream(ifs, v))
+    if(!read_stream(ifs, v))
     {
         BOOST_ERROR("Cound not find/open " << filename);
         return Array();
     }
-    if (v.type() != array_type)
+    if(v.type() != array_type)
     {
         BOOST_ERROR(filename << " does not contain a json array");
         return Array();
@@ -127,7 +127,7 @@ BOOST_AUTO_TEST_CASE(script_valid)
     {
         Array test = tv.get_array();
         string strTest = write_string(tv, false);
-        if (test.size() < 2) // Allow size > 2; extra stuff ignored (useful for comments)
+        if(test.size() < 2) // Allow size > 2; extra stuff ignored (useful for comments)
         {
             BOOST_ERROR("Bad test: " << strTest);
             continue;
@@ -151,7 +151,7 @@ BOOST_AUTO_TEST_CASE(script_invalid)
     {
         Array test = tv.get_array();
         string strTest = write_string(tv, false);
-        if (test.size() < 2) // Allow size > 2; extra stuff ignored (useful for comments)
+        if(test.size() < 2) // Allow size > 2; extra stuff ignored (useful for comments)
         {
             BOOST_ERROR("Bad test: " << strTest);
             continue;

@@ -14,6 +14,8 @@ QT_BEGIN_NAMESPACE
 class QUrl;
 QT_END_NAMESPACE
 
+#define SEND_COINS_DIALOG_NAME    "Send coins"
+
 /** Dialog for sending bitcoins */
 class SendCoinsDialog : public QDialog
 {

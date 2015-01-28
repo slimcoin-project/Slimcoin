@@ -1,0 +1,22 @@
+These are changes that were added to the client to make the client work with blockchain.
+These changes are the types of, if it is before a specific time or before a block height, do thise, else do that. It also includes what these changes fixed.
+
+static inline int64 getTargetTimespan(s32int lastNHeight) in main.cpp
+	The nTargetTimespan value cannot be too small since in the GetNextTargetRequired function, the nActualSpacing variable could be negative, but we do not want to be multiplying bnNew by a negative number in: bnNew *= ((nInterval - 1) * nTargetSpacing + nActualSpacing + nActualSpacing);
+
+bool HashBurnData(uint256 burnBlockHash, uint256 hashPrevBlock, uint256 burnTxHash,
+                  s32int burnBlkHeight, int64 burnValue, uint256 &smallestHashRet) in main.cpp
+	The multiplication factor floating point precision is not exact on each computer. That causes minor discrepencies on PoB block hashes. Taking the hash an making it its compact discards those minor discrepencies and secures an equal PoB hash among  all nodes in the network. This is really not needed with the update that includes the burn intermediate hash.
+
+bool CTxDB::LoadBlockIndex() in db.cpp
+	There should be an exact hash comparison in the place where the Proof of Burn blocks are checked. The exact hash comparison would be pTestBlkIndex->burnHash == burnHashRet;
+
+//at block 15936 and above, when checking burn hash equality in
+// CBlock::CheckProofOfBurn, use the intermediate hash
+#define BURN_INTERMEDIATE_HEIGHT 15936
+
+inline bool use_burn_hash_intermediate(s32int nHeight)
+{
+  return nHeight >= BURN_INTERMEDIATE_HEIGHT ? true : false;
+} in main.h and all subsequent used places
+	This should have been done since block 0, but I did not think of that then, but I did now!

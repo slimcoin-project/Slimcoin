@@ -1,5 +1,5 @@
 # Copyright (c) 2009-2010 Satoshi Nakamoto
-# Copyright (c) 2012 The PPCoin developers
+# Copyright (c) 2012 The SLIMCoin developers
 # Distributed under the MIT/X11 software license, see the accompanying
 # file license.txt or http://www.opensource.org/licenses/mit-license.php.
 
@@ -9,9 +9,9 @@
 #
 # - Add/edit 'MAKE' environment variable with value '/c/MinGW32/bin/mingw32-make.exe'
 #
-# - Build openssl library version: 1.0.1b
+# - Build openssl library version: 1.0.1g
 #   download from  http://www.openssl.org/source/
-#   Extract to c:\openssl-1.0.1b-mgw
+#   Extract to c:\openssl-1.0.1g-mgw
 #   In MinGW MSYS:
 #     ./config
 #     make
@@ -52,10 +52,10 @@
 #     mkdir miniupnpc
 #     cp *.h miniupnpc/
 #
-# - Build ppcoind.exe
+# - Build slimcoind.exe
 #   in MinGW MSYS
-#     cd ppcoin/src
-#     make ppcoind.exe -f makefile.mingw USE_UPNP=1
+#     cd slimcoin/src
+#     make slimcoind.exe -f makefile.mingw USE_UPNP=1
 #
 #
 
@@ -64,12 +64,12 @@ USE_UPNP:=0
 INCLUDEPATHS= \
  -I"C:\boost-1.47.0-mgw" \
  -I"C:\db-4.8.30.NC-mgw\build_unix" \
- -I"C:\openssl-1.0.1b-mgw\include"
+ -I"C:\openssl-1.0.1g-mgw\include"
 
 LIBPATHS= \
  -L"C:\boost-1.47.0-mgw\stage\lib" \
  -L"C:\db-4.8.30.NC-mgw\build_unix" \
- -L"C:\openssl-1.0.1b-mgw"
+ -L"C:\openssl-1.0.1g-mgw"
 
 LIBS= \
  -l boost_system-mgw46-mt-s-1_47 \
@@ -82,7 +82,7 @@ LIBS= \
 
 DEFS=-DWIN32 -D_WINDOWS -DBOOST_THREAD_USE_LIB -DBOOST_SPIRIT_THREADSAFE
 DEBUGFLAGS=-g
-CFLAGS=-mthreads -O2 -w -Wno-invalid-offsetof -Wformat $(DEBUGFLAGS) $(DEFS) $(INCLUDEPATHS)
+CFLAGS= -static-libstdc++ -mthreads -O2 -w -Wno-invalid-offsetof -Wformat $(DEBUGFLAGS) $(DEFS) $(INCLUDEPATHS)
 
 TESTDEFS = -DTEST_DATA_DIR=$(abspath test/data)
 
@@ -122,12 +122,12 @@ OBJS= \
     obj/kernel.o
 
 
-all: ppcoind.exe
+all: slimcoind.exe
 
 obj/%.o: %.cpp $(HEADERS)
 	g++ -c $(CFLAGS) -o $@ $<
 
-ppcoind.exe: $(OBJS:obj/%=obj/%)
+slimcoind.exe: $(OBJS:obj/%=obj/%)
 	g++ $(CFLAGS) -o $@ $(LIBPATHS) $^ $(LIBS)
 
 TESTOBJS := $(patsubst test/%.cpp,obj-test/%.o,$(wildcard test/*.cpp))
@@ -139,7 +139,7 @@ test_bitcoin.exe: $(TESTOBJS) $(filter-out obj/init.o,$(OBJS:obj/%=obj/%))
 	g++ $(CFLAGS) -o $@ $(LIBPATHS) $^ -lboost_unit_test_framework $(LIBS)
 
 clean:
-	-del /Q ppcoind test_bitcoin
+	-del /Q slimcoind test_bitcoin
 	-del /Q obj\*
 	-del /Q obj-test\*
 	-del /Q build.h

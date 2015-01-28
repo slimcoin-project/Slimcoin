@@ -1,4 +1,4 @@
-#define BOOST_TEST_MODULE Bitcoin Test Suite
+#define BOOST_TEST_MODULE Slimcoin Test Suite
 #include <boost/test/unit_test.hpp>
 
 #include "main.h"

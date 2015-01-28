@@ -38,7 +38,7 @@ Designer: http://www.everaldo.com
 Icon Pack: Crystal SVG
 License: LGPL
 
-Icon: src/qt/res/icons/bitcoin.png, src/qt/res/icons/toolbar.png
+Icon: src/qt/res/icons/bitcoin.png, src/qt/res/icons/toolbar_peercoin.png
 Designer: Bitboy (optimized for 16x16 by Wladimir van der Laan)
 License: Public Domain
 Site: http://forum.bitcoin.org/?topic=1756.0
@@ -54,3 +54,7 @@ Designer: Crobbo (forum)
 Site: https://bitcointalk.org/index.php?topic=32273.0
 License: Public domain
 
+Icon: src/qt/res/icons/burn.png, src/qt/res/icons/slimcoin.*,
+      src/qt/res/icons/toolbar.png, tx_burn.png, tx_mintBurn.png
+Designer: P4Titan
+Licence: GNU/GPL
