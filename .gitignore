@@ -3,6 +3,8 @@ src/slimcoin
 src/slimcoind
 src/test_slimcoin
 src/build.h
+src/obj/*
+src/obj_test
 .*.swp
 *.*~*
 *.bak

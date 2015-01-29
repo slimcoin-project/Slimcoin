@@ -55,7 +55,7 @@ static CCriticalSection cs_nWalletUnlockTime;
 
 extern Value dumpprivkey(const Array& params, bool fHelp);
 extern Value importprivkey(const Array& params, bool fHelp);
-// extern Value importpassphrase(const Array& params, bool fHelp);
+extern Value importpassphrase(const Array& params, bool fHelp);
 
 Object JSONRPCError(int code, const string& message)
 {
@@ -3197,14 +3197,12 @@ Value repairwallet(const Array& params, bool fHelp)
     return result;
 }
 
-/* FIXME
 Value getsubsidy(const Array& params, bool fHelp)
 {
     static CBlock* pblock;
-    pblock = CreateNewBlock(pwalletMain);
+    pblock = CreateNewBlock(*pMiningKey, pwalletMain, false);
     return (boost::int64_t)GetProofOfWorkReward(pblock->nBits);
 }
-*/
 
 // ppcoin: make a public-private key pair
 Value makekeypair(const Array& params, bool fHelp)
@@ -3367,7 +3365,7 @@ static const CRPCCommand vRPCCommands[] =
     { "listsinceblock",           &listsinceblock,         false  },
     { "dumpprivkey",              &dumpprivkey,            false  },
     { "importprivkey",            &importprivkey,          false  },
- // { "importpassphrase",         &importpassphrase,       false  },
+    { "importpassphrase",         &importpassphrase,       false  },
     { "getrawtransaction",        &getrawtransaction,      false  },
     { "sendrawtransaction",       &sendrawtransaction,     false  },
     { "signrawtransaction",       &signrawtransaction,     false  },
@@ -3377,7 +3375,7 @@ static const CRPCCommand vRPCCommands[] =
     { "repairwallet",             &repairwallet,           false  },
     { "makekeypair",              &makekeypair,            false  },
     { "sendalert",                &sendalert,              false  },
- // { "getsubsidy",               &getsubsidy,             false  },
+    { "getsubsidy",               &getsubsidy,             false  },
 };
 
 CRPCTable::CRPCTable()

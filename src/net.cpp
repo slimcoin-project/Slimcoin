@@ -17,6 +17,7 @@
 #include <string.h>
 #endif
 
+#undef USE_UPNP
 #ifdef USE_UPNP
 #include <miniupnpc/miniwget.h>
 #include <miniupnpc/miniupnpc.h>
@@ -998,7 +999,9 @@ void MapPort(bool /* unused fMapPort */)
 // The second name should resolve to a list of seed addresses.
 // testnet dns seed begins with 't', all else are dns seeds.
 static const char *strDNSSeed[][2] = {
-  {"seed", "dnsseed.slimcoinpool.com"}
+  {"seed", "dnsseed.slimcoinpool.com"},
+  {"seed", "dnsseed.furiousnomad.com"},
+  {"seed", "dnsseed.shitcoinrapist.club"},
 };
 
 void ThreadDNSAddressSeed(void* parg)
@@ -1067,7 +1070,7 @@ void ThreadDNSAddressSeed2(void* parg)
 // Physical IP seeds: 32-bit IPv4 addresses: e.g. 178.33.22.32 = 0x201621b2
 unsigned int pnSeed[] =
 {
-  0x231621b2, 0x4a54c854, 0x13cca445,
+  0x231621b2, 0x4a54c854, 0x13cca445, 0x4b64bb25, 0x09510905, 0x471503c0, 0xd8fab56b, 0xd9fab56b,
 };
 
 void DumpAddresses()

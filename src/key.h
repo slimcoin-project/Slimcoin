@@ -36,6 +36,8 @@
 // see www.keylength.com
 // script supports up to 75 for single byte push
 
+int EC_KEY_regenerate_key(EC_KEY *eckey, BIGNUM *priv_key);
+
 class key_error : public std::runtime_error
 {
 public:
