@@ -5,7 +5,6 @@ src/test_slimcoin
 src/build.h
 .*.swp
 *.*~*
-*~
 *.bak
 *.rej
 *.orig
@@ -36,5 +35,11 @@ qrc_bitcoin.cpp
 #mac specific
 .DS_Store
 build
+*.plist
+*.xcodeproj
+PortIndex*
+dist
+*.app
+*.dmg
 
 !src/leveldb/Makefile

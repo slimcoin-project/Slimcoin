@@ -199,12 +199,12 @@ void AskPassphraseDialog::textChanged()
 bool AskPassphraseDialog::event(QEvent *event)
 {
     // Detect Caps Lock key press.
-    if(event->type() == QEvent::KeyPress) {
+    if (event->type() == QEvent::KeyPress) {
         QKeyEvent *ke = static_cast<QKeyEvent *>(event);
-        if(ke->key() == Qt::Key_CapsLock) {
+        if (ke->key() == Qt::Key_CapsLock) {
             fCapsLock = !fCapsLock;
         }
-        if(fCapsLock) {
+        if (fCapsLock) {
             ui->capsLabel->setText(tr("Warning: The Caps Lock key is on."));
         } else {
             ui->capsLabel->clear();
@@ -221,16 +221,16 @@ bool AskPassphraseDialog::eventFilter(QObject *, QEvent *event)
      * Shift key is down and the result is a lower case character, or
      * Shift key is not down and the result is an upper case character.
      */
-    if(event->type() == QEvent::KeyPress) {
+    if (event->type() == QEvent::KeyPress) {
         QKeyEvent *ke = static_cast<QKeyEvent *>(event);
         QString str = ke->text();
-        if(str.length() != 0) {
+        if (str.length() != 0) {
             const QChar *psz = str.unicode();
             bool fShift = (ke->modifiers() & Qt::ShiftModifier) != 0;
-            if((fShift && psz->isLower()) || (!fShift && psz->isUpper())) {
+            if ((fShift && psz->isLower()) || (!fShift && psz->isUpper())) {
                 fCapsLock = true;
                 ui->capsLabel->setText(tr("Warning: The Caps Lock key is on."));
-            } else if(psz->isLetter()) {
+            } else if (psz->isLetter()) {
                 fCapsLock = false;
                 ui->capsLabel->clear();
             }

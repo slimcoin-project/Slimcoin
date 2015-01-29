@@ -11,6 +11,8 @@
 #include <string>
 #include <map>
 
+class CReserveKey;
+
 #include "json/json_spirit_reader_template.h"
 #include "json/json_spirit_writer_template.h"
 #include "json/json_spirit_utils.h"
@@ -91,11 +93,14 @@ typedef json_spirit::Value(*rpcfn_type)(const json_spirit::Array& params, bool f
 class CRPCCommand
 {
 public:
-  std::string name;
-  rpcfn_type actor;
-  bool okSafeMode;
+    std::string name;
+    rpcfn_type actor;
+    bool okSafeMode;
 };
 
+/**
+ * Bitcoin RPC command dispatcher.
+ */
 class CRPCTable
 {
 private:
@@ -113,10 +118,10 @@ public:
      * @throws an exception (json_spirit::Value) when an error happens.
      */
     json_spirit::Value execute(const std::string &method, const json_spirit::Array &params) const;
-
 };
 
 extern const CRPCTable tableRPC;
+extern CReserveKey* pMiningKey;
 
 //Gets the balance of the total amount of burned coins, the effective amount of burned coins
 // and the immature amount of burned coins and packages every burn transaction into an Array
