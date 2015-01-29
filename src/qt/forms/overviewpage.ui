@@ -225,7 +225,7 @@
         <set>Qt::AlignCenter</set>
        </property>
        <property name="margin">
-        <number>50</number>
+        <number>5</number>
        </property>
       </widget>
      </item>
