@@ -361,8 +361,21 @@ macx:ICON = src/qt/res/icons/slimcoin.icns
 macx:TARGET = "Slimcoin-Qt"
 
 # Set libraries and includes at end, to use platform-defined defaults if not overridden
-INCLUDEPATH += $$BOOST_INCLUDE_PATH $$BDB_INCLUDE_PATH $$OPENSSL_INCLUDE_PATH $$QRENCODE_INCLUDE_PATH
-LIBS += $$join(BOOST_LIB_PATH,,-L,) $$join(BDB_LIB_PATH,,-L,) $$join(OPENSSL_LIB_PATH,,-L,) $$join(QRENCODE_LIB_PATH,,-L,)
+INCLUDEPATH += $$BOOST_INCLUDE_PATH \
+	$$BDB_INCLUDE_PATH \
+	$$OPENSSL_INCLUDE_PATH \
+	$$QRENCODE_INCLUDE_PATH \
+	$$SLIMCOIN_SRC_PATH \
+	$$SLIMCOIN_SRC_PATH/qt \
+	$$QT_INCLUDE_PATH \
+	$$QT_INCLUDE_PATH/QtGui
+
+LIBS += \
+	$$join(LIB_PATH,,-L,) \
+	$$join(BOOST_LIB_PATH,,-L,) \
+	$$join(BDB_LIB_PATH,,-L,) \
+	$$join(OPENSSL_LIB_PATH,,-L,) \
+	$$join(QRENCODE_LIB_PATH,,-L,)
 LIBS += -lssl -lcrypto -ldb_cxx$$BDB_LIB_SUFFIX
 # -lgdi32 has to happen after -lcrypto (see  #681)
 windows:LIBS += -lole32 -luuid -lgdi32 -lwsock32
@@ -379,7 +392,10 @@ greaterThan(QT_MAJOR_VERSION, 4): QT += widgets
 QMAKE_CXXFLAGS *= -D_FORTIFY_SOURCE=2 -static -static-libgcc -static-libstdc++
 # for extra security on Windows: enable ASLR and DEP via GCC linker flags
 windows:QMAKE_LFLAGS *= -D_FORTIFY_SOURCE=2 -static -static-libgcc -static-libstdc++
-windows:QMAKE_LFLAGS *= -Wl,--dynamicbase -Wl,--nxcompat,--large-address-aware
+windows:QMAKE_LFLAGS *= -Wl,--dynamicbase -Wl,--nxcompat
+
 # on Windows: enable GCC large address aware linker flag
-windows:QMAKE_LFLAGS *= -Wl,--large-address-aware
+# hack: when compiling 64-bit, pass 64BIT=1 to qmake to avoid incompatible large-address flag
+windows:!contains(64BIT, 1) QMAKE_LFLAGS *= -Wl,--large-address-aware
+
 system($$QMAKE_LRELEASE -silent $$_PRO_FILE_)

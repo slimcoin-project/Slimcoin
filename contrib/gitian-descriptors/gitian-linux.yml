@@ -1,7 +1,7 @@
 ---
-name: "bitcoin"
+name: "slimcoion"
 suites:
-- "lucid"
+- "precise"
 architectures:
 - "i386"
 - "amd64"
@@ -21,21 +21,30 @@ packages:
 - "zlib1g-dev"
 reference_datetime: "2013-06-01 00:00:00"
 remotes:
-- "url": "https://github.com/slimcoin/slimcoin.git"
+- "url": "/home/tim/slimcoin"
   "dir": "slimcoin"
 files:
 - "slimcoin-deps-linux32-gitian-r5.zip"
 - "slimcoin-deps-linux64-gitian-r5.zip"
-- "boost-linux32-1.47.0-gitian-r1.zip"
-- "boost-linux64-1.47.0-gitian-r1.zip"
+- "boost-linux32-1.57.0-gitian-r1.zip"
+- "boost-linux64-1.57.0-gitian-r1.zip"
 script: |
+  # Verify hashes of inputs
+  echo "f6907d4e35b4974afcfafc8ec6e95bf9e789b9c5949eb8cbdc45f0a5e93974cb  boost-linux32-1.57.0-gitian-r1.zip" | sha256sum -c
+  echo "5e94b6913b01a22f75837375f3184af4900b0e4d67fe2089f8b9e9918541356c  boost-linux64-1.57.0-gitian-r1.zip" | sha256sum -c
+  echo "933e9566af886446247ab38304190ede7984ae835aaa39463ad0d348708b9ab4  slimcoin-deps-linux32-gitian-r5.zip"| sha256sum -c
+  echo "8392438b880ba811f1e259d754d6a25f63481162f1afddf0f7f6b739d076495f  slimcoin-deps-linux64-gitian-r5.zip"| sha256sum -c
+
+  BOOSTVER=1.57.0
+  BOOST_VER=1_57_0
+
   BINDIR="${OUTDIR}/bin/${GBUILD_BITS}" # 32/64 bit build specific output directory
   mkdir -p ${BINDIR}
   #
-  mkdir boost_1_47_0
-  cd boost_1_47_0
+  mkdir boost_${BOOST_VER}
+  cd boost_${BOOST_VER}
   #mkdir -p stage/lib
-  unzip ../boost-linux${GBUILD_BITS}-1.47.0-gitian-r1.zip
+  unzip ../boost-linux${GBUILD_BITS}-${BOOSTVER}-gitian-r1.zip
   mv include/boost .
   cd ..
   #
@@ -54,7 +63,24 @@ script: |
   export FAKETIME=$REFERENCE_DATETIME
   export TZ=UTC
 
-  qmake MINIUPNPC_LIB_PATH=$HOME/build/miniupnpc MINIUPNPC_INCLUDE_PATH=$DEPS_INCLUDE_DIR BDB_LIB_PATH=$DEPS_LIB_DIR BDB_INCLUDE_PATH=$DEPS_INCLUDE_DIR BOOST_LIB_PATH=$HOME/build/boost_1_47_0/lib BOOST_LIB_SUFFIX=-mt BOOST_INCLUDE_PATH=$HOME/build/boost_1_47_0 OPENSSL_LIB_PATH=$DEPS_LIB_DIR OPENSSL_INCLUDE_PATH=$DEPS_INCLUDE_DIR QRENCODE_LIB_PATH=$DEPS_LIB_DIR QRENCODE_INCLUDE_PATH=$DEPS_INCLUDE_DIR USE_QRCODE=1 RELEASE=1 INCLUDEPATH=$HOME/build DEFINES=BOOST_THREAD_USE_LIB BITCOIN_NEED_QT_PLUGINS=0 QMAKE_LRELEASE=lrelease QMAKE_CXXFLAGS=-frandom-seed=slimcoin QMAKE_LFLAGS=-frandom-seed=slimcoin USE_BUILD_INFO=1
+  qmake \
+    SLIMCOIN_SRC_PATH=$HOME/build/slimcoin/src \
+    MINIUPNPC_LIB_PATH=$HOME/build/miniupnpc \
+    MINIUPNPC_INCLUDE_PATH=$DEPS_INCLUDE_DIR \
+    BDB_LIB_PATH=$DEPS_LIB_DIR \
+    BDB_INCLUDE_PATH=$DEPS_INCLUDE_DIR \
+    BOOST_LIB_PATH=$HOME/build/boost_${BOOST_VER}/lib \
+    BOOST_INCLUDE_PATH=$HOME/build/boost_${BOOST_VER} \
+    BOOST_LIB_SUFFIX=-mt \
+    OPENSSL_LIB_PATH=$DEPS_LIB_DIR \
+    OPENSSL_INCLUDE_PATH=$DEPS_INCLUDE_DIR \
+    QRENCODE_LIB_PATH=$DEPS_LIB_DIR \
+    QRENCODE_INCLUDE_PATH=$DEPS_INCLUDE_DIR \
+    USE_QRCODE=1 RELEASE=1 \
+    INCLUDEPATH=$HOME/build \
+    DEFINES=BOOST_THREAD_USE_LIB BITCOIN_NEED_QT_PLUGINS=0 \
+    QMAKE_LRELEASE=lrelease QMAKE_CXXFLAGS=-frandom-seed=slimcoin \
+    QMAKE_LFLAGS=-frandom-seed=slimcoin USE_BUILD_INFO=1
   make $MAKEOPTS
   cp slimcoin-qt $BINDIR/
   #
@@ -62,6 +88,17 @@ script: |
   export LD_PRELOAD=/usr/lib/faketime/libfaketime.so.1
   export FAKETIME=$REFERENCE_DATETIME
   export TZ=UTC
-  make -f makefile.unix $MAKEOPTS STATIC=1 DEPSDIR=$HOME/build slimcoind USE_UPNP=1 DEBUGFLAGS="-frandom-seed=slimcoin" MINIUPNPC_LIB_PATH=$HOME/build/miniupnpc MINIUPNPC_INCLUDE_PATH=$DEPS_INCLUDE_DIR BDB_LIB_PATH=$DEPS_LIB_DIR BDB_INCLUDE_PATH=$DEPS_INCLUDE_DIR BOOST_LIB_PATH=$HOME/build/boost_1_47_0/lib BOOST_LIB_SUFFIX=-mt BOOST_INCLUDE_PATH=$HOME/build/boost_1_47_0 OPENSSL_LIB_PATH=$DEPS_LIB_DIR OPENSSL_INCLUDE_PATH=$DEPS_INCLUDE_DIR
+  make -f makefile.unix $MAKEOPTS STATIC=1 slimcoind \
+    DEPSDIR=$HOME/build \
+    USE_UPNP=1 DEBUGFLAGS="-frandom-seed=slimcoin" \
+    MINIUPNPC_LIB_PATH=$HOME/build/miniupnpc \
+    MINIUPNPC_INCLUDE_PATH=$DEPS_INCLUDE_DIR \
+    BDB_LIB_PATH=$DEPS_LIB_DIR \
+    BDB_INCLUDE_PATH=$DEPS_INCLUDE_DIR \
+    BOOST_LIB_PATH=$HOME/build/boost_${BOOST_VER}/lib \
+    BOOST_INCLUDE_PATH=$HOME/build/boost_${BOOST_VER} \
+    BOOST_LIB_SUFFIX=-mt \
+    OPENSSL_LIB_PATH=$DEPS_LIB_DIR \
+    OPENSSL_INCLUDE_PATH=$DEPS_INCLUDE_DIR
   strip slimcoind
   cp slimcoind $BINDIR

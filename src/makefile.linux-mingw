@@ -2,21 +2,32 @@
 # Distributed under the MIT/X11 software license, see the accompanying
 # file license.txt or http://www.opensource.org/licenses/mit-license.php.
 
-DEPSDIR:=/usr/i586-mingw32msvc/src
+# Changing to be in line with the Gitian build locations
+ifndef DEPSDIR
+  DEPSDIR=$(HOME)/staging
+endif
+
+ifndef HOST
+  HOST=i586-mingw32msvc
+endif
+
+GPP=$(HOST)-g++
+
 
 USE_UPNP:=0
 
 INCLUDEPATHS= \
- -I"$(DEPSDIR)/boost_1_47_0" \
- -I"$(DEPSDIR)/db-4.8.30.NC/build_unix" \
- -I"$(DEPSDIR)/openssl-1.0.1g/include" \
- -I"$(DEPSDIR)" \
- -I"$(CURDIR)"/obj \
+ -I"$(DEPSDIR)/include" \
+ -I"$(DEPSDIR)/include/boost" \
+ -I"$(DEPSDIR)/include/libpng16" \
+ -I"$(DEPSDIR)/include/miniupnpc" \
+ -I"$(DEPSDIR)/include/openssl" \
+ -I"obj"  # required to find 'build.h'
 
-LIBPATHS= \
- -L"$(DEPSDIR)/boost_1_47_0/stage/lib" \
- -L"$(DEPSDIR)/db-4.8.30.NC/build_unix" \
- -L"$(DEPSDIR)/openssl-1.0.1g"
+LIBPATHS= -L"$(DEPSDIR)/lib"
+# -L"$(DEPSDIR)/boost_1_47_0/stage/lib" \
+# -L"$(DEPSDIR)/db-4.8.30.NC/build_unix" \
+# -L"$(DEPSDIR)/openssl-1.0.1g"
 
 LIBS= \
  -l boost_system-mt-s \
@@ -78,18 +89,18 @@ version.cpp: obj/build.h
 DEFS += -DHAVE_BUILD_INFO
 
 obj/%.o: %.cpp $(HEADERS)
-	i586-mingw32msvc-g++ -c $(CFLAGS) -o $@ $<
+	$(GPP) -c $(CFLAGS) -o $@ $<
 
 slimcoind.exe: $(OBJS:obj/%=obj/%)
-	i586-mingw32msvc-g++ $(CFLAGS) -o $@ $(LIBPATHS) $^ $(LIBS)
+	$(GPP) $(CFLAGS) -o $@ $(LIBPATHS) $^ $(LIBS)
 
 TESTOBJS := $(patsubst test/%.cpp,obj-test/%.o,$(wildcard test/*.cpp))
 
 obj-test/%.o: test/%.cpp $(HEADERS)
-	i586-mingw32msvc-g++ -c $(TESTDEFS) $(CFLAGS) -o $@ $<
+	$(GPP) -c $(TESTDEFS) $(CFLAGS) -o $@ $<
 
 test_slimcoin.exe: $(TESTOBJS) $(filter-out obj/init.o,$(OBJS:obj/%=obj/%))
-	i586-mingw32msvc-g++ $(CFLAGS) -o $@ $(LIBPATHS) $^ -lboost_unit_test_framework $(LIBS)
+	$(GPP) $(CFLAGS) -o $@ $(LIBPATHS) $^ -lboost_unit_test_framework $(LIBS)
 
 
 clean:
@@ -97,6 +108,6 @@ clean:
 	-rm -f slimcoind.exe
 	-rm -f obj-test/*.o
 	-rm -f test_bitcoin.exe
-	-rm -f src/build.h
+	-rm -f obj/build.h
 
 FORCE:

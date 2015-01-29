@@ -97,7 +97,7 @@ Value importpassphrase(const Array& params, bool fHelp)
   obj.push_back(Pair("Address",       vchAddress.ToString()  ));
   obj.push_back(Pair("Hash",          pass.GetHex()));
   obj.push_back(Pair("Phrase",        strSecret));
-  obj.push_back(Pair("Length",        strSecret.length()));
+  obj.push_back(Pair("Length",   (int)strSecret.length()));
   return obj;
   // return Value::null;
 }
