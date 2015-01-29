@@ -866,7 +866,7 @@ boost::filesystem::path GetDefaultDataDir()
     if (pszHome == NULL || strlen(pszHome) == 0)
         pathRet = fs::path("/");
     else
-    p    athRet = fs::path(pszHome);
+        pathRet = fs::path(pszHome);
 #ifdef MAC_OSX
     // Mac
     pathRet /= "Library/Application Support";
@@ -954,7 +954,7 @@ boost::filesystem::path GetPidFile()
 {
     namespace fs = boost::filesystem;
 
-    fs::path pathPidFile(GetArg("-pid", "ppcoind.pid"));
+    fs::path pathPidFile(GetArg("-pid", "slimcoind.pid"));
     if (!pathPidFile.is_complete()) pathPidFile = GetDataDir() / pathPidFile;
     return pathPidFile;
 }

@@ -944,9 +944,9 @@ bool CBlock::ReadFromDisk(const CBlockIndex* pindex, bool fReadTransactions, boo
         *this = pindex->GetBlockHeader();
         return true;
     }
-    if (!ReadFromDisk(pindex->nFile, pindex->nBlockPos, fReadTransactions))
+    if (!ReadFromDisk(pindex->nFile, pindex->nBlockPos, fReadTransactions, fCheckValidity))
         return false;
-    if (GetHash() != pindex->GetBlockHash())
+    if (fCheckValidity && GetHash() != pindex->GetBlockHash())
         return error("CBlock::ReadFromDisk() : GetHash() doesn't match index");
     return true;
 }
@@ -1037,7 +1037,7 @@ int64 GetProofOfWorkReward(u32int nBits, bool fProofOfBurn)
             bnLowerBound = bnMidValue;
     }
 
-    int64 nSubsidy = bnUpperBound.getuint64();
+    nSubsidy = bnUpperBound.getuint64();
     nSubsidy = (nSubsidy / CENT) * CENT;
 
     if (fDebug && GetBoolArg("-printcreation"))
@@ -1048,7 +1048,7 @@ int64 GetProofOfWorkReward(u32int nBits, bool fProofOfBurn)
 }
 
 // ppcoin: miner's coin stake is rewarded based on coin age spent (coin-days)
-int64 GetProofOfStakeReward(int64 nCoinAge)
+int64 GetProofOfStakeReward(int64 nCoinAge, u32int nTime)
 {
     // FIXME static int64 nRewardCoinYear = CENT;  // creation amount per coin-year
     int64 nRewardCoinYear = nTime > POB_POS_TARGET_SWITCH_TIME ? (10 * CENT) : CENT;  // creation amount per coin-year
@@ -1162,8 +1162,8 @@ static u32int GetNextTargetRequired(const CBlockIndex *pindexLast, bool fProofOf
 
     int64 nActualSpacing = pindexPrev->GetBlockTime() - pindexPrevPrev->GetBlockTime();
 
-    // slimcoin: target change every block
-    // slimcoin: retarget with exponential moving toward target spacing
+    // ppcoin: target change every block
+    // ppcoin: retarget with exponential moving toward target spacing
 
     //use the last block's target as a seed
     CBigNum bnNew;
@@ -1650,7 +1650,7 @@ bool CTransaction::ConnectInputs(CTxDB& txdb, MapPrevTx inputs,
             if (!GetCoinAge(txdb, nCoinAge))
                 return error("ConnectInputs() : %s unable to get coin age for coinstake", GetHash().ToString().substr(0,10).c_str());
             int64 nStakeReward = GetValueOut() - nValueIn;
-            if (nStakeReward > GetProofOfStakeReward(nCoinAge) - GetMinFee() + MIN_TX_FEE)
+            if (nStakeReward > GetProofOfStakeReward(nCoinAge, nTime) - GetMinFee() + MIN_TX_FEE)
                 return DoS(100, error("ConnectInputs() : %s stake reward exceeded", GetHash().ToString().substr(0,10).c_str()));
         }
         else
@@ -2295,29 +2295,24 @@ bool CBlock::CheckBlock() const
     if (IsProofOfStake() && !CheckCoinStakeTimestamp(GetBlockTime(), (int64)vtx[1].nTime))
         return DoS(50, error("CheckBlock() : coinstake timestamp violation nTimeBlock=%u nTimeTx=%u", GetBlockTime(), vtx[1].nTime));
 
-    // Check coinbase reward    
+    // Check coinbase reward
     if (IsProofOfWork())
     {
         int64 blockReward = GetProofOfWorkReward(nBits);
         if (vtx[0].GetValueOut() > blockReward - vtx[0].GetMinFee() + MIN_TX_FEE)
-            return DoS(50, error("CheckBlock() : coinbase reward exceeded %s > %s", 
-                                                     FormatMoney(vtx[0].GetValueOut()).c_str(),
-                                                     FormatMoney(blockReward).c_str()));      
+            return DoS(50, error("CheckBlock() : coinbase reward exceeded %s > %s", FormatMoney(vtx[0].GetValueOut()).c_str(), FormatMoney(blockReward).c_str()));      
     }
     else if (IsProofOfBurn())
     {
         int64 blockReward = GetProofOfBurnReward(nBurnBits);
         if (vtx[0].GetValueOut() > blockReward - vtx[0].GetMinFee() + MIN_TX_FEE)
-            return DoS(50, error("CheckBlock() : coinbase reward exceeded %s > %s", 
-                                                     FormatMoney(vtx[0].GetValueOut()).c_str(),
-                                                     FormatMoney(blockReward).c_str()));      
+            return DoS(50, error("CheckBlock() : coinbase reward exceeded %s > %s", FormatMoney(vtx[0].GetValueOut()).c_str(), FormatMoney(blockReward).c_str()));      
     }
     else
-    { //proof-of-stake
+    { 
+        //proof-of-stake
         if (vtx[0].GetValueOut() > 0)
-            return DoS(50, error("CheckBlock() : coinbase reward exceeded %s > %s", 
-                                                     FormatMoney(vtx[0].GetValueOut()).c_str(),
-                                                     FormatMoney(0).c_str()));  
+            return DoS(50, error("CheckBlock() : coinbase reward exceeded %s > %s", FormatMoney(vtx[0].GetValueOut()).c_str(), FormatMoney(0).c_str()));  
     }
 
     // Check transactions
@@ -2391,8 +2386,7 @@ bool CBlock::AcceptBlock()
         return DoS(100, error("AcceptBlock() : incorrect proof-of-burn nBurnBits"));
 
     // Check timestamp against prev
-    if (GetBlockTime() <= pindexPrev->GetMedianTimePast() || 
-         GetBlockTime() + nMaxClockDrift < pindexPrev->GetBlockTime())
+    if (GetBlockTime() <= pindexPrev->GetMedianTimePast() || GetBlockTime() + nMaxClockDrift < pindexPrev->GetBlockTime())
         return error("AcceptBlock() : block's timestamp is too early");
 
     // Check that all transactions are finalized
@@ -2537,19 +2531,15 @@ bool ProcessBlock(CNode* pfrom, CBlock *pblock)
     // Check for duplicate
     uint256 hash = pblock->GetHash();
     if (mapBlockIndex.count(hash))
-        return error("ProcessBlock() : already have block %d %s", 
-                                 mapBlockIndex[hash]->nHeight, hash.ToString().substr(0, 20).c_str());
+        return error("ProcessBlock() : already have block %d %s", mapBlockIndex[hash]->nHeight, hash.ToString().substr(0,20).c_str());
     if (mapOrphanBlocks.count(hash))
         return error("ProcessBlock() : already have block (orphan) %s", hash.ToString().substr(0, 20).c_str());
 
-    // slimcoin: check proof-of-stake
+    // ppcoin: check proof-of-stake
     // Limited duplicity on stake: prevents block flood attack
     // Duplicate stake allowed only when there is an orphan child block
-    if (pblock->IsProofOfStake() && setStakeSeen.count(pblock->GetProofOfStake()) && 
-         !mapOrphanBlocksByPrev.count(hash) && !Checkpoints::WantedByPendingSyncCheckpoint(hash))
-        return error("ProcessBlock() : duplicate proof-of-stake (%s, %d) for block %s", 
-                                 pblock->GetProofOfStake().first.ToString().c_str(), pblock->GetProofOfStake().second, 
-                                 hash.ToString().c_str());
+    if (pblock->IsProofOfStake() && setStakeSeen.count(pblock->GetProofOfStake()) && !mapOrphanBlocksByPrev.count(hash) && !Checkpoints::WantedByPendingSyncCheckpoint(hash))
+        return error("ProcessBlock() : duplicate proof-of-stake (%s, %d) for block %s", pblock->GetProofOfStake().first.ToString().c_str(), pblock->GetProofOfStake().second, hash.ToString().c_str());
     // ppcoin: check proof-of-burn
     // Limited duplicity of burn blocks: prevents block flood attack
     // Duplicate burn block allowed only when there is an orphan child block
@@ -2648,9 +2638,7 @@ bool ProcessBlock(CNode* pfrom, CBlock *pblock)
             // Duplicate stake allowed only when there is orphan child block
             if (setStakeSeenOrphan.count(pblock2->GetProofOfStake()) && !mapOrphanBlocksByPrev.count(hash) && !Checkpoints::WantedByPendingSyncCheckpoint(hash))
             {
-                error("ProcessBlock() : duplicate proof-of-stake (%s, %d) for orphan block %s", 
-                            pblock2->GetProofOfStake().first.ToString().c_str(), 
-                            pblock2->GetProofOfStake().second, hash.ToString().c_str());
+                error("ProcessBlock() : duplicate proof-of-stake (%s, %d) for orphan block %s", pblock2->GetProofOfStake().first.ToString().c_str(), pblock2->GetProofOfStake().second, hash.ToString().c_str());
                 delete pblock2;
                 return false;
             }
@@ -2701,13 +2689,12 @@ bool ProcessBlock(CNode* pfrom, CBlock *pblock)
     {
         uint256 hashPrev = vWorkQueue[i];
 
-        // FIXME for (multimap<uint256, CBlockOrphan>::iterator mi = mapOrphanBlocksByPrev.lower_bound(hashPrev);
-        for (multimap<uint256, CBlock*>::iterator mi = mapOrphanBlocksByPrev.lower_bound(hashPrev);
+        for (multimap<uint256, CBlockOrphan>::iterator mi = mapOrphanBlocksByPrev.lower_bound(hashPrev);
              mi != mapOrphanBlocksByPrev.upper_bound(hashPrev);
              ++mi)
         {
             uint256 pblockOrphanHash = (*mi).second.hashBlock;
-            CBlock* pblockOrphan = (*mi).second;
+            CBlock* pblockOrphan = (*mi).second.pblock;
             if (pblockOrphan->AcceptBlock())
                 vWorkQueue.push_back(pblockOrphan->GetHash());
             mapOrphanBlocks.erase(pblockOrphan->GetHash());
@@ -2778,6 +2765,7 @@ bool CBlock::CheckBlockSignature() const
     return false;
 }
 
+/* FIXME - overrides CBlock method declared in main.h */
 // ppcoin: entropy bit for stake modifier if chosen by modifier
 unsigned int CBlock::GetStakeEntropyBit() const
 {
@@ -2797,7 +2785,8 @@ unsigned int CBlock::GetStakeEntropyBit() const
         hashSig >>= 159; // take the first bit of the hash
         nEntropyBit = hashSig.Get64();
         if (fDebug && GetBoolArg("-printstakemodifier"))
-            printf(" entropybit=%d\n", nEntropyBit);
+            // printf(" entropybit=%d\n", nEntropyBit);
+            printf("GetStakeEntropyBit(v0.4+): nTime=%u hashBlock=%s entropybit=%d\n", nTime, GetHash().ToString().c_str(), nEntropyBit);
     }
     return nEntropyBit;
 }
@@ -2921,11 +2910,9 @@ bool LoadBlockIndex(bool fAllowNew)
     }
 
     printf("%s Network: \n\tgenesis=0x%s \n\tnBitsLimit=0x%08x \n\tnBitsInitial=0x%08x\n", 
-                 fTestNet ? "Test" : "Slimcoin", hashGenesisBlock.ToString().substr(0, 20).c_str(),
-                 bnProofOfWorkLimit.GetCompact(), bnInitialHashTarget.GetCompact());
+           fTestNet? "Test" : "Slimcoin", hashGenesisBlock.ToString().substr(0, 20).c_str(),bnProofOfWorkLimit.GetCompact(), bnInitialHashTarget.GetCompact());
 
-    printf("\tnStakeMinAge=%d \n\tnCoinbaseMaturity=%d \n\tnModifierInterval=%d\n\n",
-                 nStakeMinAge, nCoinbaseMaturity, nModifierInterval);
+    printf("\tnStakeMinAge=%d \n\tnCoinbaseMaturity=%d \n\tnModifierInterval=%d\n\n", nStakeMinAge, nCoinbaseMaturity, nModifierInterval);
 
     //
     // Load block index
@@ -2978,7 +2965,7 @@ bool LoadBlockIndex(bool fAllowNew)
         else
             assert(block.hashMerkleRoot == uint256("0xbae3867d5e5d35c321adaf9610b9e4147a855f9ad319fdcf70913083d783753f"));
 
-        block.print();
+        block.print(block.GetHash());
 
 ////////////////////////////////////////////////////////////////////////////////
 ////////////////////////////////////////////////////////////////////////////////
@@ -3045,6 +3032,15 @@ bool LoadBlockIndex(bool fAllowNew)
         // ppcoin: initialize synchronized checkpoint
         if (!Checkpoints::WriteSyncCheckpoint(hashGenesisBlock))
             return error("LoadBlockIndex() : failed to init sync checkpoint");
+
+        // ppcoin: upgrade time set to zero if txdb initialized
+        {
+            CTxDB txdb;
+            if (!txdb.WriteV04UpgradeTime(0))
+                return error("LoadBlockIndex() : failed to init upgrade info");
+            printf(" Upgrade Info: v0.4+ txdb initialization\n");
+            txdb.Close();
+        }
     }
 
     // ppcoin: if checkpoint master key changed must reset sync-checkpoint
@@ -3134,7 +3130,7 @@ void PrintBlockTree()
 
         // print item
         CBlock block;
-        block.ReadFromDisk(pindex);
+        block.ReadFromDisk(pindex, true, false);
         printf("%d (%u,%u) %s  %08lx  %s  mint %7s  tx %d",
             pindex->nHeight,
             pindex->nFile,
@@ -3468,6 +3464,11 @@ bool static ProcessMessage(CNode* pfrom, string strCommand, CDataStream& vRecv)
                 Checkpoints::checkpointMessage.RelayTo(pfrom);
         }
 
+        if (pfrom->nStartingHeight == 15164) {
+            pfrom->fDisconnect = true;
+            printf("Obsolete client stuck at block 15164, disconnecting.");
+            return false;
+        }
         pfrom->fSuccessfullyConnected = true;
 
         printf("version message: version %d, blocks=%d\n", pfrom->nVersion, pfrom->nStartingHeight);
@@ -3636,7 +3637,7 @@ bool static ProcessMessage(CNode* pfrom, string strCommand, CDataStream& vRecv)
                     printf("\tnHeight: %d\t", mi->second->nHeight);
 
                     CBlock block;
-                    block.ReadFromDisk((*mi).second);
+                    block.ReadFromDisk((*mi).second, true, false);
                     pfrom->PushMessage("block", block);
 
                     // Trigger them to send a getblocks request for the next batch of inventory
@@ -3688,6 +3689,11 @@ bool static ProcessMessage(CNode* pfrom, string strCommand, CDataStream& vRecv)
         int nLimit = 500 + locator.GetDistanceBack();
         unsigned int nBytes = 0;
         printf("getblocks %d to %s limit %d\n", (pindex ? pindex->nHeight : -1), hashStop.ToString().substr(0,20).c_str(), nLimit);
+        if (pindex) 
+            if (pindex->nHeight < 60000) {
+                pfrom->Misbehaving(1);	
+                printf("  likely old client, incrementing misbehaviour count.");
+            }
         for (; pindex; pindex = pindex->pnext)
         {
             if (pindex->GetBlockHash() == hashStop)
@@ -4702,11 +4708,11 @@ int64 nLastCoinStakeSearchInterval = 0;
 // CreateNewBlock:
 //   fProofOfStake: try (best effort) to make a proof-of-stake block
 //   burnWalletTx is the walletTx for a burn transaction that when hashed, produces a valid hash <= burn target
-CBlock* CreateNewBlock(CReserveKey& resKey, CWallet* pwallet, bool fProofOfStake, const CWalletTx *burnWalletTx)
+CBlock* CreateNewBlock(CReserveKey& reservekey, CWallet* pwallet, bool fProofOfStake, const CWalletTx *burnWalletTx)
 {
     //if resKey exists, use it, else make a temporary reservekey
-    CReserveKey tmpResKey(pwallet);
-    CReserveKey *reservekey = resKey ? resKey : &tmpResKey;
+    // CReserveKey tmpResKey(pwallet);
+    // CReserveKey *reservekey = resKey ? resKey : &tmpResKey;
 
     // Create new block
     auto_ptr<CBlock> pblock(new CBlock());
@@ -4760,7 +4766,7 @@ CBlock* CreateNewBlock(CReserveKey& resKey, CWallet* pwallet, bool fProofOfStake
         txNew.vout[0].scriptPubKey << vSolutions[0];
     }
     else
-        txNew.vout[0].scriptPubKey << reservekey->GetReservedKey();
+        txNew.vout[0].scriptPubKey << reservekey.GetReservedKey();
 
     txNew.vout[0].scriptPubKey << OP_CHECKSIG;
 
@@ -5211,7 +5217,7 @@ void SlimCoinMiner(CWallet *pwallet, bool fProofOfStake)
             unsigned int nHashesDone = 0;
             unsigned int nNonceFound;
 
-            nNonceFound = ScanDcryptHash(pblock.get(), &nHashesDone, &test_hash);
+            nNonceFound = ScanDcryptHash(pblock.get(), &nHashesDone, &hash);
 
             // Check if something found
             if (nNonceFound != (unsigned int) -1)
@@ -5344,7 +5350,7 @@ void SlimCoinAfterBurner(CWallet *pwallet)
             //
             // Create new block
             //
-            auto_ptr<CBlock> pblock(CreateNewBlock(pwallet, false, &smallestWTx));
+            auto_ptr<CBlock> pblock(CreateNewBlock(reservekey, pwallet, false, &smallestWTx));
             if (!pblock.get())
                 continue;
 

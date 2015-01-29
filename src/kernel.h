@@ -2,8 +2,8 @@
 // Distributed under the MIT/X11 software license, see the accompanying
 // file COPYING or http://www.opensource.org/licenses/mit-license.php.
 
-#ifndef SLMOIN_KERNEL_H
-#define SLMOIN_KERNEL_H
+#ifndef SLIMCOIN_KERNEL_H
+#define SLIMCOIN_KERNEL_H
 
 #include "main.h"
 #include "wallet.h"
@@ -28,13 +28,11 @@ bool IsProtocolV03(unsigned int nTimeCoinStake);
 bool IsProtocolV04(unsigned int nTimeBlock);
 
 // Compute the hash modifier for proof-of-stake
-bool ComputeNextStakeModifier(const CBlockIndex* pindexCurrent, uint64& nStakeModifier, bool& fGeneratedStakeModifier);
+bool ComputeNextStakeModifier(const CBlockIndex* pindexPrev, uint64& nStakeModifier, bool& fGeneratedStakeModifier);
 
 // Check whether stake kernel meets hash target
 // Sets hashProofOfStake on success return
-bool CheckStakeKernelHash(unsigned int nBits, const CBlockIndex *pindexFrom, unsigned int nTxPrevOffset,
-                          const CTransaction &txPrev, const COutPoint &prevout, unsigned int nTimeTx,
-                          uint256 &hashProofOfStake, bool fPrintProofOfStake=false);
+bool CheckStakeKernelHash(unsigned int nBits, const CBlockIndex *pindexFrom, unsigned int nTxPrevOffset, const CTransaction &txPrev, const COutPoint &prevout, unsigned int nTimeTx, uint256 &hashProofOfStake, bool fPrintProofOfStake=false);
 
 // Check kernel hash target and coinstake signature
 // Sets hashProofOfStake on success return
@@ -49,4 +47,4 @@ unsigned int GetStakeModifierChecksum(const CBlockIndex* pindex);
 // Check stake modifier hard checkpoints
 bool CheckStakeModifierCheckpoints(int nHeight, unsigned int nStakeModifierChecksum);
 
-#endif // SLMOIN_KERNEL_H
+#endif // SLIMCOIN_KERNEL_H

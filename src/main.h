@@ -234,7 +234,7 @@ class CTxIndex;
 
 void RegisterWallet(CWallet* pwalletIn);
 void UnregisterWallet(CWallet* pwalletIn);
-// FIXME: void SyncWithWallets(const CTransaction& tx, const CBlock* pblock=NULL, bool fUpdate=false, bool fConnect=true);
+void SyncWithWallets(const CTransaction& tx, const CBlock* pblock=NULL, bool fUpdate=false, bool fConnect=true);
 bool ProcessBlock(CNode* pfrom, CBlock* pblock);
 bool CheckDiskSpace(uint64 nAdditionalBytes=0);
 FILE* OpenBlockFile(unsigned int nFile, unsigned int nBlockPos, const char* pszMode="rb");
@@ -256,7 +256,7 @@ unsigned int ComputeMinWork(unsigned int nBase, int64 nTime);
 int GetNumBlocksOfPeers();
 bool IsInitialBlockDownload();
 std::string GetWarnings(std::string strFor);
-// FIXME: bool GetTransaction(const uint256 &hash, CTransaction &tx, uint256 &hashBlock);
+bool GetTransaction(const uint256 &hash, CTransaction &tx, uint256 &hashBlock);
 uint256 WantedByOrphan(const CBlock* pblockOrphan);
 const CBlockIndex* GetLastBlockIndex(const CBlockIndex* pindex, bool fProofOfStake);
 void SlimCoinMiner(CWallet *pwallet, bool fProofOfStake);
@@ -497,7 +497,7 @@ public:
         scriptPubKey.clear();
     }
 
-    bool IsNull()
+    bool IsNull() const
     {
         return (nValue == -1);
     }
@@ -1224,25 +1224,22 @@ public:
 
     void UpdateTime(const CBlockIndex* pindexPrev);
 
+    /* FIXME check sanity of this declaration */
+    // slimcoin: entropy bit for stake modifier if chosen by modifier
+    unsigned int GetStakeEntropyBit() const;
     /*
-    // ppcoin: entropy bit for stake modifier if chosen by modifier
-    unsigned int GetStakeEntropyBit() const
     {
         uint160 hashSig = Hash160(vchBlockSig);
-
         if(fDebug && GetBoolArg("-printstakemodifier"))
-            printf("GetStakeEntropyBit: hashSig=%s", hashSig.ToString().c_str());
-
+            printf("GetV3StakeEntropyBit: hashSig=%s", hashSig.ToString().c_str());
         hashSig >>= 159; // take the first bit of the hash
-
         if(fDebug && GetBoolArg("-printstakemodifier"))
-            printf(" entropybit=%d\n", hashSig.Get64());
-
+            printf("v3entropybit=%d\n", hashSig.Get64());
         return hashSig.Get64();
     }
     */
 
-    // slimcoin: three types of block: proof-of-work, proof-of-stake, or proof-of-burn
+    // ppcoin: three types of block: proof-of-work, proof-of-stake, or proof-of-burn
     bool IsProofOfStake() const
     {
         return (vtx.size() > 1 && vtx[1].IsCoinStake());
@@ -1362,7 +1359,7 @@ public:
         return true;
     }
 
-    bool ReadFromDisk(unsigned int nFile, unsigned int nBlockPos, bool fReadTransactions=true)
+    bool ReadFromDisk(unsigned int nFile, unsigned int nBlockPos, bool fReadTransactions=true, bool fCheckValidity=true)
     {
         SetNull();
 
@@ -1382,7 +1379,7 @@ public:
         }
 
         // Check the header
-        if (fReadTransactions && IsProofOfWork() && !CheckProofOfWork(GetHash(), nBits))
+        if (fReadTransactions && fCheckValidity && IsProofOfWork() && !CheckProofOfWork(GetHash(), nBits))
             return error("CBlock::ReadFromDisk() : errors in block header");
 
         return true;
@@ -1390,10 +1387,10 @@ public:
 
 
 
-    void print() const
+    void print(const uint256 &blockHash) const
     {
         printf("CBlock(hash=%s, ver=%d, hashPrevBlock=%s, hashMerkleRoot=%s, nTime=%u, nBits=%08x, nNonce=%u, vtx=%d, vchBlockSig=%s)\n",
-            GetHash().ToString().substr(0,20).c_str(),
+            blockHash.ToString().substr(0,20).c_str(),
             nVersion,
             hashPrevBlock.ToString().substr(0,20).c_str(),
             hashMerkleRoot.ToString().substr(0,10).c_str(),
@@ -1419,10 +1416,15 @@ public:
         printf("\n");
     }
 
+    void print() const
+    {
+        print(GetHash());
+    }
+
 
     bool DisconnectBlock(CTxDB& txdb, CBlockIndex* pindex);
     bool ConnectBlock(CTxDB& txdb, CBlockIndex* pindex);
-    bool ReadFromDisk(const CBlockIndex* pindex, bool fReadTransactions=true);
+    bool ReadFromDisk(const CBlockIndex* pindex, bool fReadTransactions=true, bool fCheckValidity=true);
     bool SetBestChain(CTxDB& txdb, CBlockIndex* pindexNew);
     bool AddToBlockIndex(unsigned int nFile, unsigned int nBlockPos);
     bool CheckBlock() const;
@@ -1430,7 +1432,6 @@ public:
     bool GetCoinAge(uint64& nCoinAge) const; // ppcoin: calculate total coin age spent in block
     bool SignBlock(const CKeyStore& keystore);
     bool CheckBlockSignature() const;
-    unsigned int GetStakeEntropyBit() const; // ppcoin: entropy bit for stake modifier if chosen by modifier
 
 private:
     bool SetBestChainInner(CTxDB& txdb, CBlockIndex *pindexNew);
@@ -1480,9 +1481,9 @@ public:
     // block header
     int nVersion;
     uint256 hashMerkleRoot;
-    unsigned int nTime;
-    unsigned int nBits;
-    unsigned int nNonce;
+    u32int nTime;
+    u32int nBits;
+    u32int nNonce;
 
     // Proof-of-Burn switch, indexes, and values
     bool fProofOfBurn;
@@ -1594,14 +1595,7 @@ public:
         return (int64)nTime;
     }
 
-    CBigNum GetBlockTrust() const
-    {
-        CBigNum bnTarget;
-        bnTarget.SetCompact(nBits);
-        if (bnTarget <= 0)
-            return 0;
-        return (IsProofOfStake()? (CBigNum(1)<<256) / (bnTarget+1) : 1);
-    }
+    CBigNum GetBlockTrust() const;
 
     bool IsInMainChain() const
     {
@@ -1615,8 +1609,8 @@ public:
 
         /*
         printf("%5d ------------------------------- %d %d %d %d %d %d %d\n",
-                     nHeight, IsProofOfWork(), IsProofOfBurn(), IsProofOfStake(), 
-                     fProofOfBurn, burnBlkHeight, burnCTx, burnCTxOut);
+            nHeight, IsProofOfWork(), IsProofOfBurn(), IsProofOfStake(), 
+            fProofOfBurn, burnBlkHeight, burnCTx, burnCTxOut);
         */
 
         // The burn and stake data will be checked after all block indexes have been loaded
@@ -1806,7 +1800,6 @@ public:
         READWRITE(nTime);
         READWRITE(nBits);
         READWRITE(nNonce);
-    )
 
         // PoB
         READWRITE(fProofOfBurn);
@@ -1833,7 +1826,10 @@ public:
         block.nTime           = nTime;
         block.nBits           = nBits;
         block.nNonce          = nNonce;
-        return block.GetHash();
+
+        //assign the cached value to be written a value
+        const_cast<CDiskBlockIndex*>(this)->blockHash = block.GetHash();
+        return blockHash;
     }
 
 

@@ -49,6 +49,16 @@ namespace Checkpoints
         return hash == i->second;
     }
 
+    bool CheckpointExists(s32int nHeight)
+    {
+        //the testnet hash no checkpoints
+        if (fTestNet)
+            return false;
+
+        MapCheckpoints::const_iterator i = mapCheckpoints.find(nHeight);
+        return i != mapCheckpoints.end();
+     }
+
     int GetTotalBlocksEstimate()
     {
         if (fTestNet) return 0;
@@ -371,6 +381,8 @@ namespace Checkpoints
         // sync-checkpoint should always be accepted block
         assert(mapBlockIndex.count(hashSyncCheckpoint));
         const CBlockIndex* pindexSync = mapBlockIndex[hashSyncCheckpoint];
+        //FIXME : always too old
+        return false;
         return (pindexSync->GetBlockTime() + nSeconds < GetAdjustedTime());
     }
 }

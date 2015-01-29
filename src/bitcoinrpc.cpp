@@ -276,8 +276,7 @@ string HelpRequiringPassphrase()
 void EnsureWalletIsUnlocked()
 {
     if (pwalletMain->IsLocked())
-        throw JSONRPCError(RPC_WALLET_UNLOCK_NEEDED, 
-                                             "Error: Please enter the wallet passphrase with walletpassphrase first.");
+        throw JSONRPCError(RPC_WALLET_UNLOCK_NEEDED, "Error: Please enter the wallet passphrase with walletpassphrase first.");
 
     if (fWalletUnlockMintOnly)
         throw JSONRPCError(RPC_WALLET_UNLOCK_NEEDED, "Error: Wallet is unlocked for Proof of Stake only.");
@@ -2660,7 +2659,7 @@ Value getwork(const Array& params, bool fHelp)
     typedef map<uint256, pair<CBlock*, CScript> > mapNewBlock_t;
     static mapNewBlock_t mapNewBlock;
     static vector<CBlock*> vNewBlock;
-    // static CReserveKey reservekey(pwalletMain);
+    static CReserveKey reservekey(pwalletMain);
 
     if (params.size() == 0)
     {
@@ -2686,7 +2685,7 @@ Value getwork(const Array& params, bool fHelp)
             nStart = GetTime();
 
             // Create new block
-            pblock = CreateNewBlock(*pMiningKey, pwalletMain);
+            pblock = CreateNewBlock(*pMiningKey, pwalletMain, false, NULL);
             if (!pblock)
                 throw JSONRPCError(RPC_OUT_OF_MEMORY, "Out of memory");
             vNewBlock.push_back(pblock);
@@ -2950,7 +2949,7 @@ Value submitblock(const Array& params, bool fHelp)
         throw JSONRPCError(-100, "Unable to sign block, wallet locked?");
     printf("Block sign success.\n"); 
 
-    bool fAccepted = CheckWork(*pMiningKey, &block, *pwalletMain, false);
+    bool fAccepted = CheckWork(&block, *pwalletMain, *pMiningKey);
     printf("Checkwork success.\n");
     if (!fAccepted)
         return "rejected"; // TODO: report validation state
@@ -3000,7 +2999,7 @@ Value getmemorypool(const Array& params, bool fHelp)
             // Create new block
             if (pblock)
                 delete pblock;
-            pblock = CreateNewBlock(pwalletMain);
+            pblock = CreateNewBlock(reservekey, pwalletMain, false);
             if (!pblock)
                 throw JSONRPCError(RPC_OUT_OF_MEMORY, "Out of memory");
         }
@@ -3040,12 +3039,12 @@ Value getmemorypool(const Array& params, bool fHelp)
         CBlock pblock;
         ssBlock >> pblock;
 
-        static CReserveKey reservekey(pwalletMain);
+        // static CReserveKey reservekey(pwalletMain);
 
         if (!pblock.SignBlock(*pwalletMain))
             throw JSONRPCError(RPC_UNABLE_TO_SIGN_BLOCK, "Unable to sign block, wallet locked?");
 
-        return CheckWork(&pblock, *pwalletMain, reservekey);
+        return CheckWork(&pblock, *pwalletMain, *pMiningKey);
     }
 }
 
@@ -3946,15 +3945,20 @@ Object CallRPC(const string& strMethod, const Array& params)
 
 
 template<typename T>
-void ConvertTo(Value& value)
+void ConvertTo(Value& value, bool fAllowNull=false)
 {
+    if (fAllowNull && value.type() == null_type)
+        return;
     if (value.type() == str_type)
     {
         // reinterpret string as unquoted json value
         Value value2;
-        if (!read_string(value.get_str(), value2))
+        string strJSON = value.get_str();
+
+        if (!read_string(strJSON, value2))
             throw runtime_error(string("Error parsing JSON:") + strJSON);
-        value = value2.get_value<T>();
+        ConvertTo<T>(value2, fAllowNull);
+        value = value2;
     }
     else
     {
@@ -3962,7 +3966,7 @@ void ConvertTo(Value& value)
     }
 }
 
-/* FIXME remove
+
 // Convert strings to command-specific RPC representation
 Array RPCConvertValues(const std::string &strMethod, const std::vector<std::string> &strParams)
 {
@@ -3970,90 +3974,16 @@ Array RPCConvertValues(const std::string &strMethod, const std::vector<std::stri
     Array params;
     BOOST_FOREACH(const std::string &param, strParams)
         params.push_back(param);
-    
+
     int n = params.size();
 
     //
     // Special case non-string parameter types
     //
-
+    // if (strMethod == "setgenerate"            && n > 0) ConvertTo<bool>(params[0]);
+    // if (strMethod == "setgenerate"            && n > 1) ConvertTo<boost::int64_t>(params[1]);
     FORMAT_PARAM("setgenerate", 0, bool);
     FORMAT_PARAM("setgenerate", 1, boost::int64_t);
-    if (strMethod == "sendtoaddress"          && n > 1) ConvertTo<double>          (params[1]);
-    if (strMethod == "settxfee"               && n > 0) ConvertTo<double>          (params[0]);
-    if (strMethod == "getreceivedbyaddress"   && n > 1) ConvertTo<boost::int64_t>  (params[1]);
-    if (strMethod == "getreceivedbyaccount"   && n > 1) ConvertTo<boost::int64_t>  (params[1]);
-    if (strMethod == "listreceivedbyaddress"  && n > 0) ConvertTo<boost::int64_t>  (params[0]);
-    if (strMethod == "listreceivedbyaddress"  && n > 1) ConvertTo<bool>            (params[1]);
-    if (strMethod == "listreceivedbyaccount"  && n > 0) ConvertTo<boost::int64_t>  (params[0]);
-    if (strMethod == "listreceivedbyaccount"  && n > 1) ConvertTo<bool>            (params[1]);
-    if (strMethod == "getbalance"             && n > 1) ConvertTo<boost::int64_t>  (params[1]);
-    if (strMethod == "getblockhash"           && n > 0) ConvertTo<boost::int64_t>  (params[0]);
-    if (strMethod == "getblock"               && n > 1) ConvertTo<bool>            (params[1]);
-    if (strMethod == "move"                   && n > 2) ConvertTo<double>          (params[2]);
-    if (strMethod == "move"                   && n > 3) ConvertTo<boost::int64_t>  (params[3]);
-    if (strMethod == "sendfrom"               && n > 2) ConvertTo<double>          (params[2]);
-    if (strMethod == "sendfrom"               && n > 3) ConvertTo<boost::int64_t>  (params[3]);
-    if (strMethod == "calcburnhash"           && n > 0) ConvertTo<bool>            (params[0]);
-    if (strMethod == "burncoins"              && n > 1) ConvertTo<double>          (params[1]);
-    if (strMethod == "burncoins"              && n > 2) ConvertTo<boost::int64_t>  (params[2]);
-    if (strMethod == "listtransactions"       && n > 1) ConvertTo<bool>            (params[1]);
-    if (strMethod == "listtransactions"       && n > 2) ConvertTo<boost::int64_t>  (params[2]);
-    if (strMethod == "listtransactions"       && n > 3) ConvertTo<boost::int64_t>  (params[3]);
-    if (strMethod == "listburnminted"         && n > 0) ConvertTo<bool>            (params[0]);
-    if (strMethod == "listaccounts"           && n > 0) ConvertTo<boost::int64_t>  (params[0]);
-    if (strMethod == "walletpassphrase"       && n > 1) ConvertTo<boost::int64_t>  (params[1]);
-    if (strMethod == "walletpassphrase"       && n > 2) ConvertTo<bool>            (params[2]);
-    if (strMethod == "getblocktemplate"       && n > 0) ConvertTo<Object>          (params[0]);
-    if (strMethod == "listsinceblock"         && n > 1) ConvertTo<boost::int64_t>  (params[1]);
-    if (strMethod == "sendalert"              && n > 2) ConvertTo<boost::int64_t>  (params[2]);
-    if (strMethod == "sendalert"              && n > 3) ConvertTo<boost::int64_t>  (params[3]);
-    if (strMethod == "sendalert"              && n > 4) ConvertTo<boost::int64_t>  (params[4]);
-    if (strMethod == "sendalert"              && n > 5) ConvertTo<boost::int64_t>  (params[5]);
-    if (strMethod == "sendalert"              && n > 6) ConvertTo<boost::int64_t>  (params[6]);
-    if (strMethod == "sendmany"               && n > 1)
-    {
-        string s = params[1].get_str();
-        Value v;
-        if (!read_string(s, v) || v.type() != obj_type)
-            throw runtime_error("type mismatch");
-        params[1] = v.get_obj();
-    }
-    if (strMethod == "sendmany"               && n > 2) ConvertTo<boost::int64_t>  (params[2]);
-    if (strMethod == "reservebalance"         && n > 0) ConvertTo<bool>            (params[0]);
-    if (strMethod == "reservebalance"         && n > 1) ConvertTo<double>          (params[1]);
-    if (strMethod == "addmultisigaddress"     && n > 0) ConvertTo<boost::int64_t>  (params[0]);
-    if (strMethod == "addmultisigaddress"     && n > 1)
-    {
-        string s = params[1].get_str();
-        Value v;
-        if (!read_string(s, v) || v.type() != array_type)
-            throw runtime_error("type mismatch "+s);
-        params[1] = v.get_array();
-    }
-    
-    FORMAT_PARAM("getrawtransaction",  1, boost::int64_t);
-    if (strMethod == "signrawtransaction"     && n > 1) ConvertTo<Array>(params[1], true);
-    if (strMethod == "signrawtransaction"     && n > 2) ConvertTo<Array>(params[2], true);
-
-    return params;
-}
-*/
-
-// Convert strings to command-specific RPC representation
-Array RPCConvertValues(const std::string &strMethod, const std::vector<std::string> &strParams)
-{
-    Array params;
-    BOOST_FOREACH(const std::string &param, strParams)
-        params.push_back(param);
-
-    int n = params.size();
-
-    //
-    // Special case non-string parameter types
-    //
-    if (strMethod == "setgenerate"            && n > 0) ConvertTo<bool>(params[0]);
-    if (strMethod == "setgenerate"            && n > 1) ConvertTo<boost::int64_t>(params[1]);
     if (strMethod == "sendtoaddress"          && n > 1) ConvertTo<double>(params[1]);
     if (strMethod == "settxfee"               && n > 0) ConvertTo<double>(params[0]);
     if (strMethod == "getreceivedbyaddress"   && n > 1) ConvertTo<boost::int64_t>(params[1]);
@@ -4129,10 +4059,6 @@ int CommandLineRPC(int argc, char *argv[])
         if (argc < 2)
             throw runtime_error("too few parameters");
         string strMethod = argv[1];
-
-        // Parameters default to strings
-        std::vector<std::string> strParams(&argv[2], &argv[argc]);
-        Array params = RPCConvertValues(strMethod, strParams);
 
         // Parameters default to strings
         std::vector<std::string> strParams(&argv[2], &argv[argc]);

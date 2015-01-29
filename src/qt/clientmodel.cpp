@@ -114,8 +114,3 @@ QString ClientModel::formatClientStartupTime() const
 {
   return QDateTime::fromTime_t(nClientStartupTime).toString();
 }
-
-QString ClientModel::clientName() const
-{
-    return QString::fromStdString(CLIENT_NAME);
-}
