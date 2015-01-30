@@ -2,33 +2,51 @@ TEMPLATE = app
 TARGET = slimcoin-qt
 VERSION = 0.6.3.0
 INCLUDEPATH += src src/json src/qt
-DEFINES += QT_GUI BOOST_THREAD_USE_LIB BOOST_SPIRIT_THREADSAFE
 CONFIG += no_include_pwd
-CONFIG += static
+CONFIG += thread
+#CONFIG += debug
+#CONFIG += release
 
-win: {
+!win32 {
+CONFIG += static
+}
+
+QT += network webkit widgets
+DEFINES += QT_GUI BOOST_THREAD_USE_LIB BOOST_SPIRIT_THREADSAFE
+greaterThan(QT_MAJOR_VERSION, 4) {
+    QT += webkitwidgets
+    DEFINES += QT_DISABLE_DEPRECATED_BEFORE=0x000000
+}
+
+# for boost 1.37, add -mt to the boost libraries
+# use: qmake BOOST_LIB_SUFFIX=-mt
+# for boost thread win32 with _win32 sufix
+# use: BOOST_THREAD_LIB_SUFFIX=_win32-...
+# or when linking against a specific BerkelyDB version: BDB_LIB_SUFFIX=-4.8
+
+# Dependency library locations can be customized with:
+#    BOOST_INCLUDE_PATH, BOOST_LIB_PATH, BDB_INCLUDE_PATH,
+#    BDB_LIB_PATH, OPENSSL_INCLUDE_PATH and OPENSSL_LIB_PATH respectively
+
+
+# winbuild dependencies
+win32 {
+lessThan(QT_VERSION, 5.4) {
+BOOST_LIB_SUFFIX=-mgw48-mt-s-1_55
+} else {
 BOOST_LIB_SUFFIX=-mgw49-mt-s-1_55
+}
 BOOST_INCLUDE_PATH=C:/deps/boost_1_55_0
 BOOST_LIB_PATH=C:/deps/boost_1_55_0/stage/lib
 BDB_INCLUDE_PATH=C:/deps/db-4.8.30.NC/build_unix
 BDB_LIB_PATH=C:/deps/db-4.8.30.NC/build_unix
 OPENSSL_INCLUDE_PATH=C:/deps/openssl-1.0.1i/include
 OPENSSL_LIB_PATH=C:/deps/openssl-1.0.1i
-MINIUPNPC_INCLUDE_PATH=C:/deps/
+MINIUPNPC_INCLUDE_PATH=C:/deps
 MINIUPNPC_LIB_PATH=C:/deps/miniupnpc
 QRENCODE_INCLUDE_PATH=C:/deps/qrencode-3.4.4
 QRENCODE_LIB_PATH=C:/deps/qrencode-3.4.4/.libs
 }
-
-# for boost 1.37, add -mt to the boost libraries 
-# use: qmake BOOST_LIB_SUFFIX=-mt
-# for boost thread win32 with _win32 sufix
-# use: BOOST_THREAD_LIB_SUFFIX=_win32-...
-# or when linking against a specific BerkelyDB version: BDB_LIB_SUFFIX=-4.8
-
-# Dependency library locations can be customized with BOOST_INCLUDE_PATH, 
-#    BOOST_LIB_PATH, BDB_INCLUDE_PATH, BDB_LIB_PATH
-#    OPENSSL_INCLUDE_PATH and OPENSSL_LIB_PATH respectively
 
 OBJECTS_DIR = build
 MOC_DIR = build
@@ -358,24 +376,24 @@ macx:OBJECTIVE_SOURCES += src/qt/macdockiconhandler.mm
 macx:LIBS += -framework Foundation -framework ApplicationServices -framework AppKit
 macx:DEFINES += MAC_OSX MSG_NOSIGNAL=0
 macx:ICON = src/qt/res/icons/slimcoin.icns
-macx:TARGET = "Slimcoin-Qt"
+macx:TARGET = "SLIMCoin-Qt"
 
 # Set libraries and includes at end, to use platform-defined defaults if not overridden
 INCLUDEPATH += $$BOOST_INCLUDE_PATH \
-	$$BDB_INCLUDE_PATH \
-	$$OPENSSL_INCLUDE_PATH \
-	$$QRENCODE_INCLUDE_PATH \
-	$$SLIMCOIN_SRC_PATH \
-	$$SLIMCOIN_SRC_PATH/qt \
-	$$QT_INCLUDE_PATH \
-	$$QT_INCLUDE_PATH/QtGui
+    $$BDB_INCLUDE_PATH \
+    $$OPENSSL_INCLUDE_PATH \
+    $$QRENCODE_INCLUDE_PATH \
+    $$SLIMCOIN_SRC_PATH \
+    $$SLIMCOIN_SRC_PATH/qt \
+    $$QT_INCLUDE_PATH \
+    $$QT_INCLUDE_PATH/QtGui
 
 LIBS += \
-	$$join(LIB_PATH,,-L,) \
-	$$join(BOOST_LIB_PATH,,-L,) \
-	$$join(BDB_LIB_PATH,,-L,) \
-	$$join(OPENSSL_LIB_PATH,,-L,) \
-	$$join(QRENCODE_LIB_PATH,,-L,)
+    $$join(LIB_PATH,,-L,) \
+    $$join(BOOST_LIB_PATH,,-L,) \
+    $$join(BDB_LIB_PATH,,-L,) \
+    $$join(OPENSSL_LIB_PATH,,-L,) \
+    $$join(QRENCODE_LIB_PATH,,-L,)
 LIBS += -lssl -lcrypto -ldb_cxx$$BDB_LIB_SUFFIX
 # -lgdi32 has to happen after -lcrypto (see  #681)
 windows:LIBS += -lole32 -luuid -lgdi32 -lwsock32
