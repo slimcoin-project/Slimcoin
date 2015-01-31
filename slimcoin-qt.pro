@@ -126,7 +126,7 @@ contains(BITCOIN_NEED_QT_PLUGINS, 1) {
 QMAKE_CXXFLAGS_WARN_ON = -Wall -Wextra -Wformat -Wformat-security -Wno-invalid-offsetof -Wno-sign-compare -Wno-unused-parameter
 # this option unrecognized when building on OSX 10.6.8
 !macx {
-    QMAKE_CXXFLAGS_WARN_ON += -fdiagnostics-show-option -fpermissive
+    QMAKE_CXXFLAGS_WARN_ON += -fdiagnostics-show-option # -fpermissive
 }
 
 # Input
