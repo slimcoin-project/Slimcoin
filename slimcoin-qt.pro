@@ -202,7 +202,8 @@ HEADERS += src/qt/bitcoingui.h \
     src/ui_interface.h \
     src/kernel.h \
     src/dcrypt.h \
-    src/sha256.h
+    src/sha256.h \
+    src/qt/qcustomplot.h
 
 SOURCES += src/qt/bitcoin.cpp src/qt/bitcoingui.cpp \
     src/qt/transactiontablemodel.cpp \
@@ -263,7 +264,8 @@ SOURCES += src/qt/bitcoin.cpp src/qt/bitcoingui.cpp \
     src/qt/qtipcserver.cpp \
     src/kernel.cpp \
     src/dcrypt.cpp \
-    src/sha256.cpp
+    src/sha256.cpp \
+    src/qt/qcustomplot.cpp
 
 RESOURCES += \
     src/qt/bitcoin.qrc

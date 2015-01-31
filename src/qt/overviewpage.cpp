@@ -1,6 +1,7 @@
 #include "overviewpage.h"
 #include "ui_overviewpage.h"
 
+#include "clientmodel.h"
 #include "walletmodel.h"
 #include "bitcoinunits.h"
 #include "optionsmodel.h"
@@ -8,6 +9,9 @@
 #include "transactionfilterproxy.h"
 #include "guiutil.h"
 #include "guiconstants.h"
+#include "main.h"
+#include "bitcoinrpc.h"
+#include "util.h"
 
 #include <QAbstractItemDelegate>
 #include <QPainter>
@@ -140,6 +144,35 @@ OverviewPage::OverviewPage(QWidget *parent) :
   ui->labelDecayBurnCoins->setTextInteractionFlags(Qt::TextSelectableByMouse|Qt::TextSelectableByKeyboard);
 
   connect(ui->listTransactions, SIGNAL(clicked(QModelIndex)), this, SIGNAL(transactionClicked(QModelIndex)));
+
+  if(GetBoolArg("-chart", true))
+  {
+    // setup Plot
+    // create graph
+    ui->diffplot->addGraph();
+
+    // Argh can't get the background to work.
+    //QPixmap background = QPixmap(":/images/splash_testnet");
+    //ui->diffplot->setBackground(background);
+    //ui->diffplot->setBackground(QBrush(QWidget::palette().color(this->backgroundRole())));
+
+    // give the axes some labels:
+    ui->diffplot->xAxis->setLabel("Blocks");
+    ui->diffplot->yAxis->setLabel("Difficulty");
+
+    // set the pens
+    ui->diffplot->graph(0)->setPen(QPen(QColor(255, 165, 18)));
+    ui->diffplot->graph(0)->setLineStyle(QCPGraph::lsLine);
+
+    // set axes label fonts:
+    QFont label = font();
+    ui->diffplot->xAxis->setLabelFont(label);
+    ui->diffplot->yAxis->setLabelFont(label);
+  }
+  else
+  {
+    ui->diffplot->setVisible(false);
+  }
 }
 
 OverviewPage::~OverviewPage()
@@ -215,3 +248,67 @@ void OverviewPage::displayUnitChanged()
   txdelegate->unit = model->getOptionsModel()->getDisplayUnit();
   ui->listTransactions->update();
 }
+
+
+void OverviewPage::updatePlot(int count)
+{
+    // Double Check to make sure we don't try to update the plot when it is disabled
+    if (!GetBoolArg("-chart", true)) { return; }
+
+    // if(fDebug) { printf("Plot: Getting Ready: pidnexBest: %p\n", pindexBest); }
+
+    int numLookBack = 2000;
+    double diffMax = 0;
+    CBlockIndex* pindex = pindexBest;
+    int height = nBestHeight;
+    int xStart = std::max<int>(height-numLookBack, 0) + 1;
+    int xEnd = height;
+
+    // Start at the end and walk backwards
+    int i = numLookBack-1;
+    int x = xEnd;
+
+    // This should be a noop if the size is already 2000
+    vX.resize(numLookBack);
+    vY.resize(numLookBack);
+
+    /*
+    if(fDebug) {
+        if(height != pindex->nHeight) {
+            printf("Plot: Warning: nBestHeight and pindexBest->nHeight don't match: %d:%d:\n", height, pindex->nHeight);
+        }
+    }
+
+    if(fDebug) { printf("Plot: Reading blockchain\n"); }
+    */
+    CBlockIndex* itr = pindex;
+    while(i >= 0 && itr != NULL)
+    {
+        // if(fDebug) { printf("Plot: Processing block: %d - pprev: %p\n", itr->nHeight, itr->pprev); }
+        vX[i] = itr->nHeight;
+        vY[i] = GetDifficulty(itr);
+        diffMax = std::max<double>(diffMax, vY[i]);
+
+        itr = itr->pprev;
+        i--;
+        x--;
+    }
+
+    // if(fDebug) { printf("Plot: Drawing plot\n"); }
+
+    ui->diffplot->graph(0)->setData(vX, vY);
+
+    // set axes ranges, so we see all data:
+    ui->diffplot->xAxis->setRange((double)xStart, (double)xEnd);
+    ui->diffplot->yAxis->setRange(0, diffMax+(diffMax/10));
+
+    ui->diffplot->xAxis->setAutoSubTicks(false);
+    ui->diffplot->yAxis->setAutoSubTicks(false);
+    ui->diffplot->xAxis->setSubTickCount(0);
+    ui->diffplot->yAxis->setSubTickCount(0);
+
+    ui->diffplot->replot();
+
+    // if(fDebug) { printf("Plot: Done!\n"); }
+ }
+ 

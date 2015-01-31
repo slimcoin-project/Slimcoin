@@ -11,6 +11,7 @@ QT_END_NAMESPACE
 namespace Ui {
   class OverviewPage;
 }
+class ClientModel;
 class WalletModel;
 class TxViewDelegate;
 
@@ -24,6 +25,7 @@ public:
   ~OverviewPage();
 
   void setModel(WalletModel *model);
+  void updatePlot(int count);
   
   public slots:
     void setBalance(qint64 balance, qint64 stake, qint64 unconfirmedBalance, 
@@ -35,6 +37,7 @@ signals:
 
 private:
     Ui::OverviewPage *ui;
+    ClientModel *clientModel;
     WalletModel *model;
     qint64 currentBalance;
     qint64 currentStake;
@@ -44,6 +47,8 @@ private:
     qint64 currentEffectiveBurnCoins;
     qint64 currentImmatureBurnCoins;
     qint64 currentDecayedBurnCoins;
+    QVector<double> vX;
+    QVector<double> vY;
 
 
     TxViewDelegate *txdelegate;
