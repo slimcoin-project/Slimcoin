@@ -59,6 +59,8 @@
 #include <QDragEnterEvent>
 #if QT_VERSION < 0x050000
 #include <QUrl>
+#include <QStyle>
+#include "blockbrowser.h"
 #endif
 
 #include <iostream>
@@ -75,7 +77,7 @@ BitcoinGUI::BitcoinGUI(QWidget *parent):
     rpcConsole(0)
 {
     resize(850, 550);
-    setWindowTitle(tr("Slimcoin Wallet"));
+    setWindowTitle(tr("SLIMCoin") + " - " + tr("Wallet"));
 #ifndef Q_WS_MAC
     setWindowIcon(QIcon(":icons/slimcoin"));
 #else
@@ -99,6 +101,7 @@ BitcoinGUI::BitcoinGUI(QWidget *parent):
 
     // Create tabs
     overviewPage = new OverviewPage();
+    blockBrowser = new BlockBrowser(this);
 
     transactionsPage = new QWidget(this);
     QVBoxLayout *vbox = new QVBoxLayout();
@@ -126,6 +129,7 @@ BitcoinGUI::BitcoinGUI(QWidget *parent):
 #ifdef FIRST_CLASS_MESSAGING
     centralWidget->addWidget(messagePage);
 #endif
+    centralWidget->addWidget(blockBrowser);
     setCentralWidget(centralWidget);
 
     // Create status bar
@@ -172,6 +176,8 @@ BitcoinGUI::BitcoinGUI(QWidget *parent):
     rpcConsole = new RPCConsole(this);
     connect(openRPCConsoleAction, SIGNAL(triggered()), rpcConsole, SLOT(show()));
 
+    connect(blockAction, SIGNAL(triggered()), this, SLOT(gotoBlockBrowser()));
+
     gotoOverviewPage();
 }
 
@@ -194,6 +200,18 @@ void BitcoinGUI::createActions()
     overviewAction->setShortcut(QKeySequence(Qt::ALT + Qt::Key_1));
     tabGroup->addAction(overviewAction);
 
+    sendCoinsAction = new QAction(QIcon(":/icons/send"), tr("&"SEND_COINS_DIALOG_NAME), this);
+    sendCoinsAction->setToolTip(tr("Send coins to a SLIMCoin address"));
+    sendCoinsAction->setCheckable(true);
+    sendCoinsAction->setShortcut(QKeySequence(Qt::ALT + Qt::Key_2));
+    tabGroup->addAction(sendCoinsAction);
+
+    receiveCoinsAction = new QAction(QIcon(":/icons/receiving_addresses"), tr("&Receive coins"), this);
+    receiveCoinsAction->setToolTip(tr("Show the list of addresses for receiving payments"));
+    receiveCoinsAction->setCheckable(true);
+    receiveCoinsAction->setShortcut(QKeySequence(Qt::ALT + Qt::Key_3));
+    tabGroup->addAction(receiveCoinsAction);
+
     historyAction = new QAction(QIcon(":/icons/history"), tr("&Transactions"), this);
     historyAction->setToolTip(tr("Browse transaction history"));
     historyAction->setCheckable(true);
@@ -206,17 +224,6 @@ void BitcoinGUI::createActions()
     addressBookAction->setShortcut(QKeySequence(Qt::ALT + Qt::Key_5));
     tabGroup->addAction(addressBookAction);
 
-    receiveCoinsAction = new QAction(QIcon(":/icons/receiving_addresses"), tr("&Receive coins"), this);
-    receiveCoinsAction->setToolTip(tr("Show the list of addresses for receiving payments"));
-    receiveCoinsAction->setCheckable(true);
-    receiveCoinsAction->setShortcut(QKeySequence(Qt::ALT + Qt::Key_3));
-    tabGroup->addAction(receiveCoinsAction);
-
-    sendCoinsAction = new QAction(QIcon(":/icons/send"), tr("&"SEND_COINS_DIALOG_NAME), this);
-    sendCoinsAction->setToolTip(tr("Send coins to a Slimcoin address"));
-    sendCoinsAction->setCheckable(true);
-    sendCoinsAction->setShortcut(QKeySequence(Qt::ALT + Qt::Key_2));
-    tabGroup->addAction(sendCoinsAction);
 
     burnCoinsAction = new QAction(QIcon(":/icons/burn"), tr("&"BURN_COINS_DIALOG_NAME), this);
     burnCoinsAction->setToolTip(tr("Burn coins from a Slimcoin address"));
@@ -230,16 +237,22 @@ void BitcoinGUI::createActions()
 #endif
     tabGroup->addAction(messageAction);
 
+    blockAction = new QAction(QIcon(":/icons/bex"), tr("&Block Explorer"), this);
+    blockAction->setToolTip(tr("Explore the BlockChain"));
+    blockAction->setShortcut(QKeySequence(Qt::ALT + Qt::Key_7));
+    blockAction->setCheckable(true);
+    tabGroup->addAction(blockAction);
+
     connect(overviewAction, SIGNAL(triggered()), this, SLOT(showNormalIfMinimized()));
     connect(overviewAction, SIGNAL(triggered()), this, SLOT(gotoOverviewPage()));
+    connect(sendCoinsAction, SIGNAL(triggered()), this, SLOT(showNormalIfMinimized()));
+    connect(sendCoinsAction, SIGNAL(triggered()), this, SLOT(gotoSendCoinsPage()));
+    connect(receiveCoinsAction, SIGNAL(triggered()), this, SLOT(showNormalIfMinimized()));
+    connect(receiveCoinsAction, SIGNAL(triggered()), this, SLOT(gotoReceiveCoinsPage()));
     connect(historyAction, SIGNAL(triggered()), this, SLOT(showNormalIfMinimized()));
     connect(historyAction, SIGNAL(triggered()), this, SLOT(gotoHistoryPage()));
     connect(addressBookAction, SIGNAL(triggered()), this, SLOT(showNormalIfMinimized()));
     connect(addressBookAction, SIGNAL(triggered()), this, SLOT(gotoAddressBookPage()));
-    connect(receiveCoinsAction, SIGNAL(triggered()), this, SLOT(showNormalIfMinimized()));
-    connect(receiveCoinsAction, SIGNAL(triggered()), this, SLOT(gotoReceiveCoinsPage()));
-    connect(sendCoinsAction, SIGNAL(triggered()), this, SLOT(showNormalIfMinimized()));
-    connect(sendCoinsAction, SIGNAL(triggered()), this, SLOT(gotoSendCoinsPage()));
     connect(burnCoinsAction, SIGNAL(triggered()), this, SLOT(showNormalIfMinimized()));
     connect(burnCoinsAction, SIGNAL(triggered()), this, SLOT(gotoBurnCoinsPage()));
     connect(messageAction, SIGNAL(triggered()), this, SLOT(showNormalIfMinimized()));
@@ -273,9 +286,9 @@ void BitcoinGUI::createActions()
     openRPCConsoleAction->setStatusTip(tr("Open debugging and diagnostic console"));
 
     connect(quitAction, SIGNAL(triggered()), qApp, SLOT(quit()));
-    connect(optionsAction, SIGNAL(triggered()), this, SLOT(optionsClicked()));
     connect(aboutAction, SIGNAL(triggered()), this, SLOT(aboutClicked()));
     connect(aboutQtAction, SIGNAL(triggered()), qApp, SLOT(aboutQt()));
+    connect(optionsAction, SIGNAL(triggered()), this, SLOT(optionsClicked()));
     connect(toggleHideAction, SIGNAL(triggered()), this, SLOT(toggleHidden()));
     connect(encryptWalletAction, SIGNAL(triggered(bool)), this, SLOT(encryptWallet(bool)));
     connect(backupWalletAction, SIGNAL(triggered()), this, SLOT(backupWallet()));
@@ -325,6 +338,7 @@ void BitcoinGUI::createToolBars()
     toolbar->addAction(historyAction);
     toolbar->addAction(addressBookAction);
     toolbar->addAction(burnCoinsAction);
+    toolbar->addAction(blockAction);
 #ifdef FIRST_CLASS_MESSAGING
     toolbar->addAction(messageAction);
 #endif
@@ -352,7 +366,9 @@ void BitcoinGUI::setClientModel(ClientModel *clientModel)
             {
                 trayIcon->setToolTip(title_testnet);
                 trayIcon->setIcon(QIcon(":/icons/toolbar_testnet"));
+                toggleHideAction->setIcon(QIcon(":/icons/toolbar_testnet"));
             }
+            aboutAction->setIcon(QIcon(":/icons/toolbar_testnet"));
         }
 
         // Keep up to date with client
@@ -512,7 +528,7 @@ void BitcoinGUI::setNumBlocks(int count, int nTotalBlocks)
         return;
     }
 
-    // FIXME int nTotalBlocks = clientModel->getNumBlocksOfPeers();
+    QString strStatusBarWarnings = clientModel->getStatusBarWarnings();
     QString tooltip;
 
     if(count < nTotalBlocks)
@@ -702,6 +718,16 @@ void BitcoinGUI::gotoOverviewPage()
     exportAction->setEnabled(false);
     disconnect(exportAction, SIGNAL(triggered()), 0, 0);
 }
+
+void BitcoinGUI::gotoBlockBrowser()
+{
+    blockAction->setChecked(true);
+    centralWidget->setCurrentWidget(blockBrowser);
+
+    exportAction->setEnabled(false);
+    disconnect(exportAction, SIGNAL(triggered()), 0, 0);
+}
+
 
 void BitcoinGUI::gotoHistoryPage()
 {

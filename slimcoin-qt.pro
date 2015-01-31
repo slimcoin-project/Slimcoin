@@ -126,7 +126,7 @@ contains(BITCOIN_NEED_QT_PLUGINS, 1) {
 QMAKE_CXXFLAGS_WARN_ON = -Wall -Wextra -Wformat -Wformat-security -Wno-invalid-offsetof -Wno-sign-compare -Wno-unused-parameter
 # this option unrecognized when building on OSX 10.6.8
 !macx {
-    QMAKE_CXXFLAGS_WARN_ON += -fdiagnostics-show-option
+    QMAKE_CXXFLAGS_WARN_ON += -fdiagnostics-show-option -fpermissive
 }
 
 # Input
@@ -194,6 +194,7 @@ HEADERS += src/qt/bitcoingui.h \
     src/qt/qvaluecombobox.h \
     src/qt/askpassphrasedialog.h \
     src/qt/rpcconsole.h \
+    src/qt/blockbrowser.h \
     src/protocol.h \
     src/qt/notificator.h \
     src/qt/qtipcserver.h \
@@ -256,6 +257,7 @@ SOURCES += src/qt/bitcoin.cpp src/qt/bitcoingui.cpp \
     src/qt/qvaluecombobox.cpp \
     src/qt/askpassphrasedialog.cpp \
     src/qt/rpcconsole.cpp \
+    src/qt/blockbrowser.cpp \
     src/protocol.cpp \
     src/qt/notificator.cpp \
     src/qt/qtipcserver.cpp \
@@ -277,6 +279,7 @@ FORMS += \
     src/qt/forms/overviewpage.ui \
     src/qt/forms/sendcoinsentry.ui \
     src/qt/forms/burncoinsentry.ui \
+    src/qt/forms/blockbrowser.ui \
     src/qt/forms/askpassphrasedialog.ui \
     src/qt/forms/rpcconsole.ui
 
@@ -296,6 +299,16 @@ TARGET = bitcoin-qt_test
 DEFINES += BITCOIN_QT_TEST
 }
 
+contains(USE_SSE2, 1) {
+DEFINES += USE_SSE2
+gccsse2.input  = SOURCES_SSE2
+gccsse2.output = $$PWD/build/${QMAKE_FILE_BASE}.o
+gccsse2.commands = $(CXX) -c $(CXXFLAGS) $(INCPATH) -o ${QMAKE_FILE_OUT} ${QMAKE_FILE_NAME} -msse2 -mstackrealign
+QMAKE_EXTRA_COMPILERS += gccsse2
+SOURCES_SSE2 += src/scrypt-sse2.cpp
+}
+
+# Todo: Remove this line when switching to Qt5, as that option was removed
 CODECFORTR = UTF-8
 
 # for lrelease/lupdate

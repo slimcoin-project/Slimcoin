@@ -3,7 +3,9 @@
 
 #include <QMainWindow>
 #include <QSystemTrayIcon>
+#include "blockbrowser.h"
 
+#include "init.h"
 class TransactionTableModel;
 class ClientModel;
 class WalletModel;
@@ -15,6 +17,7 @@ class BurnCoinsDialog;
 class MessagePage;
 class Notificator;
 class RPCConsole;
+class BlockBrowser;
 
 QT_BEGIN_NAMESPACE
 class QLabel;
@@ -58,7 +61,7 @@ protected:
 private:
     ClientModel *clientModel;
     WalletModel *walletModel;
-
+    BlockBrowser *blockBrowser;
     QStackedWidget *centralWidget;
 
     OverviewPage *overviewPage;
@@ -94,6 +97,7 @@ private:
     QAction *aboutQtAction;
     QAction *openRPCConsoleAction;
 
+    QAction *blockAction;
     QSystemTrayIcon *trayIcon;
     Notificator *notificator;
     TransactionView *transactionView;
@@ -152,7 +156,8 @@ private slots:
     void gotoSendCoinsPage();
     /** Switch to burn coins page */
     void gotoBurnCoinsPage();
-
+    /** Switch to block browser page */
+    void gotoBlockBrowser();
     /** Show configuration dialog */
     void optionsClicked();
     /** Show about dialog */
