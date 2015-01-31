@@ -123,6 +123,8 @@ public:
 extern const CRPCTable tableRPC;
 extern CReserveKey* pMiningKey;
 
+extern double GetDifficulty(const CBlockIndex* blockindex);
+
 //Gets the balance of the total amount of burned coins, the effective amount of burned coins
 // and the immature amount of burned coins and packages every burn transaction into an Array
 //
