@@ -119,7 +119,7 @@ namespace GUIUtil
     //    which will lowercase it (and thus invalidate the address).
     if(uri.startsWith("slimcoin://"))
     {
-      uri.replace(0, 9, "slimcoin:");
+      uri.replace(0, std::string("slimcoin://").length(), "slimcoin:");
     }
     QUrl uriInstance(uri);
     return parseBitcoinURI(uriInstance, out);
