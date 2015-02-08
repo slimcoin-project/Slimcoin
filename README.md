@@ -13,6 +13,7 @@ SlimCoin Official Development Repo
 * Help: 
 [Forum](https://bitcointalk.org/index.php?topic=613213),
 [Other Sites and Links...] <other sites>
+[![Build Status](https://api.travis-ci.org/gjhiggins/SLIMCoin.svg?branch=slimcoin)](https://travis-ci.org/gjhiggins/SLIMCoin)
 
 Repository Guidelines
 =====================
