@@ -1044,7 +1044,8 @@ int64 GetProofOfWorkReward(u32int nBits, bool fProofOfBurn)
         printf("GetProofOfWorkReward() : create = %s nBits = 0x%08x nSubsidy = %"PRI64d" return = %"PRI64d"\n", FormatMoney(nSubsidy).c_str(), nBits, nSubsidy, min(nSubsidy, maxSubsidy));
 
     // FIXME return min(nSubsidy, maxSubsidy);
-    return min(nSubsidy, MAX_MINT_PROOF_OF_WORK);
+    // return min(nSubsidy, MAX_MINT_PROOF_OF_WORK);
+    return min(nSubsidy, maxSubsidy);
 }
 
 // ppcoin: miner's coin stake is rewarded based on coin age spent (coin-days)
