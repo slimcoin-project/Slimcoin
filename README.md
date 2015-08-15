@@ -11,8 +11,9 @@ SlimCoin Official Development Repo
 * Documentation: <add documentation link to slim website>,
 [SlimCoin Wiki] <add documentation link to GitHub wiki page>
 * Help: 
-[Forum]<add forum url>,
+[Forum](https://bitcointalk.org/index.php?topic=613213),
 [Other Sites and Links...] <other sites>
+[![Build Status](https://api.travis-ci.org/gjhiggins/SLIMCoin.svg?branch=slimcoin)](https://travis-ci.org/gjhiggins/SLIMCoin)
 
 Repository Guidelines
 =====================
