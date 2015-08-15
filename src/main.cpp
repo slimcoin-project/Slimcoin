@@ -190,7 +190,7 @@ void SyncWithWallets(const CTransaction& tx, const CBlock* pblock, bool fUpdate,
 {
     if (!fConnect)
     {
-        // ppcoin: wallets need to refund inputs when disconnecting coinstake
+        // slimcoin: wallets need to refund inputs when disconnecting coinstake
         if (tx.IsCoinStake())
         {
             BOOST_FOREACH(CWallet* pwallet, setpwalletRegistered)
@@ -1046,7 +1046,7 @@ int64 GetProofOfWorkReward(u32int nBits, bool fProofOfBurn)
     return min(nSubsidy, MAX_MINT_PROOF_OF_WORK);
 }
 
-// ppcoin: miner's coin stake is rewarded based on coin age spent (coin-days)
+// slimcoin: miner's coin stake is rewarded based on coin age spent (coin-days)
 int64 GetProofOfStakeReward(int64 nCoinAge, u32int nTime)
 {
     // FIXME static int64 nRewardCoinYear = CENT;  // creation amount per coin-year
