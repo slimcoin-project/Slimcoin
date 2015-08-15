@@ -22,13 +22,13 @@ private:
     // where knowledge about this address first came from
     CNetAddr source;
 
-    // last succesfull connection by us
+    // last successful connection by us
     int64 nLastSuccess;
 
     // last try whatsoever by us:
     // int64 CAddress::nLastTry
 
-    // connection attempts since last succesful attempt
+    // connection attempts since last successful attempt
     int nAttempts;
 
     // reference count in new sets (memory only)
@@ -116,7 +116,7 @@ public:
 //    * Bucket selection is based on cryptographic hashing, using a randomly-generated 256-bit key, which should not
 //      be observable by adversaries.
 //    * Several indexes are kept for high performance. Defining DEBUG_ADDRMAN will introduce frequent (and expensive)
-//      consistency checks for the entire datastructure.
+//      consistency checks for the entire data structure.
 
 // total number of buckets for tried addresses
 #define ADDRMAN_TRIED_BUCKET_COUNT 64
@@ -173,13 +173,13 @@ private:
     // last used nId
     int nIdCount;
 
-    // table with information about all nId's
+    // table with information about all nIds
     std::map<int, CAddrInfo> mapInfo;
 
     // find an nId based on its network address
     std::map<CNetAddr, int> mapAddr;
 
-    // randomly-ordered vector of all nId's
+    // randomly-ordered vector of all nIds
     std::vector<int> vRandom;
 
     // number of "tried" entries
@@ -213,7 +213,7 @@ protected:
     // This is the only place where actual deletes occur.
     // They are never deleted while in the "tried" table, only possibly evicted back to the "new" table.
     int ShrinkNew(int nUBucket);
- 
+
     // Move an entry from the "new" table(s) to the "tried" table
     // @pre vvUnkown[nOrigin].count(nId) != 0
     void MakeTried(CAddrInfo& info, int nId, int nOrigin);
@@ -252,8 +252,8 @@ public:
         // * nNew
         // * nTried
         // * number of "new" buckets
-        // * all nNew addrinfo's in vvNew
-        // * all nTried addrinfo's in vvTried
+        // * all nNew addrinfos in vvNew
+        // * all nTried addrinfos in vvTried
         // * for each bucket:
         //   * number of elements
         //   * for each element: index
