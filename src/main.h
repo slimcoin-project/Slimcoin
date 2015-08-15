@@ -907,6 +907,7 @@ public:
     }
 
 
+    bool ReadFromDisk(CTxDB& txdb, const uint256& hash, CTxIndex& txindexRet);
     bool ReadFromDisk(CTxDB& txdb, COutPoint prevout, CTxIndex& txindexRet);
     bool ReadFromDisk(CTxDB& txdb, COutPoint prevout);
     bool ReadFromDisk(COutPoint prevout);
@@ -1181,7 +1182,7 @@ public:
         return DcryptHash(BEGIN(nVersion), END(nNonce));
     }
 
-    //PoB
+    // PoB
     uint256 GetBurnHash(bool fRetIntermediate) const
     {
         if(!IsProofOfBurn())
@@ -1215,7 +1216,7 @@ public:
 
     bool CheckProofOfBurn() const;
 
-    //PoB
+    // PoB
 
     int64 GetBlockTime() const
     {
@@ -1432,6 +1433,7 @@ public:
     bool GetCoinAge(uint64& nCoinAge) const; // ppcoin: calculate total coin age spent in block
     bool SignBlock(const CKeyStore& keystore);
     bool CheckBlockSignature() const;
+    // unsigned int GetStakeEntropyBit() const; // slimcoin: entropy bit for stake modifier if chosen by modifier
 
 private:
     bool SetBestChainInner(CTxDB& txdb, CBlockIndex *pindexNew);
