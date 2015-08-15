@@ -584,8 +584,10 @@ bool CTxDB::LoadBlockIndex()
             CDiskBlockIndex diskindex;
             ssValue >> diskindex;
 
+            uint256 blockHash = diskindex.GetBlockHash();
+
             // Construct block index object
-            CBlockIndex* pindexNew = InsertBlockIndex(diskindex.GetBlockHash());
+            CBlockIndex* pindexNew    = InsertBlockIndex(blockHash);
             pindexNew->pprev          = InsertBlockIndex(diskindex.hashPrev);
             pindexNew->pnext          = InsertBlockIndex(diskindex.hashNext);
             pindexNew->nFile          = diskindex.nFile;
@@ -614,7 +616,7 @@ bool CTxDB::LoadBlockIndex()
             pindexNew->nBurnBits      = diskindex.nBurnBits;
 
             // Watch for genesis block
-            if (pindexGenesisBlock == NULL && diskindex.GetBlockHash() == hashGenesisBlock)
+            if (pindexGenesisBlock == NULL && blockHash == hashGenesisBlock)
                 pindexGenesisBlock = pindexNew;
 
             if (!pindexNew->CheckIndex())
@@ -632,7 +634,7 @@ bool CTxDB::LoadBlockIndex()
         }
         }    // try
         catch (std::exception &e) {
-            return error("%s() : deserialize error", __PRETTY_FUNCTION__);
+            return error("%s() : deserialize error : %s", __PRETTY_FUNCTION__, e.what());
         }
     }
     pcursor->close();

@@ -969,6 +969,17 @@ void CreatePidFile(const boost::filesystem::path &path, pid_t pid)
     }
 }
 
+bool RenameOver(boost::filesystem::path src, boost::filesystem::path dest)
+{
+#ifdef WIN32
+    return MoveFileExA(src.string().c_str(), dest.string().c_str(),
+                       MOVEFILE_REPLACE_EXISTING) != 0;
+#else
+    int rc = std::rename(src.string().c_str(), dest.string().c_str());
+    return (rc == 0);
+#endif /* WIN32 */
+}
+
 int GetFilesize(FILE* file)
 {
     int nSavePos = ftell(file);

@@ -1043,7 +1043,6 @@ int64 GetProofOfWorkReward(u32int nBits, bool fProofOfBurn)
     if (fDebug && GetBoolArg("-printcreation"))
         printf("GetProofOfWorkReward() : create = %s nBits = 0x%08x nSubsidy = %"PRI64d" return = %"PRI64d"\n", FormatMoney(nSubsidy).c_str(), nBits, nSubsidy, min(nSubsidy, maxSubsidy));
 
-    // FIXME return min(nSubsidy, maxSubsidy);
     return min(nSubsidy, MAX_MINT_PROOF_OF_WORK);
 }
 
@@ -2855,7 +2854,19 @@ FILE* OpenBlockFile(unsigned int nFile, unsigned int nBlockPos, const char* pszM
 {
     if (nFile == -1)
         return NULL;
-    FILE* file = fopen((GetDataDir() / strprintf("blk%04d.dat", nFile)).string().c_str(), pszMode);
+    filesystem::path fpath = GetDataDir();
+    filesystem::path pathBootstrap = GetDataDir() / "bootstrap.dat";
+    filesystem::path pathBootstrapOld = GetDataDir() / "bootstrap.dat.old";
+    if (filesystem::exists(pathBootstrap)) {
+        // fpath = GetDataDir() / "bootstrap.dat";
+        fpath = pathBootstrap;
+    }
+    else
+    {
+        // FILE *file = fopen().string().c_str(), pszMode);
+        fpath = GetDataDir() / strprintf("blk%04d.dat", nFile);
+    }
+    FILE *file = fopen(fpath.string().c_str(), pszMode);
     if (!file)
         return NULL;
     if (nBlockPos != 0 && !strchr(pszMode, 'a') && !strchr(pszMode, 'w'))
@@ -2865,6 +2876,9 @@ FILE* OpenBlockFile(unsigned int nFile, unsigned int nBlockPos, const char* pszM
             fclose(file);
             return NULL;
         }
+    }
+    if (filesystem::exists(pathBootstrap)) {
+        RenameOver(pathBootstrap, pathBootstrapOld);
     }
     return file;
 }

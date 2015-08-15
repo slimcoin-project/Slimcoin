@@ -60,8 +60,9 @@
 #if QT_VERSION < 0x050000
 #include <QUrl>
 #include <QStyle>
-#include "blockbrowser.h"
 #endif
+
+#include "blockbrowser.h"
 
 #include <iostream>
 
