@@ -19,8 +19,8 @@
 ****************************************************************************
 **           Author: Emanuel Eichhammer                                   **
 **  Website/Contact: http://www.qcustomplot.com/                          **
-**             Date: 14.03.14                                             **
-**          Version: 1.2.0                                                **
+**             Date: 07.04.14                                             **
+**          Version: 1.2.1                                                **
 ****************************************************************************/
 
 #ifndef QCUSTOMPLOT_H
@@ -45,14 +45,8 @@
 #include <QMargins>
 #include <qmath.h>
 #include <limits>
-#if QT_VERSION < QT_VERSION_CHECK(5, 0, 0)
-#  include <qnumeric.h>
-#  include <QPrinter>
-#  include <QPrintEngine>
-#else
-#  include <QtNumeric>
-#  include <QtPrintSupport>
-#endif
+
+
 
 class QCPPainter;
 class QCustomPlot;
@@ -170,7 +164,7 @@ Q_DECLARE_FLAGS(Interactions, Interaction)
 */
 inline bool isInvalidData(double value)
 {
-  return qIsNaN(value) || qIsInf(value);
+  return isnan(value) || isinf(value);
 }
 
 /*! \internal
