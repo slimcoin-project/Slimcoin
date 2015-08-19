@@ -4,7 +4,7 @@ SlimCoin Official Development Repo
 ### What is SlimCoin?
 [SlimCoin](http://www.slimcoin.club) (abbreviated SLM), is the first known
 [cryptocurrency](https://en.wikipedia.org/wiki/Cryptocurrency) designed as
-a combined [proof-of-stake](http://slimcoin.org/static/slimcoin-paper.pdf)/[proof-of-work](https://en.wikipedia.org/wiki/Proof-of-work_system)
+a combined [proof-of-burn](http://en.bitcoin.it/wiki/Proof_of_burn)/[proof-of-stake](http://slimcoin.org/static/slimcoin-paper.pdf)/[proof-of-work](https://en.wikipedia.org/wiki/Proof-of-work_system)
 system that can be mined using a special “Dcrypt” algorithm. SlimCoin is
 build upon [Bitcoin](http://bitcoin.org/en/) and [PeerCoin](http://peercoin.net/)
 but is unique in being more energy efficient, as proof-of-stake blocks
