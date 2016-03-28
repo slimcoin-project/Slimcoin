@@ -2,12 +2,12 @@ SlimCoin Official Development Repo
 ==================================
 
 ### What is SlimCoin?
-[SlimCoin](http://www.slimcoin.club) (abbreviated SLM), is the first known
+[Slimcoin](http://www.slimcoin.club/whitepaper.pdf) (abbreviated SLM), is the first known
 [cryptocurrency](https://en.wikipedia.org/wiki/Cryptocurrency) designed as
-a combined [proof-of-burn](http://en.bitcoin.it/wiki/Proof_of_burn)/[proof-of-stake](http://slimcoin.org/static/slimcoin-paper.pdf)/[proof-of-work](https://en.wikipedia.org/wiki/Proof-of-work_system)
+a combined [proof-of-burn](http://en.bitcoin.it/wiki/Proof_of_burn)/[proof-of-stake](https://en.wikipedia.org/wiki/Proof-of-stake)/[proof-of-work](https://en.wikipedia.org/wiki/Proof-of-work_system)
 system. It can be mined using a special “Dcrypt” algorithm. 
 
-SlimCoin is unique for using the [Proof of Burn](http://en.bitcoin.it/wiki/Proof_of_burn) algorithm. This algorithm rewards the “destruction” of coins by sending them to an unspendable address. It can be viewed as a long-term investment rewarding variant of Proof of Stake and has interesting economical implications - see the resources below for details.
+SlimCoin is unique for using the [Proof of Burn](http://en.bitcoin.it/wiki/Proof_of_burn) algorithm. This algorithm rewards the “destruction” of coins by sending them to an unspendable address. It can be described as a long-term investment rewarding variant of Proof of Stake and has interesting economical implications - see the resources below for details.
 
 The Dcrypt algorithm is extremely
 anti-ASIC and currently can only be mined with a CPU. It is made so mining
@@ -18,21 +18,21 @@ blocks become less rewarding and coin generation becomes increasingly
 based on proof-of-stake block generation.
 
 Slimcoin's codebase is
-build upon [Bitcoin](http://bitcoin.org/en/) and [PeerCoin](http://peercoin.net/). It 
+build upon [Bitcoin](http://bitcoin.org/en/) and [Peercoin](http://peercoin.net/).
 
 ### SlimCoin Resources
 * Client and Source:
 <add Client Binaries>
 [Source Code](https://github.com/slimcoin-project/Slimcoin)
-* Documentation: <add documentation link to slim website>,
-[SlimCoin Whitepaper](http://www.slimcoin.club/whitepaper.pdf)
+* Documentation: <add documentation link to slim website>
+[SlimCoin Whitepaper](http://www.slimcoin.club/whitepaper.pdf), 
 [SlimCoin Wiki](https://github.com/slimcoin-project/Slimcoin/wiki)
 * Help:
-[Slimcoin Reddit](https://www.reddit.com/r/slimcoin/)
-[Bitcointalk official thread](https://bitcointalk.org/index.php?topic=1141676)
+[Slimcoin Reddit](https://www.reddit.com/r/slimcoin/), 
+[Bitcointalk official thread](https://bitcointalk.org/index.php?topic=1141676), 
 [Old Bitcointalk announcement](https://bitcointalk.org/index.php?topic=613213)
-[Other Sites and Links...] <other sites>
-[![Build Status](https://api.travis-ci.org/gjhiggins/SLIMCoin.svg?branch=slimcoin)](https://travis-ci.org/gjhiggins/SLIMCoin)
+* Other Sites and Links <other sites>
+[![Build Status](https://api.travis-ci.org/gjhiggins/SLIMCoin.svg?branch=slimcoin)](https://travis-ci.org/gjhiggins/SLIMCoin),
 [Slimcoin Club](https://www.slimcoin.club) (Block explorer, Brain wallet and other informations)
 
 Repository Guidelines
