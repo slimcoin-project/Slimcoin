@@ -21,6 +21,7 @@
 #include "addresstablemodel.h"
 #include "transactionview.h"
 #include "overviewpage.h"
+#include "miningpage.h"
 #include "bitcoinunits.h"
 #include "guiconstants.h"
 #include "askpassphrasedialog.h"
@@ -103,6 +104,7 @@ BitcoinGUI::BitcoinGUI(QWidget *parent):
     // Create tabs
     overviewPage = new OverviewPage();
     blockBrowser = new BlockBrowser(this);
+    miningPage = new MiningPage(this);
 
     transactionsPage = new QWidget(this);
     QVBoxLayout *vbox = new QVBoxLayout();
@@ -127,6 +129,7 @@ BitcoinGUI::BitcoinGUI(QWidget *parent):
     centralWidget->addWidget(receiveCoinsPage);
     centralWidget->addWidget(sendCoinsPage);
     centralWidget->addWidget(burnCoinsPage);
+    centralWidget->addWidget(miningPage);
 #ifdef FIRST_CLASS_MESSAGING
     centralWidget->addWidget(messagePage);
 #endif
@@ -139,16 +142,19 @@ BitcoinGUI::BitcoinGUI(QWidget *parent):
     // Status bar notification icons
     QFrame *frameBlocks = new QFrame();
     frameBlocks->setContentsMargins(0,0,0,0);
-    frameBlocks->setMinimumWidth(56);
-    frameBlocks->setMaximumWidth(56);
+    frameBlocks->setMinimumWidth(73);
+    frameBlocks->setMaximumWidth(73);
     QHBoxLayout *frameBlocksLayout = new QHBoxLayout(frameBlocks);
     frameBlocksLayout->setContentsMargins(3,0,3,0);
     frameBlocksLayout->setSpacing(3);
     labelEncryptionIcon = new QLabel();
+    labelMiningIcon = new QLabel();
     labelConnectionsIcon = new QLabel();
     labelBlocksIcon = new QLabel();
     frameBlocksLayout->addStretch();
     frameBlocksLayout->addWidget(labelEncryptionIcon);
+    frameBlocksLayout->addStretch();
+    frameBlocksLayout->addWidget(labelMiningIcon);
     frameBlocksLayout->addStretch();
     frameBlocksLayout->addWidget(labelConnectionsIcon);
     frameBlocksLayout->addStretch();
@@ -201,7 +207,7 @@ void BitcoinGUI::createActions()
     overviewAction->setShortcut(QKeySequence(Qt::ALT + Qt::Key_1));
     tabGroup->addAction(overviewAction);
 
-    sendCoinsAction = new QAction(QIcon(":/icons/send"), tr("&"SEND_COINS_DIALOG_NAME), this);
+    sendCoinsAction = new QAction(QIcon(":/icons/send"), tr("&" SEND_COINS_DIALOG_NAME), this);
     sendCoinsAction->setToolTip(tr("Send coins to a SLIMCoin address"));
     sendCoinsAction->setCheckable(true);
     sendCoinsAction->setShortcut(QKeySequence(Qt::ALT + Qt::Key_2));
@@ -226,7 +232,7 @@ void BitcoinGUI::createActions()
     tabGroup->addAction(addressBookAction);
 
 
-    burnCoinsAction = new QAction(QIcon(":/icons/burn"), tr("&"BURN_COINS_DIALOG_NAME), this);
+    burnCoinsAction = new QAction(QIcon(":/icons/burn"), tr("&" BURN_COINS_DIALOG_NAME), this);
     burnCoinsAction->setToolTip(tr("Burn coins from a Slimcoin address"));
     burnCoinsAction->setCheckable(true);
     burnCoinsAction->setShortcut(QKeySequence(Qt::ALT + Qt::Key_6));
@@ -244,6 +250,12 @@ void BitcoinGUI::createActions()
     blockAction->setCheckable(true);
     tabGroup->addAction(blockAction);
 
+    miningAction = new QAction(QIcon(":/icons/mining"), tr("&Mining"), this);
+    miningAction->setToolTip(tr("Configure mining"));
+    blockAction->setShortcut(QKeySequence(Qt::ALT + Qt::Key_8));
+    miningAction->setCheckable(true);
+    tabGroup->addAction(miningAction);
+
     connect(overviewAction, SIGNAL(triggered()), this, SLOT(showNormalIfMinimized()));
     connect(overviewAction, SIGNAL(triggered()), this, SLOT(gotoOverviewPage()));
     connect(sendCoinsAction, SIGNAL(triggered()), this, SLOT(showNormalIfMinimized()));
@@ -256,6 +268,7 @@ void BitcoinGUI::createActions()
     connect(addressBookAction, SIGNAL(triggered()), this, SLOT(gotoAddressBookPage()));
     connect(burnCoinsAction, SIGNAL(triggered()), this, SLOT(showNormalIfMinimized()));
     connect(burnCoinsAction, SIGNAL(triggered()), this, SLOT(gotoBurnCoinsPage()));
+    connect(miningAction, SIGNAL(triggered()), this, SLOT(gotoMiningPage()));
     connect(messageAction, SIGNAL(triggered()), this, SLOT(showNormalIfMinimized()));
     connect(messageAction, SIGNAL(triggered()), this, SLOT(gotoMessagePage()));
 
@@ -340,6 +353,7 @@ void BitcoinGUI::createToolBars()
     toolbar->addAction(addressBookAction);
     toolbar->addAction(burnCoinsAction);
     toolbar->addAction(blockAction);
+    toolbar->addAction(miningAction);
 #ifdef FIRST_CLASS_MESSAGING
     toolbar->addAction(messageAction);
 #endif
@@ -379,10 +393,14 @@ void BitcoinGUI::setClientModel(ClientModel *clientModel)
         setNumBlocks(clientModel->getNumBlocks(), clientModel->getNumBlocksOfPeers());
         connect(clientModel, SIGNAL(numBlocksChanged(int, int)), this, SLOT(setNumBlocks(int, int)));
 
+        setMining(false, 0);
+        connect(clientModel, SIGNAL(miningChanged(bool,int)), this, SLOT(setMining(bool,int)));
+
         // Report errors from network/worker thread
         connect(clientModel, SIGNAL(error(QString,QString, bool)), this, SLOT(error(QString,QString,bool)));
 
         rpcConsole->setClientModel(clientModel);
+        miningPage->setModel(clientModel);
     }
 }
 
@@ -402,6 +420,7 @@ void BitcoinGUI::setWalletModel(WalletModel *walletModel)
         receiveCoinsPage->setModel(walletModel->getAddressTableModel());
         sendCoinsPage->setModel(walletModel);
         burnCoinsPage->setModel(walletModel);
+        miningPage->setWalletModel(walletModel);
         messagePage->setModel(walletModel);
 
         setEncryptionStatus(walletModel->getEncryptionStatus());
@@ -620,7 +639,20 @@ void BitcoinGUI::setNumBlocks(int count, int nTotalBlocks)
     {
         overviewPage->updatePlot(count);
     }
+}
 
+void BitcoinGUI::setMining(bool mining, int hashrate)
+{
+    if (mining)
+    {
+        labelMiningIcon->setPixmap(QIcon(":/icons/mining_active").pixmap(STATUSBAR_ICONSIZE,STATUSBAR_ICONSIZE));
+        labelMiningIcon->setToolTip(tr("Mining Slimcoin at %1 hashes per second").arg(hashrate));
+    }
+    else
+    {
+        labelMiningIcon->setPixmap(QIcon(":/icons/mining_inactive").pixmap(STATUSBAR_ICONSIZE,STATUSBAR_ICONSIZE));
+        labelMiningIcon->setToolTip(tr("Not mining Slimcoin"));
+    }
 }
 
 void BitcoinGUI::error(const QString &title, const QString &message, bool modal)
@@ -676,7 +708,7 @@ void BitcoinGUI::askFee(qint64 nFeeRequired, bool *payFee)
           "Do you want to pay the fee?").arg(
                 BitcoinUnits::formatWithUnit(BitcoinUnits::BTC, nFeeRequired));
     QMessageBox::StandardButton retval = QMessageBox::question(
-          this, tr("Sending..."), strMessage,
+          this, tr("Confirm transaction fee"), strMessage,
           QMessageBox::Yes|QMessageBox::Cancel, QMessageBox::Yes);
     *payFee = (retval == QMessageBox::Yes);
 }
@@ -734,6 +766,14 @@ void BitcoinGUI::gotoBlockBrowser()
     disconnect(exportAction, SIGNAL(triggered()), 0, 0);
 }
 
+void BitcoinGUI::gotoMiningPage()
+{
+    miningAction->setChecked(true);
+    centralWidget->setCurrentWidget(miningPage);
+
+    exportAction->setEnabled(false);
+    disconnect(exportAction, SIGNAL(triggered()), 0, 0);
+}
 
 void BitcoinGUI::gotoHistoryPage()
 {

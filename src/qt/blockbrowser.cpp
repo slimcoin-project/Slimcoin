@@ -307,7 +307,6 @@ double getTxFees(std::string txid)
     double buffer0 = 0;
     for (unsigned int i = 0; i < tx.vin.size(); i++)
     {
-        double swp=0;
         uint256 hash0;
         const CTxIn& vin = tx.vin[i];
         hash0.SetHex(vin.prevout.hash.ToString());
@@ -318,7 +317,9 @@ double getTxFees(std::string txid)
         CDataStream ssTx(SER_NETWORK, PROTOCOL_VERSION);
         ssTx << wtxPrev;
         const CScript target = wtxPrev.vout[vin.prevout.n].scriptPubKey;
-        swp =convertCoins(getInputValue(wtxPrev, target));
+        /* FIXME: What was this supposed to be doing?
+        double swp = convertCoins(getInputValue(wtxPrev, target));
+        */
         buffer0 = value0 + convertCoins(getInputValue(wtxPrev, target));
         value0 = buffer0;
     }

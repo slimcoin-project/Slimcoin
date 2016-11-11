@@ -231,7 +231,7 @@ Object blockToJSON(const CBlock& block, const CBlockIndex* blockindex, bool fPri
     }
 
     result.push_back(Pair("entropybit", (int)blockindex->GetStakeEntropyBit()));
-    result.push_back(Pair("modifier", strprintf("%016"PRI64x, blockindex->nStakeModifier)));
+    result.push_back(Pair("modifier", strprintf("%016" PRI64x, blockindex->nStakeModifier)));
     result.push_back(Pair("modifierchecksum", strprintf("%08x", blockindex->nStakeModifierChecksum)));
 
     //PoB details
@@ -242,7 +242,7 @@ Object blockToJSON(const CBlock& block, const CBlockIndex* blockindex, bool fPri
         result.push_back(Pair("burnCTxOut", blockindex->burnCTxOut));
     }
 
-    result.push_back(Pair("nEffectiveBurnCoins", strprintf("%"PRI64d, blockindex->nEffectiveBurnCoins)));
+    result.push_back(Pair("nEffectiveBurnCoins", strprintf("%" PRI64d, blockindex->nEffectiveBurnCoins)));
     result.push_back(Pair("Formatted nEffectiveBurnCoins", FormatMoney(blockindex->nEffectiveBurnCoins)));
     result.push_back(Pair("nBurnBits", HexBits(blockindex->nBurnBits)));
 
@@ -415,7 +415,7 @@ Value getpeerinfo(const Array& params, bool fHelp)
         Object obj;
 
         obj.push_back(Pair("addr", stats.addrName));
-        obj.push_back(Pair("services", strprintf("%08"PRI64x, stats.nServices)));
+        obj.push_back(Pair("services", strprintf("%08" PRI64x, stats.nServices)));
         obj.push_back(Pair("lastsend", (boost::int64_t)stats.nLastSend));
         obj.push_back(Pair("lastrecv", (boost::int64_t)stats.nLastRecv));
         obj.push_back(Pair("conntime", (boost::int64_t)stats.nTimeConnected));
@@ -1114,7 +1114,7 @@ Value calcburnhash(const Array& params, bool fHelp)
     output += "Smallest Hash is:   " + smallestHash.GetHex() + "\n";
     output += "By transaction id:  " + smallestWTx.GetHash().GetHex() + "\n";
     output += "Target:             " + CBigNum().SetCompact(pindexBest->nBurnBits).getuint256().GetHex() + "\n";
-    output += strprintf("nBurnBits=%08x, nEffectiveBurnCoins=%"PRI64u" (formatted %s)",
+    output += strprintf("nBurnBits=%08x, nEffectiveBurnCoins=%" PRI64u " (formatted %s)",
                                             pindexBest->nBurnBits, pindexBest->nEffectiveBurnCoins, 
                                             FormatMoney(pindexBest->nEffectiveBurnCoins).c_str());
 
@@ -1230,7 +1230,7 @@ Value getburndata(const Array& params, bool fHelp)
     Object info;
     info.push_back(Pair("General Info", ""));
     info.push_back(Pair("nBurnBits", strprintf("%08x", pindexBest->nBurnBits)));
-    info.push_back(Pair("nEffectiveBurnCoins", strprintf("%"PRI64d, pindexBest->nEffectiveBurnCoins)));
+    info.push_back(Pair("nEffectiveBurnCoins", strprintf("%" PRI64d, pindexBest->nEffectiveBurnCoins)));
     info.push_back(Pair("Formatted nEffectiveBurnCoins", FormatMoney(pindexBest->nEffectiveBurnCoins)));
                                  
     ret.push_back(info);
@@ -1666,11 +1666,13 @@ void ListTransactions(const CWalletTx& wtx, const string& strAccount, int nMinDe
             entry.push_back(Pair("category", wtx.GetDepthInMainChain() ? "immature" : "orphan"));
             entry.push_back(Pair("amount", ValueFromAmount(nGeneratedImmature)));
         }
+        /* FIXME: why is this not in SLIMcoin?
         else if (wtx.IsCoinStake())
         {
             entry.push_back(Pair("category", "stake"));
             entry.push_back(Pair("amount", ValueFromAmount(nGeneratedMature)));
         }
+        */
         else
         {
             entry.push_back(Pair("category", "generate"));
@@ -2685,7 +2687,10 @@ Value getwork(const Array& params, bool fHelp)
             nStart = GetTime();
 
             // Create new block
+            /* FIXME: check for use of reserveKey
             pblock = CreateNewBlock(*pMiningKey, pwalletMain, false, NULL);
+            */
+            pblock = CreateNewBlock(pwalletMain);
             if (!pblock)
                 throw JSONRPCError(RPC_OUT_OF_MEMORY, "Out of memory");
             vNewBlock.push_back(pblock);
@@ -2817,7 +2822,10 @@ Value getblocktemplate(const Array& params, bool fHelp)
                 delete pblock;
                 pblock = NULL;
             }
+            /* FIXME: reserve key refactoring
             pblock = CreateNewBlock(*pMiningKey, pwalletMain, false);
+            */
+            pblock = CreateNewBlock(pwalletMain, false);
             if (!pblock)
                 throw JSONRPCError(-7, "Out of memory");
 
@@ -2919,7 +2927,9 @@ Value submitblock(const Array& params, bool fHelp)
 
     if (params.size() > 0) printf("Params 0: %s\n", params[0].get_str().c_str());
     if (params.size() > 1) printf("Params 1: %s\n", params[1].get_str().c_str());
-    // static CReserveKey reservekey(pwalletMain);
+
+    static CReserveKey reservekey(pwalletMain);
+
     vector<unsigned char> blockData(ParseHex(params[0].get_str()));
     // FIXME blockData.insert( blockData.begin() + 80, 89, 0);
     CDataStream ssBlock(blockData, SER_NETWORK, PROTOCOL_VERSION);
@@ -3001,7 +3011,10 @@ Value getmemorypool(const Array& params, bool fHelp)
             // Create new block
             if (pblock)
                 delete pblock;
+            /* FIXME: reservekey?
             pblock = CreateNewBlock(reservekey, pwalletMain, false);
+            */
+            pblock = CreateNewBlock(pwalletMain, false);
             if (!pblock)
                 throw JSONRPCError(RPC_OUT_OF_MEMORY, "Out of memory");
         }
@@ -3041,12 +3054,14 @@ Value getmemorypool(const Array& params, bool fHelp)
         CBlock pblock;
         ssBlock >> pblock;
 
-        // static CReserveKey reservekey(pwalletMain);
+        static CReserveKey reservekey(pwalletMain);
 
         if (!pblock.SignBlock(*pwalletMain))
             throw JSONRPCError(RPC_UNABLE_TO_SIGN_BLOCK, "Unable to sign block, wallet locked?");
-
+        /* FIXME: refactor for pMiningKey?
         return CheckWork(&pblock, *pwalletMain, *pMiningKey);
+        */ 
+        return CheckWork(&pblock, *pwalletMain, reservekey);
     }
 }
 
@@ -3202,7 +3217,10 @@ Value repairwallet(const Array& params, bool fHelp)
 Value getsubsidy(const Array& params, bool fHelp)
 {
     static CBlock* pblock;
+    /* FIXME: reservekey refactoring
     pblock = CreateNewBlock(*pMiningKey, pwalletMain, false);
+    */
+    pblock = CreateNewBlock(pwalletMain, false);
     return (boost::int64_t)GetProofOfWorkReward(pblock->nBits);
 }
 

@@ -5,16 +5,20 @@ INCLUDEPATH += src src/json src/qt
 DEFINES += QT_GUI BOOST_THREAD_USE_LIB BOOST_SPIRIT_THREADSAFE
 CONFIG += no_include_pwd
 CONFIG += thread
-CONFIG += debug
-#CONFIG += release
+# CONFIG += debug
+CONFIG += release
 
 !win32 {
 #CONFIG += static
 }
 
-QT += network webkit widgets
 greaterThan(QT_MAJOR_VERSION, 4) {
-    QT += webkitwidgets
+        QT += network widgets
+    lessThan(QT_VERSION, 5.7) {
+        QT += webkit webkitwidgets
+    }else{
+        QT += webengine webenginewidgets
+    }
     DEFINES += QT_DISABLE_DEPRECATED_BEFORE=0x000000
     DEFINES += QT_NO_PRINTER
 }
@@ -186,6 +190,7 @@ HEADERS += src/qt/bitcoingui.h \
     src/qt/walletmodel.h \
     src/bitcoinrpc.h \
     src/qt/overviewpage.h \
+    src/qt/miningpage.h \
     src/qt/csvmodelwriter.h \
     src/crypter.h \
     src/qt/sendcoinsentry.h \
@@ -249,6 +254,7 @@ SOURCES += src/qt/bitcoin.cpp src/qt/bitcoingui.cpp \
     src/qt/walletmodel.cpp \
     src/bitcoinrpc.cpp \
     src/rpcdump.cpp \
+    src/qt/miningpage.cpp \
     src/qt/overviewpage.cpp \
     src/qt/csvmodelwriter.cpp \
     src/crypter.cpp \
@@ -280,6 +286,7 @@ FORMS += \
     src/qt/forms/editaddressdialog.ui \
     src/qt/forms/transactiondescdialog.ui \
     src/qt/forms/overviewpage.ui \
+    src/qt/forms/miningpage.ui \
     src/qt/forms/sendcoinsentry.ui \
     src/qt/forms/burncoinsentry.ui \
     src/qt/forms/blockbrowser.ui \

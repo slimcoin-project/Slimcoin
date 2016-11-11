@@ -244,7 +244,10 @@ void PrintBlockTree();
 bool ProcessMessages(CNode* pfrom);
 bool SendMessages(CNode* pto, bool fSendTrickle);
 void GenerateSlimcoins(bool fGenerate, CWallet* pwallet);
+/* FIXME: refactor?
 CBlock* CreateNewBlock(CReserveKey& reservekey, CWallet* pwallet, bool fProofOfStake=false, const CWalletTx *burnWalletTx=NULL);
+*/
+CBlock *CreateNewBlock(CWallet* pwallet, bool fProofOfStake=false, const CWalletTx *burnWalletTx=NULL, CReserveKey *resKey=NULL);
 void IncrementExtraNonce(CBlock* pblock, CBlockIndex* pindexPrev, unsigned int& nExtraNonce);
 void FormatHashBuffers(CBlock* pblock, char* pmidstate, char* pdata, char* phash1);
 bool CheckWork(CBlock* pblock, CWallet& wallet, CReserveKey& reservekey);
@@ -370,7 +373,8 @@ public:
 
     std::string ToString() const
     {
-        return strprintf("COutPoint(%s, %d)", hash.ToString().substr(0,10).c_str(), n);
+    //~ return strprintf("COutPoint(%s, %d)", hash.ToString().substr(0,10).c_str(), n);
+    return strprintf("COutPoint(%s, %d)", hash.ToString().c_str(), n);
     }
 
     void print() const
@@ -616,15 +620,20 @@ public:
         // Time based nLockTime implemented in 0.1.6
         if (nLockTime == 0)
             return true;
+
         if (nBlockHeight == 0)
             nBlockHeight = nBestHeight;
+
         if (nBlockTime == 0)
             nBlockTime = GetAdjustedTime();
+
         if ((int64)nLockTime < ((int64)nLockTime < LOCKTIME_THRESHOLD ? (int64)nBlockHeight : nBlockTime))
             return true;
+
         BOOST_FOREACH(const CTxIn& txin, vin)
             if (!txin.IsFinal())
                 return false;
+
         return true;
     }
 
@@ -894,6 +903,7 @@ public:
             vin.size(),
             vout.size(),
             nLockTime);
+
         for (unsigned int i = 0; i < vin.size(); i++)
             str += "    " + vin[i].ToString() + "\n";
         for (unsigned int i = 0; i < vout.size(); i++)
@@ -907,7 +917,9 @@ public:
     }
 
 
+    /* FIXME: refactor required?
     bool ReadFromDisk(CTxDB& txdb, const uint256& hash, CTxIndex& txindexRet);
+    */
     bool ReadFromDisk(CTxDB& txdb, COutPoint prevout, CTxIndex& txindexRet);
     bool ReadFromDisk(CTxDB& txdb, COutPoint prevout);
     bool ReadFromDisk(COutPoint prevout);
@@ -1227,18 +1239,21 @@ public:
 
     /* FIXME check sanity of this declaration */
     // slimcoin: entropy bit for stake modifier if chosen by modifier
-    unsigned int GetStakeEntropyBit() const;
-    /*
+    unsigned int GetStakeEntropyBit() const
     {
         uint160 hashSig = Hash160(vchBlockSig);
+
         if(fDebug && GetBoolArg("-printstakemodifier"))
-            printf("GetV3StakeEntropyBit: hashSig=%s", hashSig.ToString().c_str());
+            printf("GetStakeEntropyBit: hashSig=%s", hashSig.ToString().c_str());
+
         hashSig >>= 159; // take the first bit of the hash
+
         if(fDebug && GetBoolArg("-printstakemodifier"))
-            printf("v3entropybit=%d\n", hashSig.Get64());
+            printf("entropybit=%d\n", hashSig.Get64());
+
         return hashSig.Get64();
     }
-    */
+
 
     // ppcoin: three types of block: proof-of-work, proof-of-stake, or proof-of-burn
     bool IsProofOfStake() const
@@ -1343,11 +1358,13 @@ public:
         long fileOutPos = ftell(fileout);
         if (fileOutPos < 0)
             return error("CBlock::WriteToDisk() : ftell failed");
+
         nBlockPosRet = fileOutPos;
         fileout << *this;
 
         // Flush stdio buffers and commit to disk before returning
         fflush(fileout);
+
         if (!IsInitialBlockDownload() || (nBestHeight+1) % 500 == 0)
         {
 #ifdef WIN32
@@ -1386,8 +1403,6 @@ public:
         return true;
     }
 
-
-
     void print(const uint256 &blockHash) const
     {
         printf("CBlock(hash=%s, ver=%d, hashPrevBlock=%s, hashMerkleRoot=%s, nTime=%u, nBits=%08x, nNonce=%u, vtx=%d, vchBlockSig=%s)\n",
@@ -1399,7 +1414,7 @@ public:
             vtx.size(),
             HexStr(vchBlockSig.begin(), vchBlockSig.end()).c_str());
 
-        printf("CBlock General PoB(nBurnBits=%08x nEffectiveBurnCoins=%"PRI64u" (formatted %s))\n", 
+        printf("CBlock General PoB(nBurnBits=%08x nEffectiveBurnCoins=%" PRI64u " (formatted %s))\n",
                      nBurnBits, nEffectiveBurnCoins, FormatMoney(nEffectiveBurnCoins).c_str());
         
         if(IsProofOfBurn())
@@ -1430,10 +1445,10 @@ public:
     bool AddToBlockIndex(unsigned int nFile, unsigned int nBlockPos);
     bool CheckBlock() const;
     bool AcceptBlock();
-    bool GetCoinAge(uint64& nCoinAge) const; // ppcoin: calculate total coin age spent in block
+    bool GetCoinAge(uint64& nCoinAge) const; // slimcoin: calculate total coin age spent in block
     bool SignBlock(const CKeyStore& keystore);
     bool CheckBlockSignature() const;
-    // unsigned int GetStakeEntropyBit() const; // slimcoin: entropy bit for stake modifier if chosen by modifier
+    // unsigned int GetStakeEntropyBit() const; // ppcoin: entropy bit for stake modifier if chosen by modifier
 
 private:
     bool SetBestChainInner(CTxDB& txdb, CBlockIndex *pindexNew);
@@ -1725,7 +1740,7 @@ public:
 
     std::string ToString() const
     {
-        return strprintf("CBlockIndex(nprev=%08x, pnext=%08x, nFile=%d, nBlockPos=%-6d nHeight=%d, nMint=%s, nMoneySupply=%s, nFlags=(%s)(%d)(%s), nStakeModifier=%016"PRI64x", nStakeModifierChecksum=%08x, hashProofOfStake=%s, prevoutStake=(%s), nStakeTime=%d merkle=%s, hashBlock=%s, nBurnBits=%08x nEffectiveBurnCoins=%"PRI64u" (formatted %s))",
+        return strprintf("CBlockIndex(nprev=%08x, pnext=%08x, nFile=%d, nBlockPos=%-6d nHeight=%d, nMint=%s, nMoneySupply=%s, nFlags=(%s)(%d)(%s), nStakeModifier=%016" PRI64x ", nStakeModifierChecksum=%08x, hashProofOfStake=%s, prevoutStake=(%s), nStakeTime=%d merkle=%s, hashBlock=%s, nBurnBits=%08x nEffectiveBurnCoins=%" PRI64u " (formatted %s))",
             pprev, pnext, nFile, nBlockPos, nHeight,
             FormatMoney(nMint).c_str(), FormatMoney(nMoneySupply).c_str(),
             GeneratedStakeModifier() ? "MOD" : "-", GetStakeEntropyBit(), IsProofOfStake()? "PoS" : "PoW",
@@ -2067,8 +2082,8 @@ public:
         return strprintf(
                 "CAlert(\n"
                 "    nVersion     = %d\n"
-                "    nRelayUntil  = %"PRI64d"\n"
-                "    nExpiration  = %"PRI64d"\n"
+                "    nRelayUntil  = %" PRI64d "\n"
+                "    nExpiration  = %" PRI64d "\n"
                 "    nID          = %d\n"
                 "    nCancel      = %d\n"
                 "    setCancel    = %s\n"

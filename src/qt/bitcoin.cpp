@@ -235,7 +235,6 @@ int main(int argc, char *argv[])
   {
     BitcoinGUI window;
     guiref = &window;
-
     if(AppInit2(argc, argv))
     {
       {
@@ -257,9 +256,13 @@ int main(int argc, char *argv[])
 
         // If -min option passed, start window minimized.
         if(GetBoolArg("-min"))
+                {
           window.showMinimized();
+                }
         else
+                {
           window.show();
+                }
 
         // Place this here as guiref has to be defined if we dont want to lose URIs
         ipcInit();
@@ -270,7 +273,7 @@ int main(int argc, char *argv[])
         // Check for URI in argv
         for(int i = 1; i < argc; i++)
         {
-          if(strlen(argv[i]) >= 7 && strncasecmp(argv[i], "slimcoin:", 7) == 0)
+          if(strlen(argv[i]) > 8 && strncasecmp(argv[i], "slimcoin:", 9) == 0)
           {
             const char *strURI = argv[i];
             try {

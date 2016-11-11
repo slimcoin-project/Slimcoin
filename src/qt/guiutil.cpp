@@ -65,6 +65,11 @@ namespace GUIUtil
     if(uri.scheme() != QString("slimcoin"))
       return false;
 
+    // check if the address is valid
+    CBitcoinAddress addressFromUri(uri.path().toStdString());
+    if (!addressFromUri.IsValid())
+        return false;
+
     SendCoinsRecipient rv;
     rv.address = uri.path();
     rv.amount = 0;
@@ -245,6 +250,30 @@ namespace GUIUtil
     if(boost::filesystem::exists(pathDebug))
       QDesktopServices::openUrl(QUrl::fromLocalFile(QString::fromStdString(pathDebug.string())));
   }
+
+ToolTipToRichTextFilter::ToolTipToRichTextFilter(int size_threshold, QObject *parent) :
+    QObject(parent), size_threshold(size_threshold)
+{
+
+}
+
+bool ToolTipToRichTextFilter::eventFilter(QObject *obj, QEvent *evt)
+{
+    if(evt->type() == QEvent::ToolTipChange)
+    {
+        QWidget *widget = static_cast<QWidget*>(obj);
+        QString tooltip = widget->toolTip();
+        if(tooltip.size() > size_threshold && !tooltip.startsWith("<qt/>") && !Qt::mightBeRichText(tooltip))
+        {
+            // Prefix <qt/> to make sure Qt detects this as rich text
+            // Escape the current message as HTML and replace \n by <br>
+            tooltip = "<qt/>" + HtmlEscape(tooltip, true);
+            widget->setToolTip(tooltip);
+            return true;
+        }
+    }
+    return QObject::eventFilter(obj, evt);
+}
 
   HelpMessageBox::HelpMessageBox(QWidget *parent) :
     QMessageBox(parent)
