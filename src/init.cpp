@@ -540,6 +540,7 @@ bool AppInit2(int argc, char *argv[])
       return false;
     }
   } else {
+   // FIXME: Handle reserve balance while syncing
    mapArgs["-reservebalance"] = "1000000";
   }
 
