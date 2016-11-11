@@ -516,6 +516,7 @@ Value getnetworkghps(const Array& params, bool fHelp)
         // Exponential moving average of recent proof-of-work block spacing
         if (pindex->IsProofOfWork())
         {
+            //obtain the time between the blocks
             int64 nActualSpacingWork = pindex->GetBlockTime() - pindexPrevWork->GetBlockTime();
             nTargetSpacingWork = ((nInterval - 1) * nTargetSpacingWork + nActualSpacingWork + nActualSpacingWork) / (nInterval + 1);
             nTargetSpacingWork = max(nTargetSpacingWork, nTargetSpacingWorkMin);
@@ -2725,7 +2726,9 @@ Value getwork(const Array& params, bool fHelp)
         CBlock* pdata = (CBlock*)&vchData[0];
 
         // Byte reverse
-        for (int i = 0; i < 128/4; i++)
+        // FIXME Check alternative
+        // for (int i = 0; i < 128/4; i++)
+        for (int i = 0; i < 128 / sizeof(u32int); i++)
             ((unsigned int*)pdata)[i] = ByteReverse(((unsigned int*)pdata)[i]);
 
         // Get saved block
