@@ -305,9 +305,9 @@ double getTxFees(std::string txid)
 
     double value0 = 0;
     double buffer0 = 0;
-    double swp=0;
     for (unsigned int i = 0; i < tx.vin.size(); i++)
     {
+        double swp=0;
         uint256 hash0;
         const CTxIn& vin = tx.vin[i];
         hash0.SetHex(vin.prevout.hash.ToString());
