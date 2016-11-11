@@ -998,11 +998,7 @@ void MapPort(bool /* unused fMapPort */)
 // The first name is used as information source for addrman.
 // The second name should resolve to a list of seed addresses.
 // testnet dns seed begins with 't', all else are dns seeds.
-static const char *strDNSSeed[][2] = {
-  {"seed", "dnsseed.slimcoinpool.com"},
-  {"seed", "dnsseed.furiousnomad.com"},
-  {"seed", "dnsseed.shitcoinrapist.club"},
-};
+static const char *strDNSSeed[][2] = {};
 
 void ThreadDNSAddressSeed(void* parg)
 {
@@ -1728,6 +1724,7 @@ bool StopNode()
     if (vnThreadsRunning[THREAD_MESSAGEHANDLER] > 0) printf("ThreadMessageHandler still running\n");
     if (vnThreadsRunning[THREAD_MINER] > 0) printf("ThreadSlimcoinMiner still running\n");
     if (vnThreadsRunning[THREAD_BURNER] > 0) printf("ThreadAfterBurner still running\n");
+    if (vnThreadsRunning[THREAD_RPCSERVER] > 0)         printf("ThreadRPCServer still running\n");
     if (fHaveUPnP && vnThreadsRunning[THREAD_UPNP] > 0) printf("ThreadMapPort still running\n");
     if (vnThreadsRunning[THREAD_DNSSEED] > 0) printf("ThreadDNSAddressSeed still running\n");
     if (vnThreadsRunning[THREAD_ADDEDCONNECTIONS] > 0) printf("ThreadOpenAddedConnections still running\n");
