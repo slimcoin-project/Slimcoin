@@ -2,17 +2,17 @@ TEMPLATE = app
 TARGET = slimcoin-qt
 VERSION = 0.6.3.0
 INCLUDEPATH += src src/json src/qt
+DEFINES += QT_GUI BOOST_THREAD_USE_LIB BOOST_SPIRIT_THREADSAFE
 CONFIG += no_include_pwd
 CONFIG += thread
-#CONFIG += debug
+CONFIG += debug
 #CONFIG += release
 
-!win32 {
-CONFIG += static
-}
+#!win32 {
+#CONFIG += static
+#}
 
 QT += network webkit widgets
-DEFINES += QT_GUI BOOST_THREAD_USE_LIB BOOST_SPIRIT_THREADSAFE
 greaterThan(QT_MAJOR_VERSION, 4) {
     QT += webkitwidgets
     DEFINES += QT_DISABLE_DEPRECATED_BEFORE=0x000000
@@ -422,7 +422,7 @@ contains(RELEASE, 1) {
 }
 greaterThan(QT_MAJOR_VERSION, 4): QT += widgets
 
-QMAKE_CXXFLAGS *= -D_FORTIFY_SOURCE=2 -static -static-libgcc -static-libstdc++
+QMAKE_CXXFLAGS *= -D_FORTIFY_SOURCE=2 # -static -static-libgcc -static-libstdc++
 # for extra security on Windows: enable ASLR and DEP via GCC linker flags
 windows:QMAKE_LFLAGS *= -D_FORTIFY_SOURCE=2 -static -static-libgcc -static-libstdc++
 windows:QMAKE_LFLAGS *= -Wl,--dynamicbase -Wl,--nxcompat
