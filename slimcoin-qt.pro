@@ -8,14 +8,15 @@ CONFIG += thread
 CONFIG += debug
 #CONFIG += release
 
-#!win32 {
+!win32 {
 #CONFIG += static
-#}
+}
 
 QT += network webkit widgets
 greaterThan(QT_MAJOR_VERSION, 4) {
     QT += webkitwidgets
     DEFINES += QT_DISABLE_DEPRECATED_BEFORE=0x000000
+    DEFINES += QT_NO_PRINTER
 }
 
 # for boost 1.37, add -mt to the boost libraries
