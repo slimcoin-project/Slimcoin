@@ -105,8 +105,7 @@ TransactionRecord(uint256 hash, int64 time,
   /** Decompose CWallet transaction to model transaction records.
    */
   static bool showTransaction(const CWalletTx &wtx);
-  static QList<TransactionRecord> decomposeTransaction(const CWallet *wallet, const CWalletTx &wtx, 
-                                                       bool fBurnMint=false);
+  static QList<TransactionRecord> decomposeTransaction(const CWallet *wallet, const CWalletTx &wtx, bool fBurnMint=false);
 
   /** @name Immutable transaction attributes
       @{*/

@@ -209,8 +209,7 @@ void ClientModel::update()
 
   if(cachedNumConnections != newNumConnections)
     emit numConnectionsChanged(newNumConnections);
-  if(cachedNumBlocks != newNumBlocks || cachedStatusBar != newStatusBar || 
-     cachedNumBlocksOfPeers != newNumBlocksOfPeers)
+  if(cachedNumBlocks != newNumBlocks || cachedStatusBar != newStatusBar || cachedNumBlocksOfPeers != newNumBlocksOfPeers)
   {
 
     cachedNumConnections = newNumConnections;

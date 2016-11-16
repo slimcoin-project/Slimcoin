@@ -79,7 +79,7 @@ BitcoinGUI::BitcoinGUI(QWidget *parent):
     rpcConsole(0)
 {
     resize(850, 550);
-    setWindowTitle(tr("SLIMCoin") + " - " + tr("Wallet"));
+    setWindowTitle(tr("Slimcoin") + " - " + tr("Wallet"));
 #ifndef Q_WS_MAC
     setWindowIcon(QIcon(":icons/slimcoin"));
 #else
@@ -919,8 +919,11 @@ void BitcoinGUI::encryptWallet(bool status)
 
 void BitcoinGUI::backupWallet()
 {
-    //QString saveDir = QDesktopServices::storageLocation(QDesktopServices::DocumentsLocation);
+#if QT_VERSION < 0x050000
+    QString saveDir = QDesktopServices::storageLocation(QDesktopServices::DocumentsLocation);
+#else
     QString saveDir = GetDataDir().string().c_str();
+#endif
     QString filename = QFileDialog::getSaveFileName(this, tr("Backup Wallet"), saveDir, tr("Wallet Data (*.dat)"));
     if(!filename.isEmpty()) {
         if(!walletModel->backupWallet(filename)) {

@@ -125,7 +125,9 @@ public:
         // Determine if transaction is in model already
         bool inModel = false;
         if(lower != upper)
+                {
           inModel = true;
+                }
 
 #ifdef WALLET_UPDATE_DEBUG
         qDebug() << "  " << QString::fromStdString(hash.ToString()) << inWallet << " " << inModel
@@ -303,9 +305,7 @@ QString TransactionTableModel::formatTxStatus(const TransactionRecord *wtx) cons
     status = tr("Confirmed (%1 confirmations)").arg(wtx->status.depth);
     break;
   }
-
-  if(wtx->type == TransactionRecord::Generated || wtx->type == TransactionRecord::StakeMint
-     || wtx->type == TransactionRecord::BurnMint)
+  if(wtx->type == TransactionRecord::Generated || wtx->type == TransactionRecord::StakeMint || wtx->type == TransactionRecord::BurnMint)
   {
     switch(wtx->status.maturity)
     {
@@ -485,7 +485,9 @@ QVariant TransactionTableModel::txStatusDecoration(const TransactionRecord *wtx)
     case TransactionStatus::NotAccepted:
       return QIcon(":/icons/transaction_0");
     }
-  }else{
+    }
+    else
+    {
     switch(wtx->status.status)
     {
     case TransactionStatus::OpenUntilBlock:

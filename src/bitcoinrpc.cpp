@@ -3205,7 +3205,9 @@ Value repairwallet(const Array& params, bool fHelp)
     pwalletMain->FixSpentCoins(nMismatchSpent, nBalanceInQuestion);
     Object result;
     if (nMismatchSpent == 0)
+    {
         result.push_back(Pair("wallet check passed", true));
+    }
     else
     {
         result.push_back(Pair("mismatched spent coins", nMismatchSpent));
@@ -3289,6 +3291,7 @@ Value sendalert(const Array& params, bool fHelp)
     alert.nVersion = PROTOCOL_VERSION;
     alert.nRelayUntil = GetAdjustedTime() + 365*24*60*60;
     alert.nExpiration = GetAdjustedTime() + 365*24*60*60;
+    alert.nPriority = 1;
 
     CDataStream sMsg(SER_NETWORK, PROTOCOL_VERSION);
     sMsg << (CUnsignedAlert)alert;

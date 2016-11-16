@@ -339,7 +339,8 @@ public:
         SCRIPT_ADDRESS_TEST = 196,
     };
 
-    bool SetHash160(const uint160& hash160) {
+    bool SetHash160(const uint160& hash160)
+    {
         SetData(fTestNet ? PUBKEY_ADDRESS_TEST : PUBKEY_ADDRESS, &hash160, 20);
         return true;
     }

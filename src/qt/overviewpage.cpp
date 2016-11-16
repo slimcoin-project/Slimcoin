@@ -58,18 +58,23 @@ public:
     painter->drawText(addressRect, Qt::AlignLeft|Qt::AlignVCenter, address);
 
     if(amount < 0)
+    {
       foreground = COLOR_NEGATIVE;
+    }
     else if(!confirmed)
+    {
       foreground = COLOR_UNCONFIRMED;
+    }
     else
+    {
       foreground = option.palette.color(QPalette::Text);
-
+    }
     painter->setPen(foreground);
     QString amountText = BitcoinUnits::formatWithUnit(unit, amount, true);
-
     if(!confirmed)
+    {
       amountText = QString("[") + amountText + QString("]");
-
+    }
     painter->drawText(amountRect, Qt::AlignRight|Qt::AlignVCenter, amountText);
 
     painter->setPen(option.palette.color(QPalette::Text));
@@ -180,8 +185,7 @@ OverviewPage::~OverviewPage()
   delete ui;
 }
 
-void OverviewPage::setBalance(qint64 balance, qint64 stake, qint64 unconfirmedBalance, 
-                              BurnCoinsBalances burnBalances)
+void OverviewPage::setBalance(qint64 balance, qint64 stake, qint64 unconfirmedBalance, BurnCoinsBalances burnBalances)
 {
   int unit = model->getOptionsModel()->getDisplayUnit();
   currentBalance = balance;
@@ -225,10 +229,8 @@ void OverviewPage::setModel(WalletModel *model)
     ui->listTransactions->setModelColumn(TransactionTableModel::ToAddress);
 
     // Keep up to date with wallet
-    setBalance(model->getBalance(), model->getStake(), model->getUnconfirmedBalance(), 
-               model->getBurnCoinBalances());
-    connect(model, SIGNAL(balanceChanged(qint64, qint64, qint64, BurnCoinsBalances)),
-            this, SLOT(setBalance(qint64, qint64, qint64, BurnCoinsBalances)));
+    setBalance(model->getBalance(), model->getStake(), model->getUnconfirmedBalance(), model->getBurnCoinBalances());
+    connect(model, SIGNAL(balanceChanged(qint64, qint64, qint64, BurnCoinsBalances)), this, SLOT(setBalance(qint64, qint64, qint64, BurnCoinsBalances)));
 
     setNumTransactions(model->getNumTransactions());
     connect(model, SIGNAL(numTransactionsChanged(int)), this, SLOT(setNumTransactions(int)));
@@ -242,8 +244,7 @@ void OverviewPage::displayUnitChanged()
   if(!model || !model->getOptionsModel())
     return;
   if(currentBalance != -1)
-    setBalance(currentBalance, currentStake, currentUnconfirmedBalance, 
-               BurnCoinsBalances(currentNetBurnCoins, currentEffectiveBurnCoins, currentImmatureBurnCoins));
+    setBalance(currentBalance, currentStake, currentUnconfirmedBalance, BurnCoinsBalances(currentNetBurnCoins, currentEffectiveBurnCoins, currentImmatureBurnCoins));
 
   txdelegate->unit = model->getOptionsModel()->getDisplayUnit();
   ui->listTransactions->update();

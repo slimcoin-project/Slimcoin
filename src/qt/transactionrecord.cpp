@@ -30,8 +30,7 @@ bool TransactionRecord::showTransaction(const CWalletTx &wtx)
 /*
  * Decompose CWallet transaction to model transaction records.
  */
-QList<TransactionRecord> TransactionRecord::decomposeTransaction(const CWallet *wallet, const CWalletTx &wtx, 
-                                                                 bool fBurnMint)
+QList<TransactionRecord> TransactionRecord::decomposeTransaction(const CWallet *wallet, const CWalletTx &wtx, bool fBurnMint)
 {
   QList<TransactionRecord> parts;
   int64 nTime = wtx.GetTxTime();
@@ -148,7 +147,9 @@ QList<TransactionRecord> TransactionRecord::decomposeTransaction(const CWallet *
 
           parts.append(sub);
         }
-      }else{
+        }
+            else
+            {
         //
         // Mixed debit transaction, can't break down payees
         //
@@ -220,8 +221,7 @@ void TransactionRecord::updateStatus(const CWalletTx &wtx)
   }
 
   // For generated transactions, determine maturity
-  if(type == TransactionRecord::Generated || type == TransactionRecord::StakeMint
-     || type == TransactionRecord::BurnMint)
+  if(type == TransactionRecord::Generated || type == TransactionRecord::StakeMint || type == TransactionRecord::BurnMint)
   {
     int64 nCredit = wtx.GetCredit(true);
     if(nCredit == 0)

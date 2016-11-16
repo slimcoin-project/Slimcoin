@@ -140,9 +140,10 @@ static bool SelectBlockFromCandidates(
 // block. This is to make it difficult for an attacker to gain control of
 // additional bits in the stake modifier, even after generating a chain of
 // blocks.
-bool ComputeNextStakeModifier(const CBlockIndex* pindexCurrent, uint64& nStakeModifier, bool& fGeneratedStakeModifier)
+// bool ComputeNextStakeModifier(const CBlockIndex* pindexCurrent, uint64& nStakeModifier, bool& fGeneratedStakeModifier)
+bool ComputeNextStakeModifier(const CBlockIndex* pindexPrev, uint64& nStakeModifier, bool& fGeneratedStakeModifier)
 {
-    const CBlockIndex* pindexPrev = pindexCurrent->pprev;
+    // const CBlockIndex* pindexPrev = pindexCurrent->pprev;
     nStakeModifier = 0;
     fGeneratedStakeModifier = false;
     if (!pindexPrev)
@@ -167,6 +168,7 @@ bool ComputeNextStakeModifier(const CBlockIndex* pindexCurrent, uint64& nStakeMo
         }
         return true;
     }
+    /* FIXME Integrate v0.4+ switch
     if (nModifierTime / nModifierInterval >= pindexCurrent->GetBlockTime() / nModifierInterval)
     {
         // v0.4+ requires current block timestamp also be in a different modifier interval
@@ -186,6 +188,7 @@ bool ComputeNextStakeModifier(const CBlockIndex* pindexCurrent, uint64& nStakeMo
             }
         }
     }
+    */
 
     // Sort candidate blocks by timestamp
     vector<pair<int64, uint256> > vSortedByTimestamp;

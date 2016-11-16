@@ -28,8 +28,7 @@ public:
   void updatePlot(int count);
   
   public slots:
-    void setBalance(qint64 balance, qint64 stake, qint64 unconfirmedBalance, 
-                    BurnCoinsBalances burnBalances);
+    void setBalance(qint64 balance, qint64 stake, qint64 unconfirmedBalance, BurnCoinsBalances burnBalances);
     void setNumTransactions(int count);
 
 signals:
