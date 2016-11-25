@@ -12,7 +12,7 @@ install:
 script: 
  - make -f makefile.unix -j 5
  - cd ..
- - qmake USE_UPNP=- 
+ - qmake USE_UPNP=-
  - make -j 5
  
 

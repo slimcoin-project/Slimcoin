@@ -43,6 +43,8 @@
         <file alias="tx_burn">res/icons/tx_burn.png</file>
         <file alias="Burn_mint">res/icons/tx_mintBurn.png</file>
         <file alias="debugwindow">res/icons/debugwindow.png</file>
+        <file alias="bex">res/icons/bex.png</file>
+        <file alias="mining">res/icons/mining.png</file>
     </qresource>
     <qresource prefix="/images">
         <file alias="about">res/images/about.png</file>

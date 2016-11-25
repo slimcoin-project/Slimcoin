@@ -2687,9 +2687,6 @@ Value getwork(const Array& params, bool fHelp)
             nStart = GetTime();
 
             // Create new block
-            /* FIXME: check for use of reserveKey
-            pblock = CreateNewBlock(*pMiningKey, pwalletMain, false, NULL);
-            */
             pblock = CreateNewBlock(pwalletMain);
             if (!pblock)
                 throw JSONRPCError(RPC_OUT_OF_MEMORY, "Out of memory");
@@ -2731,8 +2728,6 @@ Value getwork(const Array& params, bool fHelp)
         CBlock* pdata = (CBlock*)&vchData[0];
 
         // Byte reverse
-        // FIXME Check alternative
-        // for (int i = 0; i < 128/4; i++)
         for (int i = 0; i < 128 / sizeof(u32int); i++)
             ((unsigned int*)pdata)[i] = ByteReverse(((unsigned int*)pdata)[i]);
 
@@ -2822,9 +2817,6 @@ Value getblocktemplate(const Array& params, bool fHelp)
                 delete pblock;
                 pblock = NULL;
             }
-            /* FIXME: reserve key refactoring
-            pblock = CreateNewBlock(*pMiningKey, pwalletMain, false);
-            */
             pblock = CreateNewBlock(pwalletMain, false);
             if (!pblock)
                 throw JSONRPCError(-7, "Out of memory");
@@ -3011,9 +3003,6 @@ Value getmemorypool(const Array& params, bool fHelp)
             // Create new block
             if (pblock)
                 delete pblock;
-            /* FIXME: reservekey?
-            pblock = CreateNewBlock(reservekey, pwalletMain, false);
-            */
             pblock = CreateNewBlock(pwalletMain, false);
             if (!pblock)
                 throw JSONRPCError(RPC_OUT_OF_MEMORY, "Out of memory");
@@ -3058,9 +3047,6 @@ Value getmemorypool(const Array& params, bool fHelp)
 
         if (!pblock.SignBlock(*pwalletMain))
             throw JSONRPCError(RPC_UNABLE_TO_SIGN_BLOCK, "Unable to sign block, wallet locked?");
-        /* FIXME: refactor for pMiningKey?
-        return CheckWork(&pblock, *pwalletMain, *pMiningKey);
-        */ 
         return CheckWork(&pblock, *pwalletMain, reservekey);
     }
 }
@@ -3219,9 +3205,6 @@ Value repairwallet(const Array& params, bool fHelp)
 Value getsubsidy(const Array& params, bool fHelp)
 {
     static CBlock* pblock;
-    /* FIXME: reservekey refactoring
-    pblock = CreateNewBlock(*pMiningKey, pwalletMain, false);
-    */
     pblock = CreateNewBlock(pwalletMain, false);
     return (boost::int64_t)GetProofOfWorkReward(pblock->nBits);
 }

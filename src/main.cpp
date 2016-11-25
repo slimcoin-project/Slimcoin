@@ -1043,14 +1043,13 @@ int64 GetProofOfWorkReward(u32int nBits, bool fProofOfBurn)
     if (fDebug && GetBoolArg("-printcreation"))
         printf("GetProofOfWorkReward() : create = %s nBits = 0x%08x nSubsidy = %" PRI64d " return = %" PRI64d "\n", FormatMoney(nSubsidy).c_str(), nBits, nSubsidy, min(nSubsidy, maxSubsidy));
 
-    // return min(nSubsidy, MAX_MINT_PROOF_OF_WORK);
     return min(nSubsidy, maxSubsidy);
 }
 
 // ppcoin: miner's coin stake is rewarded based on coin age spent (coin-days)
 int64 GetProofOfStakeReward(int64 nCoinAge, u32int nTime)
 {
-    // FIXME static int64 nRewardCoinYear = CENT;  // creation amount per coin-year
+    // NOTE: static int64 nRewardCoinYear = CENT;  // creation amount per coin-year
     int64 nRewardCoinYear = nTime > POB_POS_TARGET_SWITCH_TIME ? (10 * CENT) : CENT;  // creation amount per coin-year
     int64 nSubsidy = nCoinAge * nRewardCoinYear * 33 / (365 * 33 + 8);
 
@@ -1059,7 +1058,7 @@ int64 GetProofOfStakeReward(int64 nCoinAge, u32int nTime)
     return nSubsidy;
 }
 
-/* FiXME
+/* NOTE:
 static const int64 nTargetTimespan = 7 * 24 * 60 * 60;  // one week
 static const int64 nTargetSpacingWorkMax = 12 * STAKE_TARGET_SPACING; // 2-hour
 */
@@ -1099,7 +1098,6 @@ static inline CBigNum GetProofOfStakeLimit(u32int nTime)
 
 //
 // maximum nBits value could possible be required nTime after
-// minimum work required was nBase
 //
 u32int ComputeMaxBits(CBigNum bnTargetLimit, u32int nBase, int64 nTime)
 {
@@ -2218,9 +2216,6 @@ bool CBlock::AddToBlockIndex(unsigned int nFile, unsigned int nBlockPos)
     // Add to mapBlockIndex
     map<uint256, CBlockIndex*>::iterator mi = mapBlockIndex.insert(make_pair(hash, pindexNew)).first;
     if (pindexNew->IsProofOfStake())
-        /* FIXME: ppcoin has ... 
-        setStakeSeen.insert(make_pair(pindexNew->prevoutStake, pindexNew->nStakeTime));
-        */
         setStakeSeen.insert(pindexNew->GetProofOfStake());
     else if (pindexNew->IsProofOfBurn())
         setBurnSeen.insert(pindexNew->GetProofOfBurn());
@@ -2699,9 +2694,6 @@ bool ProcessBlock(CNode* pfrom, CBlock *pblock)
             uint256 pblockOrphanHash = (*mi).second.hashBlock;
             CBlock* pblockOrphan = (*mi).second.pblock;
             if (pblockOrphan->AcceptBlock())
-				/* FIXME: ppcoin has ...
-                vWorkQueue.push_back(pblockOrphan->GetHash());
-                */
                 vWorkQueue.push_back(pblockOrphanHash);
             mapOrphanBlocks.erase(pblockOrphanHash);
             setStakeSeenOrphan.erase(pblockOrphan->GetProofOfStake());
@@ -2770,34 +2762,6 @@ bool CBlock::CheckBlockSignature() const
     }
     return false;
 }
-
-/* FIXME - overrides CBlock method declared in main.h */
-// ppcoin: entropy bit for stake modifier if chosen by modifier
-/*
-unsigned int CBlock::GetStakeEntropyBit() const
-{
-    unsigned int nEntropyBit = 0;
-    if (IsProtocolV04(nTime))
-    {
-        nEntropyBit = ((GetHash().Get64()) & 1llu);// last bit of block hash
-        if (fDebug && GetBoolArg("-printstakemodifier"))
-            printf("GetStakeEntropyBit(v0.4+): nTime=%u hashBlock=%s entropybit=%d\n", nTime, GetHash().ToString().c_str(), nEntropyBit);
-    }
-    else
-    {
-        // old protocol for entropy bit pre v0.4
-        uint160 hashSig = Hash160(vchBlockSig);
-        if (fDebug && GetBoolArg("-printstakemodifier"))
-            printf("GetStakeEntropyBit(v0.3): nTime=%u hashSig=%s", nTime, hashSig.ToString().c_str());
-        hashSig >>= 159; // take the first bit of the hash
-        nEntropyBit = hashSig.Get64();
-        if (fDebug && GetBoolArg("-printstakemodifier"))
-            // printf(" entropybit=%d\n", nEntropyBit);
-            printf("GetStakeEntropyBit(v0.4+): nTime=%u hashBlock=%s entropybit=%d\n", nTime, GetHash().ToString().c_str(), nEntropyBit);
-    }
-    return nEntropyBit;
-}
-*/
 
 bool CBlock::CheckBurnEffectiveCoins(int64 *calcEffCoinsRet) const
 {
@@ -2988,9 +2952,6 @@ bool LoadBlockIndex(bool fAllowNew)
         else
             assert(block.hashMerkleRoot == uint256("0xbae3867d5e5d35c321adaf9610b9e4147a855f9ad319fdcf70913083d783753f"));
 
-        /* FIXME: ppcoin has ...
-        block.print(block.GetHash());
-        */
         block.print();
 
 ////////////////////////////////////////////////////////////////////////////////
@@ -3058,16 +3019,6 @@ bool LoadBlockIndex(bool fAllowNew)
         // ppcoin: initialize synchronized checkpoint
         if (!Checkpoints::WriteSyncCheckpoint(hashGenesisBlock))
             return error("LoadBlockIndex() : failed to init sync checkpoint");
-        /* FIXME: lose this?
-        // ppcoin: upgrade time set to zero if txdb initialized
-        {
-            CTxDB txdb;
-            if (!txdb.WriteV04UpgradeTime(0))
-                return error("LoadBlockIndex() : failed to init upgrade info");
-            printf(" Upgrade Info: v0.4+ txdb initialization\n");
-            txdb.Close();
-        }
-        */
     }
 
     // ppcoin: if checkpoint master key changed must reset sync-checkpoint
@@ -3087,28 +3038,6 @@ bool LoadBlockIndex(bool fAllowNew)
         }
         txdb.Close();
     }
-
-    /* FIXME: and lose this too?
-    // ppcoin: upgrade time set to zero if txdb initialized
-    {
-        CTxDB txdb;
-        if (txdb.ReadV04UpgradeTime(nProtocolV04UpgradeTime))
-        {
-            if (nProtocolV04UpgradeTime)
-                printf(" Upgrade Info: txdb upgrade to v0.4 detected at timestamp %d\n", nProtocolV04UpgradeTime);
-            else
-                printf(" Upgrade Info: v0.4+ no txdb upgrade detected.\n");
-        }
-        else
-        {
-            nProtocolV04UpgradeTime = GetTime();
-            printf(" Upgrade Info: upgrading txdb from v0.3 at timestamp %u\n", nProtocolV04UpgradeTime);
-            if (!txdb.WriteV04UpgradeTime(nProtocolV04UpgradeTime))
-                return error("LoadBlockIndex() : failed to write upgrade info");
-        }
-        txdb.Close();
-    }
-    */
 
     return true;
 }
@@ -3248,16 +3177,6 @@ string GetWarnings(string strFor)
         nPriority = 3000;
         strStatusBar = strRPC = "WARNING: Invalid checkpoint found! Displayed transactions may not be correct! You may need to upgrade, or notify developers of the issue.";
     }
-
-    /* FIXME: and also lose this?
-    // ppcoin: if detected unmet upgrade requirement enter safe mode
-    // Note: v0.4 upgrade requires blockchain redownload if past protocol switch
-    if (IsProtocolV04(nProtocolV04UpgradeTime + 60*60*24)) // 1 day margin
-    {
-        nPriority = 5000;
-        strStatusBar = strRPC = "WARNING: Blockchain redownload required approaching or past v0.4 upgrade deadline.";
-    }
-    */
 
     // Alerts
     {
@@ -3495,14 +3414,6 @@ bool static ProcessMessage(CNode* pfrom, string strCommand, CDataStream& vRecv)
                 Checkpoints::checkpointMessage.RelayTo(pfrom);
         }
 
-        /* ppcoin-specific?
-        if (pfrom->nStartingHeight == 15164) {
-            pfrom->fDisconnect = true;
-            printf("Obsolete client stuck at block 15164, disconnecting.");
-            return false;
-        }
-        */
-
         pfrom->fSuccessfullyConnected = true;
 
         printf("version message: version %d, blocks=%d\n", pfrom->nVersion, pfrom->nStartingHeight);
@@ -3723,6 +3634,7 @@ bool static ProcessMessage(CNode* pfrom, string strCommand, CDataStream& vRecv)
         int nLimit = 500 + locator.GetDistanceBack();
         unsigned int nBytes = 0;
         printf("getblocks %d to %s limit %d\n", (pindex ? pindex->nHeight : -1), hashStop.ToString().substr(0,20).c_str(), nLimit);
+        // TODO: inherited from ppcoin to unknown effect, possibly beneficial
         if (pindex) 
             if (pindex->nHeight < 60000) {
                 pfrom->Misbehaving(1);	
@@ -3740,12 +3652,6 @@ bool static ProcessMessage(CNode* pfrom, string strCommand, CDataStream& vRecv)
                 break;
             }
             pfrom->PushInventory(CInv(MSG_BLOCK, pindex->GetBlockHash()));
-            /* FIXME: and lose this ...
-            CBlock block;
-            block.ReadFromDisk(pindex, true);
-            nBytes += block.GetSerializeSize(SER_NETWORK, PROTOCOL_VERSION);
-            if (--nLimit <= 0 || nBytes >= SendBufferSize()/2)
-            */
             if (--nLimit <= 0)
             {
                 // When this block is requested, we'll send an inv that'll make them
@@ -4745,9 +4651,6 @@ int64 nLastCoinStakeSearchInterval = 0;
 // CreateNewBlock:
 //   fProofOfStake: try (best effort) to make a proof-of-stake block
 //   burnWalletTx is the walletTx for a burn transaction that when hashed, produces a valid hash <= burn target
-/* FIXME: resolve refactoring to include “reservekey”
-CBlock* CreateNewBlock(CReserveKey& reservekey, CWallet* pwallet, bool fProofOfStake, const CWalletTx *burnWalletTx)
-*/
 CBlock *CreateNewBlock(CWallet* pwallet, bool fProofOfStake, const CWalletTx *burnWalletTx, CReserveKey *resKey)
 {
     //if resKey exists, use it, else make a temporary reservekey
@@ -4755,9 +4658,6 @@ CBlock *CreateNewBlock(CWallet* pwallet, bool fProofOfStake, const CWalletTx *bu
     CReserveKey *reservekey = resKey ? resKey : &tmpResKey;
 
     // Create new block
-    /* FIXME: add switch
-    unique_ptr<CBlock> pblock(new CBlock());
-    */
     auto_ptr<CBlock> pblock(new CBlock());
     if (!pblock.get())
         return NULL;
@@ -4780,9 +4680,6 @@ CBlock *CreateNewBlock(CWallet* pwallet, bool fProofOfStake, const CWalletTx *bu
     txNew.vin.resize(1);
     txNew.vin[0].prevout.SetNull();
     txNew.vout.resize(1);
-    /* FIXME: added in ppcoin?
-    txNew.vout[0].scriptPubKey << reservekey.GetReservedKey() << OP_CHECKSIG;
-    */
 
     //handle the public key of burn block differently
     if (pblock->IsProofOfBurn())
@@ -4988,10 +4885,6 @@ CBlock *CreateNewBlock(CWallet* pwallet, bool fProofOfStake, const CWalletTx *bu
             printf("CreateNewBlock(): total size %lu\n", nBlockSize);
 
     }
-    /* FIXME: Where's this taken from?
-    if (pblock->IsProofOfWork())
-        pblock->vtx[0].vout[0].nValue = GetProofOfWorkReward(pblock->nBits);
-    */
 
     // Fill in header
     pblock->hashPrevBlock = pindexPrev->GetBlockHash();
@@ -5207,10 +5100,6 @@ void SlimCoinMiner(CWallet *pwallet, bool fProofOfStake)
         //
         unsigned int nTransactionsUpdatedLast = nTransactionsUpdated;
         CBlockIndex* pindexPrev = pindexBest;
-        /* FIXME: refactor?
-        auto_ptr<CBlock> pblock(CreateNewBlock(reservekey, pwallet, fProofOfStake));
-        unique_ptr<CBlock> pblock(CreateNewBlock(pwallet, fProofOfStake));
-        */
         auto_ptr<CBlock> pblock(CreateNewBlock(pwallet, fProofOfStake));
         if (!pblock.get())
             return;
@@ -5260,10 +5149,6 @@ void SlimCoinMiner(CWallet *pwallet, bool fProofOfStake)
         //
         int64 nStart = GetTime();
         uint256 hashTarget = CBigNum().SetCompact(pblock->nBits).getuint256();
-        /* FIXME: general improvement or ppcoin-specific
-        uint256 hashbuf[2];
-        uint256& hash = *alignup<16>(hashbuf);
-        */
         uint256 test_hash;
 
         for (;;)
@@ -5276,17 +5161,9 @@ void SlimCoinMiner(CWallet *pwallet, bool fProofOfStake)
             // Check if something found
             if (nNonceFound != (unsigned int) -1)
             {
-                /* FIXME: generic or ppcoin-specific?
-                for (unsigned int i = 0; i < sizeof(hash)/4; i++)
-                    ((unsigned int*)&hash)[i] = ByteReverse(((unsigned int*)&hash)[i]);
-                */
                 if (test_hash <= hashTarget)
                 {
                     // Found a solution!
-                    /* FIXME: generic or ppcoin-specific?
-                    pblock->nNonce = ByteReverse(nNonceFound);
-                    assert(hash == pblock->GetHash());
-                    */
 
                     assert(test_hash == pblock->GetHash());
                     if (!pblock->SignBlock(*pwalletMain))

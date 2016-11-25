@@ -998,7 +998,10 @@ void MapPort(bool /* unused fMapPort */)
 // The first name is used as information source for addrman.
 // The second name should resolve to a list of seed addresses.
 // testnet dns seed begins with 't', all else are dns seeds.
-static const char *strDNSSeed[][2] = {};
+// FIXME: strDNSSeed required
+static const char *strDNSSeed[][2] = {
+  {"seed", "seed.slimcoin.bit"}
+};
 
 void ThreadDNSAddressSeed(void* parg)
 {

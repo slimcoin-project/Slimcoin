@@ -244,9 +244,6 @@ void PrintBlockTree();
 bool ProcessMessages(CNode* pfrom);
 bool SendMessages(CNode* pto, bool fSendTrickle);
 void GenerateSlimcoins(bool fGenerate, CWallet* pwallet);
-/* FIXME: refactor?
-CBlock* CreateNewBlock(CReserveKey& reservekey, CWallet* pwallet, bool fProofOfStake=false, const CWalletTx *burnWalletTx=NULL);
-*/
 CBlock *CreateNewBlock(CWallet* pwallet, bool fProofOfStake=false, const CWalletTx *burnWalletTx=NULL, CReserveKey *resKey=NULL);
 void IncrementExtraNonce(CBlock* pblock, CBlockIndex* pindexPrev, unsigned int& nExtraNonce);
 void FormatHashBuffers(CBlock* pblock, char* pmidstate, char* pdata, char* phash1);
@@ -917,9 +914,6 @@ public:
     }
 
 
-    /* FIXME: refactor required?
-    bool ReadFromDisk(CTxDB& txdb, const uint256& hash, CTxIndex& txindexRet);
-    */
     bool ReadFromDisk(CTxDB& txdb, COutPoint prevout, CTxIndex& txindexRet);
     bool ReadFromDisk(CTxDB& txdb, COutPoint prevout);
     bool ReadFromDisk(COutPoint prevout);
@@ -1237,7 +1231,6 @@ public:
 
     void UpdateTime(const CBlockIndex* pindexPrev);
 
-    /* FIXME check sanity of this declaration */
     // slimcoin: entropy bit for stake modifier if chosen by modifier
     unsigned int GetStakeEntropyBit() const
     {
@@ -1448,7 +1441,6 @@ public:
     bool GetCoinAge(uint64& nCoinAge) const; // slimcoin: calculate total coin age spent in block
     bool SignBlock(const CKeyStore& keystore);
     bool CheckBlockSignature() const;
-    // unsigned int GetStakeEntropyBit() const; // ppcoin: entropy bit for stake modifier if chosen by modifier
 
 private:
     bool SetBestChainInner(CTxDB& txdb, CBlockIndex *pindexNew);
@@ -1621,9 +1613,6 @@ public:
 
     bool CheckIndex() const
     {
-
-        // return IsProofOfWork() ? CheckProofOfWork(GetBlockHash(), nBits) : true;
-
         /*
         printf("%5d ------------------------------- %d %d %d %d %d %d %d\n",
             nHeight, IsProofOfWork(), IsProofOfBurn(), IsProofOfStake(), 
