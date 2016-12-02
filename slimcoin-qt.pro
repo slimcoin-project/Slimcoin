@@ -1,26 +1,20 @@
 TEMPLATE = app
 TARGET = slimcoin-qt
-VERSION = 0.6.3.0
+VERSION = 0.6.4.0
 INCLUDEPATH += src src/json src/qt
-DEFINES += QT_GUI BOOST_THREAD_USE_LIB BOOST_SPIRIT_THREADSAFE
+DEFINES += QT_GUI BOOST_THREAD_USE_LIB BOOST_SPIRIT_THREADSAFE QT_NO_PRINTER
 CONFIG += no_include_pwd
 CONFIG += thread
-CONFIG += debug
-# CONFIG += release
+CONFIG += release
+QT += core gui network
 
 !win32 {
-#CONFIG += static
+# CONFIG += static
 }
 
 greaterThan(QT_MAJOR_VERSION, 4) {
-        QT += network widgets
-    lessThan(QT_VERSION, 5.7) {
-        QT += webkit webkitwidgets
-    }else{
-        QT += webengine webenginewidgets
-    }
-    DEFINES += QT_DISABLE_DEPRECATED_BEFORE=0x000000
-    DEFINES += QT_NO_PRINTER
+    QT += widgets
+    DEFINES += QT_DISABLE_DEPRECATED_BEFORE=0
 }
 
 # for boost 1.37, add -mt to the boost libraries
@@ -36,21 +30,39 @@ greaterThan(QT_MAJOR_VERSION, 4) {
 
 # winbuild dependencies
 win32 {
-lessThan(QT_VERSION, 5.4) {
-BOOST_LIB_SUFFIX=-mgw48-mt-s-1_55
-} else {
-BOOST_LIB_SUFFIX=-mgw49-mt-s-1_55
-}
-BOOST_INCLUDE_PATH=C:/deps/boost_1_55_0
-BOOST_LIB_PATH=C:/deps/boost_1_55_0/stage/lib
-BDB_INCLUDE_PATH=C:/deps/db-4.8.30.NC/build_unix
-BDB_LIB_PATH=C:/deps/db-4.8.30.NC/build_unix
-OPENSSL_INCLUDE_PATH=C:/deps/openssl-1.0.1i/include
-OPENSSL_LIB_PATH=C:/deps/openssl-1.0.1i
-MINIUPNPC_INCLUDE_PATH=C:/deps
-MINIUPNPC_LIB_PATH=C:/deps/miniupnpc
-QRENCODE_INCLUDE_PATH=C:/deps/qrencode-3.4.4
-QRENCODE_LIB_PATH=C:/deps/qrencode-3.4.4/.libs
+    contains(MXE, 1) {
+        BDB_INCLUDE_PATH=/usr/lib/mxe/usr/i686-w64-mingw32.static/include
+        BDB_LIB_PATH=/usr/lib/mxe/usr/i686-w64-mingw32.static/lib
+        BOOST_INCLUDE_PATH=/usr/lib/mxe/usr/i686-w64-mingw32.static/include/boost
+        BOOST_LIB_PATH=/usr/lib/mxe/usr/i686-w64-mingw32.static/lib
+        BOOST_LIB_SUFFIX=-mt
+        BOOST_THREAD_LIB_SUFFIX=_win32-mt
+        CXXFLAGS=-std=gnu++11 -march=i686
+        LDFLAGS=-march=i686
+        MINIUPNPC_INCLUDE_PATH=/usr/lib/mxe/usr/i686-w64-mingw32.static/include
+        MINIUPNPC_LIB_PATH=/usr/lib/mxe/usr/i686-w64-mingw32.static/lib
+        OPENSSL_INCLUDE_PATH=/usr/lib/mxe/usr/i686-w64-mingw32.static/include/openssl
+        OPENSSL_LIB_PATH=/usr/lib/mxe/usr/i686-w64-mingw32.static/lib
+        PATH=/usr/lib/mxe/usr/bin:/home/gjh/bin:/usr/local/sbin:/usr/local/bin:/usr/sbin:/usr/bin:/sbin:/bin:/snap/bin
+        QMAKE_LRELEASE=/usr/lib/mxe/usr/i686-w64-mingw32.static/qt5/bin/lrelease
+        QTDIR=/usr/lib/mxe/usr/i686-w64-mingw32.static/qt5
+    }else{
+        lessThan(QT_VERSION, 5.4) {
+    		BOOST_LIB_SUFFIX=-mgw48-mt-s-1_55
+    	} else {
+    		BOOST_LIB_SUFFIX=-mgw49-mt-s-1_55
+    	}
+    	BOOST_INCLUDE_PATH=C:/deps/boost_1_55_0
+    	BOOST_LIB_PATH=C:/deps/boost_1_55_0/stage/lib
+    	BDB_INCLUDE_PATH=C:/deps/db-4.8.30.NC/build_unix
+    	BDB_LIB_PATH=C:/deps/db-4.8.30.NC/build_unix
+    	OPENSSL_INCLUDE_PATH=C:/deps/openssl-1.0.1i/include
+    	OPENSSL_LIB_PATH=C:/deps/openssl-1.0.1i
+    	MINIUPNPC_INCLUDE_PATH=C:/deps
+    	MINIUPNPC_LIB_PATH=C:/deps/miniupnpc
+    	QRENCODE_INCLUDE_PATH=C:/deps/qrencode-3.4.4
+    	QRENCODE_LIB_PATH=C:/deps/qrencode-3.4.4/.libs
+    }
 }
 
 OBJECTS_DIR = build
@@ -294,28 +306,28 @@ FORMS += \
     src/qt/forms/rpcconsole.ui
 
 contains(USE_QRCODE, 1) {
-HEADERS += src/qt/qrcodedialog.h
-SOURCES += src/qt/qrcodedialog.cpp
-FORMS += src/qt/forms/qrcodedialog.ui
+    HEADERS += src/qt/qrcodedialog.h
+    SOURCES += src/qt/qrcodedialog.cpp
+    FORMS += src/qt/forms/qrcodedialog.ui
 }
 
 contains(BITCOIN_QT_TEST, 1) {
-SOURCES += src/qt/test/test_main.cpp \
-    src/qt/test/uritests.cpp
-HEADERS += src/qt/test/uritests.h
-DEPENDPATH += src/qt/test
-QT += testlib
-TARGET = bitcoin-qt_test
-DEFINES += BITCOIN_QT_TEST
+    SOURCES += src/qt/test/test_main.cpp \
+        src/qt/test/uritests.cpp
+    HEADERS += src/qt/test/uritests.h
+    DEPENDPATH += src/qt/test
+    QT += testlib
+    TARGET = bitcoin-qt_test
+    DEFINES += BITCOIN_QT_TEST
 }
 
 contains(USE_SSE2, 1) {
-DEFINES += USE_SSE2
-gccsse2.input  = SOURCES_SSE2
-gccsse2.output = $$PWD/build/${QMAKE_FILE_BASE}.o
-gccsse2.commands = $(CXX) -c $(CXXFLAGS) $(INCPATH) -o ${QMAKE_FILE_OUT} ${QMAKE_FILE_NAME} -msse2 -mstackrealign
-QMAKE_EXTRA_COMPILERS += gccsse2
-SOURCES_SSE2 += src/scrypt-sse2.cpp
+    DEFINES += USE_SSE2
+    gccsse2.input  = SOURCES_SSE2
+    gccsse2.output = $$PWD/build/${QMAKE_FILE_BASE}.o
+    gccsse2.commands = $(CXX) -c $(CXXFLAGS) $(INCPATH) -o ${QMAKE_FILE_OUT} ${QMAKE_FILE_NAME} -msse2 -mstackrealign
+    QMAKE_EXTRA_COMPILERS += gccsse2
+    SOURCES_SSE2 += src/scrypt-sse2.cpp
 }
 
 # Todo: Remove this line when switching to Qt5, as that option was removed
