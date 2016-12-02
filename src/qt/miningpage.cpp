@@ -92,10 +92,17 @@ void MiningPage::startPoolMining()
     QString urlLine = QString("%1:%2").arg(url, ui->portLine->text());
     QString userpassLine = QString("%1:%2").arg(ui->usernameLine->text(), ui->passwordLine->text());
     args << "--algo" << "dcrypt";
+#if QT_VERSION < 0x050000
     args << "--scantime" << ui->scantimeBox->text().toAscii();
     args << "--url" << urlLine.toAscii();
     args << "--userpass" << userpassLine.toAscii();
     args << "--threads" << ui->threadsBox->text().toAscii();
+#else
+    args << "--scantime" << ui->scantimeBox->text().toLatin1();
+    args << "--url" << urlLine.toLatin1();
+    args << "--userpass" << userpassLine.toLatin1();
+    args << "--threads" << ui->threadsBox->text().toLatin1();
+#endif
     args << "--retries" << "-1"; // Retry forever.
     args << "-P"; // This is needed for this to work correctly on Windows. Extra protocol dump helps flush the buffer quicker.
 
@@ -186,13 +193,13 @@ void MiningPage::readProcessOutput()
             else if (line.contains("LONGPOLL detected new block"))
                 reportToList("LONGPOLL detected a new block", LONGPOLL, getTime(line));
             else if (line.contains("Supported options:"))
-                reportToList("Miner didn't start properly. Try checking your settings.", ERROR, NULL);
+                reportToList("Miner didn't start properly. Try checking your settings.", MERROR, NULL);
             else if (line.contains("The requested URL returned error: 403"))
-                reportToList("Couldn't connect. Please check your username and password.", ERROR, NULL);
+                reportToList("Couldn't connect. Please check your username and password.", MERROR, NULL);
             else if (line.contains("HTTP request failed"))
-                reportToList("Couldn't connect. Please check pool server and port.", ERROR, NULL);
+                reportToList("Couldn't connect. Please check pool server and port.", MERROR, NULL);
             else if (line.contains("JSON-RPC call failed"))
-                reportToList("Couldn't communicate with server. Retrying in 30 seconds.", ERROR, NULL);
+                reportToList("Couldn't communicate with server. Retrying in 30 seconds.", MERROR, NULL);
             else if (line.contains("thread ") && line.contains("khash/s"))
             {
                 QString threadIDstr = line.at(line.indexOf("thread ")+7);
@@ -219,16 +226,16 @@ void MiningPage::minerError(QProcess::ProcessError error)
 {
     if (error == QProcess::FailedToStart)
     {
-        reportToList("Miner failed to start. Make sure you have the minerd executable and libraries in the same directory as barcoin-qt.", ERROR, NULL);
+        reportToList("Miner failed to start. Make sure you have the minerd executable and libraries in the same directory as barcoin-qt.", MERROR, NULL);
     }
 }
 
 void MiningPage::minerFinished()
 {
     if (getMiningType() == ClientModel::SoloMining)
-        reportToList("Solo mining stopped.", ERROR, NULL);
+        reportToList("Solo mining stopped.", MERROR, NULL);
     else
-        reportToList("Miner exited.", ERROR, NULL);
+        reportToList("Miner exited.", MERROR, NULL);
     ui->list->addItem("");
     minerActive = false;
     resetMiningButton();
@@ -239,7 +246,7 @@ void MiningPage::minerStarted()
 {
     if (!minerActive) {
         if (getMiningType() == ClientModel::SoloMining){
-            reportToList("Solo mining started.", ERROR, NULL);
+            reportToList("Solo mining started.", MERROR, NULL);
         }
         else
         {

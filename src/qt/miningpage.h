@@ -19,7 +19,7 @@
 #define STARTED 0
 #define SHARE_SUCCESS 1
 #define SHARE_FAIL 2
-#define ERROR 3
+#define MERROR 3
 #define LONGPOLL 4
 
 namespace Ui {
