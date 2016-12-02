@@ -1,5 +1,5 @@
 src/*.exe
-src/slimcoin
+release/slimcoin-qt.exe
 src/slimcoind
 src/test_slimcoin
 src/build.h
@@ -13,7 +13,7 @@ src/obj_test
 *.o
 *.patch
 .slimcoin
-
+.qmake.stash
 #testing scripts
 my*
 my*
@@ -25,8 +25,13 @@ TAGS
 
 #compilation and Qt preprocessor part
 *.qm
-Makefile
 slimcoin-qt
+slimcoin-qt*.cpp
+Makefile
+Makefile.Debug
+Makefile.Release
+Makefile.Profile
+object_script*
 
 #resources cpp
 qrc_*.cpp
