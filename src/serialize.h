@@ -828,6 +828,7 @@ CDataStream(const std::vector<unsigned char>& vchIn, int nTypeIn, int nVersionIn
       vch.insert(it, first, last);
   }
 
+#if !defined(MAC_OSX)
   void insert(iterator it, std::vector<char>::const_iterator first, std::vector<char>::const_iterator last)
   {
     if (it == vch.begin() + nReadPos && last - first <= nReadPos)
@@ -839,6 +840,7 @@ CDataStream(const std::vector<unsigned char>& vchIn, int nTypeIn, int nVersionIn
     else
       vch.insert(it, first, last);
   }
+#endif
 
 #if !defined(_MSC_VER) || _MSC_VER >= 1300
   void insert(iterator it, const char* first, const char* last)

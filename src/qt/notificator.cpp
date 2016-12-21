@@ -16,9 +16,10 @@
 #include <stdint.h>
 #endif
 
-#ifdef Q_WS_MAC
+#ifdef MAC_OSX
 #include <ApplicationServices/ApplicationServices.h>
-extern bool qt_mac_execute_apple_script(const QString &script, AEDesc *ret);
+#include "macnotificationhandler.h"
+// extern bool qt_mac_execute_apple_script(const QString &script, AEDesc *ret);
 #endif
 
 // https://wiki.ubuntu.com/NotificationDevelopmentGuidelines recommends at least 128
@@ -46,10 +47,11 @@ Notificator::Notificator(const QString &programName, QSystemTrayIcon *trayicon, 
         mode = Freedesktop;
     }
 #endif
-#ifdef Q_WS_MAC
+#ifdef MAC_OSX
+    /*
     // Check if Growl is installed (based on Qt's tray icon implementation)
     CFURLRef cfurl;
-    OSStatus status = LSGetApplicationForInfo(kLSUnknownType, kLSUnknownCreator, CFSTR("growlTicket"), kLSRolesAll, 0, &cfurl);
+    OSStatus status = LSCopyDefaultApplicationURLForContentType(kLSUnknownType, kLSUnknownCreator, CFSTR("growlTicket"), kLSRolesAll, 0, &cfurl);
     if(status != kLSApplicationNotFoundErr) {
         CFBundleRef bundle = CFBundleCreate(0, cfurl);
         if(CFStringCompare(CFBundleGetIdentifier(bundle), CFSTR("com.Growl.GrowlHelperApp"), kCFCompareCaseInsensitive | kCFCompareBackwards) == kCFCompareEqualTo) {
@@ -61,6 +63,7 @@ Notificator::Notificator(const QString &programName, QSystemTrayIcon *trayicon, 
         CFRelease(cfurl);
         CFRelease(bundle);
     }
+    */
 #endif
 }
 
@@ -225,7 +228,7 @@ void Notificator::notifySystray(Class cls, const QString &title, const QString &
 }
 
 // Based on Qt's tray icon implementation
-#ifdef Q_WS_MAC
+#ifdef MAC_OSX
 void Notificator::notifyGrowl(Class cls, const QString &title, const QString &text, const QIcon &icon)
 {
     const QString script(
@@ -269,7 +272,7 @@ void Notificator::notifyGrowl(Class cls, const QString &title, const QString &te
     quotedTitle.replace("\\", "\\\\").replace("\"", "\\");
     quotedText.replace("\\", "\\\\").replace("\"", "\\");
     QString growlApp(this->mode == Notificator::Growl13 ? "Growl" : "GrowlHelperApp");
-    qt_mac_execute_apple_script(script.arg(notificationApp, quotedTitle, quotedText, notificationIcon, growlApp), 0);
+    // qt_mac_execute_apple_script(script.arg(notificationApp, quotedTitle, quotedText, notificationIcon, growlApp), 0);
 }
 #endif
 
@@ -285,7 +288,7 @@ void Notificator::notify(Class cls, const QString &title, const QString &text, c
     case QSystemTray:
         notifySystray(cls, title, text, icon, millisTimeout);
         break;
-#ifdef Q_WS_MAC
+#ifdef MAC_OSX
     case Growl12:
     case Growl13:
         notifyGrowl(cls, title, text, icon);
