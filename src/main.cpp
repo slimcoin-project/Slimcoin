@@ -2825,7 +2825,7 @@ bool CheckDiskSpace(uint64 nAdditionalBytes)
 
 FILE* OpenBlockFile(unsigned int nFile, unsigned int nBlockPos, const char* pszMode)
 {
-    if (nFile == -1)
+    if (nFile == (unsigned int) -1)
         return NULL;
     filesystem::path fpath = GetDataDir();
     filesystem::path pathBootstrap = GetDataDir() / "bootstrap.dat";
@@ -5372,7 +5372,7 @@ void static ThreadSlimcoinMiner(void* parg)
 
     nHPSTimerStart = 0;
 
-    if (!vnThreadsRunning[THREAD_MINER] == 0)
+    if ((!vnThreadsRunning[THREAD_MINER]) == 0)
         dHashesPerSec = 0;
 
     printf("ThreadSlimcoinMiner exiting, %d threads remaining\n", vnThreadsRunning[THREAD_MINER]);

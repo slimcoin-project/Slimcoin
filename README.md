@@ -35,6 +35,16 @@ build upon [Bitcoin](http://bitcoin.org/en/) and [Peercoin](http://peercoin.net/
 [![Build Status](https://api.travis-ci.org/gjhiggins/SLIMCoin.svg?branch=slimcoin)](https://travis-ci.org/gjhiggins/SLIMCoin),
 [Slimcoin Club](https://www.slimcoin.club) (Block explorer, Brain wallet and other informations)
 
+Build on OS X
+=============
+```bash
+qmake RELEASE=1 USE_UPNP=1 USE_QRCODE=1 bitcoin-qt.pro
+make
+export QTDIR=/opt/local/share/qt4
+T=$(contrib/qt_translations.py $QTDIR/translations src/qt/locale)
+python2.7 contrib/macdeploy/macdeployqtplus  -add-qt-tr $T -dmg -fancy contrib/macdeploy/fancy.plist SLIMoin-Qt.app
+```
+
 Repository Guidelines
 =====================
 

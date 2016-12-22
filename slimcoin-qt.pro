@@ -10,8 +10,15 @@ CONFIG += qt_framework
 QT += core gui network
 CONFIG += link_pkgconfig
 
-!win32 {
-# CONFIG += static
+BDB_LIB_SUFFIX = -5.3
+
+exists( /usr/local/Cellar/* ) {
+      message( "Configuring for homebrew..." )
+      CONFIG += brew
+}
+
+!windows {
+    CONFIG += static
 }
 
 greaterThan(QT_MAJOR_VERSION, 4) {
@@ -31,7 +38,7 @@ greaterThan(QT_MAJOR_VERSION, 4) {
 
 
 # winbuild dependencies
-win32 {
+windows {
     contains(MXE, 1) {
         BDB_INCLUDE_PATH=/usr/lib/mxe/usr/i686-w64-mingw32.static/include
         BDB_LIB_PATH=/usr/lib/mxe/usr/i686-w64-mingw32.static/lib
@@ -62,8 +69,6 @@ win32 {
     	OPENSSL_LIB_PATH=C:/deps/openssl-1.0.1i
     	MINIUPNPC_INCLUDE_PATH=C:/deps
     	MINIUPNPC_LIB_PATH=C:/deps/miniupnpc
-    	QRENCODE_INCLUDE_PATH=C:/deps/qrencode-3.4.4
-    	QRENCODE_LIB_PATH=C:/deps/qrencode-3.4.4/.libs
     }
 }
 
@@ -73,12 +78,17 @@ UI_DIR = build
 
 # use: qmake "RELEASE=1"
 contains(RELEASE, 1) {
-    # Mac: compile for maximum compatibility (10.12, 64-bit)
+    # Tested with MacOS Sierra, using QT 5.7.0 because previous versions
+    # are not supported. QT 5.7.0 requires C++11 support and in order to
+    # build QT 5.7.0 with Homebrew, the full version of Xcode must be
+    # installed, not just the command-line tools. Grab Xcode free from
+    # the Apple Developer site and install it before continuing with
+    # the below. Xcode 8.2_beta is used here.
+
     macx:QMAKE_CXXFLAGS += -mmacosx-version-min=10.12 -isysroot /Applications/Xcode-beta.app/Contents/Developer/Platforms/MacOSX.platform/Developer/SDKs/MacOSX10.12.sdk
     macx:QMAKE_CFLAGS += -mmacosx-version-min=10.12 -isysroot /Applications/Xcode-beta.app/Contents/Developer/Platforms/MacOSX.platform/Developer/SDKs/MacOSX10.12.sdk
     macx:QMAKE_LFLAGS += -mmacosx-version-min=10.12 -isysroot /Applications/Xcode-beta.app/Contents/Developer/Platforms/MacOSX.platform/Developer/SDKs/MacOSX10.12.sdk
     macx:QMAKE_OBJECTIVE_CFLAGS += -mmacosx-version-min=10.12 -isysroot /Applications/Xcode-beta.app/Contents/Developer/Platforms/MacOSX.platform/Developer/SDKs/MacOSX10.12.sdk
-
 
     !windows:!macx {
         # Linux: static link
@@ -91,6 +101,39 @@ contains(RELEASE, 1) {
 contains(USE_QRCODE, 1) {
     message(Building with QRCode support)
     DEFINES += USE_QRCODE
+    isEmpty(QRENCODE_LIB_PATH) {
+        unix:QRENCODE_LIB_PATH = /usr/lib
+        contains(CONFIG, brew) {
+            macx:QRENCODE_LIB_PATH = /usr/local/lib
+        }else{
+            macx:QRENCODE_LIB_PATH = /opt/local/lib
+        }
+        windows {
+            contains(MXE, 1) {
+                QRENCODE_LIB_PATH=/usr/lib/mxe/usr/i686-w64-mingw32.static/lib
+            }else{
+                QRENCODE_LIB_PATH=C:/deps/qrencode-3.4.4/.libs
+            }
+        }
+    }
+    isEmpty(QRENCODE_INCLUDE_PATH) {
+        unix:QRENCODE_INCLUDE_PATH = /usr/include
+        contains(CONFIG, brew) {
+            macx:QRENCODE_INCLUDE_PATH = /usr/local/include
+        }else{
+            macx:QRENCODE_INCLUDE_PATH = /opt/local/include
+        }
+        windows {
+            contains(MXE, 1) {
+                QRENCODE_INCLUDE_PATH=/usr/lib/mxe/usr/i686-w64-mingw32.static/include
+            }else{
+                QRENCODE_INCLUDE_PATH=C:/deps/qrencode-3.4.4
+                QRENCODE_LIB_PATH=C:/deps/qrencode-3.4.4/.libs
+            }
+        }
+    }
+    INCLUDEPATH += $$QRENCODE_INCLUDE_PATH
+    LIBS += $$join(QRENCODE_LIB_PATH,,-L,)
     LIBS += -lqrencode
 }
 
@@ -105,10 +148,31 @@ contains(USE_UPNP, -) {
     count(USE_UPNP, 0) {
         USE_UPNP=1
     }
+    isEmpty(MINIUPNPC_LIB_SUFFIX) {
+        windows:MINIUPNPC_LIB_SUFFIX=-miniupnpc
+    }
+    isEmpty(MINIUPNPC_INCLUDE_PATH) {
+        contains(CONFIG, brew) {
+            macx:MINIUPNPC_INCLUDE_PATH=/usr/local/Cellar/miniupnpc/2.0/include
+        }else{
+            macx:MINIUPNPC_INCLUDE_PATH=/opt/local/include
+        }
+        unix:MINIUPNPC_INCLUDE_PATH=/usr/include/miniupnpc
+        windows:MINIUPNPC_INCLUDE_PATH=C:/dev/coindeps32/miniupnpc-1.9
+    }
+    isEmpty(MINIUPNPC_LIB_PATH) {
+        contains(CONFIG, brew) {
+            macx:MINIUPNPC_LIB_PATH=/usr/local/Cellar/miniupnpc/2.0/lib
+        }else{
+            macx:MINIUPNPC_LIB_PATH=/opt/local/lib
+        }
+        unix:MINIUPNPC_INCLUDE_PATH=/usr/lib
+        windows:MINIUPNPC_LIB_PATH=C:/dev/coindeps32/miniupnpc-1.9
+    }
     DEFINES += USE_UPNP=$$USE_UPNP STATICLIB
     INCLUDEPATH += $$MINIUPNPC_INCLUDE_PATH
     LIBS += $$join(MINIUPNPC_LIB_PATH,,-L,) -lminiupnpc
-    win32:LIBS += -liphlpapi
+    windows:LIBS += -liphlpapi
 }
 
 # use: qmake "USE_DBUS=1"
@@ -146,14 +210,42 @@ contains(BITCOIN_NEED_QT_PLUGINS, 1) {
     DEFINES += HAVE_BUILD_INFO
 }
 
-QMAKE_CXXFLAGS_WARN_ON = -Wall -Wextra -Wformat -Wformat-security -Wno-invalid-offsetof -Wno-sign-compare -Wno-unused-parameter
+QMAKE_CXXFLAGS_WARN_ON = -Wall \
+    -Wextra \
+    -Wformat \
+    -Wformat-security \
+    -Wno-ignored-qualifiers \
+    -Wno-invalid-offsetof \
+    -Wno-sign-compare \
+    -Wno-unused-parameter \
+    -Wno-unused-variable
+
 # this option unrecognized when building on OSX 10.6.8
+# TODO: is this still the case with OSX 12.0?
 !macx {
-    QMAKE_CXXFLAGS_WARN_ON += -fdiagnostics-show-option # -fpermissive
+    QMAKE_CXXFLAGS_WARN_ON += -fdiagnostics-show-option -fpermissive
+}
+macx:QMAKE_CXXFLAGS_WARN_ON += -Wno-deprecated-declarations
+
+contains(USE_O3, 1) {
+    message(Building O3 optimization flag)
+    QMAKE_CXXFLAGS_RELEASE -= -O2
+    QMAKE_CFLAGS_RELEASE -= -O2
+    QMAKE_CXXFLAGS += -O3
+    QMAKE_CFLAGS += -O3
+}
+
+contains(USE_O0, 1) {
+    message(Building O0 optimization flag)
+    QMAKE_CXXFLAGS_RELEASE -= -O2
+    QMAKE_CFLAGS_RELEASE -= -O2
+    QMAKE_CXXFLAGS += -O0
+    QMAKE_CFLAGS += -O0
 }
 
 # Input
 DEPENDPATH += src src/json src/qt
+
 HEADERS += src/qt/bitcoingui.h \
     src/qt/transactiontablemodel.h \
     src/qt/addresstablemodel.h \
@@ -337,14 +429,16 @@ contains(USE_SSE2, 1) {
 }
 
 # Todo: Remove this line when switching to Qt5, as that option was removed
-CODECFORTR = UTF-8
+lessThan(QT_MAJOR_VERSION, 5) {
+    CODECFORTR = UTF-8
+}
 
 # for lrelease/lupdate
 # also add new translations to src/qt/bitcoin.qrc under translations/
 TRANSLATIONS = $$files(src/qt/locale/bitcoin_*.ts)
 
 isEmpty(QMAKE_LRELEASE) {
-    win32:QMAKE_LRELEASE = $$[QT_INSTALL_BINS]\\lrelease.exe
+    windows:QMAKE_LRELEASE = $$[QT_INSTALL_BINS]\\lrelease.exe
     else:QMAKE_LRELEASE = $$[QT_INSTALL_BINS]/lrelease
 }
 isEmpty(TS_DIR):TS_DIR = src/qt/locale
@@ -371,83 +465,126 @@ isEmpty(BOOST_THREAD_LIB_SUFFIX) {
     BOOST_THREAD_LIB_SUFFIX = $$BOOST_LIB_SUFFIX
 }
 
-isEmpty(BDB_LIB_PATH) {
-    macx:BDB_LIB_PATH = /opt/local/lib/db48
-}
-
 isEmpty(BDB_LIB_SUFFIX) {
-    macx:BDB_LIB_SUFFIX = -4.8
+    BDB_LIB_SUFFIX = -4.8
 }
 
 isEmpty(BDB_INCLUDE_PATH) {
-    macx:BDB_INCLUDE_PATH = /opt/local/include/db48
+    contains(CONFIG, brew) {
+        macx:BDB_INCLUDE_PATH = /usr/local/Cellar/berkeley-db4/4.8.30/include
+    }else{
+        macx:BDB_INCLUDE_PATH = /opt/local/berkeley-db4/include
+    }
+    windows:BDB_INCLUDE_PATH = C:/dev/coindeps32/bdb-4.8/include
+    # For backward compatibility specify, else assume currency
+    contains(BDB_LIB_SUFFIX, 4.8) {
+        unix:BDB_INCLUDE_PATH = /usr/local/BerkeleyDB/include
+    }
+    INCLUDEPATH += BDB_INCLUDE_PATH
 }
 
-isEmpty(BOOST_LIB_PATH) {
-    macx:BOOST_LIB_PATH = /opt/local/lib
+isEmpty(BDB_LIB_PATH) {
+    contains(CONFIG, brew) {
+        macx:BDB_LIB_PATH = /usr/local/Cellar/berkeley-db4/4.8.30/lib
+    }else{
+        macx:BDB_LIB_PATH = /opt/local/berkeley-db4/lib
+    }
+    windows:BDB_LIB_PATH = C:/dev/coindeps32/bdb-4.8/lib
+    # For backward compatibility specify, else assume currency
+    contains(BDB_LIB_SUFFIX, 4.8) {
+        unix:BDB_LIB_PATH = /usr/local/BerkeleyDB/lib
+    }
+    LIBS += $$join(BDB_LIB_PATH,,-L,)
 }
 
 isEmpty(BOOST_INCLUDE_PATH) {
-    macx:BOOST_INCLUDE_PATH = /opt/local/include
+    contains(CONFIG, brew) {
+        macx:BOOST_INCLUDE_PATH = /usr/local/opt/boost/include
+    }else{
+        macx:BOOST_INCLUDE_PATH = /opt/local/include
+    }
+    windows:BOOST_INCLUDE_PATH = C:/dev/coindeps32/boost_1_57_0/include
+    unix:BOOST_INCLUDE_PATH = /usr/include/boost
+    INCLUDEPATH += BOOST_INCLUDE_PATH
 }
 
-windows:CONFIG += static
-windows:LIBS += -lws2_32 -lshlwapi
-windows:DEFINES += WIN32
-windows:RC_FILE = src/qt/res/bitcoin-qt.rc
-
-windows:!contains(MINGW_THREAD_BUGFIX, 0) {
-    # At least qmake's win32-g++-cross profile is missing the -lmingwthrd
-    # thread-safety flag. GCC has -mthreads to enable this, but it doesn't
-    # work with static linking. -lmingwthrd must come BEFORE -lmingw, so
-    # it is prepended to QMAKE_LIBS_QT_ENTRY.
-    # It can be turned off with MINGW_THREAD_BUGFIX=0, just in case it causes
-    # any problems on some untested qmake profile now or in the future.
-    DEFINES += _MT
-    QMAKE_LIBS_QT_ENTRY = -lmingwthrd $$QMAKE_LIBS_QT_ENTRY
+isEmpty(BOOST_LIB_PATH) {
+    contains(CONFIG, brew) {
+        macx:BOOST_LIB_PATH = /usr/local/opt/boost/lib
+    }else{
+        macx:BOOST_LIB_PATH = /opt/local/lib
+    }
+    windows:BOOST_LIB_PATH = C:/dev/coindeps32/boost_1_57_0/lib
+    unix:BOOST_LIB_PATH = /usr/lib
+    LIBS += $$join(BOOST_LIB_PATH,,-L,)
 }
 
-!windows:!mac {
-    DEFINES += LINUX
-    LIBS += -lrt
+isEmpty(OPENSSL_INCLUDE_PATH) {
+    contains(CONFIG, brew) {
+        macx:OPENSSL_INCLUDE_PATH = /usr/local/Cellar/openssl/1.0.2j/include
+    }else{
+        macx:OPENSSL_INCLUDE_PATH = /opt/local/include
+    }
+    windows:OPENSSL_INCLUDE_PATH = C:/dev/coindeps32/openssl-1.0.1p/include
+    unix:OPENSSL_INCLUDE_PATH = /usr/include/openssl
+    INCLUDEPATH += $$OPENSSL_INCLUDE_PATH
 }
 
-macx:HEADERS += src/qt/macdockiconhandler.h
-macx:OBJECTIVE_SOURCES += src/qt/macdockiconhandler.mm
-macx:LIBS += -framework Foundation -framework ApplicationServices -framework AppKit
-macx:DEFINES += MAC_OSX MSG_NOSIGNAL=0
-macx:ICON = src/qt/res/icons/slimcoin.icns
-macx:TARGET = "SLIMCoin-Qt"
+isEmpty(OPENSSL_LIB_PATH) {
+    contains(CONFIG, brew) {
+        macx:OPENSSL_LIB_PATH = /usr/local/Cellar/openssl/1.0.2j/lib
+    }else{
+        macx:OPENSSL_LIB_PATH = /opt/local/lib
+    }
+    windows:OPENSSL_LIB_PATH = C:/dev/coindeps32/openssl-1.0.1p/lib
+    unix:OPENSSL_LIB_PATH = /usr/lib
+    INCLUDEPATH
+    LIBS += $$join(OPENSSL_LIB_PATH,,-L,)}
+
+# Force OS X Sierra specifics
+macx {
+	CONFIG += 11 x86_64
+	HEADERS += src/qt/macdockiconhandler.h src/qt/macnotificationhandler.h
+	OBJECTIVE_SOURCES += src/qt/macdockiconhandler.mm src/qt/macnotificationhandler.mm
+	LIBS += -framework Foundation -framework ApplicationServices -framework AppKit
+	LIBS += /usr/local/Cellar/miniupnpc/2.0/lib/libminiupnpc.a
+	LIBS += /usr/local/Cellar/berkeley-db4/4.8.30/lib/libdb_cxx.a
+	LIBS += /usr/local/Cellar/openssl/1.0.2j/lib/libcrypto.a
+	LIBS += /usr/local/Cellar/openssl/1.0.2j/lib/libssl.a
+	LIBS += /usr/local/Cellar/boost/1.62.0/lib/libboost_system-mt.a
+	LIBS += /usr/local/Cellar/boost/1.62.0/lib/libboost_filesystem-mt.a
+	LIBS += /usr/local/Cellar/boost/1.62.0/lib/libboost_program_options-mt.a
+	LIBS += /usr/local/Cellar/boost/1.62.0/lib/libboost_thread-mt.a
+	DEFINES += MAC_OSX MSG_NOSIGNAL=0
+	ICON = src/qt/res/icons/slimcoin.icns
+	TARGET = "SLIMCoin-Qt"
+	QMAKE_CFLAGS += -std=c++11 -stdlib=libc++ -mmacosx-version-min=10.12
+	QMAKE_CXXFLAGS += -std=c++11 -stdlib=libc++ -mmacosx-version-min=10.12
+	QMAKE_MAC_SDK = macosx10.12
+	CXXFLAGS += -std=c++11 -march=i686
+	QMAKE_INFO_PLIST = share/qt/Info.plist
+    CONFIG -= brew
+}
 
 # Set libraries and includes at end, to use platform-defined defaults if not overridden
-INCLUDEPATH += $$BOOST_INCLUDE_PATH \
-    $$BDB_INCLUDE_PATH \
-    $$OPENSSL_INCLUDE_PATH \
-    $$QRENCODE_INCLUDE_PATH \
+INCLUDEPATH += \
     $$SLIMCOIN_SRC_PATH \
     $$SLIMCOIN_SRC_PATH/qt \
     $$QT_INCLUDE_PATH \
     $$QT_INCLUDE_PATH/QtGui
 
-LIBS += \
-    $$join(LIB_PATH,,-L,) \
-    $$join(BOOST_LIB_PATH,,-L,) \
-    $$join(BDB_LIB_PATH,,-L,) \
-    $$join(OPENSSL_LIB_PATH,,-L,) \
-    $$join(QRENCODE_LIB_PATH,,-L,)
+LIBS += $$join(LIB_PATH,,-L,)
 LIBS += -lssl -lcrypto -ldb_cxx$$BDB_LIB_SUFFIX
 # -lgdi32 has to happen after -lcrypto (see  #681)
 windows:LIBS += -lole32 -luuid -lgdi32 -lwsock32
 LIBS += -lboost_system$$BOOST_LIB_SUFFIX -lboost_filesystem$$BOOST_LIB_SUFFIX -lboost_program_options$$BOOST_LIB_SUFFIX -lboost_thread$$BOOST_THREAD_LIB_SUFFIX
+unix:LIBS += -lrt
 
-contains(RELEASE, 1) {
-    !windows:!macx {
-        # Linux: turn dynamic linking back on for c/c++ runtime libraries
-        LIBS += -Wl,-Bdynamic
-    }
-}
-greaterThan(QT_MAJOR_VERSION, 4): QT += widgets
+# for extra security against potential buffer overflows: enable GCCs Stack Smashing Protection
+QMAKE_CXXFLAGS *= -fstack-protector-all --param ssp-buffer-size=1
+QMAKE_LFLAGS *= -fstack-protector-all --param ssp-buffer-size=1
 
+# for extra security (see: https://wiki.debian.org/Hardening): this flag is GCC compiler-specific
 QMAKE_CXXFLAGS *= -D_FORTIFY_SOURCE=2 # -static -static-libgcc -static-libstdc++
 # for extra security on Windows: enable ASLR and DEP via GCC linker flags
 windows:QMAKE_LFLAGS *= -D_FORTIFY_SOURCE=2 -static -static-libgcc -static-libstdc++
@@ -456,5 +593,8 @@ windows:QMAKE_LFLAGS *= -Wl,--dynamicbase -Wl,--nxcompat
 # on Windows: enable GCC large address aware linker flag
 # hack: when compiling 64-bit, pass 64BIT=1 to qmake to avoid incompatible large-address flag
 windows:!contains(64BIT, 1) QMAKE_LFLAGS *= -Wl,--large-address-aware
+
+QMAKE_RPATHDIR += @executable_path/../Frameworks
+QMAKE_RPATHDIR += @executable_path/lib
 
 system($$QMAKE_LRELEASE -silent $$_PRO_FILE_)
