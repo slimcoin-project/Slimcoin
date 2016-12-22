@@ -17,9 +17,7 @@
 #ifndef NOMINMAX
 #define NOMINMAX
 #endif
-#ifdef WIN32
 #include <winsock2.h>
-#endif
 #include <windows.h>
 // This is used to attempt to keep keying material out of swap
 // Note that VirtualLock does not provide this as a guarantee on Windows,
