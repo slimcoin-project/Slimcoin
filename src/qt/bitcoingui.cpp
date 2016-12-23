@@ -202,57 +202,68 @@ void BitcoinGUI::createActions()
     QActionGroup *tabGroup = new QActionGroup(this);
 
     overviewAction = new QAction(QIcon(":/icons/overview"), tr("&Overview"), this);
-    overviewAction->setToolTip(tr("Show general overview of wallet"));
+    overviewAction->setStatusTip(tr("Show general overview of wallet"));
+    overviewAction->setToolTip(overviewAction->statusTip());
     overviewAction->setCheckable(true);
     overviewAction->setShortcut(QKeySequence(Qt::ALT + Qt::Key_1));
     tabGroup->addAction(overviewAction);
 
     sendCoinsAction = new QAction(QIcon(":/icons/send"), tr("&" SEND_COINS_DIALOG_NAME), this);
-    sendCoinsAction->setToolTip(tr("Send coins to a SLIMCoin address"));
+    sendCoinsAction->setStatusTip(tr("Send coins to a SLIMCoin address"));
+    sendCoinsAction->setToolTip(sendCoinsAction->statusTip());
     sendCoinsAction->setCheckable(true);
     sendCoinsAction->setShortcut(QKeySequence(Qt::ALT + Qt::Key_2));
     tabGroup->addAction(sendCoinsAction);
 
-    receiveCoinsAction = new QAction(QIcon(":/icons/receiving_addresses"), tr("&Receive coins"), this);
-    receiveCoinsAction->setToolTip(tr("Show the list of addresses for receiving payments"));
+    receiveCoinsAction = new QAction(QIcon(":/icons/receiving_addresses"), tr("&Receive"), this);
+    receiveCoinsAction->setStatusTip(tr("Show the list of addresses for receiving payments"));
+    receiveCoinsAction->setToolTip(receiveCoinsAction->statusTip());
     receiveCoinsAction->setCheckable(true);
     receiveCoinsAction->setShortcut(QKeySequence(Qt::ALT + Qt::Key_3));
     tabGroup->addAction(receiveCoinsAction);
 
     historyAction = new QAction(QIcon(":/icons/history"), tr("&Transactions"), this);
-    historyAction->setToolTip(tr("Browse transaction history"));
+    historyAction->setStatusTip(tr("Browse transaction history"));
+    historyAction->setToolTip(historyAction->statusTip());
     historyAction->setCheckable(true);
     historyAction->setShortcut(QKeySequence(Qt::ALT + Qt::Key_4));
     tabGroup->addAction(historyAction);
 
-    addressBookAction = new QAction(QIcon(":/icons/address-book"), tr("&Address Book"), this);
-    addressBookAction->setToolTip(tr("Edit the list of stored addresses and labels"));
+    addressBookAction = new QAction(QIcon(":/icons/address-book"), tr("&Addresses"), this);
+    addressBookAction->setStatusTip(tr("Edit the list of stored addresses and labels"));
+    addressBookAction->setToolTip(addressBookAction->statusTip());
     addressBookAction->setCheckable(true);
     addressBookAction->setShortcut(QKeySequence(Qt::ALT + Qt::Key_5));
     tabGroup->addAction(addressBookAction);
 
 
     burnCoinsAction = new QAction(QIcon(":/icons/burn"), tr("&" BURN_COINS_DIALOG_NAME), this);
-    burnCoinsAction->setToolTip(tr("Burn coins from a Slimcoin address"));
+    burnCoinsAction->setStatusTip(tr("Burn coins from a Slimcoin address"));
+    burnCoinsAction->setToolTip(burnCoinsAction->statusTip());
     burnCoinsAction->setCheckable(true);
     burnCoinsAction->setShortcut(QKeySequence(Qt::ALT + Qt::Key_6));
     tabGroup->addAction(burnCoinsAction);
+
     messageAction = new QAction(QIcon(":/icons/edit"), tr("Sign &message"), this);
-    messageAction->setToolTip(tr("Prove you control an address"));
+    messageAction->setStatusTip(tr("Prove you control an address"));
+    messageAction->setToolTip(messageAction->statusTip());
 #ifdef FIRST_CLASS_MESSAGING
     messageAction->setCheckable(true);
+    messageAction->setShortcut(QKeySequence(Qt::ALT + Qt::Key_7));
 #endif
     tabGroup->addAction(messageAction);
 
-    blockAction = new QAction(QIcon(":/icons/bex"), tr("&Block Explorer"), this);
-    blockAction->setToolTip(tr("Explore the BlockChain"));
-    blockAction->setShortcut(QKeySequence(Qt::ALT + Qt::Key_7));
+    blockAction = new QAction(QIcon(":/icons/bex"), tr("&Explorer"), this);
+    blockAction->setStatusTip(tr("Explore the blockchain and transactions"));
+    blockAction->setToolTip(blockAction->statusTip());
+    blockAction->setShortcut(QKeySequence(Qt::ALT + Qt::Key_8));
     blockAction->setCheckable(true);
     tabGroup->addAction(blockAction);
 
     miningAction = new QAction(QIcon(":/icons/mining"), tr("&Mining"), this);
-    miningAction->setToolTip(tr("Configure mining"));
-    blockAction->setShortcut(QKeySequence(Qt::ALT + Qt::Key_8));
+    miningAction->setStatusTip(tr("Configure mining"));
+    miningAction->setToolTip(miningAction->statusTip());
+    miningAction->setShortcut(QKeySequence(Qt::ALT + Qt::Key_9));
     miningAction->setCheckable(true);
     tabGroup->addAction(miningAction);
 
@@ -273,31 +284,41 @@ void BitcoinGUI::createActions()
     connect(messageAction, SIGNAL(triggered()), this, SLOT(gotoMessagePage()));
 
     quitAction = new QAction(QIcon(":/icons/quit"), tr("E&xit"), this);
-    quitAction->setToolTip(tr("Quit application"));
+    quitAction->setStatusTip(tr("Quit application"));
+    quitAction->setToolTip(quitAction->statusTip());
     quitAction->setShortcut(QKeySequence(Qt::CTRL + Qt::Key_Q));
     quitAction->setMenuRole(QAction::QuitRole);
     aboutAction = new QAction(QIcon(":/icons/slimcoin"), tr("&About %1").arg(qApp->applicationName()), this);
-    aboutAction->setToolTip(tr("Show information about Slimcoin"));
+    aboutAction->setStatusTip(tr("Show information about Slimcoin"));
+    aboutAction->setToolTip(aboutAction->statusTip());
     aboutAction->setMenuRole(QAction::AboutRole);
-    aboutQtAction = new QAction(tr("About &Qt"), this);
-    aboutQtAction->setToolTip(tr("Show information about Qt"));
+    aboutQtAction = new QAction(QIcon(":/icons/qt"), tr("About &Qt"), this);
+    aboutQtAction->setStatusTip(tr("Show information about Qt"));
+    aboutQtAction->setToolTip(aboutQtAction->statusTip());
     aboutQtAction->setMenuRole(QAction::AboutQtRole);
     optionsAction = new QAction(QIcon(":/icons/options"), tr("&Options..."), this);
-    optionsAction->setToolTip(tr("Modify configuration options for slimcoin"));
+    optionsAction->setStatusTip(tr("Modify configuration options for SLIMCoin"));
+    optionsAction->setToolTip(optionsAction->statusTip());
     optionsAction->setMenuRole(QAction::PreferencesRole);
-    toggleHideAction = new QAction(QIcon(":/icons/slimcoin"), tr("Show/Hide &Slimcoin"), this);
-    toggleHideAction->setToolTip(tr("Show or hide the Slimcoin window"));
+    toggleHideAction = new QAction(QIcon(":/icons/slimcoin"), tr("Show/Hide &SLIMCoin"), this);
+    toggleHideAction->setStatusTip(tr("Show or hide the SLIMCoin window"));
+    toggleHideAction->setToolTip(toggleHideAction->statusTip());
     exportAction = new QAction(QIcon(":/icons/export"), tr("&Export..."), this);
-    exportAction->setToolTip(tr("Export the data in the current tab to a file"));
+    exportAction->setStatusTip(tr("Export the data in the current tab to a file"));
+    exportAction->setToolTip(exportAction->statusTip());
     encryptWalletAction = new QAction(QIcon(":/icons/lock_closed"), tr("&Encrypt Wallet"), this);
-    encryptWalletAction->setToolTip(tr("Encrypt or decrypt wallet"));
+    encryptWalletAction->setStatusTip(tr("Encrypt or decrypt wallet"));
+    encryptWalletAction->setToolTip(encryptWalletAction->statusTip());
     encryptWalletAction->setCheckable(true);
     backupWalletAction = new QAction(QIcon(":/icons/filesave"), tr("&Backup Wallet"), this);
-    backupWalletAction->setToolTip(tr("Backup wallet to another location"));
+    backupWalletAction->setStatusTip(tr("Backup wallet to another location"));
+    backupWalletAction->setToolTip(backupWalletAction->statusTip());
     changePassphraseAction = new QAction(QIcon(":/icons/key"), tr("&Change Passphrase"), this);
-    changePassphraseAction->setToolTip(tr("Change the passphrase used for wallet encryption"));
+    changePassphraseAction->setStatusTip(tr("Change the passphrase used for wallet encryption"));
+    changePassphraseAction->setToolTip(changePassphraseAction->statusTip());
     openRPCConsoleAction = new QAction(QIcon(":/icons/debugwindow"), tr("&Debug window"), this);
     openRPCConsoleAction->setStatusTip(tr("Open debugging and diagnostic console"));
+    openRPCConsoleAction->setToolTip(openRPCConsoleAction->statusTip());
 
     connect(quitAction, SIGNAL(triggered()), qApp, SLOT(quit()));
     connect(aboutAction, SIGNAL(triggered()), this, SLOT(aboutClicked()));
@@ -470,7 +491,7 @@ void BitcoinGUI::createTrayIcon()
     trayIconMenu->addAction(quitAction);
 #endif
     trayIconMenu->addAction(openRPCConsoleAction);
-    notificator = new Notificator(tr("Slimcoin-qt"), trayIcon);
+    notificator = new Notificator(tr("SLIMCoin-qt"), trayIcon);
 }
 
 #ifndef MAC_OSX
@@ -646,12 +667,12 @@ void BitcoinGUI::setMining(bool mining, int hashrate)
     if (mining)
     {
         labelMiningIcon->setPixmap(QIcon(":/icons/mining_active").pixmap(STATUSBAR_ICONSIZE,STATUSBAR_ICONSIZE));
-        labelMiningIcon->setToolTip(tr("Mining Slimcoin at %1 hashes per second").arg(hashrate));
+        labelMiningIcon->setToolTip(tr("Mining SLIMCoin at %1 hashes per second").arg(hashrate));
     }
     else
     {
         labelMiningIcon->setPixmap(QIcon(":/icons/mining_inactive").pixmap(STATUSBAR_ICONSIZE,STATUSBAR_ICONSIZE));
-        labelMiningIcon->setToolTip(tr("Not mining Slimcoin"));
+        labelMiningIcon->setToolTip(tr("Not mining SLIMCoin"));
     }
 }
 

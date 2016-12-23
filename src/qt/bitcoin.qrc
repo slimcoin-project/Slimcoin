@@ -45,6 +45,7 @@
         <file alias="debugwindow">res/icons/debugwindow.png</file>
         <file alias="bex">res/icons/bex.png</file>
         <file alias="mining">res/icons/mining.png</file>
+        <file alias="qt">res/icons/qt.png</file>
     </qresource>
     <qresource prefix="/images">
         <file alias="about">res/images/about.png</file>

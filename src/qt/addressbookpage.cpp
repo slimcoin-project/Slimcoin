@@ -250,12 +250,19 @@ void AddressBookPage::selectionChanged()
             break;
         }
         ui->copyToClipboard->setEnabled(true);
+        ui->copyToClipboard->setVisible(true);
+#ifdef USE_QRCODE
         ui->showQRCode->setEnabled(true);
+        ui->showQRCode->setVisible(true);
+#endif
     }
     else
     {
         ui->deleteButton->setEnabled(false);
-        ui->showQRCode->setEnabled(false);
+#ifdef USE_QRCODE
+        ui->showQRCode->setEnabled(true);
+        ui->showQRCode->setVisible(true);
+#endif
         ui->copyToClipboard->setEnabled(false);
         ui->signMessage->setEnabled(false);
     }
