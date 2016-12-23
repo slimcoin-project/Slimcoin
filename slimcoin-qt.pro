@@ -10,7 +10,10 @@ CONFIG += qt_framework
 QT += core gui network
 CONFIG += link_pkgconfig
 
-BDB_LIB_SUFFIX = -5.3
+isEmpty(BDB_LIB_SUFFIX) {
+	!macx:unix:BDB_LIB_SUFFIX = -5.3
+	windows:macx:BDB_LIB_SUFFIX = -4.8
+}
 
 exists( /usr/local/Cellar/* ) {
       message( "Configuring for homebrew..." )
@@ -478,9 +481,9 @@ isEmpty(BDB_INCLUDE_PATH) {
     windows:BDB_INCLUDE_PATH = C:/dev/coindeps32/bdb-4.8/include
     # For backward compatibility specify, else assume currency
     contains(BDB_LIB_SUFFIX, 4.8) {
-        unix:BDB_INCLUDE_PATH = /usr/local/BerkeleyDB/include
+        !macx:unix:BDB_INCLUDE_PATH = /usr/local/BerkeleyDB/include
     }
-    INCLUDEPATH += BDB_INCLUDE_PATH
+    INCLUDEPATH += $$BDB_INCLUDE_PATH
 }
 
 isEmpty(BDB_LIB_PATH) {
@@ -492,7 +495,7 @@ isEmpty(BDB_LIB_PATH) {
     windows:BDB_LIB_PATH = C:/dev/coindeps32/bdb-4.8/lib
     # For backward compatibility specify, else assume currency
     contains(BDB_LIB_SUFFIX, 4.8) {
-        unix:BDB_LIB_PATH = /usr/local/BerkeleyDB/lib
+        !macx:unix:BDB_LIB_PATH = /usr/local/BerkeleyDB/lib
     }
     LIBS += $$join(BDB_LIB_PATH,,-L,)
 }
@@ -504,8 +507,8 @@ isEmpty(BOOST_INCLUDE_PATH) {
         macx:BOOST_INCLUDE_PATH = /opt/local/include
     }
     windows:BOOST_INCLUDE_PATH = C:/dev/coindeps32/boost_1_57_0/include
-    unix:BOOST_INCLUDE_PATH = /usr/include/boost
-    INCLUDEPATH += BOOST_INCLUDE_PATH
+    !macx:unix:BOOST_INCLUDE_PATH = /usr/include/boost
+    INCLUDEPATH += $$BOOST_INCLUDE_PATH
 }
 
 isEmpty(BOOST_LIB_PATH) {
@@ -515,30 +518,29 @@ isEmpty(BOOST_LIB_PATH) {
         macx:BOOST_LIB_PATH = /opt/local/lib
     }
     windows:BOOST_LIB_PATH = C:/dev/coindeps32/boost_1_57_0/lib
-    unix:BOOST_LIB_PATH = /usr/lib
+    !macx:unix:BOOST_LIB_PATH = /usr/lib
     LIBS += $$join(BOOST_LIB_PATH,,-L,)
 }
 
 isEmpty(OPENSSL_INCLUDE_PATH) {
     contains(CONFIG, brew) {
-        macx:OPENSSL_INCLUDE_PATH = /usr/local/Cellar/openssl/1.0.2j/include
+        macx:OPENSSL_INCLUDE_PATH = /usr/local/opt/openssl/include
     }else{
         macx:OPENSSL_INCLUDE_PATH = /opt/local/include
     }
     windows:OPENSSL_INCLUDE_PATH = C:/dev/coindeps32/openssl-1.0.1p/include
-    unix:OPENSSL_INCLUDE_PATH = /usr/include/openssl
+    !macx:unix:OPENSSL_INCLUDE_PATH = /usr/include/openssl
     INCLUDEPATH += $$OPENSSL_INCLUDE_PATH
 }
 
 isEmpty(OPENSSL_LIB_PATH) {
     contains(CONFIG, brew) {
-        macx:OPENSSL_LIB_PATH = /usr/local/Cellar/openssl/1.0.2j/lib
+        macx:OPENSSL_LIB_PATH = /usr/local/opt/openssl/lib
     }else{
         macx:OPENSSL_LIB_PATH = /opt/local/lib
     }
     windows:OPENSSL_LIB_PATH = C:/dev/coindeps32/openssl-1.0.1p/lib
-    unix:OPENSSL_LIB_PATH = /usr/lib
-    INCLUDEPATH
+    !macx:unix:OPENSSL_LIB_PATH = /usr/lib
     LIBS += $$join(OPENSSL_LIB_PATH,,-L,)}
 
 # Force OS X Sierra specifics
@@ -578,7 +580,7 @@ LIBS += -lssl -lcrypto -ldb_cxx$$BDB_LIB_SUFFIX
 # -lgdi32 has to happen after -lcrypto (see  #681)
 windows:LIBS += -lole32 -luuid -lgdi32 -lwsock32
 LIBS += -lboost_system$$BOOST_LIB_SUFFIX -lboost_filesystem$$BOOST_LIB_SUFFIX -lboost_program_options$$BOOST_LIB_SUFFIX -lboost_thread$$BOOST_THREAD_LIB_SUFFIX
-unix:LIBS += -lrt
+!macx:unix:LIBS += -lrt
 
 # for extra security against potential buffer overflows: enable GCCs Stack Smashing Protection
 QMAKE_CXXFLAGS *= -fstack-protector-all --param ssp-buffer-size=1
