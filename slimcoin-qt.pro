@@ -20,7 +20,7 @@ exists( /usr/local/Cellar/* ) {
       CONFIG += brew
 }
 
-!windows {
+!windows:!unix {
     CONFIG += static
 }
 
@@ -105,7 +105,7 @@ contains(USE_QRCODE, 1) {
     message(Building with QRCode support)
     DEFINES += USE_QRCODE
     isEmpty(QRENCODE_LIB_PATH) {
-        unix:QRENCODE_LIB_PATH = /usr/lib
+        !macx:unix:QRENCODE_LIB_PATH = /usr/lib
         contains(CONFIG, brew) {
             macx:QRENCODE_LIB_PATH = /usr/local/lib
         }else{
@@ -120,7 +120,7 @@ contains(USE_QRCODE, 1) {
         }
     }
     isEmpty(QRENCODE_INCLUDE_PATH) {
-        unix:QRENCODE_INCLUDE_PATH = /usr/include
+        !macx:unix:QRENCODE_INCLUDE_PATH = /usr/include
         contains(CONFIG, brew) {
             macx:QRENCODE_INCLUDE_PATH = /usr/local/include
         }else{
@@ -160,7 +160,7 @@ contains(USE_UPNP, -) {
         }else{
             macx:MINIUPNPC_INCLUDE_PATH=/opt/local/include
         }
-        unix:MINIUPNPC_INCLUDE_PATH=/usr/include/miniupnpc
+        !macx:unix:MINIUPNPC_INCLUDE_PATH=/usr/include/miniupnpc
         windows:MINIUPNPC_INCLUDE_PATH=C:/dev/coindeps32/miniupnpc-1.9
     }
     isEmpty(MINIUPNPC_LIB_PATH) {
@@ -169,7 +169,7 @@ contains(USE_UPNP, -) {
         }else{
             macx:MINIUPNPC_LIB_PATH=/opt/local/lib
         }
-        unix:MINIUPNPC_INCLUDE_PATH=/usr/lib
+        !macx:unix:MINIUPNPC_INCLUDE_PATH=/usr/lib
         windows:MINIUPNPC_LIB_PATH=C:/dev/coindeps32/miniupnpc-1.9
     }
     DEFINES += USE_UPNP=$$USE_UPNP STATICLIB
@@ -565,7 +565,23 @@ macx {
 	QMAKE_MAC_SDK = macosx10.12
 	CXXFLAGS += -std=c++11 -march=i686
 	QMAKE_INFO_PLIST = share/qt/Info.plist
-    CONFIG -= brew
+        CONFIG -= brew
+}
+
+windows:!contains(MINGW_THREAD_BUGFIX, 0) {
+    # At least qmake's win32-g++-cross profile is missing the -lmingwthrd
+    # thread-safety flag. GCC has -mthreads to enable this, but it doesn't
+    # work with static linking. -lmingwthrd must come BEFORE -lmingw, so
+    # it is prepended to QMAKE_LIBS_QT_ENTRY.
+    # It can be turned off with MINGW_THREAD_BUGFIX=0, just in case it causes
+    # any problems on some untested qmake profile now or in the future.
+    DEFINES += _MT
+    QMAKE_LIBS_QT_ENTRY = -lmingwthrd $$QMAKE_LIBS_QT_ENTRY
+}
+
+!windows:!mac {
+    DEFINES += LINUX
+    LIBS += -lrt
 }
 
 # Set libraries and includes at end, to use platform-defined defaults if not overridden
@@ -578,9 +594,12 @@ INCLUDEPATH += \
 LIBS += $$join(LIB_PATH,,-L,)
 LIBS += -lssl -lcrypto -ldb_cxx$$BDB_LIB_SUFFIX
 # -lgdi32 has to happen after -lcrypto (see  #681)
+# windows:LIBS += -lws2_32 -lshlwapi
+# windows:DEFINES += WIN32
+# windows:RC_FILE = src/qt/res/bitcoin-qt.rc
 windows:LIBS += -lole32 -luuid -lgdi32 -lwsock32
 LIBS += -lboost_system$$BOOST_LIB_SUFFIX -lboost_filesystem$$BOOST_LIB_SUFFIX -lboost_program_options$$BOOST_LIB_SUFFIX -lboost_thread$$BOOST_THREAD_LIB_SUFFIX
-!macx:unix:LIBS += -lrt
+
 
 # for extra security against potential buffer overflows: enable GCCs Stack Smashing Protection
 QMAKE_CXXFLAGS *= -fstack-protector-all --param ssp-buffer-size=1
@@ -596,7 +615,9 @@ windows:QMAKE_LFLAGS *= -Wl,--dynamicbase -Wl,--nxcompat
 # hack: when compiling 64-bit, pass 64BIT=1 to qmake to avoid incompatible large-address flag
 windows:!contains(64BIT, 1) QMAKE_LFLAGS *= -Wl,--large-address-aware
 
-QMAKE_RPATHDIR += @executable_path/../Frameworks
-QMAKE_RPATHDIR += @executable_path/lib
+macx:{
+    QMAKE_RPATHDIR += @executable_path/../Frameworks
+    QMAKE_RPATHDIR += @executable_path/lib
+}
 
 system($$QMAKE_LRELEASE -silent $$_PRO_FILE_)
