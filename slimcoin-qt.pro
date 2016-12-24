@@ -10,11 +10,6 @@ CONFIG += qt_framework
 QT += core gui network
 CONFIG += link_pkgconfig
 
-isEmpty(BDB_LIB_SUFFIX) {
-	!macx:unix:BDB_LIB_SUFFIX = -5.3
-	windows:macx:BDB_LIB_SUFFIX = -4.8
-}
-
 exists( /usr/local/Cellar/* ) {
       message( "Configuring for homebrew..." )
       CONFIG += brew
@@ -27,6 +22,10 @@ exists( /usr/local/Cellar/* ) {
 greaterThan(QT_MAJOR_VERSION, 4) {
     QT += widgets
     DEFINES += QT_DISABLE_DEPRECATED_BEFORE=0
+}
+
+isEmpty(BDB_LIB_SUFFIX) {
+    windows:macx:BDB_LIB_SUFFIX = -4.8
 }
 
 # for boost 1.37, add -mt to the boost libraries
@@ -474,28 +473,48 @@ isEmpty(BDB_LIB_SUFFIX) {
 
 isEmpty(BDB_INCLUDE_PATH) {
     contains(CONFIG, brew) {
-        macx:BDB_INCLUDE_PATH = /usr/local/Cellar/berkeley-db4/4.8.30/include
+        contains(BDB_LIB_SUFFIX -4.8) {
+            macx:BDB_INCLUDE_PATH = /usr/local/opt/berkeley-db4/include
+        }else{
+            macx:BDB_INCLUDE_PATH = /usr/local/bekerley-db/include
+        }
     }else{
-        macx:BDB_INCLUDE_PATH = /opt/local/berkeley-db4/include
+        contains(BDB_LIB_SUFFIX -4.8) {
+            macx:BDB_INCLUDE_PATH = /opt/local/berkeley-db4/include
+        }else{
+            macx:BDB_INCLUDE_PATH = /opt/local/berkeley-db/include
+        }
     }
     windows:BDB_INCLUDE_PATH = C:/dev/coindeps32/bdb-4.8/include
     # For backward compatibility specify, else assume currency
     contains(BDB_LIB_SUFFIX, 4.8) {
         !macx:unix:BDB_INCLUDE_PATH = /usr/local/BerkeleyDB/include
+    }else{
+        !macx:unix:BDB_INCLUDE_PATH = /usr/include
     }
     INCLUDEPATH += $$BDB_INCLUDE_PATH
 }
 
 isEmpty(BDB_LIB_PATH) {
     contains(CONFIG, brew) {
-        macx:BDB_LIB_PATH = /usr/local/Cellar/berkeley-db4/4.8.30/lib
+        contains(BDB_LIB_SUFFIX -4.8) {
+            macx:BDB_LIB_PATH = /usr/local/opt/berkeley-db4/lib
+        }else{
+            macx:BDB_LIB_PATH = /usr/local/opt/berkeley-db/lib
+        }
     }else{
-        macx:BDB_LIB_PATH = /opt/local/berkeley-db4/lib
+        contains(BDB_LIB_SUFFIX -4.8) {
+            macx:BDB_LIB_PATH = /opt/local/berkeley-db4/lib
+        }else{
+            macx:BDB_LIB_PATH = /opt/local/berkeleydb/lib
+        }
     }
     windows:BDB_LIB_PATH = C:/dev/coindeps32/bdb-4.8/lib
     # For backward compatibility specify, else assume currency
     contains(BDB_LIB_SUFFIX, 4.8) {
         !macx:unix:BDB_LIB_PATH = /usr/local/BerkeleyDB/lib
+    }else{
+        !macx:unix:BDB_LIB_PATH = /usr/lib/x86_64-linux-gnu/
     }
     LIBS += $$join(BDB_LIB_PATH,,-L,)
 }
@@ -549,14 +568,14 @@ macx {
 	HEADERS += src/qt/macdockiconhandler.h src/qt/macnotificationhandler.h
 	OBJECTIVE_SOURCES += src/qt/macdockiconhandler.mm src/qt/macnotificationhandler.mm
 	LIBS += -framework Foundation -framework ApplicationServices -framework AppKit
-	LIBS += /usr/local/Cellar/miniupnpc/2.0/lib/libminiupnpc.a
-	LIBS += /usr/local/Cellar/berkeley-db4/4.8.30/lib/libdb_cxx.a
-	LIBS += /usr/local/Cellar/openssl/1.0.2j/lib/libcrypto.a
-	LIBS += /usr/local/Cellar/openssl/1.0.2j/lib/libssl.a
-	LIBS += /usr/local/Cellar/boost/1.62.0/lib/libboost_system-mt.a
-	LIBS += /usr/local/Cellar/boost/1.62.0/lib/libboost_filesystem-mt.a
-	LIBS += /usr/local/Cellar/boost/1.62.0/lib/libboost_program_options-mt.a
-	LIBS += /usr/local/Cellar/boost/1.62.0/lib/libboost_thread-mt.a
+	LIBS += /usr/local/opt/miniupnpc/lib/libminiupnpc.a
+	LIBS += /usr/local/opt/berkeley-db/lib/libdb_cxx.a
+	LIBS += /usr/local/opt/openssl/lib/libcrypto.a
+	LIBS += /usr/local/opt/openssl/lib/libssl.a
+	LIBS += /usr/local/opt/boost/lib/libboost_system-mt.a
+	LIBS += /usr/local/opt/boost/lib/libboost_filesystem-mt.a
+	LIBS += /usr/local/opt/boost/lib/libboost_program_options-mt.a
+	LIBS += /usr/local/opt/boost/lib/libboost_thread-mt.a
 	DEFINES += MAC_OSX MSG_NOSIGNAL=0
 	ICON = src/qt/res/icons/slimcoin.icns
 	TARGET = "SLIMCoin-Qt"

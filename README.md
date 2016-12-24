@@ -38,11 +38,15 @@ build upon [Bitcoin](http://bitcoin.org/en/) and [Peercoin](http://peercoin.net/
 Build on OS X
 =============
 ```bash
-qmake RELEASE=1 USE_UPNP=1 USE_QRCODE=1 bitcoin-qt.pro
+export BDB_LIB_SUFFIX=-`ls /usr/local/Cellar/berkeley-db/`
+qmake RELEASE=1 USE_UPNP=1 USE_QRCODE=1 FIRST_CLASS_MESSAGING=1 slimcoin-qt.pro
 make
-export QTDIR=/opt/local/share/qt4
+# macports
+# export QTDIR=/opt/local/share/qt5
+# brew
+export QTDIR=/usr/local/opt/qt5
 T=$(contrib/qt_translations.py $QTDIR/translations src/qt/locale)
-python2.7 contrib/macdeploy/macdeployqtplus  -add-qt-tr $T -dmg -fancy contrib/macdeploy/fancy.plist SLIMoin-Qt.app
+python2.7 contrib/macdeploy/macdeployqtplus  -add-qt-tr $T -dmg -fancy contrib/macdeploy/fancy.plist SLIMCoin-Qt.app
 ```
 
 Repository Guidelines
