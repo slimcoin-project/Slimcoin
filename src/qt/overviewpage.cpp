@@ -174,7 +174,8 @@ OverviewPage::OverviewPage(QWidget *parent) :
 
         // set the pens
         ui->diffplot->graph(0)->setPen(QPen(QColor(255, 165, 18)));
-        ui->diffplot->graph(0)->setLineStyle(QCPGraph::lsLine);
+        ui->diffplot->graph(0)->setLineStyle(QCPGraph::lsNone);
+        ui->diffplot->graph(0)->setScatterStyle(QCPScatterStyle(QCPScatterStyle::ssDisc, QColor(255, 165, 18), 1));
 
         // set axes label fonts:
         QFont label = font();
