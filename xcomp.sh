@@ -11,9 +11,10 @@ PATH=/usr/lib/mxe/usr/bin:$PATH
 MXE_PATH=/usr/lib/mxe
 MXE_INCLUDE_PATH=/usr/lib/mxe/usr/i686-w64-mingw32.static/include
 MXE_LIB_PATH=/usr/lib/mxe/usr/i686-w64-mingw32.static/lib
-# Belt and brances
+# Belt and braces
 CXXFLAGS="-std=gnu++11 -march=i686"
 LDFLAGS="-march=i686"
+target="i686-w64-mingw32.static"
 
 # Particularise for cross-compiling
 export BOOST_LIB_SUFFIX=-mt
@@ -26,11 +27,16 @@ export BDB_INCLUDE_PATH=${MXE_INCLUDE_PATH}
 export BDB_LIB_PATH=${MXE_LIB_PATH}
 export MINIUPNPC_INCLUDE_PATH=${MXE_INCLUDE_PATH}
 export MINIUPNPC_LIB_PATH=${MXE_LIB_PATH}
-export QMAKE_LRELEASE=${MXE_PATH}/usr/i686-w64-mingw32.static/qt5/bin/lrelease
+export QMAKE_LRELEASE=${MXE_PATH}/usr/${target}/qt5/bin/lrelease
 
 # Call qmake to create Makefile.[Release|Debug]
 ${target}-qmake-qt5 \
     MXE=1 \
+    USE_O3=1 \
+    USE_QRCODE=1 \
+    FIRST_CLASS_MESSAGING=1 \
+    RELEASE=1 \
+    USE_UPNPC=1 \
     BOOST_LIB_SUFFIX=${BOOST_LIB_SUFFIX} \
     BOOST_THREAD_LIB_SUFFIX=${BOOST_THREAD_LIB_SUFFIX} \
     BOOST_INCLUDE_PATH=${BOOST_INCLUDE_PATH} \
