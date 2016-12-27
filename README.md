@@ -94,10 +94,10 @@ Names of packages are `mxe-<target>-<package>`.
 
 Possible targets:
 
-> i686-w64-mingw32.static
-> x86-64-w64-mingw32.static (note that _ replaced with -)
-> i686-w64-mingw32.shared
-> x86-64-w64-mingw32.shared (note that _ replaced with -)
+> - i686-w64-mingw32.static
+> - x86-64-w64-mingw32.static (note that `_` replaced with `-`)
+> - i686-w64-mingw32.shared
+> - x86-64-w64-mingw32.shared (note that `_` replaced with `-`)
 
 *(A complete list of packages can be found on the [MXE site](http://mxe.cc/#packages) and in [the build matrix](http://mxe.cc/build-matrix.html).)*
 
