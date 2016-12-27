@@ -90,7 +90,7 @@ Install some MXE package:
 
     $ apt-get install mxe-i686-w64-mingw32.static-qt
 
-Names of packages are mxe-<target>-<package>.
+Names of packages are `mxe-<target>-<package>`.
 
 Possible targets:
 
