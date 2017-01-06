@@ -39,6 +39,15 @@ Wallets cannot be unencrypted in Slimcoin. If you encrypt (or “lock”) your w
 
 4. Minting status is indicated by the little padlock in the bottom right corner of the client. After a few moments it should become unlocked. If you hover your mouse over it, it should say "Wallet is encrypted and currently unlocked for block minting only".
 
+
+## Build on Linux VM
+
+(useful fragment, parked for later inclusion)
+
+    sudo apt-get install libprotoc-dev libprotobuf-dev -y
+    sudo apt-get install libpng-dev qrencode -y
+    sudo apt-get install libqrencode-dev -y
+
 ## Build on OS X
 
 ### Install Homebrew
