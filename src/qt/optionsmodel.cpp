@@ -4,6 +4,9 @@
 
 #include "init.h"
 #include "walletdb.h"
+/* TODO: add and check
+#include "intro.h"
+*/
 
 OptionsModel::OptionsModel(QObject *parent) :
     QAbstractListModel(parent)
@@ -30,6 +33,11 @@ void OptionsModel::Init()
         SoftSetArg("-proxy", settings.value("addrProxy").toString().toStdString());
     if(settings.contains("detachDB"))
         SoftSetBoolArg("-detachdb", settings.value("detachDB").toBool());
+
+    /* TODO: add and check
+    if (!settings.contains("strDataDir"))
+        settings.setValue("strDataDir", Intro::getDefaultDataDirectory());
+    */
 }
 
 bool OptionsModel::Upgrade()
