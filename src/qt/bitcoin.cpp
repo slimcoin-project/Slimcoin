@@ -161,17 +161,40 @@ int main(int argc, char *argv[])
   }
 #endif
 
-#if QT_VERSION < 0x050000
-  // Internal string conversion is all UTF-8
-  QTextCodec::setCodecForTr(QTextCodec::codecForName("UTF-8"));
-  QTextCodec::setCodecForCStrings(QTextCodec::codecForTr());
-#endif
-
   Q_INIT_RESOURCE(bitcoin);
   QApplication app(argc, argv);
 
   // Command-line options take precedence:
   ParseParameters(argc, argv);
+
+  // 2. Basic Qt initialization (not dependent on parameters or configuration)
+#if QT_VERSION < 0x050000
+    // Internal string conversion is all UTF-8
+    QTextCodec::setCodecForTr(QTextCodec::codecForName("UTF-8"));
+    QTextCodec::setCodecForCStrings(QTextCodec::codecForTr());
+#endif
+
+#if QT_VERSION > 0x050100
+    // Generate high-dpi pixmaps
+    QApplication::setAttribute(Qt::AA_UseHighDpiPixmaps);
+#endif
+#if QT_VERSION >= 0x050600
+    QGuiApplication::setAttribute(Qt::AA_EnableHighDpiScaling);
+#endif
+#ifdef Q_OS_MAC
+    QApplication::setAttribute(Qt::AA_DontShowIconsInMenus);
+#endif
+/* FIXME: refactor to Qt5.6+
+#if QT_VERSION >= 0x050500
+    // Because of the POODLE attack it is recommended to disable SSLv3 (https://disablessl3.com/),
+    // so set SSL protocols to TLS1.0+.
+    QSslConfiguration sslconf = QSslConfiguration::defaultConfiguration();
+    sslconf.setProtocol(QSsl::TlsV1_0OrLater);
+    QSslConfiguration::setDefaultConfiguration(sslconf);
+#endif
+*/
+
+  // TODO: Do not refer to data directory yet, this can be overridden by Intro::pickDataDirectory
 
   // ... then bitcoin.conf:
   if(!boost::filesystem::is_directory(GetDataDir(false)))
