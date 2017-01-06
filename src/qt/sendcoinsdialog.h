@@ -47,10 +47,13 @@ private:
     WalletModel *model;
     bool fNewRecipientAllowed;
 
+    void resetMessage();
+
 private slots:
     void on_sendButton_clicked();
 
     void removeEntry(SendCoinsEntry* entry);
+    void handleMsgTypeSelectionChanged(int idx);
 };
 
 #endif // SENDCOINSDIALOG_H

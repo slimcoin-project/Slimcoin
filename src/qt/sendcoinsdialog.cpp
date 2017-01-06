@@ -101,6 +101,18 @@ void SendCoinsDialog::on_sendButton_clicked()
 
   fNewRecipientAllowed = false;
 
+    QString txmsg = ui->lineEditMsg->text();
+    if ( std::strlen(txmsg.toStdString().c_str()) > 244 )
+    {
+        QMessageBox::question(this, tr("Message error"),
+                              tr("Message length exceeds the limit (244 bytes)!"),
+              QMessageBox::Cancel,
+              QMessageBox::Cancel);
+
+        fNewRecipientAllowed = true;
+        return;
+    }
+
   QMessageBox::StandardButton retval = QMessageBox::question(this, tr("Confirm send coins"),
                                                              tr("Are you sure you want to send %1?").arg(formatted.join(tr(" and "))),
                                                              QMessageBox::Yes|QMessageBox::Cancel,
@@ -120,8 +132,10 @@ void SendCoinsDialog::on_sendButton_clicked()
     return;
   }
 
+
+  /* FIXME: check */
   //the false indicates this is supposed to not be a burn transaction
-  WalletModel::SendCoinsReturn sendstatus = model->sendCoins(recipients, false);
+  WalletModel::SendCoinsReturn sendstatus = model->sendCoins(recipients, txmsg, false);
   switch(sendstatus.status)
   {
   case WalletModel::InvalidAddress:
@@ -186,6 +200,7 @@ void SendCoinsDialog::clear()
   updateRemoveEnabled();
 
   ui->sendButton->setDefault(true);
+    resetMessage();
 }
 
 void SendCoinsDialog::reject()
@@ -298,3 +313,37 @@ void SendCoinsDialog::setBalance(qint64 balance, qint64 stake, qint64 unconfirme
   int unit = model->getOptionsModel()->getDisplayUnit();
   ui->labelBalance->setText(BitcoinUnits::formatWithUnit(unit, balance));
 }
+
+void SendCoinsDialog::resetMessage()
+{
+    ui->lineEditMsg->setVisible(false);
+    ui->lineEditMsg->setText("");
+    ui->labelFee->setVisible(false);
+    ui->amountEditFee->setVisible(false);
+    ui->comboBoxMsgType->setCurrentIndex(0);
+}
+
+void SendCoinsDialog::handleMsgTypeSelectionChanged(int idx)
+{
+    switch(idx)
+    {
+    case 0:
+        ui->lineEditMsg->setVisible(false);
+        ui->labelFee->setVisible(false);
+        ui->amountEditFee->setVisible(false);
+        break;
+    case 1:
+        ui->lineEditMsg->setVisible(true);
+        ui->labelFee->setVisible(false);
+        ui->amountEditFee->setVisible(false);
+        break;
+    case 2:
+        ui->lineEditMsg->setVisible(true);
+        ui->labelFee->setVisible(true);
+        ui->amountEditFee->setVisible(true);
+        break;
+    default:
+        break;
+    }
+}
+
