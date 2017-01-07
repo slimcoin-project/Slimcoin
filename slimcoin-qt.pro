@@ -268,6 +268,7 @@ HEADERS += src/qt/bitcoingui.h \
     src/util.h \
     src/uint256.h \
     src/serialize.h \
+    src/smalldata.h \
     src/strlcpy.h \
     src/main.h \
     src/net.h \
@@ -340,6 +341,7 @@ SOURCES += src/qt/bitcoin.cpp src/qt/bitcoingui.cpp \
     src/netbase.cpp \
     src/key.cpp \
     src/script.cpp \
+    src/smalldata.cpp \
     src/main.cpp \
     src/init.cpp \
     src/net.cpp \

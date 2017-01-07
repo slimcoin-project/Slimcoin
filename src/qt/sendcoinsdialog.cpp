@@ -102,7 +102,7 @@ void SendCoinsDialog::on_sendButton_clicked()
   fNewRecipientAllowed = false;
 
     QString txmsg = ui->lineEditMsg->text();
-    if ( std::strlen(txmsg.toStdString().c_str()) > 244 )
+    if ( std::string(txmsg.toStdString().c_str()).length() > 244 )
     {
         QMessageBox::question(this, tr("Message error"),
                               tr("Message length exceeds the limit (244 bytes)!"),

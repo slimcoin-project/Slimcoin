@@ -9,6 +9,7 @@
 #include "wallet.h"
 #include "walletdb.h" // for BackupWallet
 #include "bitcoinrpc.h" // getBurnCoinBalances()
+#include "smalldata.h"
 
 #include <QSet>
 
