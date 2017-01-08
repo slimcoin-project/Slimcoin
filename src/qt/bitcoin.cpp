@@ -7,9 +7,7 @@
 #include "walletmodel.h"
 #include "optionsmodel.h"
 #include "guiutil.h"
-/* TODO: add and check
-#include "intro.h"
-*/
+
 #include "init.h"
 #include "ui_interface.h"
 #include "qtipcserver.h"
@@ -163,13 +161,7 @@ int main(int argc, char *argv[])
   }
 #endif
 
-  Q_INIT_RESOURCE(bitcoin);
-  QApplication app(argc, argv);
-
-  // Command-line options take precedence:
-  ParseParameters(argc, argv);
-
-  // 2. Basic Qt initialization (not dependent on parameters or configuration)
+  // Basic Qt initialization (not dependent on parameters or configuration)
 #if QT_VERSION < 0x050000
   // Internal string conversion is all UTF-8
   QTextCodec::setCodecForTr(QTextCodec::codecForName("UTF-8"));
@@ -185,17 +177,12 @@ int main(int argc, char *argv[])
 #ifdef Q_OS_MAC
     QApplication::setAttribute(Qt::AA_DontShowIconsInMenus);
 #endif
-/* FIXME: refactor to Qt5
-#if QT_VERSION >= 0x050500
-    // Because of the POODLE attack it is recommended to disable SSLv3 (https://disablessl3.com/),
-    // so set SSL protocols to TLS1.0+.
-    QSslConfiguration sslconf = QSslConfiguration::defaultConfiguration();
-    sslconf.setProtocol(QSsl::TlsV1_0OrLater);
-    QSslConfiguration::setDefaultConfiguration(sslconf);
-#endif
-*/
 
-  // TODO: Do not refer to data directory yet, this can be overridden by Intro::pickDataDirectory
+  Q_INIT_RESOURCE(bitcoin);
+  QApplication app(argc, argv);
+
+  // Command-line options take precedence:
+  ParseParameters(argc, argv);
 
   // ... then bitcoin.conf:
   if(!boost::filesystem::is_directory(GetDataDir(false)))
@@ -242,29 +229,6 @@ int main(int argc, char *argv[])
   translator.load(":/translations/"+lang_territory);
   if(!translator.isEmpty())
     app.installTranslator(&translator);
-
-/* TODO: add and check
-    /// 5. Now that settings and translations are available, ask user for data directory
-    // User language is set up: pick a data directory
-    if (!Intro::pickDataDirectory())
-        return EXIT_SUCCESS;
-
-    /// 6. Determine availability of data directory and parse bitcoin.conf
-    /// - Do not call GetDataDir(true) before this step finishes
-    if (!boost::filesystem::is_directory(GetDataDir(false)))
-    {
-        QMessageBox::critical(0, QObject::tr("SLIMCoin"),
-                              QObject::tr("Error: Specified data directory \"%1\" does not exist.").arg(QString::fromStdString(mapArgs["-datadir"])));
-        return EXIT_FAILURE;
-    }
-    try {
-        ReadConfigFile(GetArg("-conf", "slimcoin.conf"), mapArgs, mapMultiArgs);
-    } catch (const std::exception& e) {
-        QMessageBox::critical(0, QObject::tr("SLIMCoin"),
-                              QObject::tr("Error: Cannot parse configuration file: %1. Only use key=value syntax.").arg(e.what()));
-        return EXIT_FAILURE;
-    }
-*/
 
   QSplashScreen splash(QPixmap(":/images/splash"), 0);
   if(GetBoolArg("-splash", true) && !GetBoolArg("-min"))

@@ -113,9 +113,7 @@ void BurnCoinsDialog::on_sendButton_clicked()
   }
 
   //sendCoins will automatically detect that this Tx is a burn Tx
-  //pass along a null value for the txmsg
-  QString txmsg = "";
-  WalletModel::SendCoinsReturn sendstatus = model->sendCoins(recipients, txmsg, true);
+  WalletModel::SendCoinsReturn sendstatus = model->sendCoins(recipients, true);
   switch(sendstatus.status)
   {
   case WalletModel::InvalidAddress:
