@@ -15,6 +15,7 @@ class MiningPage;
 class AddressBookPage;
 class SendCoinsDialog;
 class BurnCoinsDialog;
+class InscriptionDialog;
 class MessagePage;
 class Notificator;
 class RPCConsole;
@@ -88,6 +89,7 @@ private:
     QAction *quitAction;
     QAction *sendCoinsAction;
     QAction *burnCoinsAction;
+    QAction *inscribeAction;
     QAction *addressBookAction;
     QAction *messageAction;
     QAction *aboutAction;
@@ -105,6 +107,7 @@ private:
     QSystemTrayIcon *trayIcon;
     Notificator *notificator;
     TransactionView *transactionView;
+    InscriptionDialog *inscriptionPage;
     RPCConsole *rpcConsole;
 
     QMovie *syncIconMovie;
