@@ -161,6 +161,12 @@ int main(int argc, char *argv[])
   }
 #endif
 
+  Q_INIT_RESOURCE(bitcoin);
+  QApplication app(argc, argv);
+
+  // Command-line options take precedence:
+  ParseParameters(argc, argv);
+
   // Basic Qt initialization (not dependent on parameters or configuration)
 #if QT_VERSION < 0x050000
   // Internal string conversion is all UTF-8
@@ -177,12 +183,6 @@ int main(int argc, char *argv[])
 #ifdef Q_OS_MAC
     QApplication::setAttribute(Qt::AA_DontShowIconsInMenus);
 #endif
-
-  Q_INIT_RESOURCE(bitcoin);
-  QApplication app(argc, argv);
-
-  // Command-line options take precedence:
-  ParseParameters(argc, argv);
 
   // ... then bitcoin.conf:
   if(!boost::filesystem::is_directory(GetDataDir(false)))

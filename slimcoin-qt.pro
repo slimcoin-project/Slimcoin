@@ -11,7 +11,7 @@ QT += core gui network
 CONFIG += link_pkgconfig
 
 isEmpty(BDB_LIB_SUFFIX) {
-	!macx:unix:BDB_LIB_SUFFIX = -5.3
+	# !macx:unix:BDB_LIB_SUFFIX = -5.3
 	windows:macx:BDB_LIB_SUFFIX = -4.8
 }
 
@@ -88,10 +88,10 @@ contains(RELEASE, 1) {
     # the Apple Developer site and install it before continuing with
     # the below. Xcode 8.2_beta is used here.
 
-    macx:QMAKE_CXXFLAGS += -mmacosx-version-min=10.12 -isysroot /Applications/Xcode-beta.app/Contents/Developer/Platforms/MacOSX.platform/Developer/SDKs/MacOSX10.12.sdk
-    macx:QMAKE_CFLAGS += -mmacosx-version-min=10.12 -isysroot /Applications/Xcode-beta.app/Contents/Developer/Platforms/MacOSX.platform/Developer/SDKs/MacOSX10.12.sdk
-    macx:QMAKE_LFLAGS += -mmacosx-version-min=10.12 -isysroot /Applications/Xcode-beta.app/Contents/Developer/Platforms/MacOSX.platform/Developer/SDKs/MacOSX10.12.sdk
-    macx:QMAKE_OBJECTIVE_CFLAGS += -mmacosx-version-min=10.12 -isysroot /Applications/Xcode-beta.app/Contents/Developer/Platforms/MacOSX.platform/Developer/SDKs/MacOSX10.12.sdk
+    macx:QMAKE_CXXFLAGS += -mmacosx-version-min=10.12 -isysroot /Applications/Xcode.app/Contents/Developer/Platforms/MacOSX.platform/Developer/SDKs/MacOSX10.12.sdk
+    macx:QMAKE_CFLAGS += -mmacosx-version-min=10.12 -isysroot /Applications/Xcode.app/Contents/Developer/Platforms/MacOSX.platform/Developer/SDKs/MacOSX10.12.sdk
+    macx:QMAKE_LFLAGS += -mmacosx-version-min=10.12 -isysroot /Applications/Xcode.app/Contents/Developer/Platforms/MacOSX.platform/Developer/SDKs/MacOSX10.12.sdk
+    macx:QMAKE_OBJECTIVE_CFLAGS += -mmacosx-version-min=10.12 -isysroot /Applications/Xcode.app/Contents/Developer/Platforms/MacOSX.platform/Developer/SDKs/MacOSX10.12.sdk
 
     !windows:!macx {
         # Linux: static link
@@ -327,9 +327,7 @@ HEADERS += src/addrman.h \
     src/walletdb.h \
     src/version.h
 
-SOURCES += src/qt/bitcoin.cpp \
-    src/qt/bitcoingui.cpp \
-    src/addrman.cpp \
+SOURCES += src/addrman.cpp \
     src/bitcoinrpc.cpp \
     src/checkpoints.cpp \
     src/crypter.cpp \
@@ -351,6 +349,8 @@ SOURCES += src/qt/bitcoin.cpp \
     src/qt/addressbookpage.cpp \
     src/qt/addresstablemodel.cpp \
     src/qt/askpassphrasedialog.cpp \
+    src/qt/bitcoin.cpp \
+    src/qt/bitcoingui.cpp \
     src/qt/bitcoinaddressvalidator.cpp \
     src/qt/bitcoinamountfield.cpp \
     src/qt/bitcoinstrings.cpp \
@@ -475,9 +475,9 @@ isEmpty(BOOST_THREAD_LIB_SUFFIX) {
     BOOST_THREAD_LIB_SUFFIX = $$BOOST_LIB_SUFFIX
 }
 
-isEmpty(BDB_LIB_SUFFIX) {
-    BDB_LIB_SUFFIX = -4.8
-}
+# isEmpty(BDB_LIB_SUFFIX) {
+#     BDB_LIB_SUFFIX = -4.8
+# }
 
 isEmpty(BDB_INCLUDE_PATH) {
     contains(CONFIG, brew) {

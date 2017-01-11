@@ -27,6 +27,27 @@ Slimcoin's codebase is built upon [Bitcoin](http://bitcoin.org/en/) and [Peercoi
 [![Build Status](https://api.travis-ci.org/gjhiggins/SLIMCoin.svg?branch=slimcoin)](https://travis-ci.org/gjhiggins/SLIMCoin),
 [Slimcoin Club](https://www.slimcoin.club) (Block explorer, Brain wallet and other informations)
 
+## Minting with an encrypted wallet
+
+Wallets cannot be unencrypted in Slimcoin. If you encrypt (or “lock”) your wallet, you must thereafter specify how long it is to remain unlocked for minting. The following instructions for minting were copied from peercoin.net's [Minting Guide](https://peercoin.net/minting-guide)
+
+1. Ensure your wallet is encrypted with a good passphrase. Write this down and keep it somewhere safe; if you forget the passphrase you will lose your coins. The wallet encryption option can be found under the settings tab in the Peercoin-Qt wallet program.
+
+2. To start minting go to help -> debug window -> console and enter: `walletpassphrase abc 999999 true` where `abc` is your passphrase and `999999` is the time you want to mint for in seconds. You can change the amount of time to whatever you like, but it is usually easiest just to set it at a very high number. If your passphrase includes spaces, enclose it in quotation marks.
+
+3. Clear your passphrase by pressing `Ctrl-L`.
+
+4. Minting status is indicated by the little padlock in the bottom right corner of the client. After a few moments it should become unlocked. If you hover your mouse over it, it should say "Wallet is encrypted and currently unlocked for block minting only".
+
+
+## Build on Linux VM
+
+(useful fragment, parked for later inclusion)
+
+    sudo apt-get install libprotoc-dev libprotobuf-dev -y
+    sudo apt-get install libpng-dev qrencode -y
+    sudo apt-get install libqrencode-dev -y
+
 ## Build on OS X
 
 ### Install Homebrew
@@ -173,6 +194,32 @@ The cross-compilation product is saved in the `release` directory under the name
 
 *(be prepared for a long wait during the loading of the index, e.g. 15-20 mins on a low-end machine)*
 
+## Technical parameters
+
+pszTimestamp: "RT: 2 southeast Ukranian regions to hold referendum May 11 as 
+planned";
+
+strMessageMagic: "SLIMCoin Signed Message:\n"
+pchMessageStart: 6e8b92a5
+testnet_pchMessageStart: 4d2ae1ab
+
+nBits: 0.00024414
+nVersion: 1
+nTime: 1399578460
+nNonce: 116872
+
+testnetnTime: 1390500425
+testnetnNonce: 63626
+
+PORT: 41682
+RPC_PORT: 41683
+TESTNET_PORT: 41684
+TESTNET_RPC_PORT: 41685
+
+PUBKEY_ADDRESS: 63 - slimcoin: addresses begin with 'S'
+SCRIPT_ADDRESS: 125 - slimcoin: script addresses begin with 's'
+PUBKEY_ADDRESS_TEST: 111
+SCRIPT_ADDRESS_TEST: 196
 
 ## Repository Guidelines
 
