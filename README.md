@@ -194,6 +194,32 @@ The cross-compilation product is saved in the `release` directory under the name
 
 *(be prepared for a long wait during the loading of the index, e.g. 15-20 mins on a low-end machine)*
 
+## Technical parameters
+
+pszTimestamp: "RT: 2 southeast Ukranian regions to hold referendum May 11 as 
+planned";
+
+strMessageMagic: "SLIMCoin Signed Message:\n"
+pchMessageStart: 6e8b92a5
+testnet_pchMessageStart: 4d2ae1ab
+
+nBits: 0.00024414
+nVersion: 1
+nTime: 1399578460
+nNonce: 116872
+
+testnetnTime: 1390500425
+testnetnNonce: 63626
+
+PORT: 41682
+RPC_PORT: 41683
+TESTNET_PORT: 41684
+TESTNET_RPC_PORT: 41685
+
+PUBKEY_ADDRESS: 63 - slimcoin: addresses begin with 'S'
+SCRIPT_ADDRESS: 125 - slimcoin: script addresses begin with 's'
+PUBKEY_ADDRESS_TEST: 111
+SCRIPT_ADDRESS_TEST: 196
 
 ## Repository Guidelines
 
