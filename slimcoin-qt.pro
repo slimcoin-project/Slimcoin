@@ -11,7 +11,7 @@ QT += core gui network
 CONFIG += link_pkgconfig
 
 isEmpty(BDB_LIB_SUFFIX) {
-	!macx:unix:BDB_LIB_SUFFIX = -5.3
+	# !macx:unix:BDB_LIB_SUFFIX = -5.3
 	windows:macx:BDB_LIB_SUFFIX = -4.8
 }
 
@@ -249,162 +249,164 @@ contains(USE_O0, 1) {
 # Input
 DEPENDPATH += src src/json src/qt
 
-HEADERS += src/qt/bitcoingui.h \
-    src/qt/transactiontablemodel.h \
-    src/qt/addresstablemodel.h \
-    src/qt/optionsdialog.h \
-    src/qt/sendcoinsdialog.h \
-    src/qt/burncoinsdialog.h \
-    src/qt/addressbookpage.h \
-    src/qt/messagepage.h \
-    src/qt/aboutdialog.h \
-    src/qt/editaddressdialog.h \
-    src/qt/bitcoinaddressvalidator.h \
-    src/addrman.h \
+HEADERS += src/addrman.h \
+    src/allocators.h \
     src/base58.h \
     src/bignum.h \
+    src/bitcoinrpc.h \
     src/checkpoints.h \
     src/compat.h \
-    src/util.h \
-    src/uint256.h \
-    src/serialize.h \
-    src/strlcpy.h \
-    src/main.h \
-    src/net.h \
-    src/key.h \
+    src/crypter.h \
     src/db.h \
-    src/walletdb.h \
-    src/script.h \
+    src/dcrypt.h \
     src/init.h \
     src/irc.h \
-    src/mruset.h \
-    src/json/json_spirit_writer_template.h \
-    src/json/json_spirit_writer.h \
-    src/json/json_spirit_value.h \
-    src/json/json_spirit_utils.h \
-    src/json/json_spirit_stream_reader.h \
-    src/json/json_spirit_reader_template.h \
-    src/json/json_spirit_reader.h \
-    src/json/json_spirit_error_position.h \
     src/json/json_spirit.h \
+    src/json/json_spirit_error_position.h \
+    src/json/json_spirit_reader.h \
+    src/json/json_spirit_reader_template.h \
+    src/json/json_spirit_stream_reader.h \
+    src/json/json_spirit_utils.h \
+    src/json/json_spirit_value.h \
+    src/json/json_spirit_writer.h \
+    src/json/json_spirit_writer_template.h \
+    src/kernel.h \
+    src/key.h \
+    src/keystore.h \
+    src/main.h \
+    src/mruset.h \
+    src/net.h \
+    src/protocol.h \
+    src/qt/aboutdialog.h \
+    src/qt/addressbookpage.h \
+    src/qt/addresstablemodel.h \
+    src/qt/askpassphrasedialog.h \
+    src/qt/bitcoinaddressvalidator.h \
+    src/qt/bitcoinamountfield.h \
+    src/qt/bitcoingui.h \
+    src/qt/bitcoinunits.h \
+    src/qt/blockbrowser.h \
+    src/qt/burncoinsdialog.h \
+    src/qt/burncoinsentry.h \
     src/qt/clientmodel.h \
-    src/qt/guiutil.h \
-    src/qt/transactionrecord.h \
+    src/qt/csvmodelwriter.h \
+    src/qt/editaddressdialog.h \
     src/qt/guiconstants.h \
-    src/qt/optionsmodel.h \
+    src/qt/guiutil.h \
+    src/qt/messagepage.h \
+    src/qt/miningpage.h \
     src/qt/monitoreddatamapper.h \
+    src/qt/notificator.h \
+    src/qt/optionsdialog.h \
+    src/qt/optionsmodel.h \
+    src/qt/overviewpage.h \
+    src/qt/qcustomplot.h \
+    src/qt/qtipcserver.h \
+    src/qt/qvalidatedlineedit.h \
+    src/qt/qvaluecombobox.h \
+    src/qt/rpcconsole.h \
+    src/qt/sendcoinsdialog.h \
+    src/qt/sendcoinsentry.h \
     src/qt/transactiondesc.h \
     src/qt/transactiondescdialog.h \
-    src/qt/bitcoinamountfield.h \
-    src/wallet.h \
-    src/keystore.h \
     src/qt/transactionfilterproxy.h \
+    src/qt/transactionrecord.h \
+    src/qt/transactiontablemodel.h \
     src/qt/transactionview.h \
     src/qt/walletmodel.h \
-    src/bitcoinrpc.h \
-    src/qt/overviewpage.h \
-    src/qt/miningpage.h \
-    src/qt/csvmodelwriter.h \
-    src/crypter.h \
-    src/qt/sendcoinsentry.h \
-    src/qt/burncoinsentry.h \
-    src/qt/qvalidatedlineedit.h \
-    src/qt/bitcoinunits.h \
-    src/qt/qvaluecombobox.h \
-    src/qt/askpassphrasedialog.h \
-    src/qt/rpcconsole.h \
-    src/qt/blockbrowser.h \
-    src/protocol.h \
-    src/qt/notificator.h \
-    src/qt/qtipcserver.h \
-    src/allocators.h \
-    src/ui_interface.h \
-    src/kernel.h \
-    src/dcrypt.h \
+    src/script.h \
+    src/serialize.h \
     src/sha256.h \
-    src/qt/qcustomplot.h
+    src/strlcpy.h \
+    src/ui_interface.h \
+    src/uint256.h \
+    src/util.h \
+    src/wallet.h \
+    src/walletdb.h \
+    src/version.h
 
-SOURCES += src/qt/bitcoin.cpp src/qt/bitcoingui.cpp \
-    src/qt/transactiontablemodel.cpp \
-    src/qt/addresstablemodel.cpp \
-    src/qt/optionsdialog.cpp \
-    src/qt/sendcoinsdialog.cpp \
-    src/qt/burncoinsdialog.cpp \
-    src/qt/addressbookpage.cpp \
-    src/qt/messagepage.cpp \
-    src/qt/aboutdialog.cpp \
-    src/qt/editaddressdialog.cpp \
-    src/qt/bitcoinaddressvalidator.cpp \
-    src/version.cpp \
-    src/util.cpp \
-    src/netbase.cpp \
-    src/key.cpp \
-    src/script.cpp \
-    src/main.cpp \
-    src/init.cpp \
-    src/net.cpp \
-    src/irc.cpp \
+SOURCES += src/addrman.cpp \
+    src/bitcoinrpc.cpp \
     src/checkpoints.cpp \
-    src/addrman.cpp \
+    src/crypter.cpp \
     src/db.cpp \
-    src/walletdb.cpp \
-    src/json/json_spirit_writer.cpp \
-    src/json/json_spirit_value.cpp \
+    src/dcrypt.cpp \
+    src/init.cpp \
+    src/irc.cpp \
     src/json/json_spirit_reader.cpp \
+    src/json/json_spirit_value.cpp \
+    src/json/json_spirit_writer.cpp \
+    src/kernel.cpp \
+    src/key.cpp \
+    src/keystore.cpp \
+    src/main.cpp \
+    src/net.cpp \
+    src/netbase.cpp \
+    src/protocol.cpp \
+    src/qt/aboutdialog.cpp \
+    src/qt/addressbookpage.cpp \
+    src/qt/addresstablemodel.cpp \
+    src/qt/askpassphrasedialog.cpp \
+    src/qt/bitcoin.cpp \
+    src/qt/bitcoingui.cpp \
+    src/qt/bitcoinaddressvalidator.cpp \
+    src/qt/bitcoinamountfield.cpp \
+    src/qt/bitcoinstrings.cpp \
+    src/qt/bitcoinunits.cpp \
+    src/qt/blockbrowser.cpp \
+    src/qt/burncoinsdialog.cpp \
+    src/qt/burncoinsentry.cpp \
     src/qt/clientmodel.cpp \
+    src/qt/csvmodelwriter.cpp \
+    src/qt/editaddressdialog.cpp \
     src/qt/guiutil.cpp \
-    src/qt/transactionrecord.cpp \
-    src/qt/optionsmodel.cpp \
+    src/qt/messagepage.cpp \
+    src/qt/miningpage.cpp \
     src/qt/monitoreddatamapper.cpp \
+    src/qt/notificator.cpp \
+    src/qt/optionsdialog.cpp \
+    src/qt/optionsmodel.cpp \
+    src/qt/overviewpage.cpp \
+    src/qt/qcustomplot.cpp \
+    src/qt/qtipcserver.cpp \
+    src/qt/qvalidatedlineedit.cpp \
+    src/qt/qvaluecombobox.cpp \
+    src/qt/rpcconsole.cpp \
+    src/qt/sendcoinsdialog.cpp \
+    src/qt/sendcoinsentry.cpp \
     src/qt/transactiondesc.cpp \
     src/qt/transactiondescdialog.cpp \
-    src/qt/bitcoinstrings.cpp \
-    src/qt/bitcoinamountfield.cpp \
-    src/wallet.cpp \
-    src/keystore.cpp \
     src/qt/transactionfilterproxy.cpp \
+    src/qt/transactionrecord.cpp \
+    src/qt/transactiontablemodel.cpp \
     src/qt/transactionview.cpp \
     src/qt/walletmodel.cpp \
-    src/bitcoinrpc.cpp \
     src/rpcdump.cpp \
-    src/qt/miningpage.cpp \
-    src/qt/overviewpage.cpp \
-    src/qt/csvmodelwriter.cpp \
-    src/crypter.cpp \
-    src/qt/sendcoinsentry.cpp \
-    src/qt/burncoinsentry.cpp \
-    src/qt/qvalidatedlineedit.cpp \
-    src/qt/bitcoinunits.cpp \
-    src/qt/qvaluecombobox.cpp \
-    src/qt/askpassphrasedialog.cpp \
-    src/qt/rpcconsole.cpp \
-    src/qt/blockbrowser.cpp \
-    src/protocol.cpp \
-    src/qt/notificator.cpp \
-    src/qt/qtipcserver.cpp \
-    src/kernel.cpp \
-    src/dcrypt.cpp \
+    src/script.cpp \
     src/sha256.cpp \
-    src/qt/qcustomplot.cpp
+    src/util.cpp \
+    src/version.cpp \
+    src/wallet.cpp \
+    src/walletdb.cpp
 
 RESOURCES += \
     src/qt/bitcoin.qrc
 
 FORMS += \
-    src/qt/forms/sendcoinsdialog.ui \
-    src/qt/forms/burncoinsdialog.ui \
-    src/qt/forms/addressbookpage.ui \
-    src/qt/forms/messagepage.ui \
     src/qt/forms/aboutdialog.ui \
-    src/qt/forms/editaddressdialog.ui \
-    src/qt/forms/transactiondescdialog.ui \
-    src/qt/forms/overviewpage.ui \
-    src/qt/forms/miningpage.ui \
-    src/qt/forms/sendcoinsentry.ui \
-    src/qt/forms/burncoinsentry.ui \
-    src/qt/forms/blockbrowser.ui \
+    src/qt/forms/addressbookpage.ui \
     src/qt/forms/askpassphrasedialog.ui \
-    src/qt/forms/rpcconsole.ui
+    src/qt/forms/blockbrowser.ui \
+    src/qt/forms/burncoinsdialog.ui \
+    src/qt/forms/burncoinsentry.ui \
+    src/qt/forms/editaddressdialog.ui \
+    src/qt/forms/messagepage.ui \
+    src/qt/forms/miningpage.ui \
+    src/qt/forms/overviewpage.ui \
+    src/qt/forms/rpcconsole.ui \
+    src/qt/forms/sendcoinsdialog.ui \
+    src/qt/forms/sendcoinsentry.ui \
+    src/qt/forms/transactiondescdialog.ui
 
 contains(USE_QRCODE, 1) {
     HEADERS += src/qt/qrcodedialog.h
@@ -468,9 +470,9 @@ isEmpty(BOOST_THREAD_LIB_SUFFIX) {
     BOOST_THREAD_LIB_SUFFIX = $$BOOST_LIB_SUFFIX
 }
 
-isEmpty(BDB_LIB_SUFFIX) {
-    BDB_LIB_SUFFIX = -4.8
-}
+# isEmpty(BDB_LIB_SUFFIX) {
+#     BDB_LIB_SUFFIX = -4.8
+# }
 
 isEmpty(BDB_INCLUDE_PATH) {
     contains(CONFIG, brew) {

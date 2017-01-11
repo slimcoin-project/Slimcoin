@@ -404,7 +404,7 @@ QVariant TransactionTableModel::txAddressDecoration(const TransactionRecord *wtx
   case TransactionRecord::SendToOther:
     return QIcon(":/icons/tx_output");
   case TransactionRecord::BurnMint:
-    return QIcon(":/icons/Burn_mint");
+    return QIcon(":/icons/burn_mint");
   case TransactionRecord::Burned:
     return QIcon(":/icons/tx_burn");
   default:
