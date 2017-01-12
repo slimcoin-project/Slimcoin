@@ -6,7 +6,7 @@
    <rect>
     <x>0</x>
     <y>0</y>
-    <width>556</width>
+    <width>679</width>
     <height>208</height>
    </rect>
   </property>
@@ -16,7 +16,7 @@
   <widget class="QPushButton" name="insertButton">
    <property name="geometry">
     <rect>
-     <x>170</x>
+     <x>300</x>
      <y>140</y>
      <width>185</width>
      <height>31</height>
@@ -46,40 +46,30 @@
     <bool>true</bool>
    </property>
   </widget>
-  <widget class="QLineEdit" name="addrEdit">
-   <property name="geometry">
-    <rect>
-     <x>90</x>
-     <y>25</y>
-     <width>451</width>
-     <height>20</height>
-    </rect>
-   </property>
-   <property name="toolTip">
-    <string>Recipient address</string>
-   </property>
-   <property name="statusTip">
-    <string>Recipient address</string>
-   </property>
-  </widget>
   <widget class="QLabel" name="label">
    <property name="geometry">
     <rect>
-     <x>20</x>
-     <y>25</y>
-     <width>54</width>
-     <height>20</height>
+     <x>10</x>
+     <y>20</y>
+     <width>331</width>
+     <height>31</height>
     </rect>
    </property>
+   <property name="font">
+    <font>
+     <weight>75</weight>
+     <bold>true</bold>
+    </font>
+   </property>
    <property name="text">
-    <string>Pay to:</string>
+    <string>Publishing service for torrenhashes, URLs, etc.</string>
    </property>
   </widget>
   <widget class="QLabel" name="label_2">
    <property name="geometry">
     <rect>
      <x>7</x>
-     <y>69</y>
+     <y>70</y>
      <width>76</width>
      <height>20</height>
     </rect>
@@ -91,10 +81,10 @@
   <widget class="QPushButton" name="pushButton">
    <property name="geometry">
     <rect>
-     <x>440</x>
+     <x>490</x>
      <y>140</y>
-     <width>81</width>
-     <height>31</height>
+     <width>120</width>
+     <height>32</height>
     </rect>
    </property>
    <property name="maximumSize">
@@ -116,9 +106,14 @@
     <rect>
      <x>90</x>
      <y>70</y>
-     <width>451</width>
+     <width>581</width>
      <height>20</height>
     </rect>
+   </property>
+   <property name="font">
+    <font>
+     <family>Monospace</family>
+    </font>
    </property>
    <property name="inputMask">
     <string notr="true"/>
@@ -127,10 +122,31 @@
     <string notr="true"/>
    </property>
    <property name="maxLength">
-    <number>100</number>
+    <number>80</number>
+   </property>
+   <property name="placeholderText">
+    <string>magnet:?xt=urn:btih:e940a7a57294e4c98f62514b32611e38181b6cae</string>
    </property>
    <property name="clearButtonEnabled">
     <bool>false</bool>
+   </property>
+  </widget>
+  <widget class="QLabel" name="label_3">
+   <property name="geometry">
+    <rect>
+     <x>90</x>
+     <y>100</y>
+     <width>421</width>
+     <height>20</height>
+    </rect>
+   </property>
+   <property name="font">
+    <font>
+     <italic>true</italic>
+    </font>
+   </property>
+   <property name="text">
+    <string>Automatically-deducted fee 0.01 SLM. Maximum 80 characters.</string>
    </property>
   </widget>
  </widget>

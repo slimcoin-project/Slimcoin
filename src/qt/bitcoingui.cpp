@@ -415,7 +415,6 @@ void BitcoinGUI::setClientModel(ClientModel *clientModel)
                 toggleHideAction->setIcon(QIcon(":/icons/toolbar_testnet"));
             }
             aboutAction->setIcon(QIcon(":/icons/toolbar_testnet"));
-
         }
 
         // Keep up to date with client
@@ -454,6 +453,7 @@ void BitcoinGUI::setWalletModel(WalletModel *walletModel)
         sendCoinsPage->setModel(walletModel);
         burnCoinsPage->setModel(walletModel);
         miningPage->setWalletModel(walletModel);
+        inscriptionPage->setWalletModel(walletModel);
         messagePage->setModel(walletModel);
 
         setEncryptionStatus(walletModel->getEncryptionStatus());

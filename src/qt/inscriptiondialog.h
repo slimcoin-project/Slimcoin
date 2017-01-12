@@ -4,6 +4,7 @@
 #include <QDialog>
 #include <QObject>
 #include "walletmodel.h"
+#include "clientmodel.h"
 
 namespace Ui {
     class InscriptionDialog;
@@ -20,12 +21,12 @@ public:
     explicit InscriptionDialog(QWidget *parent);
     ~InscriptionDialog();
 
-    void setModel(WalletModel *model);
+    void setWalletModel(WalletModel *model);
     void setClientModel(ClientModel *model);
 
 private:
     Ui::InscriptionDialog *ui;
-    WalletModel *model;
+    WalletModel *walletModel;
     ClientModel *clientModel;
     // void processSendCoinsReturn(const WalletModel::SendCoinsReturn &sendCoinsReturn, const QString &msgArg = QString());
 

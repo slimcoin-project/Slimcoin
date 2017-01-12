@@ -10,8 +10,6 @@
 
 #include <QString>
 
-#include "smalldata.h"
-
 using namespace std;
 
 QString TransactionDesc::FormatTxStatus(const CWalletTx& wtx)

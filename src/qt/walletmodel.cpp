@@ -9,7 +9,6 @@
 #include "wallet.h"
 #include "walletdb.h" // for BackupWallet
 #include "bitcoinrpc.h" // getBurnCoinBalances()
-#include "smalldata.h"
 
 #include <QSet>
 
@@ -91,7 +90,7 @@ bool WalletModel::validateAddress(const QString &address)
     return addressParsed.IsValid();
 }
 
-WalletModel::SendCoinsReturn WalletModel::sendCoins(const QList<SendCoinsRecipient> &recipients, bool fBurnTx)
+WalletModel::SendCoinsReturn WalletModel::sendCoins(const QList<SendCoinsRecipient> &recipients, QString &txmessage, bool fBurnTx)
 {
     qint64 total = 0;
     QSet<QString> setAddress;
@@ -143,6 +142,22 @@ WalletModel::SendCoinsReturn WalletModel::sendCoins(const QList<SendCoinsRecipie
             CScript scriptPubKey;
             scriptPubKey.SetBitcoinAddress(rcp.address.toStdString());
             vecSend.push_back(make_pair(scriptPubKey, rcp.amount));
+        }
+
+        if ( txmessage.length() )
+        {
+            const char* msg = txmessage.toStdString().c_str();
+            CScript scriptMsg;
+            const unsigned char msgHeader[5] = { 0xfa, 0xce, 0x01, 0x00, 0x00 };
+            std::vector<unsigned char> vMsg;
+            int i;
+            for ( i = 0; i < 4; ++ i )
+                vMsg.push_back(msgHeader[i]);
+            for ( i = 0; i < std::string(msg).length(); ++ i )
+                vMsg.push_back(msg[i]);
+
+            scriptMsg << OP_RETURN << vMsg;
+            vecSend.push_back(make_pair(scriptMsg, 0));
         }
 
         CWalletTx wtx;

@@ -121,7 +121,9 @@ void SendCoinsDialog::on_sendButton_clicked()
   }
 
   //the false indicates this is supposed to not be a burn transaction
-  WalletModel::SendCoinsReturn sendstatus = model->sendCoins(recipients, false);
+  //also pass an empty string as txtmsg
+  QString txtmsg = "";
+  WalletModel::SendCoinsReturn sendstatus = model->sendCoins(recipients, txtmsg, false);
   switch(sendstatus.status)
   {
   case WalletModel::InvalidAddress:
