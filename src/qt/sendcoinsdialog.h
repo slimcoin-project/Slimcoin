@@ -47,6 +47,7 @@ private:
     WalletModel *model;
     bool fNewRecipientAllowed;
 
+
 private slots:
     void on_sendButton_clicked();
 

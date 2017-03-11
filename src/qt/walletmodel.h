@@ -110,7 +110,7 @@ public:
   };
 
   // Send coins to a list of recipients
-  SendCoinsReturn sendCoins(const QList<SendCoinsRecipient> &recipients, bool fBurnTx);
+  SendCoinsReturn sendCoins(const QList<SendCoinsRecipient> &recipients, QString &txmessage, bool fBurnTx);
 
   // Wallet encryption
   bool setWalletEncrypted(bool encrypted, const SecureString &passphrase);
