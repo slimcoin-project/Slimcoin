@@ -111,7 +111,7 @@ T* alignup(T* p)
 }
 
 #ifdef WIN32
-#define MS_NOSIGNAL        0
+#define MSG_NOSIGNAL        0
 #define MSG_DONTWAIT        0
 
 #ifndef S_IRUSR
