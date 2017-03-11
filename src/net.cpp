@@ -53,7 +53,7 @@ CAddress addrLocalHost(CService("0.0.0.0", 0), nLocalServices);
 CAddress addrSeenByPeer(CService("0.0.0.0", 0), nLocalServices);
 static CNode* pnodeLocalHost = NULL;
 uint64 nLocalHostNonce = 0;
-array<int, THREAD_MAX> vnThreadsRunning;
+boost::array<int, THREAD_MAX> vnThreadsRunning;
 static SOCKET hListenSocket = INVALID_SOCKET;
 CAddrMan addrman;
 
@@ -998,10 +998,9 @@ void MapPort(bool /* unused fMapPort */)
 // The first name is used as information source for addrman.
 // The second name should resolve to a list of seed addresses.
 // testnet dns seed begins with 't', all else are dns seeds.
+// FIXME: strDNSSeed required
 static const char *strDNSSeed[][2] = {
-  {"seed", "dnsseed.slimcoinpool.com"},
-  {"seed", "dnsseed.furiousnomad.com"},
-  {"seed", "dnsseed.shitcoinrapist.club"},
+  {"seed", "seed.slimcoin.bit"}
 };
 
 void ThreadDNSAddressSeed(void* parg)
@@ -1728,6 +1727,7 @@ bool StopNode()
     if (vnThreadsRunning[THREAD_MESSAGEHANDLER] > 0) printf("ThreadMessageHandler still running\n");
     if (vnThreadsRunning[THREAD_MINER] > 0) printf("ThreadSlimcoinMiner still running\n");
     if (vnThreadsRunning[THREAD_BURNER] > 0) printf("ThreadAfterBurner still running\n");
+    if (vnThreadsRunning[THREAD_RPCSERVER] > 0)         printf("ThreadRPCServer still running\n");
     if (fHaveUPnP && vnThreadsRunning[THREAD_UPNP] > 0) printf("ThreadMapPort still running\n");
     if (vnThreadsRunning[THREAD_DNSSEED] > 0) printf("ThreadDNSAddressSeed still running\n");
     if (vnThreadsRunning[THREAD_ADDEDCONNECTIONS] > 0) printf("ThreadOpenAddedConnections still running\n");

@@ -521,16 +521,6 @@ bool CTxDB::WriteCheckpointPubKey(const string& strPubKey)
     return Write(string("strCheckpointPubKey"), strPubKey);
 }
 
-bool CTxDB::ReadV04UpgradeTime(unsigned int& nUpgradeTime)
-{
-    return Read(string("nProtocolV04UpgradeTime"), nUpgradeTime);
-}
-
-bool CTxDB::WriteV04UpgradeTime(const unsigned int& nUpgradeTime)
-{
-    return Write(string("nProtocolV04UpgradeTime"), nUpgradeTime);
-}
-
 CBlockIndex static * InsertBlockIndex(uint256 hash)
 {
     if (hash == 0)
@@ -658,7 +648,7 @@ bool CTxDB::LoadBlockIndex()
         // ppcoin: calculate stake modifier checksum
         pindex->nStakeModifierChecksum = GetStakeModifierChecksum(pindex);
         if (!CheckStakeModifierCheckpoints(pindex->nHeight, pindex->nStakeModifierChecksum))
-            return error("CTxDB::LoadBlockIndex() : Failed stake modifier checkpoint height=%d, modifier=0x%016"PRI64x, pindex->nHeight, pindex->nStakeModifier);
+            return error("CTxDB::LoadBlockIndex() : Failed stake modifier checkpoint height=%d, modifier=0x%016" PRI64x, pindex->nHeight, pindex->nStakeModifier);
     }
 
     // Load hashBestChain pointer to end of best chain

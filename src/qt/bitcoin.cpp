@@ -144,7 +144,7 @@ int main(int argc, char *argv[])
   // Do this early as we don't want to bother initializing if we are just calling IPC
   for(int i = 1; i < argc; i++)
   {
-    if(strlen(argv[i]) >= 7 && strncasecmp(argv[i], "slimcoin:", 7) == 0)
+    if(strlen(argv[i]) >= 8 && strncasecmp(argv[i], "slimcoin:", 9) == 0)
     {
       const char *strURI = argv[i];
       try {
@@ -161,17 +161,29 @@ int main(int argc, char *argv[])
   }
 #endif
 
-#if QT_VERSION < 0x050000
-  // Internal string conversion is all UTF-8
-  QTextCodec::setCodecForTr(QTextCodec::codecForName("UTF-8"));
-  QTextCodec::setCodecForCStrings(QTextCodec::codecForTr());
-#endif
-
   Q_INIT_RESOURCE(bitcoin);
   QApplication app(argc, argv);
 
   // Command-line options take precedence:
   ParseParameters(argc, argv);
+
+  // Basic Qt initialization (not dependent on parameters or configuration)
+#if QT_VERSION < 0x050000
+    // Internal string conversion is all UTF-8
+    QTextCodec::setCodecForTr(QTextCodec::codecForName("UTF-8"));
+    QTextCodec::setCodecForCStrings(QTextCodec::codecForTr());
+#endif
+
+#if QT_VERSION > 0x050100
+    // Generate high-dpi pixmaps
+    QApplication::setAttribute(Qt::AA_UseHighDpiPixmaps);
+#endif
+#if QT_VERSION >= 0x050600
+    QGuiApplication::setAttribute(Qt::AA_EnableHighDpiScaling);
+#endif
+#ifdef Q_OS_MAC
+    QApplication::setAttribute(Qt::AA_DontShowIconsInMenus);
+#endif
 
   // ... then bitcoin.conf:
   if(!boost::filesystem::is_directory(GetDataDir(false)))
@@ -235,7 +247,6 @@ int main(int argc, char *argv[])
   {
     BitcoinGUI window;
     guiref = &window;
-
     if(AppInit2(argc, argv))
     {
       {
@@ -257,9 +268,13 @@ int main(int argc, char *argv[])
 
         // If -min option passed, start window minimized.
         if(GetBoolArg("-min"))
+                {
           window.showMinimized();
+                }
         else
+                {
           window.show();
+                }
 
         // Place this here as guiref has to be defined if we dont want to lose URIs
         ipcInit();
@@ -270,7 +285,7 @@ int main(int argc, char *argv[])
         // Check for URI in argv
         for(int i = 1; i < argc; i++)
         {
-          if(strlen(argv[i]) >= 7 && strncasecmp(argv[i], "slimcoin:", 7) == 0)
+          if(strlen(argv[i]) > 8 && strncasecmp(argv[i], "slimcoin:", 9) == 0)
           {
             const char *strURI = argv[i];
             try {

@@ -123,8 +123,10 @@ public:
 };
 
 extern const CRPCTable tableRPC;
-extern CReserveKey* pMiningKey;
 
+/* FIXME: refactor required?
+extern CReserveKey* pMiningKey;
+*/
 extern double GetDifficulty(const CBlockIndex* blockindex);
 
 //Gets the balance of the total amount of burned coins, the effective amount of burned coins

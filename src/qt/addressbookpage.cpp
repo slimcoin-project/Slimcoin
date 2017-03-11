@@ -25,7 +25,7 @@ AddressBookPage::AddressBookPage(Mode mode, Tabs tab, QWidget *parent) :
 {
     ui->setupUi(this);
 
-#ifdef Q_WS_MAC // Icons on push buttons are very uncommon on Mac
+#ifdef MAC_OSX // Icons on push buttons are very uncommon on Mac
     ui->newAddressButton->setIcon(QIcon());
     ui->copyToClipboard->setIcon(QIcon());
     ui->deleteButton->setIcon(QIcon());
@@ -250,12 +250,19 @@ void AddressBookPage::selectionChanged()
             break;
         }
         ui->copyToClipboard->setEnabled(true);
+        ui->copyToClipboard->setVisible(true);
+#ifdef USE_QRCODE
         ui->showQRCode->setEnabled(true);
+        ui->showQRCode->setVisible(true);
+#endif
     }
     else
     {
         ui->deleteButton->setEnabled(false);
-        ui->showQRCode->setEnabled(false);
+#ifdef USE_QRCODE
+        ui->showQRCode->setEnabled(true);
+        ui->showQRCode->setVisible(true);
+#endif
         ui->copyToClipboard->setEnabled(false);
         ui->signMessage->setEnabled(false);
     }

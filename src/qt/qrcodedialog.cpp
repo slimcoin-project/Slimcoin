@@ -3,9 +3,7 @@
 #include "guiutil.h"
 
 #include <QPixmap>
-#if QT_VERSION < 0x050000
 #include <QUrl>
-#endif
 #include <QDebug>
 
 #include <qrencode.h>

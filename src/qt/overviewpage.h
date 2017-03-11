@@ -9,7 +9,7 @@ class QModelIndex;
 QT_END_NAMESPACE
 
 namespace Ui {
-  class OverviewPage;
+    class OverviewPage;
 }
 class ClientModel;
 class WalletModel;
@@ -21,16 +21,15 @@ class OverviewPage : public QWidget
   Q_OBJECT
 
 public:
-  explicit OverviewPage(QWidget *parent = 0);
-  ~OverviewPage();
+    explicit OverviewPage(QWidget *parent = 0);
+    ~OverviewPage();
 
-  void setModel(WalletModel *model);
-  void updatePlot(int count);
-  
-  public slots:
-    void setBalance(qint64 balance, qint64 stake, qint64 unconfirmedBalance, 
-                    BurnCoinsBalances burnBalances);
-    void setNumTransactions(int count);
+    void setModel(WalletModel *model);
+    void updatePlot(int count);
+    
+    public slots:
+        void setBalance(qint64 balance, qint64 stake, qint64 unconfirmedBalance, BurnCoinsBalances burnBalances);
+        void setNumTransactions(int count);
 
 signals:
     void transactionClicked(const QModelIndex &index);
@@ -54,7 +53,7 @@ private:
     TxViewDelegate *txdelegate;
 
     private slots:
-      void displayUnitChanged();
+        void displayUnitChanged();
 };
 
 #endif // OVERVIEWPAGE_H

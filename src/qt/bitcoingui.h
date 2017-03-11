@@ -11,6 +11,7 @@ class ClientModel;
 class WalletModel;
 class TransactionView;
 class OverviewPage;
+class MiningPage;
 class AddressBookPage;
 class SendCoinsDialog;
 class BurnCoinsDialog;
@@ -65,6 +66,7 @@ private:
     QStackedWidget *centralWidget;
 
     OverviewPage *overviewPage;
+    MiningPage *miningPage;
     QWidget *transactionsPage;
     AddressBookPage *addressBookPage;
     AddressBookPage *receiveCoinsPage;
@@ -73,6 +75,7 @@ private:
     MessagePage *messagePage;
 
     QLabel *labelEncryptionIcon;
+    QLabel *labelMiningIcon;
     QLabel *labelConnectionsIcon;
     QLabel *labelBlocksIcon;
     QLabel *progressBarLabel;
@@ -80,6 +83,7 @@ private:
 
     QMenuBar *appMenuBar;
     QAction *overviewAction;
+    QAction *miningAction;
     QAction *historyAction;
     QAction *quitAction;
     QAction *sendCoinsAction;
@@ -117,10 +121,10 @@ private:
 public slots:
     /** Set number of connections shown in the UI */
     void setNumConnections(int count);
-
     /** Set number of blocks shown in the UI */
     void setNumBlocks(int count, int nTotalBlocks);
-
+    /** Set mining status and hashrate in the UI */
+    void setMining(bool mining, int hashrate);
     /** Set the encryption status as shown in the UI.
        @param[in] status            current encryption status
        @see WalletModel::EncryptionStatus
@@ -158,11 +162,13 @@ private slots:
     void gotoBurnCoinsPage();
     /** Switch to block browser page */
     void gotoBlockBrowser();
+    /** Switch to mining page */
+    void gotoMiningPage();
     /** Show configuration dialog */
     void optionsClicked();
     /** Show about dialog */
     void aboutClicked();
-#ifndef Q_WS_MAC
+#ifndef MAC_OSX
     /** Handle tray icon clicked */
     void trayIconActivated(QSystemTrayIcon::ActivationReason reason);
 #endif

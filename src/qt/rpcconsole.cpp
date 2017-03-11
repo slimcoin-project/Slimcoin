@@ -188,7 +188,7 @@ RPCConsole::RPCConsole(QWidget *parent) :
 {
   ui->setupUi(this);
 
-#ifndef Q_OS_MAC
+#ifndef MAC_OSX
   ui->openDebugLogfileButton->setIcon(QIcon(":/icons/export"));
   ui->showCLOptionsButton->setIcon(QIcon(":/icons/options"));
 #endif

@@ -24,7 +24,7 @@ static const int CLIENT_VERSION =
                          +       1 * CLIENT_VERSION_BUILD;
 
 // Set to true for release, false for prerelease or test build
-#define CLIENT_VERSION_IS_RELEASE  true
+#define CLIENT_VERSION_IS_RELEASE  false
 
 extern const std::string CLIENT_NAME;
 extern const std::string CLIENT_BUILD;
@@ -33,7 +33,7 @@ extern const std::string CLIENT_DATE;
 // slimcoin version - intended for display purpose ONLY
 #define SLIMCOIN_VERSION_MAJOR       0
 #define SLIMCOIN_VERSION_MINOR       4
-#define SLIMCOIN_VERSION_REVISION    0
+#define SLIMCOIN_VERSION_REVISION    1
 #define SLIMCOIN_VERSION_BUILD       0
 
 static const int SLIMCOIN_VERSION =
@@ -46,7 +46,7 @@ static const int SLIMCOIN_VERSION =
 // network protocol versioning
 //
 
-static const int PROTOCOL_VERSION = 60004;
+static const int PROTOCOL_VERSION = 60003;
 
 // earlier versions not supported as of Feb 2012, and are disconnected
 // NOTE: as of bitcoin v0.6 message serialization (vSend, vRecv) still

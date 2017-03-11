@@ -21,7 +21,7 @@ SendCoinsDialog::SendCoinsDialog(QWidget *parent) :
 {
   ui->setupUi(this);
 
-#ifdef Q_WS_MAC // Icons on push buttons are very uncommon on Mac
+#ifdef MAC_OSX // Icons on push buttons are very uncommon on Mac
   ui->addButton->setIcon(QIcon());
   ui->clearButton->setIcon(QIcon());
   ui->sendButton->setIcon(QIcon());
@@ -50,8 +50,7 @@ void SendCoinsDialog::setModel(WalletModel *model)
   if(model)
   {
     setBalance(model->getBalance(), model->getStake(), model->getUnconfirmedBalance());
-    connect(model, SIGNAL(balanceChanged(qint64, qint64, qint64, BurnCoinsBalances)), 
-            this, SLOT(setBalance(qint64, qint64, qint64)));
+    connect(model, SIGNAL(balanceChanged(qint64, qint64, qint64, BurnCoinsBalances)), this, SLOT(setBalance(qint64, qint64, qint64)));
   }
 }
 
@@ -163,7 +162,7 @@ void SendCoinsDialog::on_sendButton_clicked()
     break;
   case WalletModel::BadBurningCoins:
     QMessageBox::warning(this, tr("Send Coins"),
-                         tr("You are sending coins to a burn address without using the dedicated \""BURN_COINS_DIALOG_NAME"\" tab. If you want to burn coins, use the dedicated tab instead of this \""SEND_COINS_DIALOG_NAME"\" tab. \n\nSending coins aborted."),
+                         tr("You are sending coins to a burn address without using the dedicated \"" BURN_COINS_DIALOG_NAME "\" tab. If you want to burn coins, use the dedicated tab instead of this \"" SEND_COINS_DIALOG_NAME "\" tab. \n\nSending coins aborted."),
                          QMessageBox::Ok, QMessageBox::Ok);
     break;
   case WalletModel::Aborted: // User aborted, nothing to do

@@ -7,20 +7,23 @@
 # Mac OS X makefile for slimcoin
 # Originally by Laszlo Hanyecz (solar@heliacal.net)
 
-CXX=llvm-g++
-DEPSDIR=/opt/local
+CXX=clang++
+DEPSDIR=/usr/local
 
 INCLUDEPATHS= \
  -I"$(CURDIR)" \
  -I"$(CURDIR)"/obj \
  -I"$(DEPSDIR)/include" \
- -I"$(DEPSDIR)/include/db48"
+ -I"$(DEPSDIR)/opt/berkeley-db/include" \
+ -I"$(DEPSDIR)/opt/openssl/include"
 
 LIBPATHS= \
  -L"$(DEPSDIR)/lib" \
- -L"$(DEPSDIR)/lib/db48"
+ -L"$(DEPSDIR)/opt/berkeley-db/lib" \
+ -L"$(DEPSDIR)/opt/openssl/lib"
 
 USE_UPNP:=1
+USE_IPV6:=1
 
 LIBS= -dead_strip
 
@@ -31,33 +34,35 @@ ifdef STATIC
 TESTLIBS += \
  $(DEPSDIR)/lib/libboost_unit_test_framework-mt.a
 LIBS += \
- $(DEPSDIR)/lib/db48/libdb_cxx-4.8.a \
- $(DEPSDIR)/lib/libboost_system-mt.a \
- $(DEPSDIR)/lib/libboost_filesystem-mt.a \
- $(DEPSDIR)/lib/libboost_program_options-mt.a \
- $(DEPSDIR)/lib/libboost_thread-mt.a \
- $(DEPSDIR)/lib/libssl.a \
- $(DEPSDIR)/lib/libcrypto.a \
+ $(DEPSDIR)/opt/berkeley-db/lib/libdb_cxx-6.1.a \
+ $(DEPSDIR)/opt/boost/lib/libboost_system-mt.a \
+ $(DEPSDIR)/opt/boost/lib/libboost_filesystem-mt.a \
+ $(DEPSDIR)/opt/boost/lib/libboost_program_options-mt.a \
+ $(DEPSDIR)/opt/boost/lib/libboost_thread-mt.a \
+ $(DEPSDIR)/opt/openssl/lib/libssl.a \
+ $(DEPSDIR)/opt/openssl/lib/libcrypto.a \
  -lz
 else
 TESTLIBS += \
  -lboost_unit_test_framework-mt
 LIBS += \
- -ldb_cxx-4.8 \
+ -ldb_cxx-6.1 \
  -lboost_system-mt \
  -lboost_filesystem-mt \
  -lboost_program_options-mt \
  -lboost_thread-mt \
+ -lboost_chrono-mt \
  -lssl \
  -lcrypto \
  -lz
+
 TESTDEFS += -DBOOST_TEST_DYN_LINK
 endif
 
 DEFS=-DMAC_OSX -DMSG_NOSIGNAL=0 -DBOOST_SPIRIT_THREADSAFE
 
 ifdef RELEASE
-CFLAGS = -mmacosx-version-min=10.5 -O3
+CFLAGS = -mmacosx-version-min=10.12 -O3
 # Compile for maximum compatibility and smallest size.
 # This requires that dependencies are compiled
 # the same way.
@@ -95,15 +100,21 @@ OBJS= \
     obj/wallet.o \
     obj/walletdb.o \
     obj/noui.o \
-    obj/kernel.o
+    obj/kernel.o \
+    obj/dcrypt.o \
+    obj/sha256.o
 
 ifdef USE_UPNP
 	DEFS += -DUSE_UPNP=$(USE_UPNP)
 ifdef STATIC
-	LIBS += $(DEPSDIR)/lib/libminiupnpc.a
+	LIBS += $(DEPSDIR)/opt/miniupnpc/lib/libminiupnpc.a
 else
 	LIBS += -lminiupnpc
 endif
+endif
+
+ifneq (${USE_IPV6}, -)
+	DEFS += -DUSE_IPV6=$(USE_IPV6)
 endif
 
 all: slimcoind
@@ -117,8 +128,15 @@ obj/build.h: FORCE
 version.cpp: obj/build.h
 DEFS += -DHAVE_BUILD_INFO
 
+obj/%-sse2.o: %-sse2.cpp
+	$(CXX) -c $(CFLAGS) -msse2 -MMD -MF $(@:%.o=%.d) -o $@ $<
+	@cp $(@:%.o=%.d) $(@:%.o=%.P); \
+	  sed -e 's/#.*//' -e 's/^[^:]*: *//' -e 's/ *\\$$//' \
+	      -e '/^$$/ d' -e 's/$$/ :/' < $(@:%.o=%.d) >> $(@:%.o=%.P); \
+	  rm -f $(@:%.o=%.d)
+
 obj/%.o: %.cpp
-	$(CXX) -c $(CFLAGS) -MMD -o $@ $<
+	$(CXX) -c $(CFLAGS) -MMD -MF $(@:%.o=%.d) -o $@ $<
 	@cp $(@:%.o=%.d) $(@:%.o=%.P); \
 	  sed -e 's/#.*//' -e 's/^[^:]*: *//' -e 's/ *\\$$//' \
 	      -e '/^$$/ d' -e 's/$$/ :/' < $(@:%.o=%.d) >> $(@:%.o=%.P); \
@@ -130,7 +148,7 @@ slimcoind: $(OBJS:obj/%=obj/%)
 TESTOBJS := $(patsubst test/%.cpp,obj-test/%.o,$(wildcard test/*.cpp))
 
 obj-test/%.o: test/%.cpp
-	$(CXX) -c $(TESTDEFS) $(CFLAGS) -MMD -o $@ $<
+	$(CXX) -c $(TESTDEFS) $(CFLAGS) -MMD -MF $(@:%.o=%.d) -o $@ $<
 	@cp $(@:%.o=%.d) $(@:%.o=%.P); \
 	  sed -e 's/#.*//' -e 's/^[^:]*: *//' -e 's/ *\\$$//' \
 	      -e '/^$$/ d' -e 's/$$/ :/' < $(@:%.o=%.d) >> $(@:%.o=%.P); \
@@ -145,6 +163,7 @@ clean:
 	-rm -f obj-test/*.o
 	-rm -f obj/*.P
 	-rm -f obj-test/*.P
-	-rm -f src/build.h
+	-rm -f obj/build.h
+	-cd leveldb && $(MAKE) clean || true
 
 FORCE:

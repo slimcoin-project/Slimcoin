@@ -305,7 +305,6 @@ double getTxFees(std::string txid)
 
     double value0 = 0;
     double buffer0 = 0;
-    double swp=0;
     for (unsigned int i = 0; i < tx.vin.size(); i++)
     {
         uint256 hash0;
@@ -318,7 +317,9 @@ double getTxFees(std::string txid)
         CDataStream ssTx(SER_NETWORK, PROTOCOL_VERSION);
         ssTx << wtxPrev;
         const CScript target = wtxPrev.vout[vin.prevout.n].scriptPubKey;
-        swp =convertCoins(getInputValue(wtxPrev, target));
+        /* FIXME: What was this supposed to be doing?
+        double swp = convertCoins(getInputValue(wtxPrev, target));
+        */
         buffer0 = value0 + convertCoins(getInputValue(wtxPrev, target));
         value0 = buffer0;
     }
@@ -439,11 +440,11 @@ void BlockBrowser::updateExplorer(bool block)
         QString QOutputs = QString::fromUtf8(outputs.c_str());
         QString QInputs = QString::fromUtf8(inputs.c_str());
         QString QFees = QString::number(fees, 'f', 6);
-        ui->valueBox->setText(QValue + " BSY");
+        ui->valueBox->setText(QValue + " SLM");
         ui->txID->setText(QID);
         ui->outputBox->setText(QOutputs);
         ui->inputBox->setText(QInputs);
-        ui->feesBox->setText(QFees + " BSY");
+        ui->feesBox->setText(QFees + " SLM");
     }
 }
 
