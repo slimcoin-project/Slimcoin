@@ -1,3 +1,4 @@
+_working/*
 src/*.exe
 release/slimcoin-qt.exe
 src/slimcoind
