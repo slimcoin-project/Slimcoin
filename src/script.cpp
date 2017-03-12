@@ -1205,7 +1205,7 @@ bool CheckSig(vector<unsigned char> vchSig, vector<unsigned char> vchPubKey, CSc
 bool Solver(const CScript &scriptPubKey, txnouttype &typeRet, vector<vector<unsigned char> > &vSolutionsRet)
 {
     // Templates
-    static map<txnouttype, CScript> mTemplates;
+    static multimap<txnouttype, CScript> mTemplates;
     if (mTemplates.empty())
     {
         // Standard tx, sender provides pubkey, receiver adds signature
@@ -1738,6 +1738,7 @@ static CScript CombineMultisig(CScript scriptPubKey, const CTransaction& txTo, u
             }
         }
     }
+
     // Now build a merged CScript:
     unsigned int nSigsHave = 0;
     CScript result; result << OP_0; // pop-one-too-many workaround

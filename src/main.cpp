@@ -190,7 +190,7 @@ void SyncWithWallets(const CTransaction& tx, const CBlock* pblock, bool fUpdate,
 {
     if (!fConnect)
     {
-        // slimcoin: wallets need to refund inputs when disconnecting coinstake
+        // ppcoin: wallets need to refund inputs when disconnecting coinstake
         if (tx.IsCoinStake())
         {
             BOOST_FOREACH(CWallet* pwallet, setpwalletRegistered)
@@ -421,9 +421,25 @@ bool CTransaction::IsStandard() const
         if (!txin.scriptSig.IsPushOnly())
             return false;
     }
+    /*
     BOOST_FOREACH(const CTxOut& txout, vout)
         if (!::IsStandard(txout.scriptPubKey))
             return false;
+    */
+    unsigned int nDataOut = 0;
+    txnouttype whichType;
+    BOOST_FOREACH(const CTxOut& txout, vout) {
+        if (!::IsStandard(txout.scriptPubKey)) {
+            return false;
+        }
+        if (whichType == TX_NULL_DATA)
+            nDataOut++;
+    }
+
+    // only one OP_RETURN txout is permitted
+    if (nDataOut > 1) {
+        return false;
+    }
     return true;
 }
 
@@ -1048,7 +1064,7 @@ int64 GetProofOfWorkReward(u32int nBits, bool fProofOfBurn)
     return min(nSubsidy, maxSubsidy);
 }
 
-// slimcoin: miner's coin stake is rewarded based on coin age spent (coin-days)
+// ppcoin: miner's coin stake is rewarded based on coin age spent (coin-days)
 int64 GetProofOfStakeReward(int64 nCoinAge, u32int nTime)
 {
     // NOTE: static int64 nRewardCoinYear = CENT;  // creation amount per coin-year
