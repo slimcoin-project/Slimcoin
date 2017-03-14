@@ -105,7 +105,7 @@ contains(USE_QRCODE, 1) {
     message(Building with QRCode support)
     DEFINES += USE_QRCODE
     isEmpty(QRENCODE_LIB_PATH) {
-        !macx:unix:QRENCODE_LIB_PATH = /usr/lib
+        # !macx:unix:QRENCODE_LIB_PATH = /usr/lib
         contains(CONFIG, brew) {
             macx:QRENCODE_LIB_PATH = /usr/local/lib
         }else{
@@ -169,7 +169,7 @@ contains(USE_UPNP, -) {
         }else{
             macx:MINIUPNPC_LIB_PATH=/opt/local/lib
         }
-        !macx:unix:MINIUPNPC_INCLUDE_PATH=/usr/lib
+        # !macx:unix:MINIUPNPC_INCLUDE_PATH=/usr/lib
         windows:MINIUPNPC_LIB_PATH=C:/dev/coindeps32/miniupnpc-1.9
     }
     DEFINES += USE_UPNP=$$USE_UPNP STATICLIB
@@ -307,6 +307,7 @@ HEADERS += src/addrman.h \
     src/qt/rpcconsole.h \
     src/qt/sendcoinsdialog.h \
     src/qt/sendcoinsentry.h \
+    src/qt/signverifymessagedialog.h \
     src/qt/transactiondesc.h \
     src/qt/transactiondescdialog.h \
     src/qt/transactionfilterproxy.h \
@@ -374,6 +375,7 @@ SOURCES += src/addrman.cpp \
     src/qt/rpcconsole.cpp \
     src/qt/sendcoinsdialog.cpp \
     src/qt/sendcoinsentry.cpp \
+    src/qt/signverifymessagedialog.cpp \
     src/qt/transactiondesc.cpp \
     src/qt/transactiondescdialog.cpp \
     src/qt/transactionfilterproxy.cpp \
@@ -406,6 +408,7 @@ FORMS += \
     src/qt/forms/rpcconsole.ui \
     src/qt/forms/sendcoinsdialog.ui \
     src/qt/forms/sendcoinsentry.ui \
+    src/qt/forms/signverifymessagedialog.ui \
     src/qt/forms/transactiondescdialog.ui
 
 contains(USE_QRCODE, 1) {
@@ -492,9 +495,9 @@ isEmpty(BDB_INCLUDE_PATH) {
     # For backward compatibility specify, else assume currency
     contains(BDB_LIB_SUFFIX, 4.8) {
         !macx:unix:BDB_INCLUDE_PATH = /usr/local/BerkeleyDB/include
-    }else{
-        !macx:unix:BDB_INCLUDE_PATH = /usr/include
-    }
+    } # else{
+      #   !macx:unix:BDB_INCLUDE_PATH = /usr/include
+    # }
     INCLUDEPATH += $$BDB_INCLUDE_PATH
 }
 
@@ -516,9 +519,9 @@ isEmpty(BDB_LIB_PATH) {
     # For backward compatibility specify, else assume currency
     contains(BDB_LIB_SUFFIX, -4.8) {
         !macx:unix:BDB_LIB_PATH = /usr/local/BerkeleyDB/lib
-    }else{
-        !macx:unix:BDB_LIB_PATH = /usr/lib/x86_64-linux-gnu/
-    }
+    } # else{
+      #   !macx:unix:BDB_LIB_PATH = /usr/lib/x86_64-linux-gnu/
+    # }
     LIBS += $$join(BDB_LIB_PATH,,-L,)
 }
 
@@ -540,7 +543,7 @@ isEmpty(BOOST_LIB_PATH) {
         macx:BOOST_LIB_PATH = /opt/local/lib
     }
     windows:BOOST_LIB_PATH = C:/dev/coindeps32/boost_1_57_0/lib
-    !macx:unix:BOOST_LIB_PATH = /usr/lib
+    # !macx:unix:BOOST_LIB_PATH = /usr/lib
     LIBS += $$join(BOOST_LIB_PATH,,-L,)
 }
 
@@ -562,7 +565,7 @@ isEmpty(OPENSSL_LIB_PATH) {
         macx:OPENSSL_LIB_PATH = /opt/local/lib
     }
     windows:OPENSSL_LIB_PATH = C:/dev/coindeps32/openssl-1.0.1p/lib
-    !macx:unix:OPENSSL_LIB_PATH = /usr/lib
+    # !macx:unix:OPENSSL_LIB_PATH = /usr/lib
     LIBS += $$join(OPENSSL_LIB_PATH,,-L,)}
 
 # Force OS X Sierra specifics

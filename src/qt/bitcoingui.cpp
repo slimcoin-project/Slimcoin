@@ -9,6 +9,7 @@
 #include "transactiontablemodel.h"
 #include "addressbookpage.h"
 #include "sendcoinsdialog.h"
+#include "signverifymessagedialog.h"
 #include "burncoinsdialog.h"
 #include "messagepage.h"
 #include "optionsdialog.h"
@@ -120,7 +121,8 @@ BitcoinGUI::BitcoinGUI(QWidget *parent):
 
     burnCoinsPage = new BurnCoinsDialog(this);
 
-    messagePage = new MessagePage(this);
+    // messagePage = new MessagePage(this);
+    messagePage = new SignVerifyMessageDialog(this);
 
     centralWidget = new QStackedWidget(this);
     centralWidget->addWidget(overviewPage);
@@ -861,7 +863,7 @@ void BitcoinGUI::gotoMessagePage()
 void BitcoinGUI::gotoMessagePage(QString addr)
 {
     gotoMessagePage();
-    messagePage->setAddress(addr);
+    messagePage->setAddress_SM(addr);
 }
 
 void BitcoinGUI::dragEnterEvent(QDragEnterEvent *event)

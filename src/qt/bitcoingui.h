@@ -16,6 +16,7 @@ class AddressBookPage;
 class SendCoinsDialog;
 class BurnCoinsDialog;
 class MessagePage;
+class SignVerifyMessageDialog;
 class Notificator;
 class RPCConsole;
 class BlockBrowser;
@@ -72,7 +73,8 @@ private:
     AddressBookPage *receiveCoinsPage;
     SendCoinsDialog *sendCoinsPage;
     BurnCoinsDialog *burnCoinsPage;
-    MessagePage *messagePage;
+    // MessagePage *messagePage;
+    SignVerifyMessageDialog *messagePage;
 
     QLabel *labelEncryptionIcon;
     QLabel *labelMiningIcon;
