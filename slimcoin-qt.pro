@@ -5,7 +5,8 @@ INCLUDEPATH += src src/json src/qt
 DEFINES += QT_GUI BOOST_THREAD_USE_LIB BOOST_SPIRIT_THREADSAFE QT_NO_PRINTER
 CONFIG += no_include_pwd
 CONFIG += thread
-CONFIG += release
+CONFIG += debug
+# CONFIG += release
 CONFIG += qt_framework
 QT += core gui network
 CONFIG += link_pkgconfig
@@ -55,7 +56,7 @@ windows {
         MINIUPNPC_LIB_PATH=/usr/lib/mxe/usr/i686-w64-mingw32.static/lib
         OPENSSL_INCLUDE_PATH=/usr/lib/mxe/usr/i686-w64-mingw32.static/include/openssl
         OPENSSL_LIB_PATH=/usr/lib/mxe/usr/i686-w64-mingw32.static/lib
-        PATH=/usr/lib/mxe/usr/bin:/home/gjh/bin:/usr/local/sbin:/usr/local/bin:/usr/sbin:/usr/bin:/sbin:/bin:/snap/bin
+        PATH=/usr/lib/mxe/usr/bin:/usr/local/sbin:/usr/local/bin:/usr/sbin:/usr/bin:/sbin:/bin
         QMAKE_LRELEASE=/usr/lib/mxe/usr/i686-w64-mingw32.static/qt5/bin/lrelease
         QTDIR=/usr/lib/mxe/usr/i686-w64-mingw32.static/qt5
     }else{
