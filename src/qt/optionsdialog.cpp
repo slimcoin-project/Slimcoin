@@ -38,10 +38,10 @@ private:
     QCheckBox *minimize_on_close;
 #endif
     QCheckBox *connect_socks4;
-    QCheckBox *detach_database;
     QLineEdit *proxy_ip;
     QLineEdit *proxy_port;
     BitcoinAmountField *fee_edit;
+    BitcoinAmountField *resbal_edit;
 
 signals:
 
@@ -59,6 +59,7 @@ public:
 private:
     QValueComboBox *unit;
     QCheckBox *display_addresses;
+    QCheckBox *detach_database;
 signals:
 
 public slots:
@@ -229,9 +230,24 @@ MainOptionsPage::MainOptionsPage(QWidget *parent):
 
     layout->addLayout(fee_hbox);
 
+
+    QHBoxLayout *resbal_hbox = new QHBoxLayout();
+    resbal_hbox->addSpacing(18);
+    QLabel *resbal_label = new QLabel(tr("Reserve balance"));
+    resbal_hbox->addWidget(resbal_label);
+    resbal_edit = new BitcoinAmountField();
+
+    resbal_label->setBuddy(resbal_edit);
+    resbal_hbox->addWidget(resbal_edit);
+    resbal_hbox->addStretch(1);
+
+    layout->addLayout(resbal_hbox);
+
+    /*
     detach_database = new QCheckBox(tr("Detach databases at shutdown"));
     detach_database->setToolTip(tr("Detach block and address databases at shutdown. This means they can be moved to another data directory, but it slows down shutdown. The wallet is always detached."));
     layout->addWidget(detach_database);
+    */
 
     layout->addStretch(1); // Extra space at bottom
 
@@ -260,7 +276,10 @@ void MainOptionsPage::setMapper(MonitoredDataMapper *mapper)
     mapper->addMapping(proxy_ip, OptionsModel::ProxyIP);
     mapper->addMapping(proxy_port, OptionsModel::ProxyPort);
     mapper->addMapping(fee_edit, OptionsModel::Fee);
+    mapper->addMapping(resbal_edit, OptionsModel::ReserveBalance);
+    /*
     mapper->addMapping(detach_database, OptionsModel::DetachDatabases);
+    */
 }
 
 DisplayOptionsPage::DisplayOptionsPage(QWidget *parent):
@@ -285,6 +304,10 @@ DisplayOptionsPage::DisplayOptionsPage(QWidget *parent):
     display_addresses->setToolTip(tr("Whether to show Slimcoin addresses in the transaction list"));
     layout->addWidget(display_addresses);
 
+    detach_database = new QCheckBox(tr("Detach databases at shutdown"));
+    detach_database->setToolTip(tr("Detach block and address databases at shutdown. This means they can be moved to another data directory, but it slows down shutdown. The wallet is always detached."));
+    layout->addWidget(detach_database);
+
     layout->addStretch();
 
     setLayout(layout);
@@ -294,4 +317,5 @@ void DisplayOptionsPage::setMapper(MonitoredDataMapper *mapper)
 {
     mapper->addMapping(unit, OptionsModel::DisplayUnit);
     mapper->addMapping(display_addresses, OptionsModel::DisplayAddresses);
+    mapper->addMapping(detach_database, OptionsModel::DetachDatabases);
 }

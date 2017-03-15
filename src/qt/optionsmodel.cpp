@@ -21,6 +21,7 @@ void OptionsModel::Init()
     fMinimizeToTray = settings.value("fMinimizeToTray", false).toBool();
     fMinimizeOnClose = settings.value("fMinimizeOnClose", false).toBool();
     nTransactionFee = settings.value("nTransactionFee").toLongLong();
+    nReserveBalance = settings.value("nReserveBalance").toLongLong();
 
     // These are shared with core bitcoin; we want
     // command-line options to override the GUI settings:
@@ -28,6 +29,8 @@ void OptionsModel::Init()
         SoftSetBoolArg("-upnp", settings.value("fUseUPnP").toBool());
     if(settings.contains("addrProxy") && settings.value("fUseProxy").toBool())
         SoftSetArg("-proxy", settings.value("addrProxy").toString().toStdString());
+    // if(settings.contains("reserveBalance") && settings.value("fReserveBalance").toBool())
+    //    SoftSetArg("-reservebalance", settings.value("reserveBalance").toString().toStdString());
     if(settings.contains("detachDB"))
         SoftSetBoolArg("-detachdb", settings.value("detachDB").toBool());
 }
@@ -45,7 +48,7 @@ bool OptionsModel::Upgrade()
     CWalletDB walletdb("wallet.dat");
 
     QList<QString> intOptions;
-    intOptions << "nDisplayUnit" << "nTransactionFee";
+    intOptions << "nDisplayUnit" << "nTransactionFee" << "nReserveBalance";
     foreach(QString key, intOptions)
     {
         int value = 0;
@@ -119,6 +122,8 @@ QVariant OptionsModel::data(const QModelIndex & index, int role) const
             return QVariant(addrProxy.GetPort());
         case Fee:
             return QVariant(nTransactionFee);
+        case ReserveBalance:
+            return QVariant(nReserveBalance);
         case DisplayUnit:
             return QVariant(nDisplayUnit);
         case DisplayAddresses:
@@ -200,6 +205,11 @@ bool OptionsModel::setData(const QModelIndex & index, const QVariant & value, in
             settings.setValue("nTransactionFee", nTransactionFee);
             }
             break;
+        case ReserveBalance: {
+            nReserveBalance = value.toLongLong();
+            settings.setValue("nReserveBalance", nReserveBalance);
+            }
+            break;
         case DisplayUnit: {
             int unit = value.toInt();
             nDisplayUnit = unit;
@@ -229,6 +239,11 @@ bool OptionsModel::setData(const QModelIndex & index, const QVariant & value, in
 qint64 OptionsModel::getTransactionFee()
 {
     return nTransactionFee;
+}
+
+qint64 OptionsModel::getReserveBalance()
+{
+    return nReserveBalance;
 }
 
 bool OptionsModel::getMinimizeToTray()
