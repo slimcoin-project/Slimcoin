@@ -375,16 +375,32 @@ namespace Checkpoints
                 pindexSync->GetBlockTime() + nStakeMinAge < GetAdjustedTime());
     }
 
+    /*
+    https://talk.peercoin.net/t/the-removal-of-checkpointing/2121/18
+
+    d5000 writes:
+
+    My problem with the actual checkpointing approach is that it adds a
+    possible attack vector: let's call it the "CheckpointPrivateKey hack attack".
+
+    Any malicious individual which hacks the computer of the private key holder
+    can control the network and double-spend. Even worse, the computer with the
+    private key must be connected to the Internet to send the checkpoints, so
+    this key cannot be stored in offline cold storage (except if Sunny has some
+    kind of brainwallet mechanism).
+    */
+
     // Is the sync-checkpoint too old?
     bool IsSyncCheckpointTooOld(unsigned int nSeconds)
     {
+        /* Disabled due to infeasibility of meeting maintenance requirements
         LOCK(cs_hashSyncCheckpoint);
         // sync-checkpoint should always be accepted block
         assert(mapBlockIndex.count(hashSyncCheckpoint));
         const CBlockIndex* pindexSync = mapBlockIndex[hashSyncCheckpoint];
-        //FIXME : always too old
-        return false;
         return (pindexSync->GetBlockTime() + nSeconds < GetAdjustedTime());
+        */
+        return false;
     }
 }
 
