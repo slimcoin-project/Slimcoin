@@ -1680,8 +1680,10 @@ bool VerifySignature(const CTransaction& txFrom, const CTransaction& txTo, unsig
 {
     assert(nIn < txTo.vin.size());
     const CTxIn &txin = txTo.vin[nIn];
+
     if (txin.prevout.n >= txFrom.vout.size())
         return false;
+
     const CTxOut &txout = txFrom.vout[txin.prevout.n];
 
     if (txin.prevout.hash != txFrom.GetHash())
@@ -1738,6 +1740,7 @@ static CScript CombineMultisig(CScript scriptPubKey, const CTransaction& txTo, u
             }
         }
     }
+
     // Now build a merged CScript:
     unsigned int nSigsHave = 0;
     CScript result; result << OP_0; // pop-one-too-many workaround
