@@ -10,6 +10,7 @@
 #include "crypter.h"
 #include "ui_interface.h"
 #include "kernel.h"
+# include<boost/algorithm/string/replace.hpp>
 
 using namespace std;
 
@@ -390,6 +391,15 @@ bool CWallet::AddToWallet(const CWalletTx &wtxIn, bool fBurnTx)
 
         // since AddToWallet is called directly for self-originating transactions, check for consumption of own coins
         WalletUpdateSpent(wtx);
+
+        // notify an external script when a wallet transaction comes in or is updated
+        std::string strCmd = GetArg("-walletnotify", "");
+
+        if ( !strCmd.empty())
+        {
+            boost::replace_all(strCmd, "%s", wtxIn.GetHash().GetHex());
+            boost::thread t(runCommand, strCmd); // thread runs free
+        }
     }
 
     // Refresh UI
