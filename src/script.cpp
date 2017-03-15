@@ -1564,8 +1564,8 @@ bool ExtractAddresses(const CScript &scriptPubKey, txnouttype &typeRet, vector<C
     return true;
 }
 
-bool VerifyScript(const CScript &scriptSig, const CScript &scriptPubKey, const CTransaction &txTo, unsigned int nIn,
-                  bool fValidatePayToScriptHash, int nHashType)
+bool VerifyScript(const CScript &scriptSig, const CScript &scriptPubKey, const CTransaction &txTo, 
+                                    unsigned int nIn, bool fValidatePayToScriptHash, int nHashType)
 {
     vector<vector<unsigned char> > stack, stackCopy;
     if (!EvalScript(stack, scriptSig, txTo, nIn, nHashType))
@@ -1600,7 +1600,8 @@ bool VerifyScript(const CScript &scriptSig, const CScript &scriptPubKey, const C
     return true;
 }
 
-bool SignSignature(const CKeyStore &keystore, const CScript &fromPubKey,  CTransaction& txTo, unsigned int nIn, int nHashType)
+bool SignSignature(const CKeyStore &keystore, const CScript &fromPubKey, 
+                                     CTransaction& txTo, unsigned int nIn, int nHashType)
 {
     assert(nIn < txTo.vin.size());
     CTxIn& txin = txTo.vin[nIn];
@@ -1676,12 +1677,15 @@ bool SignSignature(const CKeyStore &keystore, const CTransaction &txFrom, CTrans
 }
 
 
-bool VerifySignature(const CTransaction& txFrom, const CTransaction& txTo, unsigned int nIn, bool fValidatePayToScriptHash, int nHashType)
+bool VerifySignature(const CTransaction& txFrom, const CTransaction& txTo, 
+                                         unsigned int nIn, bool fValidatePayToScriptHash, int nHashType)
 {
     assert(nIn < txTo.vin.size());
     const CTxIn &txin = txTo.vin[nIn];
+
     if (txin.prevout.n >= txFrom.vout.size())
         return false;
+
     const CTxOut &txout = txFrom.vout[txin.prevout.n];
 
     if (txin.prevout.hash != txFrom.GetHash())
