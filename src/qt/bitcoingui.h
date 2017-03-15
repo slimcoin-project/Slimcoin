@@ -21,6 +21,7 @@ class BurnCoinsDialog;
 class InscriptionDialog;
 class MessagePage;
 class MultisigDialog;
+class SignVerifyMessageDialog;
 class Notificator;
 class RPCConsole;
 class BlockBrowser;
@@ -83,6 +84,8 @@ private:
     MessagePage *messagePage;
     TorrentPage *torrentPage;
     MultisigDialog *multisigPage;
+    // MessagePage *messagePage;
+    SignVerifyMessageDialog *messagePage;
 
     QLabel *labelEncryptionIcon;
     QLabel *labelMiningIcon;

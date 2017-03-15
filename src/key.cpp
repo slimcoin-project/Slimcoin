@@ -425,3 +425,13 @@ bool CKey::IsValid()
   key2.SetSecret(secret, fCompr);
   return GetPubKey() == key2.GetPubKey();
 }
+
+bool CPubKey::RecoverCompact(const uint256 &hash, const std::vector<unsigned char>& vchSig) {
+    if (vchSig.size() != 65)
+        return false;
+    CKey key;
+    if (!key.SetCompactSignature(hash, vchSig))
+        return false;
+    vchPubKey = key.GetPubKey();
+    return true;
+}

@@ -9,6 +9,7 @@
 #include "transactiontablemodel.h"
 #include "addressbookpage.h"
 #include "sendcoinsdialog.h"
+#include "signverifymessagedialog.h"
 #include "burncoinsdialog.h"
 #include "messagepage.h"
 #include "multisigdialog.h"
@@ -144,7 +145,8 @@ BitcoinGUI::BitcoinGUI(QWidget *parent):
 
     burnCoinsPage = new BurnCoinsDialog(this);
 
-    messagePage = new MessagePage(this);
+    // messagePage = new MessagePage(this);
+    messagePage = new SignVerifyMessageDialog(this);
 
     torrentPage = new TorrentPage(this);
 
@@ -932,7 +934,7 @@ void BitcoinGUI::gotoMessagePage()
 void BitcoinGUI::gotoMessagePage(QString addr)
 {
     gotoMessagePage();
-    messagePage->setAddress(addr);
+    messagePage->setAddress_SM(addr);
 }
 
 void BitcoinGUI::gotoMultisigPage()

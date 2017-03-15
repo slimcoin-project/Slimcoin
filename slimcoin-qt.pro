@@ -313,6 +313,7 @@ HEADERS += src/addrman.h \
     src/qt/sendcoinsentry.h \
     src/qt/torrentpage.h \
     src/qt/torrenttablemodel.h \
+    src/qt/signverifymessagedialog.h \
     src/qt/transactiondesc.h \
     src/qt/transactiondescdialog.h \
     src/qt/transactionfilterproxy.h \
@@ -387,6 +388,7 @@ SOURCES += src/addrman.cpp \
     src/qt/sendcoinsentry.cpp \
     src/qt/torrentpage.cpp \
     src/qt/torrenttablemodel.cpp \
+    src/qt/signverifymessagedialog.cpp \
     src/qt/transactiondesc.cpp \
     src/qt/transactiondescdialog.cpp \
     src/qt/transactionfilterproxy.cpp \
@@ -425,6 +427,7 @@ FORMS += \
     src/qt/forms/sendcoinsdialog.ui \
     src/qt/forms/sendcoinsentry.ui \
     src/qt/forms/torrentpage.ui \
+    src/qt/forms/signverifymessagedialog.ui \
     src/qt/forms/transactiondescdialog.ui
 
 contains(USE_QRCODE, 1) {
