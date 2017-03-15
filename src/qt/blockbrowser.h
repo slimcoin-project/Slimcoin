@@ -16,6 +16,7 @@
 #include <QMap>
 #include <QSettings>
 #include <QSlider>
+#include <QDialog>
 
 double getBlockHardness(int);
 double getTxTotalValue(std::string);
@@ -40,7 +41,7 @@ class BlockBrowser;
 }
 class ClientModel;
 
-class BlockBrowser : public QWidget
+class BlockBrowser : public QDialog
 {
     Q_OBJECT
 

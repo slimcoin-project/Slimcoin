@@ -17,15 +17,15 @@ class OverviewPage;
 class MiningPage;
 class AddressBookPage;
 class SendCoinsDialog;
+class BlockBrowser;
 class BurnCoinsDialog;
 class InscriptionDialog;
-class MessagePage;
+//class MessagePage;
 class MultisigDialog;
 class SignVerifyMessageDialog;
+class TorrentPage;
 class Notificator;
 class RPCConsole;
-class BlockBrowser;
-class TorrentPage;
 
 QT_BEGIN_NAMESPACE
 class QLabel;
@@ -71,7 +71,6 @@ private:
 
     ClientModel *clientModel;
     WalletModel *walletModel;
-    BlockBrowser *blockBrowser;
     QStackedWidget *centralWidget;
 
     OverviewPage *overviewPage;
@@ -80,11 +79,12 @@ private:
     AddressBookPage *addressBookPage;
     AddressBookPage *receiveCoinsPage;
     SendCoinsDialog *sendCoinsPage;
+    BlockBrowser *blockBrowser;
     BurnCoinsDialog *burnCoinsPage;
-    // MessagePage *messagePage;
-    TorrentPage *torrentPage;
+    InscriptionDialog *inscriptionPage;
     MultisigDialog *multisigPage;
     SignVerifyMessageDialog *messagePage;
+    TorrentPage *torrentPage;
 
     QLabel *labelEncryptionIcon;
     QLabel *labelMiningIcon;
@@ -99,11 +99,8 @@ private:
     QAction *historyAction;
     QAction *quitAction;
     QAction *sendCoinsAction;
-    QAction *burnCoinsAction;
-    QAction *inscribeAction;
     QAction *addressBookAction;
     QAction *messageAction;
-    QAction *multisigAction;
     QAction *aboutAction;
     QAction *receiveCoinsAction;
     QAction *optionsAction;
@@ -116,11 +113,14 @@ private:
     QAction *openRPCConsoleAction;
 
     QAction *blockAction;
+    QAction *burnCoinsAction;
+    QAction *inscribeAction;
+    QAction *multisigAction;
     QAction *torrentPageAction;
+
     QSystemTrayIcon *trayIcon;
     Notificator *notificator;
     TransactionView *transactionView;
-    InscriptionDialog *inscriptionPage;
     RPCConsole *rpcConsole;
 
     QMovie *syncIconMovie;
@@ -162,7 +162,6 @@ public slots:
 
     void gotoMessagePage();
     void gotoMessagePage(QString);
-    void gotoMultisigPage();
 
 private slots:
     /** Switch to overview (home) page */
@@ -181,6 +180,10 @@ private slots:
     void gotoBlockBrowser();
     /** Switch to mining page */
     void gotoMiningPage();
+    /** switch to multisig page*/
+    void gotoMultisigPage();
+    /** switch to inscription page*/
+    void gotoInscriptionPage();
     /** Switch to torrent page */
     void gotoTorrentPage();
     /** Show configuration dialog */

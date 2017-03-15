@@ -6,12 +6,15 @@
    <rect>
     <x>0</x>
     <y>0</y>
-    <width>686</width>
-    <height>217</height>
+    <width>679</width>
+    <height>208</height>
    </rect>
   </property>
   <property name="windowTitle">
-   <string>Send Coins</string>
+   <string>Burn Coins</string>
+  </property>
+  <property name="modal">
+   <bool>true</bool>
   </property>
   <layout class="QVBoxLayout" name="verticalLayout">
    <item>
@@ -24,12 +27,21 @@
        <rect>
         <x>0</x>
         <y>0</y>
-        <width>666</width>
-        <height>165</height>
+        <width>659</width>
+        <height>156</height>
        </rect>
       </property>
       <layout class="QVBoxLayout" name="verticalLayout_2">
-       <property name="margin">
+       <property name="leftMargin">
+        <number>0</number>
+       </property>
+       <property name="topMargin">
+        <number>0</number>
+       </property>
+       <property name="rightMargin">
+        <number>0</number>
+       </property>
+       <property name="bottomMargin">
         <number>0</number>
        </property>
        <item>

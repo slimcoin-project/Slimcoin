@@ -36,17 +36,17 @@ InscriptionDialog::InscriptionDialog(QWidget *parent) :
     ui->setupUi(this);
 }
 
-void InscriptionDialog::setWalletModel(WalletModel *model)
+void InscriptionDialog::setClientModel(ClientModel *model)
 {
-    this->walletModel = model;
+    this->clientModel = model;
     if(model)
     {
     }
 }
 
-void InscriptionDialog::setClientModel(ClientModel *model)
+void InscriptionDialog::setWalletModel(WalletModel *model)
 {
-    this->clientModel = model;
+    this->walletModel = model;
     if(model)
     {
     }

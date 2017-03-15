@@ -177,6 +177,7 @@ void BurnCoinsDialog::clear()
   ui->sendButton->setDefault(true);
 }
 
+/*
 void BurnCoinsDialog::reject()
 {
   clear();
@@ -186,6 +187,7 @@ void BurnCoinsDialog::accept()
 {
   clear();
 }
+*/
 
 BurnCoinsEntry *BurnCoinsDialog::addEntry()
 {
