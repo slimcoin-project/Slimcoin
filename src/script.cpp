@@ -230,6 +230,7 @@ const char* GetOpName(opcodetype opcode)
         // template matching params
     case OP_PUBKEYHASH             : return "OP_PUBKEYHASH";
     case OP_PUBKEY                 : return "OP_PUBKEY";
+    case OP_SMALLDATA              : return "OP_SMALLDATA";
 
     case OP_INVALIDOPCODE          : return "OP_INVALIDOPCODE";
     default:
@@ -1216,6 +1217,9 @@ bool Solver(const CScript &scriptPubKey, txnouttype &typeRet, vector<vector<unsi
         // Sender provides N pubkeys, receivers provides M signatures
         mTemplates.insert(make_pair(TX_MULTISIG, CScript() << OP_SMALLINTEGER << OP_PUBKEYS << OP_SMALLINTEGER << OP_CHECKMULTISIG));
 
+        // Empty, provably prunable, data-carrying output
+        mTemplates.insert(make_pair(TX_NULL_DATA, CScript() << OP_RETURN << OP_SMALLDATA));
+        mTemplates.insert(make_pair(TX_NULL_DATA, CScript() << OP_RETURN));
     }
 
     // Shortcut for pay-to-script-hash, which are more constrained than the other types:
@@ -1298,6 +1302,12 @@ bool Solver(const CScript &scriptPubKey, txnouttype &typeRet, vector<vector<unsi
                     vSolutionsRet.push_back(valtype(1, n));
                 }
                 else
+                    break;
+            }
+            else if (opcode2 == OP_SMALLDATA)
+            {
+                // small pushdata, <= MAX_OP_RETURN_RELAY bytes
+                if (vch1.size() > MAX_OP_RETURN_RELAY)
                     break;
             }
             else if (opcode1 != opcode2 || vch1 != vch2)
@@ -1554,8 +1564,8 @@ bool ExtractAddresses(const CScript &scriptPubKey, txnouttype &typeRet, vector<C
     return true;
 }
 
-bool VerifyScript(const CScript &scriptSig, const CScript &scriptPubKey, const CTransaction &txTo, 
-                                    unsigned int nIn, bool fValidatePayToScriptHash, int nHashType)
+bool VerifyScript(const CScript &scriptSig, const CScript &scriptPubKey, const CTransaction &txTo, unsigned int nIn,
+                  bool fValidatePayToScriptHash, int nHashType)
 {
     vector<vector<unsigned char> > stack, stackCopy;
     if (!EvalScript(stack, scriptSig, txTo, nIn, nHashType))
@@ -1590,8 +1600,7 @@ bool VerifyScript(const CScript &scriptSig, const CScript &scriptPubKey, const C
     return true;
 }
 
-bool SignSignature(const CKeyStore &keystore, const CScript &fromPubKey, 
-                                     CTransaction& txTo, unsigned int nIn, int nHashType)
+bool SignSignature(const CKeyStore &keystore, const CScript &fromPubKey,  CTransaction& txTo, unsigned int nIn, int nHashType)
 {
     assert(nIn < txTo.vin.size());
     CTxIn& txin = txTo.vin[nIn];
@@ -1626,8 +1635,7 @@ bool SignSignature(const CKeyStore &keystore, const CScript &fromPubKey,
     return VerifyScript(txin.scriptSig, fromPubKey, txTo, nIn, true, 0);
 }
 
-bool SignSignature(const CKeyStore &keystore, const CTransaction &txFrom, 
-                                     CTransaction &txTo, unsigned int nIn, int nHashType)
+bool SignSignature(const CKeyStore &keystore, const CTransaction &txFrom, CTransaction &txTo, unsigned int nIn, int nHashType)
 {
     assert(nIn < txTo.vin.size());
     CTxIn &txin = txTo.vin[nIn];
@@ -1668,15 +1676,12 @@ bool SignSignature(const CKeyStore &keystore, const CTransaction &txFrom,
 }
 
 
-bool VerifySignature(const CTransaction& txFrom, const CTransaction& txTo, 
-                                         unsigned int nIn, bool fValidatePayToScriptHash, int nHashType)
+bool VerifySignature(const CTransaction& txFrom, const CTransaction& txTo, unsigned int nIn, bool fValidatePayToScriptHash, int nHashType)
 {
     assert(nIn < txTo.vin.size());
     const CTxIn &txin = txTo.vin[nIn];
-
     if (txin.prevout.n >= txFrom.vout.size())
         return false;
-
     const CTxOut &txout = txFrom.vout[txin.prevout.n];
 
     if (txin.prevout.hash != txFrom.GetHash())
@@ -1733,7 +1738,6 @@ static CScript CombineMultisig(CScript scriptPubKey, const CTransaction& txTo, u
             }
         }
     }
-
     // Now build a merged CScript:
     unsigned int nSigsHave = 0;
     CScript result; result << OP_0; // pop-one-too-many workaround

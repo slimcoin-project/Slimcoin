@@ -169,11 +169,10 @@ int main(int argc, char *argv[])
 
   // Basic Qt initialization (not dependent on parameters or configuration)
 #if QT_VERSION < 0x050000
-    // Internal string conversion is all UTF-8
-    QTextCodec::setCodecForTr(QTextCodec::codecForName("UTF-8"));
-    QTextCodec::setCodecForCStrings(QTextCodec::codecForTr());
+  // Internal string conversion is all UTF-8
+  QTextCodec::setCodecForTr(QTextCodec::codecForName("UTF-8"));
+  QTextCodec::setCodecForCStrings(QTextCodec::codecForTr());
 #endif
-
 #if QT_VERSION > 0x050100
     // Generate high-dpi pixmaps
     QApplication::setAttribute(Qt::AA_UseHighDpiPixmaps);
@@ -231,7 +230,7 @@ int main(int argc, char *argv[])
   if(!translator.isEmpty())
     app.installTranslator(&translator);
 
-  QSplashScreen splash(QPixmap(":/images/splash"), 0);
+  QSplashScreen splash(QPixmap(":/images/splash_testnet"), 0);
   if(GetBoolArg("-splash", true) && !GetBoolArg("-min"))
   {
     splash.show();

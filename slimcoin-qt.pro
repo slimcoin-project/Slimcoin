@@ -294,6 +294,7 @@ HEADERS += src/addrman.h \
     src/qt/editaddressdialog.h \
     src/qt/guiconstants.h \
     src/qt/guiutil.h \
+    src/qt/inscriptiondialog.h \
     src/qt/messagepage.h \
     src/qt/miningpage.h \
     src/qt/monitoreddatamapper.h \
@@ -318,6 +319,7 @@ HEADERS += src/addrman.h \
     src/script.h \
     src/serialize.h \
     src/sha256.h \
+    src/smalldata.h \
     src/strlcpy.h \
     src/ui_interface.h \
     src/uint256.h \
@@ -361,6 +363,7 @@ SOURCES += src/addrman.cpp \
     src/qt/csvmodelwriter.cpp \
     src/qt/editaddressdialog.cpp \
     src/qt/guiutil.cpp \
+    src/qt/inscriptiondialog.cpp \
     src/qt/messagepage.cpp \
     src/qt/miningpage.cpp \
     src/qt/monitoreddatamapper.cpp \
@@ -385,6 +388,7 @@ SOURCES += src/addrman.cpp \
     src/rpcdump.cpp \
     src/script.cpp \
     src/sha256.cpp \
+    src/smalldata.cpp \
     src/util.cpp \
     src/version.cpp \
     src/wallet.cpp \
@@ -401,6 +405,7 @@ FORMS += \
     src/qt/forms/burncoinsdialog.ui \
     src/qt/forms/burncoinsentry.ui \
     src/qt/forms/editaddressdialog.ui \
+    src/qt/forms/inscriptiondialog.ui \
     src/qt/forms/messagepage.ui \
     src/qt/forms/miningpage.ui \
     src/qt/forms/overviewpage.ui \

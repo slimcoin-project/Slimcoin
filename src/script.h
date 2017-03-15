@@ -20,6 +20,8 @@ class CTransaction;
 class CKeyStore;
 class CScript;
 
+static const unsigned int MAX_OP_RETURN_RELAY = 120;      // bytes
+
 /** Signature hash types/flags */
 enum
 {
@@ -181,6 +183,7 @@ enum opcodetype
 
 
     // template matching params
+    OP_SMALLDATA = 0xf9,
     OP_SMALLINTEGER = 0xfa,
     OP_PUBKEYS = 0xfb,
     OP_PUBKEYHASH = 0xfd,
@@ -228,24 +231,28 @@ protected:
     CScript& push_int64(int64 n)
     {
         if (n == -1 || (n >= 1 && n <= 16))
+        {
             push_back(n + (OP_1 - 1));
-        else{
+        }
+        else
+        {
             CBigNum bn(n);
             *this << bn.getvch();
         }
-
         return *this;
     }
 
     CScript& push_uint64(uint64 n)
     {
         if (n >= 1 && n <= 16)
+        {
             push_back(n + (OP_1 - 1));
-        else{
+        }
+        else
+        {
             CBigNum bn(n);
             *this << bn.getvch();
         }
-
         return *this;
     }
 
@@ -334,16 +341,20 @@ CScript(const unsigned char* pbegin, const unsigned char* pend) : std::vector<un
         if (b.size() < OP_PUSHDATA1)
         {
             insert(end(), (unsigned char)b.size());
-        }else if (b.size() <= 0xff)
+        }
+        else if (b.size() <= 0xff)
         {
             insert(end(), OP_PUSHDATA1);
             insert(end(), (unsigned char)b.size());
-        }else if (b.size() <= 0xffff)
+        }
+        else if (b.size() <= 0xffff)
         {
             insert(end(), OP_PUSHDATA2);
             unsigned short nSize = b.size();
             insert(end(), (unsigned char*)&nSize, (unsigned char*)&nSize + sizeof(nSize));
-        }else{
+        }
+        else
+        {
             insert(end(), OP_PUSHDATA4);
             unsigned int nSize = b.size();
             insert(end(), (unsigned char*)&nSize, (unsigned char*)&nSize + sizeof(nSize));
@@ -393,7 +404,6 @@ CScript(const unsigned char* pbegin, const unsigned char* pend) : std::vector<un
         opcodeRet = OP_INVALIDOPCODE;
         if (pvchRet)
             pvchRet->clear();
-
         if (pc >= end())
             return false;
 
@@ -409,32 +419,32 @@ CScript(const unsigned char* pbegin, const unsigned char* pend) : std::vector<un
             if (opcode < OP_PUSHDATA1)
             {
                 nSize = opcode;
-            }else if (opcode == OP_PUSHDATA1)
+            }
+            else if (opcode == OP_PUSHDATA1)
             {
                 if (end() - pc < 1)
                     return false;
                 nSize = *pc++;
-            }else if (opcode == OP_PUSHDATA2)
+            }
+            else if (opcode == OP_PUSHDATA2)
             {
                 if (end() - pc < 2)
                     return false;
                 nSize = 0;
                 memcpy(&nSize, &pc[0], 2);
                 pc += 2;
-            }else if (opcode == OP_PUSHDATA4)
+            }
+            else if (opcode == OP_PUSHDATA4)
             {
                 if (end() - pc < 4)
                     return false;
                 memcpy(&nSize, &pc[0], 4);
                 pc += 4;
             }
-
             if (end() - pc < nSize)
                 return false;
-
             if (pvchRet)
                 pvchRet->assign(pc, pc + nSize);
-
             pc += nSize;
         }
 
@@ -601,23 +611,12 @@ bool EvalScript(std::vector<std::vector<unsigned char> > &stack, const CScript &
 int ScriptSigArgsExpected(txnouttype t, const std::vector<std::vector<unsigned char> > &vSolutions);
 bool IsStandard(const CScript &scriptPubKey);
 bool IsMine(const CKeyStore &keystore, const CScript &scriptPubKey);
+bool ExtractAddresses(const CScript &scriptPubKey, txnouttype &typeRet, std::vector<CBitcoinAddress> &addressRet, int &nRequiredRet);
+bool SignSignature(const CKeyStore &keystore, const CScript &fromPubKey, CTransaction& txTo, unsigned int nIn, int nHashType);
+bool SignSignature(const CKeyStore &keystore, const CTransaction &txFrom, CTransaction &txTo, unsigned int nIn, int nHashType=SIGHASH_ALL);
+bool VerifySignature(const CTransaction &txFrom, const CTransaction &txTo, unsigned int nIn, bool fValidatePayToScriptHash, int nHashType);
+bool VerifyScript(const CScript &scriptSig, const CScript &scriptPubKey, const CTransaction &txTo, unsigned int nIn, bool fValidatePayToScriptHash, int nHashType);
+CScript CombineSignatures(CScript scriptPubKey, const CTransaction& txTo, unsigned int nIn, const CScript& scriptSig1, const CScript& scriptSig2);
 
-bool ExtractAddresses(const CScript &scriptPubKey, txnouttype &typeRet, 
-                                            std::vector<CBitcoinAddress> &addressRet, int &nRequiredRet);
-
-bool SignSignature(const CKeyStore &keystore, const CScript &fromPubKey, 
-                                     CTransaction& txTo, unsigned int nIn, int nHashType);
-
-bool SignSignature(const CKeyStore &keystore, const CTransaction &txFrom, 
-                                     CTransaction &txTo, unsigned int nIn, int nHashType=SIGHASH_ALL);
-
-bool VerifySignature(const CTransaction &txFrom, const CTransaction &txTo, 
-                                         unsigned int nIn, bool fValidatePayToScriptHash, int nHashType);
-
-bool VerifyScript(const CScript &scriptSig, const CScript &scriptPubKey, const CTransaction &txTo, 
-                                    unsigned int nIn, bool fValidatePayToScriptHash, int nHashType);
-
-CScript CombineSignatures(CScript scriptPubKey, const CTransaction& txTo, unsigned int nIn,
-                                                    const CScript& scriptSig1, const CScript& scriptSig2);
 
 #endif
