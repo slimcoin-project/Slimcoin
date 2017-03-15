@@ -105,6 +105,7 @@ int64 nHPSTimerStart;
 
 // Settings
 int64 nTransactionFee = MIN_TX_FEE;
+int64 nReserveBalance;
 
 // Dcrypt hash scanner
 static u32int ScanDcryptHash(CBlock *pblock, u32int *nHashesDone, uint256 *phash);
