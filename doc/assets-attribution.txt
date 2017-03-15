@@ -55,6 +55,6 @@ Site: https://bitcointalk.org/index.php?topic=32273.0
 License: Public domain
 
 Icon: src/qt/res/icons/burn.png, src/qt/res/icons/slimcoin.*,
-      src/qt/res/icons/toolbar.png, tx_burn.png, tx_mintBurn.png
+      src/qt/res/icons/toolbar.png, tx_burn.png, tx_mintburn.png
 Designer: P4Titan
 Licence: GNU/GPL
