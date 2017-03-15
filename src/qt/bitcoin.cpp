@@ -231,7 +231,7 @@ int main(int argc, char *argv[])
   if(!translator.isEmpty())
     app.installTranslator(&translator);
 
-  QSplashScreen splash(QPixmap(":/images/splash"), 0);
+  QSplashScreen splash(QPixmap(":/images/splash_testnet"), 0);
   if(GetBoolArg("-splash", true) && !GetBoolArg("-min"))
   {
     splash.show();

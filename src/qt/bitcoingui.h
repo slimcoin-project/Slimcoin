@@ -16,6 +16,7 @@ class AddressBookPage;
 class SendCoinsDialog;
 class BurnCoinsDialog;
 class MessagePage;
+class MultisigDialog;
 class Notificator;
 class RPCConsole;
 class BlockBrowser;
@@ -73,6 +74,7 @@ private:
     SendCoinsDialog *sendCoinsPage;
     BurnCoinsDialog *burnCoinsPage;
     MessagePage *messagePage;
+    MultisigDialog *multisigPage;
 
     QLabel *labelEncryptionIcon;
     QLabel *labelMiningIcon;
@@ -90,6 +92,7 @@ private:
     QAction *burnCoinsAction;
     QAction *addressBookAction;
     QAction *messageAction;
+    QAction *multisigAction;
     QAction *aboutAction;
     QAction *receiveCoinsAction;
     QAction *optionsAction;
@@ -146,6 +149,7 @@ public slots:
 
     void gotoMessagePage();
     void gotoMessagePage(QString);
+    void gotoMultisigPage();
 
 private slots:
     /** Switch to overview (home) page */
