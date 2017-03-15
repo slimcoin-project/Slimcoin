@@ -20,7 +20,7 @@ class CTransaction;
 class CKeyStore;
 class CScript;
 
-static const unsigned int MAX_OP_RETURN_RELAY = 120;      // bytes
+static const unsigned int MAX_OP_RETURN_RELAY = 80;      // bytes
 
 /** Signature hash types/flags */
 enum

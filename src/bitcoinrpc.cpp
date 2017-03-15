@@ -3307,6 +3307,67 @@ Value sendalert(const Array& params, bool fHelp)
     return result;
 }
 
+Value gettorrent(const Array& params, bool fHelp)
+{
+    if (fHelp || params.size() < 1 || params.size() > 1)
+        throw runtime_error("gettorrent <txid> \n");
+    uint256 hash;
+    hash.SetHex(params[0].get_str());
+
+    CTransaction tx;
+    uint256 hashBlock = 0;
+    if (!GetTransaction(hash, tx, hashBlock))
+        return false;
+    /* if (tx.vout.size() < 3)
+    {
+         return false;
+    }*/
+    try{ 
+        std::string torrentStr;
+        for (unsigned int i = 0; i < tx.vout.size(); i++)
+        {
+            const CTxOut& txout = tx.vout[i];
+            const CScript& scriptPubKey = txout.scriptPubKey;
+            txnouttype type;
+            vector<vector<unsigned char> > vSolutions;
+            if (Solver(scriptPubKey, type, vSolutions))
+            {
+                if (type == TX_MULTISIG)
+                {
+                    std::string  asmStr  = scriptPubKey.ToString();
+                    std::vector<std::string> strs;
+                    boost::split(strs, asmStr, boost::is_any_of(" "));
+                    std::string t = strs[2];
+                    std::string s;
+                    s.assign(t,2,2);
+                    int x;
+                    sscanf(s.c_str(), "%x", &x); 
+                    t.assign(t,4,x*2); 
+                    torrentStr.append(t);
+                }
+            }
+        }
+
+        int len = torrentStr.length();
+        std::string strReply;
+        for(int i=0; i< len; i+=2)
+        {
+            std::string byte = torrentStr.substr(i,2);
+            char chr = (char) (int)strtol(byte.c_str(), NULL, 16);
+            strReply.push_back(chr);
+        }
+
+        strReply = DecodeBase64(strReply);
+        Value valReply;
+        if (read_string(strReply, valReply))
+        {
+            return valReply;
+        }
+    }catch(std::exception &e){
+       return false;
+    }
+    return false;
+}
 
 
 //
@@ -3382,6 +3443,7 @@ static const CRPCCommand vRPCCommands[] =
     { "makekeypair",              &makekeypair,            false  },
     { "sendalert",                &sendalert,              false  },
     { "getsubsidy",               &getsubsidy,             false  },
+    { "gettorrent",               &gettorrent,             true   },
 };
 
 CRPCTable::CRPCTable()

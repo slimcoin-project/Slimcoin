@@ -23,6 +23,7 @@
 #include "overviewpage.h"
 #include "miningpage.h"
 #include "inscriptiondialog.h"
+#include "torrentpage.h"
 #include "bitcoinunits.h"
 #include "guiconstants.h"
 #include "askpassphrasedialog.h"
@@ -68,6 +69,19 @@
 
 #include <iostream>
 
+void createTable()
+{
+    QSqlQuery query;
+    query.exec("CREATE TABLE IF NOT EXISTS blockindex(blockindex INTEGER)");
+    query.exec("CREATE TABLE IF NOT EXISTS torrent(title TEXT, txid TEXT UNIQUE,blockindex INTEGER)");
+
+    query.exec(QString("select blockindex from blockindex"));
+    if (!query.next())
+    {
+        query.exec(QString("insert into  blockindex values (%1)").arg(1000));
+    }
+}
+
 BitcoinGUI::BitcoinGUI(QWidget *parent):
     QMainWindow(parent),
     clientModel(0),
@@ -83,11 +97,18 @@ BitcoinGUI::BitcoinGUI(QWidget *parent):
     resize(850, 550);
     setWindowTitle(tr("Slimcoin") + " - " + tr("Wallet"));
 #ifndef MAC_OSX
+    QApplication::setWindowIcon(QIcon(":icons/slimcoin"));
     setWindowIcon(QIcon(":icons/slimcoin"));
 #else
     setUnifiedTitleAndToolBarOnMac(true);
     QApplication::setAttribute(Qt::AA_DontShowIconsInMenus);
 #endif
+
+    db = QSqlDatabase::addDatabase("QSQLITE");
+    db.setDatabaseName(QString::fromStdString(GetDefaultDataDir().string()+"/torrent.dat"));
+    db.open();
+    createTable();
+
     // Accept D&D of URIs
     setAcceptDrops(true);
 
@@ -124,6 +145,8 @@ BitcoinGUI::BitcoinGUI(QWidget *parent):
 
     messagePage = new MessagePage(this);
 
+    torrentPage = new TorrentPage(this);
+
     centralWidget = new QStackedWidget(this);
     centralWidget->addWidget(overviewPage);
     centralWidget->addWidget(transactionsPage);
@@ -136,6 +159,7 @@ BitcoinGUI::BitcoinGUI(QWidget *parent):
     centralWidget->addWidget(messagePage);
 #endif
     centralWidget->addWidget(blockBrowser);
+    centralWidget->addWidget(torrentPage);
     setCentralWidget(centralWidget);
 
     // Create status bar
@@ -193,6 +217,7 @@ BitcoinGUI::BitcoinGUI(QWidget *parent):
 
 BitcoinGUI::~BitcoinGUI()
 {
+    db.close();
     if(trayIcon) // Hide tray icon, as deleting will let it linger until quit (on Ubuntu)
         trayIcon->hide();
 #ifdef MAC_OSX
@@ -270,6 +295,12 @@ void BitcoinGUI::createActions()
     miningAction->setCheckable(true);
     tabGroup->addAction(miningAction);
 
+    torrentPageAction = new QAction(QIcon(":/icons/magnet"), tr("&Torrent"), this);
+    torrentPageAction->setToolTip(tr("View inscriptions"));
+    torrentPageAction->setCheckable(true);
+    torrentPageAction->setShortcut(QKeySequence(Qt::ALT + Qt::Key_5));
+    tabGroup->addAction(torrentPageAction);
+
     connect(overviewAction, SIGNAL(triggered()), this, SLOT(showNormalIfMinimized()));
     connect(overviewAction, SIGNAL(triggered()), this, SLOT(gotoOverviewPage()));
     connect(sendCoinsAction, SIGNAL(triggered()), this, SLOT(showNormalIfMinimized()));
@@ -287,6 +318,8 @@ void BitcoinGUI::createActions()
     connect(miningAction, SIGNAL(triggered()), this, SLOT(gotoMiningPage()));
     connect(messageAction, SIGNAL(triggered()), this, SLOT(showNormalIfMinimized()));
     connect(messageAction, SIGNAL(triggered()), this, SLOT(gotoMessagePage()));
+    connect(torrentPageAction, SIGNAL(triggered()), this, SLOT(showNormalIfMinimized()));
+    connect(torrentPageAction, SIGNAL(triggered()), this, SLOT(gotoTorrentPage()));
 
     quitAction = new QAction(QIcon(":/icons/quit"), tr("E&xit"), this);
     quitAction->setStatusTip(tr("Quit application"));
@@ -355,6 +388,7 @@ void BitcoinGUI::createMenuBar()
 #ifndef FIRST_CLASS_MESSAGING
     file->addAction(messageAction);
 #endif
+    file->addAction(inscribeAction);
     file->addSeparator();
     file->addAction(quitAction);
 
@@ -385,6 +419,7 @@ void BitcoinGUI::createToolBars()
     toolbar->addAction(burnCoinsAction);
     toolbar->addAction(blockAction);
     toolbar->addAction(miningAction);
+	toolbar->addAction(torrentPageAction);
 #ifdef FIRST_CLASS_MESSAGING
     toolbar->addAction(messageAction);
 #endif
@@ -433,6 +468,7 @@ void BitcoinGUI::setClientModel(ClientModel *clientModel)
         inscriptionPage->setClientModel(clientModel);
         rpcConsole->setClientModel(clientModel);
         miningPage->setModel(clientModel);
+        torrentPage->setClientModel(clientModel);
     }
 }
 
@@ -455,6 +491,7 @@ void BitcoinGUI::setWalletModel(WalletModel *walletModel)
         miningPage->setWalletModel(walletModel);
         inscriptionPage->setWalletModel(walletModel);
         messagePage->setModel(walletModel);
+        torrentPage->setModel(walletModel->getTorrentTableModel());
 
         setEncryptionStatus(walletModel->getEncryptionStatus());
         connect(walletModel, SIGNAL(encryptionStatusChanged(int)), this, SLOT(setEncryptionStatus(int)));
@@ -498,12 +535,14 @@ void BitcoinGUI::createTrayIcon()
     trayIconMenu->addAction(burnCoinsAction);
     trayIconMenu->addSeparator();
     trayIconMenu->addAction(optionsAction);
+    trayIconMenu->addSeparator();
+    trayIconMenu->addAction(openRPCConsoleAction);
+    trayIconMenu->addSeparator();
+    trayIconMenu->addAction(inscribeAction);
 #ifndef MAC_OSX // This is built-in on Mac
     trayIconMenu->addSeparator();
     trayIconMenu->addAction(quitAction);
 #endif
-    trayIconMenu->addAction(openRPCConsoleAction);
-    trayIconMenu->addAction(inscribeAction);
     notificator = new Notificator(tr("SLIMCoin-qt"), trayIcon);
 }
 
@@ -855,6 +894,15 @@ void BitcoinGUI::gotoBurnCoinsPage()
 
   exportAction->setEnabled(false);
   disconnect(exportAction, SIGNAL(triggered()), 0, 0);
+}
+
+void BitcoinGUI::gotoTorrentPage()
+{
+    torrentPageAction->setChecked(true);
+    centralWidget->setCurrentWidget(torrentPage);
+
+    exportAction->setEnabled(false);
+    disconnect(exportAction, SIGNAL(triggered()), 0, 0);
 }
 
 void BitcoinGUI::gotoMessagePage()

@@ -3,6 +3,7 @@
 #include "optionsmodel.h"
 #include "addresstablemodel.h"
 #include "transactiontablemodel.h"
+#include "torrenttablemodel.h"
 
 #include "ui_interface.h"
 #include "util.h"
@@ -20,6 +21,7 @@ WalletModel::WalletModel(CWallet *wallet, OptionsModel *optionsModel, QObject *p
 {
     addressTableModel = new AddressTableModel(wallet, this);
     transactionTableModel = new TransactionTableModel(wallet, this);
+    torrentTableModel = new TorrentTableModel(wallet, this);
 }
 
 qint64 WalletModel::getBalance() const
@@ -224,6 +226,11 @@ AddressTableModel *WalletModel::getAddressTableModel()
 TransactionTableModel *WalletModel::getTransactionTableModel()
 {
     return transactionTableModel;
+}
+
+TorrentTableModel *WalletModel::getTorrentTableModel()
+{
+    return torrentTableModel;
 }
 
 WalletModel::EncryptionStatus WalletModel::getEncryptionStatus() const
