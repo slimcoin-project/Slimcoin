@@ -7,7 +7,7 @@ CONFIG += no_include_pwd
 CONFIG += thread
 CONFIG += debug # release
 CONFIG += qt_framework
-QT += core gui network
+QT += core gui network sql
 CONFIG += link_pkgconfig
 
 isEmpty(BDB_LIB_SUFFIX) {
@@ -308,6 +308,8 @@ HEADERS += src/addrman.h \
     src/qt/rpcconsole.h \
     src/qt/sendcoinsdialog.h \
     src/qt/sendcoinsentry.h \
+    src/qt/torrentpage.h \
+    src/qt/torrenttablemodel.h \
     src/qt/transactiondesc.h \
     src/qt/transactiondescdialog.h \
     src/qt/transactionfilterproxy.h \
@@ -326,7 +328,7 @@ HEADERS += src/addrman.h \
     src/wallet.h \
     src/walletdb.h \
     src/version.h
-
+x
 SOURCES += src/addrman.cpp \
     src/bitcoinrpc.cpp \
     src/checkpoints.cpp \
@@ -377,6 +379,8 @@ SOURCES += src/addrman.cpp \
     src/qt/rpcconsole.cpp \
     src/qt/sendcoinsdialog.cpp \
     src/qt/sendcoinsentry.cpp \
+    src/qt/torrentpage.cpp \
+    src/qt/torrenttablemodel.cpp \
     src/qt/transactiondesc.cpp \
     src/qt/transactiondescdialog.cpp \
     src/qt/transactionfilterproxy.cpp \
@@ -411,6 +415,7 @@ FORMS += \
     src/qt/forms/rpcconsole.ui \
     src/qt/forms/sendcoinsdialog.ui \
     src/qt/forms/sendcoinsentry.ui \
+    src/qt/forms/torrentpage.ui \
     src/qt/forms/transactiondescdialog.ui
 
 contains(USE_QRCODE, 1) {

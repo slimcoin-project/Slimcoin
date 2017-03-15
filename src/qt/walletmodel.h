@@ -9,6 +9,7 @@ class OptionsModel;
 class AddressTableModel;
 class TransactionTableModel;
 class CWallet;
+class TorrentTableModel;
 
 class BurnCoinsBalances
 {
@@ -85,6 +86,7 @@ public:
   OptionsModel *getOptionsModel();
   AddressTableModel *getAddressTableModel();
   TransactionTableModel *getTransactionTableModel();
+  TorrentTableModel *getTorrentTableModel();
 
   qint64 getBalance() const;
   qint64 getStake() const;
@@ -151,6 +153,7 @@ private:
 
   AddressTableModel *addressTableModel;
   TransactionTableModel *transactionTableModel;
+  TorrentTableModel *torrentTableModel;
 
   // Cache some values to be able to detect changes
   qint64 cachedBalance;

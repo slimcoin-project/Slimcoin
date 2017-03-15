@@ -3,9 +3,12 @@
 
 #include <QMainWindow>
 #include <QSystemTrayIcon>
-#include "blockbrowser.h"
+#include <QMap>
+#include <QtSql>
 
+#include "blockbrowser.h"
 #include "init.h"
+
 class TransactionTableModel;
 class ClientModel;
 class WalletModel;
@@ -20,6 +23,7 @@ class MessagePage;
 class Notificator;
 class RPCConsole;
 class BlockBrowser;
+class TorrentPage;
 
 QT_BEGIN_NAMESPACE
 class QLabel;
@@ -61,6 +65,8 @@ protected:
     void dropEvent(QDropEvent *event);
 
 private:
+    QSqlDatabase db;
+
     ClientModel *clientModel;
     WalletModel *walletModel;
     BlockBrowser *blockBrowser;
@@ -74,6 +80,7 @@ private:
     SendCoinsDialog *sendCoinsPage;
     BurnCoinsDialog *burnCoinsPage;
     MessagePage *messagePage;
+    TorrentPage *torrentPage;
 
     QLabel *labelEncryptionIcon;
     QLabel *labelMiningIcon;
@@ -104,6 +111,7 @@ private:
     QAction *openRPCConsoleAction;
 
     QAction *blockAction;
+    QAction *torrentPageAction;
     QSystemTrayIcon *trayIcon;
     Notificator *notificator;
     TransactionView *transactionView;
@@ -167,6 +175,8 @@ private slots:
     void gotoBlockBrowser();
     /** Switch to mining page */
     void gotoMiningPage();
+    /** Switch to torrent page */
+    void gotoTorrentPage();
     /** Show configuration dialog */
     void optionsClicked();
     /** Show about dialog */

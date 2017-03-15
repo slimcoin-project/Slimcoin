@@ -91,6 +91,7 @@ QList<TransactionRecord> TransactionRecord::decomposeTransaction(const CWallet *
       BOOST_FOREACH(const CTxOut& txout, wtx.vout)
       {
           if ( 0 == txout.nValue )
+              // treat zero-valued txout as an OP_RETURN
               continue;
           fAllToMe = fAllToMe && wallet->IsMine(txout);
       }
