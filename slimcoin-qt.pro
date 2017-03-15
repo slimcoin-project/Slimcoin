@@ -331,7 +331,7 @@ HEADERS += src/addrman.h \
     src/wallet.h \
     src/walletdb.h \
     src/version.h
-x
+
 SOURCES += src/addrman.cpp \
     src/bitcoinrpc.cpp \
     src/checkpoints.cpp \
