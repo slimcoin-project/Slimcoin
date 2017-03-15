@@ -182,7 +182,7 @@ void AddressBookPage::on_signMessage_clicked()
     QObject *qoGUI = parent()->parent();
     BitcoinGUI *gui = qobject_cast<BitcoinGUI *>(qoGUI);
     if(gui)
-        gui->gotoMessagePage();
+        gui->gotoMessagePage(addr);
 }
 
 void AddressBookPage::on_newAddressButton_clicked()

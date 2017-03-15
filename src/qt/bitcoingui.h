@@ -81,10 +81,9 @@ private:
     AddressBookPage *receiveCoinsPage;
     SendCoinsDialog *sendCoinsPage;
     BurnCoinsDialog *burnCoinsPage;
-    MessagePage *messagePage;
+    // MessagePage *messagePage;
     TorrentPage *torrentPage;
     MultisigDialog *multisigPage;
-    // MessagePage *messagePage;
     SignVerifyMessageDialog *messagePage;
 
     QLabel *labelEncryptionIcon;
