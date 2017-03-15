@@ -11,6 +11,7 @@
 #include "sendcoinsdialog.h"
 #include "burncoinsdialog.h"
 #include "messagepage.h"
+#include "multisigdialog.h"
 #include "optionsdialog.h"
 #include "aboutdialog.h"
 #include "clientmodel.h"
@@ -94,7 +95,7 @@ BitcoinGUI::BitcoinGUI(QWidget *parent):
     inscriptionPage(0),
     rpcConsole(0)
 {
-    resize(850, 550);
+    resize(864, 564);
     setWindowTitle(tr("Slimcoin") + " - " + tr("Wallet"));
 #ifndef MAC_OSX
     QApplication::setWindowIcon(QIcon(":icons/slimcoin"));
@@ -146,6 +147,8 @@ BitcoinGUI::BitcoinGUI(QWidget *parent):
     messagePage = new MessagePage(this);
 
     torrentPage = new TorrentPage(this);
+
+    multisigPage = new MultisigDialog(this);
 
     centralWidget = new QStackedWidget(this);
     centralWidget->addWidget(overviewPage);
@@ -281,6 +284,9 @@ void BitcoinGUI::createActions()
 #endif
     tabGroup->addAction(messageAction);
 
+    multisigAction = new QAction(QIcon(":/icons/send"), tr("Multisig"), this);
+    tabGroup->addAction(multisigAction);
+
     blockAction = new QAction(QIcon(":/icons/bex"), tr("&Explorer"), this);
     blockAction->setStatusTip(tr("Explore the blockchain and transactions"));
     blockAction->setToolTip(blockAction->statusTip());
@@ -320,6 +326,8 @@ void BitcoinGUI::createActions()
     connect(messageAction, SIGNAL(triggered()), this, SLOT(gotoMessagePage()));
     connect(torrentPageAction, SIGNAL(triggered()), this, SLOT(showNormalIfMinimized()));
     connect(torrentPageAction, SIGNAL(triggered()), this, SLOT(gotoTorrentPage()));
+    connect(multisigAction, SIGNAL(triggered()), this, SLOT(showNormalIfMinimized()));
+    connect(multisigAction, SIGNAL(triggered()), this, SLOT(gotoMultisigPage()));
 
     quitAction = new QAction(QIcon(":/icons/quit"), tr("E&xit"), this);
     quitAction->setStatusTip(tr("Quit application"));
@@ -389,6 +397,7 @@ void BitcoinGUI::createMenuBar()
     file->addAction(messageAction);
 #endif
     file->addAction(inscribeAction);
+    file->addAction(multisigAction);
     file->addSeparator();
     file->addAction(quitAction);
 
@@ -404,7 +413,6 @@ void BitcoinGUI::createMenuBar()
     help->addAction(aboutAction);
     help->addAction(aboutQtAction);
     help->addSeparator();
-    help->addAction(inscribeAction);
 }
 
 void BitcoinGUI::createToolBars()
@@ -492,6 +500,7 @@ void BitcoinGUI::setWalletModel(WalletModel *walletModel)
         inscriptionPage->setWalletModel(walletModel);
         messagePage->setModel(walletModel);
         torrentPage->setModel(walletModel->getTorrentTableModel());
+        multisigPage->setModel(walletModel);
 
         setEncryptionStatus(walletModel->getEncryptionStatus());
         connect(walletModel, SIGNAL(encryptionStatusChanged(int)), this, SLOT(setEncryptionStatus(int)));
@@ -533,6 +542,7 @@ void BitcoinGUI::createTrayIcon()
     trayIconMenu->addAction(receiveCoinsAction);
     trayIconMenu->addAction(sendCoinsAction);
     trayIconMenu->addAction(burnCoinsAction);
+    trayIconMenu->addAction(multisigAction);
     trayIconMenu->addSeparator();
     trayIconMenu->addAction(optionsAction);
     trayIconMenu->addSeparator();
@@ -923,6 +933,12 @@ void BitcoinGUI::gotoMessagePage(QString addr)
 {
     gotoMessagePage();
     messagePage->setAddress(addr);
+}
+
+void BitcoinGUI::gotoMultisigPage()
+{
+    multisigPage->show();
+    multisigPage->setFocus();
 }
 
 void BitcoinGUI::dragEnterEvent(QDragEnterEvent *event)
