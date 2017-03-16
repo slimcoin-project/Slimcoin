@@ -1636,7 +1636,8 @@ bool SignSignature(const CKeyStore &keystore, const CScript &fromPubKey,
     return VerifyScript(txin.scriptSig, fromPubKey, txTo, nIn, true, 0);
 }
 
-bool SignSignature(const CKeyStore &keystore, const CTransaction &txFrom, CTransaction &txTo, unsigned int nIn, int nHashType)
+bool SignSignature(const CKeyStore &keystore, const CTransaction &txFrom,
+                                     CTransaction &txTo, unsigned int nIn, int nHashType)
 {
     assert(nIn < txTo.vin.size());
     CTxIn &txin = txTo.vin[nIn];
