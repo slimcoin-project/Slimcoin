@@ -569,9 +569,10 @@ int64 GetArg(const std::string& strArg, int64 nDefault)
 
 bool GetBoolArg(const std::string& strArg, bool fDefault)
 {
-    // FIXME: hack to force testnet, this is for testing only, should be removed later
+    /* FIXME: hack to force testnet, this is for testing only, should be removed later
     if (strArg == "-testnet")
         return true;
+    */
 
     if (mapArgs.count(strArg))
     {
