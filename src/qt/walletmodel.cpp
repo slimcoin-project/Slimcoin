@@ -10,6 +10,7 @@
 #include "wallet.h"
 #include "walletdb.h" // for BackupWallet
 #include "bitcoinrpc.h" // getBurnCoinBalances()
+#include "base58.h"
 
 #include <QSet>
 
@@ -333,6 +334,12 @@ void WalletModel::UnlockContext::CopyFrom(const UnlockContext& rhs)
     // Transfer context; old object no longer relocks wallet
     *this = rhs;
     rhs.relock = false;
+}
+
+bool WalletModel::getPubKey(const CKeyID &address, CPubKey& vchPubKeyOut) const
+{
+    std::vector<unsigned char> vchpubkeyout = vchPubKeyOut.Raw();
+    return wallet->GetPubKey(address, vchpubkeyout);
 }
 
 CWallet * WalletModel::getWallet()

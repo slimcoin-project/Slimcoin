@@ -127,8 +127,8 @@ void MultisigDialog::on_createAddressButton_clicked()
     if(!model)
         return;
 
-    /* FIXME
-    std::vector<CPubKey> pubkeys;
+    /* FIXME */
+    std::vector<CKey> pubkeys;
     unsigned int required = ui->requiredSignatures->text().toUInt();
 
     for(int i = 0; i < ui->pubkeyEntries->count(); i++)
@@ -137,10 +137,23 @@ void MultisigDialog::on_createAddressButton_clicked()
         if(!entry->validate())
             return;
         QString str = entry->getPubkey();
-        CPubKey vchPubKey(ParseHex(str.toStdString().c_str()));
+        // CPubKey vchPubKey(ParseHex(str.toStdString().c_str()));
+        std::vector<unsigned char> vchPubKey(ParseHex(str.toStdString().c_str()));
+        CKey key;
+        if (!key.SetPubKey(vchPubKey))
+            return;
+        /*
         if(!vchPubKey.IsFullyValid())
             return;
-        pubkeys.push_back(vchPubKey);
+        */
+        if(!key.IsValid())
+            return;
+        /*
+        CKey key;
+        if (!key.SetPubKey(vchPubKey))
+            return false;
+        */
+        pubkeys.push_back(key);
     }
 
     if((required == 0) || (required > pubkeys.size()))
@@ -153,7 +166,7 @@ void MultisigDialog::on_createAddressButton_clicked()
 
     ui->multisigAddress->setText(address.ToString().c_str());
     ui->redeemScript->setText(HexStr(script.begin(), script.end()).c_str());
-    */
+    /**/
 }
 
 void MultisigDialog::on_copyMultisigAddressButton_clicked()
@@ -170,7 +183,7 @@ void MultisigDialog::on_saveRedeemScriptButton_clicked()
 {
     if(!model)
         return;
-    /* FIXME
+    /* FIXME */
     CWallet *wallet = model->getWallet();
     std::string redeemScript = ui->redeemScript->text().toStdString();
     std::vector<unsigned char> scriptData(ParseHex(redeemScript));
@@ -180,7 +193,7 @@ void MultisigDialog::on_saveRedeemScriptButton_clicked()
     LOCK(wallet->cs_wallet);
     if(!wallet->HaveCScript(scriptID))
         wallet->AddCScript(script);
-    */
+    /**/
 }
 
 void MultisigDialog::on_saveMultisigAddressButton_clicked()
@@ -195,7 +208,6 @@ void MultisigDialog::on_saveMultisigAddressButton_clicked()
 
     if(!model->validateAddress(QString(address.c_str())))
         return;
-    /* FIXME
     std::vector<unsigned char> scriptData(ParseHex(redeemScript));
     CScript script(scriptData.begin(), scriptData.end());
     CScriptID scriptID = script.GetID();
@@ -203,9 +215,8 @@ void MultisigDialog::on_saveMultisigAddressButton_clicked()
     LOCK(wallet->cs_wallet);
     if(!wallet->HaveCScript(scriptID))
         wallet->AddCScript(script);
-    if(!wallet->mapAddressBook.count(CBitcoinAddress(address).Get()))
-        wallet->SetAddressBookName(CBitcoinAddress(address).Get(), label);
-    */
+    if(!wallet->mapAddressBook.count(CBitcoinAddress(address)))
+        wallet->SetAddressBookName(CBitcoinAddress(address), label);
 }
 
 void MultisigDialog::clear()
@@ -270,15 +281,13 @@ void MultisigDialog::on_createTransactionButton_clicked()
         {
             if(entry->validate())
             {
-                /* FIXME
                 SendCoinsRecipient recipient = entry->getValue();
                 CBitcoinAddress address(recipient.address.toStdString());
                 CScript scriptPubKey;
-                scriptPubKey.SetBitcoinAddress(address.Get());
+                scriptPubKey.SetBitcoinAddress(address);
                 int64 amount = recipient.amount;
                 CTxOut output(amount, scriptPubKey);
                 transaction.vout.push_back(output);
-                */
             }
             else
                 return;
@@ -501,13 +510,13 @@ void MultisigDialog::on_sendTransactionButton_clicked()
     int64 minFee = MIN_TX_FEE * (1 + (int64) transactionSize / 1000);
     if(fee < minFee)
     {
-        QMessageBox::StandardButton ret = QMessageBox::question(this, tr("Confirm sending transaction"), tr("The fee of the transaction (%1 SPRTS) is smaller than the expected fee (%2 SPRTS). Do you want to send the transaction anyway?").arg((double) fee / COIN).arg((double) minFee / COIN), QMessageBox::Yes | QMessageBox::Cancel, QMessageBox::Cancel);
+        QMessageBox::StandardButton ret = QMessageBox::question(this, tr("Confirm sending transaction"), tr("The fee of the transaction (%1 SLM) is smaller than the expected fee (%2 SLM). Do you want to send the transaction anyway?").arg((double) fee / COIN).arg((double) minFee / COIN), QMessageBox::Yes | QMessageBox::Cancel, QMessageBox::Cancel);
         if(ret != QMessageBox::Yes)
             return;
     }
     else if(fee > minFee)
     {
-        QMessageBox::StandardButton ret = QMessageBox::question(this, tr("Confirm sending transaction"), tr("The fee of the transaction (%1 SPRTS) is bigger than the expected fee (%2 SPRTS). Do you want to send the transaction anyway?").arg((double) fee / COIN).arg((double) minFee / COIN), QMessageBox::Yes | QMessageBox::Cancel, QMessageBox::Cancel);
+        QMessageBox::StandardButton ret = QMessageBox::question(this, tr("Confirm sending transaction"), tr("The fee of the transaction (%1 SLM) is bigger than the expected fee (%2 SLM). Do you want to send the transaction anyway?").arg((double) fee / COIN).arg((double) minFee / COIN), QMessageBox::Yes | QMessageBox::Cancel, QMessageBox::Cancel);
         if(ret != QMessageBox::Yes)
             return;
     }

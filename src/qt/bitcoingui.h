@@ -73,6 +73,10 @@ private:
     WalletModel *walletModel;
     QStackedWidget *centralWidget;
 
+    QSystemTrayIcon *trayIcon;
+    TransactionView *transactionView;
+    RPCConsole *rpcConsole;
+
     OverviewPage *overviewPage;
     MiningPage *miningPage;
     QWidget *transactionsPage;
@@ -85,6 +89,7 @@ private:
     MultisigDialog *multisigPage;
     SignVerifyMessageDialog *messagePage;
     TorrentPage *torrentPage;
+    Notificator *notificator;
 
     QLabel *labelEncryptionIcon;
     QLabel *labelMiningIcon;
@@ -117,11 +122,6 @@ private:
     QAction *inscribeAction;
     QAction *multisigAction;
     QAction *torrentPageAction;
-
-    QSystemTrayIcon *trayIcon;
-    Notificator *notificator;
-    TransactionView *transactionView;
-    RPCConsole *rpcConsole;
 
     QMovie *syncIconMovie;
 

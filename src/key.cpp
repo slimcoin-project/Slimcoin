@@ -435,3 +435,14 @@ bool CPubKey::RecoverCompact(const uint256 &hash, const std::vector<unsigned cha
     vchPubKey = key.GetPubKey();
     return true;
 }
+
+/*
+bool CPubKey::IsFullyValid() const {
+    if (!IsValid())
+        return false;
+    CKey key;
+    if (!key.SetPubKey(*this))
+        return false;
+    return true;
+}
+*/

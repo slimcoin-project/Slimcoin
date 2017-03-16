@@ -9,6 +9,8 @@ class OptionsModel;
 class AddressTableModel;
 class TransactionTableModel;
 class CWallet;
+class CKeyID;
+class CPubKey;
 class TorrentTableModel;
 
 class BurnCoinsBalances
@@ -144,6 +146,7 @@ public:
 
   UnlockContext requestUnlock();
 
+  bool getPubKey(const CKeyID &address, CPubKey& vchPubKeyOut) const;
   CWallet * getWallet();
 
 private:

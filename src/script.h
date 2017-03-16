@@ -594,6 +594,11 @@ public:
     {
         printf("%s\n", ToString().c_str());
     }
+
+    CScriptID GetID() const
+    {
+        return CScriptID(Hash160(*this));
+    }
 };
 
 

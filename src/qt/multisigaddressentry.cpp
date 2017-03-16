@@ -83,18 +83,18 @@ void MultisigAddressEntry::on_pubkey_textChanged(const QString &pubkey)
 
     // Compute address from public key
     std::vector<unsigned char> vchPubKey(ParseHex(pubkey.toStdString().c_str()));
-    /* FIXME
+    /* FIXME */
     CPubKey pkey(vchPubKey);
     CKeyID keyID = pkey.GetID();
     CBitcoinAddress address(keyID);
     ui->address->setText(address.ToString().c_str());
-    */
-    /*
+    /**/
+    /**/
     // Get label of address
     QString associatedLabel = model->getAddressTableModel()->labelForAddress(address.ToString().c_str());
     if(!associatedLabel.isEmpty())
         ui->label->setText(associatedLabel);
-    */
+    /**/
 }
 
 void MultisigAddressEntry::on_address_textChanged(const QString &address)
@@ -104,7 +104,7 @@ void MultisigAddressEntry::on_address_textChanged(const QString &address)
 
     // Get public key of address
     CBitcoinAddress addr(address.toStdString().c_str());
-    /* FIXME
+    /* FIXME */
     CKeyID keyID;
     if(addr.GetKeyID(keyID))
     {
@@ -119,5 +119,5 @@ void MultisigAddressEntry::on_address_textChanged(const QString &address)
     QString associatedLabel = model->getAddressTableModel()->labelForAddress(address);
     if(!associatedLabel.isEmpty())
         ui->label->setText(associatedLabel);
-    */
+    /**/
 }
