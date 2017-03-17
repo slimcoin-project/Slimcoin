@@ -583,7 +583,6 @@ SendCoinsEntry * MultisigDialog::addOutput()
     entry->setModel(model);
     ui->outputs->addWidget(entry);
     connect(entry, SIGNAL(removeEntry(SendCoinsEntry *)), this, SLOT(removeEntry(SendCoinsEntry *)));
-    connect(entry, SIGNAL(payAmountChanged()), this, SLOT(updateAmounts()));
     updateRemoveEnabled();
     entry->clear();
     ui->scrollAreaWidgetContents_3->resize(ui->scrollAreaWidgetContents_3->sizeHint());
