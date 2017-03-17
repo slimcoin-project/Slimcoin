@@ -30,8 +30,8 @@
 InscriptionDialog::InscriptionDialog(QWidget *parent) :
     QDialog(parent),
     ui(new Ui::InscriptionDialog),
-    clientModel(0),
-    walletModel(0)
+    walletModel(0),
+    clientModel(0)
 {
     ui->setupUi(this);
 }
