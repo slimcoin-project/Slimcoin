@@ -2,9 +2,6 @@
 <ui version="4.0">
  <class>TorrentPage</class>
  <widget class="QWidget" name="TorrentPage">
-  <property name="windowModality">
-   <enum>Qt::NonModal</enum>
-  </property>
   <property name="geometry">
    <rect>
     <x>0</x>

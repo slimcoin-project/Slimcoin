@@ -3,6 +3,7 @@
 #include <QSettings>
 
 #include "init.h"
+#include "util.h"
 #include "walletdb.h"
 
 OptionsModel::OptionsModel(QObject *parent) :
@@ -23,6 +24,11 @@ void OptionsModel::Init()
     nTransactionFee = settings.value("nTransactionFee").toLongLong();
     nReserveBalance = settings.value("nReserveBalance").toLongLong();
 
+
+    int64 nreservebalance = 0;
+    if (mapArgs.count("-reservebalance") && !ParseMoney(mapArgs["-reservebalance"], nreservebalance))
+        nreservebalance = 1000000; // Failsafe
+    printf("nreservebalance read as: %" PRI64u, ".\n", nreservebalance);
     // These are shared with core bitcoin; we want
     // command-line options to override the GUI settings:
     if(settings.contains("fUseUPnP"))
@@ -30,7 +36,20 @@ void OptionsModel::Init()
     if(settings.contains("addrProxy") && settings.value("fUseProxy").toBool())
         SoftSetArg("-proxy", settings.value("addrProxy").toString().toStdString());
     // if(settings.contains("reserveBalance") && settings.value("fReserveBalance").toBool())
-    //    SoftSetArg("-reservebalance", settings.value("reserveBalance").toString().toStdString());
+    if(settings.contains("nReserveBalance"))
+    {
+        if (nreservebalance > 0) {
+            SoftSetArg("-reservebalance", BitcoinUnits::formatWithUnit(BitcoinUnits::BTC, nreservebalance).toStdString());
+            settings.setValue("nReserveBalance", nreservebalance);
+            // printf("nreservebalance set to %s", settings.value("nReserveBalance").toString().toStdString());
+            printf("nreservebalance set to %" PRI64u ".\n", settings.value("nReserveBalance"));
+        }
+        else {
+            SoftSetArg("-reservebalance", settings.value("nReserveBalance").toString().toStdString());
+            // printf("nReserveBalance set to %s", settings.value("nReserveBalance").toString().toStdString());
+            printf("nReserveBalance set to %" PRI64u ".\n", settings.value("nReserveBalance"));
+        }
+    }
     if(settings.contains("detachDB"))
         SoftSetBoolArg("-detachdb", settings.value("detachDB").toBool());
 }
@@ -208,6 +227,7 @@ bool OptionsModel::setData(const QModelIndex & index, const QVariant & value, in
         case ReserveBalance: {
             nReserveBalance = value.toLongLong();
             settings.setValue("nReserveBalance", nReserveBalance);
+            // emit reserveBalanceChanged(nReserveBalance);
             }
             break;
         case DisplayUnit: {

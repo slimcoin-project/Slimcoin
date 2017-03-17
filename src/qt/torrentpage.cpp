@@ -221,6 +221,20 @@ void TorrentPage::showDetails()
     }
 }
 
+void TorrentPage::selectionChanged()
+{
+    if(!ui->tableView->selectionModel())
+        return;
+
+    QModelIndexList selection = ui->tableView->selectionModel()->selectedRows();
+    if(!selection.isEmpty())
+    {
+        QString html = selection.at(0).data(TorrentTableModel::TorrentRole).toString();
+        // TransactionDescDialog dlg(selection.at(0));
+        // dlg.exec();
+    }
+}
+
 void TorrentPage::searchButtonClicked()
 {
     /* TODO: What are the semantics of searching through torrenthashes?

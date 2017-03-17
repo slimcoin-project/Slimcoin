@@ -392,6 +392,9 @@ bool CWallet::AddToWallet(const CWalletTx &wtxIn, bool fBurnTx)
         // since AddToWallet is called directly for self-originating transactions, check for consumption of own coins
         WalletUpdateSpent(wtx);
 
+        // Notify UI of new or updated transaction
+        // NotifyTransactionChanged(this, hash, fInsertedNew ? CT_NEW : CT_UPDATED);
+
         // notify an external script when a wallet transaction comes in or is updated
         std::string strCmd = GetArg("-walletnotify", "");
 
@@ -895,6 +898,14 @@ int64 CWallet::GetBalance() const
     return nTotal;
 }
 
+int64 CWallet::GetReserveBalance() const
+{
+    int64 nReserveBalance = 0;
+    if (mapArgs.count("-reservebalance") && !ParseMoney(mapArgs["-reservebalance"], nReserveBalance))
+        return error("CWallet:GetReserveBalance : invalid reserve balance amount");
+    return nReserveBalance;
+}
+
 int64 CWallet::GetUnconfirmedBalance() const
 {
     int64 nTotal = 0;
@@ -1257,6 +1268,7 @@ bool CWallet::CreateCoinStake(const CKeyStore& keystore, unsigned int nBits, int
     int64 nReserveBalance = 0;
     if (mapArgs.count("-reservebalance") && !ParseMoney(mapArgs["-reservebalance"], nReserveBalance))
         return error("CreateCoinStake : invalid reserve balance amount");
+    printf("CreateCoinStake reservebalance %" PRI64u ".\n", nReserveBalance);
     if (nBalance <= nReserveBalance)
         return false;
     set<pair<const CWalletTx*,unsigned int> > setCoins;

@@ -49,8 +49,9 @@ void SendCoinsDialog::setModel(WalletModel *model)
   }
   if(model)
   {
-    setBalance(model->getBalance(), model->getStake(), model->getUnconfirmedBalance());
-    connect(model, SIGNAL(balanceChanged(qint64, qint64, qint64, BurnCoinsBalances)), this, SLOT(setBalance(qint64, qint64, qint64)));
+    setBalance(model->getBalance(), model->getStake(), model->getUnconfirmedBalance(), model->getReserveBalance());
+    connect(model, SIGNAL(balanceChanged(qint64, qint64, qint64, qint64, BurnCoinsBalances)), this, SLOT(setBalance(qint64, qint64, qint64, qint64)));
+    // connect(model->getOptionsModel(), SIGNAL(displayUnitChanged(int)), this, SLOT(updateDisplayUnit()));
   }
 }
 
@@ -290,10 +291,11 @@ void SendCoinsDialog::handleURI(const QString &uri)
   pasteEntry(rv);
 }
 
-void SendCoinsDialog::setBalance(qint64 balance, qint64 stake, qint64 unconfirmedBalance)
+void SendCoinsDialog::setBalance(qint64 balance, qint64 stake, qint64 unconfirmedBalance, qint64 reserveBalance)
 {
   Q_UNUSED(stake);
   Q_UNUSED(unconfirmedBalance);
+  Q_UNUSED(reserveBalance);
   if(!model || !model->getOptionsModel())
     return;
 

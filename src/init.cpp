@@ -540,8 +540,10 @@ bool AppInit2(int argc, char *argv[])
       return false;
     }
   } else {
-   // FIXME: Handle reserve balance while syncing
-   mapArgs["-reservebalance"] = "1000000";
+    // FIXME: Handle reserve balance while syncing
+    SoftSetArg("-reservebalance", std::string("1000000"));
+    // mapArgs["-reservebalance"] = "1000000";
+    // printf("Init set reservebalance to %s.\n", std::to_string(nReserveBalance));
   }
 
   if(mapArgs.count("-checkpointkey")) // slimcoin: checkpoint master priv key

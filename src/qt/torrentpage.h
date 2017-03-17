@@ -56,6 +56,7 @@ Q_SIGNALS:
 private slots:
     void searchButtonClicked();
     void showDetails();
+    void selectionChanged();
 private:
     
 

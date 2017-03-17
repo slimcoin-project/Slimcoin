@@ -234,6 +234,7 @@ MainOptionsPage::MainOptionsPage(QWidget *parent):
     QHBoxLayout *resbal_hbox = new QHBoxLayout();
     resbal_hbox->addSpacing(18);
     QLabel *resbal_label = new QLabel(tr("Reserve balance"));
+    resbal_label->setToolTip(tr("Set a reserve balance of coins to be excluded from staking, reduces CPU usage."));
     resbal_hbox->addWidget(resbal_label);
     resbal_edit = new BitcoinAmountField();
 

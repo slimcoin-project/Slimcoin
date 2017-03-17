@@ -152,6 +152,7 @@ public:
     void ReacceptWalletTransactions();
     void ResendWalletTransactions();
     int64 GetBalance() const;
+    int64 GetReserveBalance() const;
     int64 GetUnconfirmedBalance() const;
     int64 GetStake() const;
     int64 GetNewMint() const;

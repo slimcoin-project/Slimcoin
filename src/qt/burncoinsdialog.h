@@ -32,7 +32,7 @@ public slots:
     void reject();
     void accept();
     */
-    void setBalance(qint64 balance, qint64 stake, qint64 unconfirmedBalance);
+    void setBalance(qint64 balance, qint64 stake, qint64 unconfirmedBalance, qint64 reserveBalance);
 
 private:
     Ui::BurnCoinsDialog *ui;

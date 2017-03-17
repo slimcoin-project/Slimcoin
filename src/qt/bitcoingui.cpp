@@ -88,13 +88,13 @@ BitcoinGUI::BitcoinGUI(QWidget *parent):
     QMainWindow(parent),
     clientModel(0),
     walletModel(0),
-    encryptWalletAction(0),
-    changePassphraseAction(0),
-    aboutQtAction(0),
     trayIcon(0),
+    rpcConsole(0),
     inscriptionPage(0),
     notificator(0),
-    rpcConsole(0)
+    encryptWalletAction(0),
+    changePassphraseAction(0),
+    aboutQtAction(0)
 {
     resize(864, 564);
     setWindowTitle(tr("Slimcoin") + " - " + tr("Wallet"));
@@ -465,6 +465,7 @@ void BitcoinGUI::setClientModel(ClientModel *clientModel)
         // Report errors from network/worker thread
         connect(clientModel, SIGNAL(error(QString,QString, bool)), this, SLOT(error(QString,QString,bool)));
 
+        overviewPage->setClientModel(clientModel);
         rpcConsole->setClientModel(clientModel);
         miningPage->setModel(clientModel);
         inscriptionPage->setClientModel(clientModel);

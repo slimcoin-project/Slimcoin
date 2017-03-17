@@ -91,6 +91,7 @@ public:
   TorrentTableModel *getTorrentTableModel();
 
   qint64 getBalance() const;
+  qint64 getReserveBalance() const;
   qint64 getStake() const;
   qint64 getUnconfirmedBalance() const;
   int getNumTransactions() const;
@@ -162,6 +163,7 @@ private:
 
   // Cache some values to be able to detect changes
   qint64 cachedBalance;
+  qint64 cachedReserveBalance;
   qint64 cachedUnconfirmedBalance;
   qint64 cachedNumTransactions;
   EncryptionStatus cachedEncryptionStatus;
@@ -169,10 +171,13 @@ private:
 
 signals:
   // Signal that balance in wallet changed
-  void balanceChanged(qint64 balance, qint64 stake, qint64 unconfirmedBalance, BurnCoinsBalances cachedBurnCoinsBalances);
+  void balanceChanged(qint64 balance, qint64 stake, qint64 unconfirmedBalance, qint64 reserveBalance, BurnCoinsBalances cachedBurnCoinsBalances);
 
   // Number of transactions in wallet changed
   void numTransactionsChanged(int count);
+
+  // Number of transactions in wallet changed
+  void reserveBalanceChanged(int count);
 
   // Encryption status of wallet changed
   void encryptionStatusChanged(int status);

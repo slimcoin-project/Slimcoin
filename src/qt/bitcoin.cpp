@@ -231,9 +231,12 @@ int main(int argc, char *argv[])
   if(!translator.isEmpty())
     app.installTranslator(&translator);
 
+  QPixmap testnet_splash_pixmap = QPixmap(":/images/splash_testnet");
   QSplashScreen splash(QPixmap(":/images/splash"), 0);
   if(GetBoolArg("-splash", true) && !GetBoolArg("-min"))
   {
+    if(GetBoolArg("-testnet", true))
+      splash.setPixmap(testnet_splash_pixmap);
     splash.show();
     splash.setAutoFillBackground(true);
     splashref = &splash;

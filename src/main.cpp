@@ -428,11 +428,17 @@ bool CTransaction::IsStandard() const
             return false;
     */
     unsigned int nDataOut = 0;
-    txnouttype whichType;
+    // txnouttype whichType;
     BOOST_FOREACH(const CTxOut& txout, vout) {
+        txnouttype whichType;
+        vector<valtype> vSolutions;
+        /*
         if (!::IsStandard(txout.scriptPubKey)) {
             return false;
         }
+        */
+        if (!Solver(txout.scriptPubKey, whichType, vSolutions))
+            return false;
         if (whichType == TX_NULL_DATA)
             nDataOut++;
     }
