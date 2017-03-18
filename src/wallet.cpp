@@ -1271,7 +1271,8 @@ bool CWallet::CreateCoinStake(const CKeyStore& keystore, unsigned int nBits, int
     int64 nReserveBalance = 0;
     if (mapArgs.count("-reservebalance") && !ParseMoney(mapArgs["-reservebalance"], nReserveBalance))
         return error("CreateCoinStake : invalid reserve balance amount");
-    printf("CreateCoinStake reservebalance %" PRI64u ".\n", nReserveBalance);
+    if (fDebug && GetBoolArg("-printcoinstake"))
+        printf("CreateCoinStake reservebalance %" PRI64u ".\n", nReserveBalance);
     if (nBalance <= nReserveBalance)
         return false;
     set<pair<const CWalletTx*,unsigned int> > setCoins;
