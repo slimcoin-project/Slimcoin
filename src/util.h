@@ -326,7 +326,7 @@ typedef CMutexLock<CCriticalSection> CCriticalBlock;
         LeaveCritical();                            \
     }
 
-#ifdef MAC_OSX
+#ifdef Q_OS_MAC
 // boost::interprocess::interprocess_semaphore seems to spinlock on OSX; prefer polling instead
 class CSemaphore
 {
