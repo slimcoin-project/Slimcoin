@@ -130,6 +130,8 @@ void CKey::SetCompressedPubKey()
 void CKey::Reset()
 {
   fCompressedPubKey = false;
+  if (pkey != NULL)
+    EC_KEY_free(pkey);
   pkey = EC_KEY_new_by_curve_name(NID_secp256k1);
   if(pkey == NULL)
     throw key_error("CKey::CKey() : EC_KEY_new_by_curve_name failed");
@@ -138,6 +140,7 @@ void CKey::Reset()
 
 CKey::CKey()
 {
+  pkey = NULL;
   Reset();
 }
 
@@ -184,10 +187,24 @@ void CKey::MakeNewKey(bool fCompressed)
 bool CKey::SetPrivKey(const CPrivKey& vchPrivKey)
 {
   const unsigned char* pbegin = &vchPrivKey[0];
-  if(!d2i_ECPrivateKey(&pkey, &pbegin, vchPrivKey.size()))
-    return false;
+    if (d2i_ECPrivateKey(&pkey, &pbegin, vchPrivKey.size()))
+    {
+        // In testing, d2i_ECPrivateKey can return true
+        // but fill in pkey with a key that fails
+        // EC_KEY_check_key, so:
+        if (EC_KEY_check_key(pkey))
+        {
   fSet = true;
   return true;
+        }
+    }
+    // If vchPrivKey data is bad d2i_ECPrivateKey() can
+    // leave pkey in a state where calling EC_KEY_free()
+    // crashes. To avoid that, set pkey to NULL and
+    // leak the memory (a leak is better than a crash)
+    pkey = NULL;
+    Reset();
+    return false;
 }
 
 bool CKey::SetSecret(const CSecret& vchSecret, bool fCompressed)
@@ -243,12 +260,16 @@ CPrivKey CKey::GetPrivKey() const
 bool CKey::SetPubKey(const std::vector<unsigned char>& vchPubKey)
 {
   const unsigned char* pbegin = &vchPubKey[0];
-  if(!o2i_ECPublicKey(&pkey, &pbegin, vchPubKey.size()))
-    return false;
-  fSet = true;
-  if(vchPubKey.size() == 33)
-    SetCompressedPubKey();
-  return true;
+  if(o2i_ECPublicKey(&pkey, &pbegin, vchPubKey.size()))
+  {
+    fSet = true;
+    if(vchPubKey.size() == 33)
+      SetCompressedPubKey();
+    return true;
+  }
+  pkey = NULL;
+  Reset();
+  return false;
 }
 
 std::vector<unsigned char> CKey::GetPubKey() const
@@ -308,7 +329,10 @@ bool CKey::SignCompact(uint256 hash, std::vector<unsigned char>& vchSig)
     }
 
     if(nRecId == -1)
+    {
+      ECDSA_SIG_free(sig);
       throw key_error("CKey::SignCompact() : unable to construct recoverable key");
+    }
 
     vchSig[0] = nRecId+27+(fCompressedPubKey ? 4 : 0);
     BN_bn2bin(sig->r,&vchSig[33-(nBitsR+7)/8]);
