@@ -148,28 +148,6 @@ CTransaction RandomOrphan()
 
 BOOST_AUTO_TEST_CASE(DoS_mapOrphans)
 {
-  CKey key;
-  key.MakeNewKey(true);
-  CBasicKeyStore keystore;
-  keystore.AddKey(key);
-
-  // 50 orphan transactions:
-  for(int i = 0; i < 50; i++)
-  {
-    CTransaction tx;
-    tx.vin.resize(1);
-    tx.vin[0].prevout.n = 0;
-    tx.vin[0].prevout.hash = GetRandHash();
-    tx.vin[0].scriptSig << OP_1;
-    tx.vout.resize(1);
-    tx.vout[0].nValue = 1*CENT;
-    tx.vout[0].scriptPubKey.SetBitcoinAddress(key.GetPubKey());
-
-    CDataStream ds(SER_DISK, CLIENT_VERSION);
-    ds << tx;
-    AddOrphanTx(ds);
-  }
-
   // ... and 50 that depend on other orphans:
   for(int i = 0; i < 50; i++)
   {
@@ -189,17 +167,36 @@ BOOST_AUTO_TEST_CASE(DoS_mapOrphans)
     AddOrphanTx(ds);
   }
 
-  // This really-big orphan should be ignored:
-  for(int i = 0; i < 10; i++)
-  {
-    CTransaction txPrev = RandomOrphan();
+    // ... and 50 that depend on other orphans:
+    for (int i = 0; i < 50; i++)
+    {
+        CTransaction txPrev = RandomOrphan();
+
+        CTransaction tx;
+        tx.vin.resize(1);
+        tx.vin[0].prevout.n = 0;
+        tx.vin[0].prevout.hash = txPrev.GetHash();
+        tx.vout.resize(1);
+        tx.vout[0].nValue = 1*CENT;
+        tx.vout[0].scriptPubKey.SetDestination(key.GetPubKey().GetID());
+        SignSignature(keystore, txPrev, tx, 0);
+
+        CDataStream ds(SER_DISK, CLIENT_VERSION);
+        ds << tx;
+        AddOrphanTx(ds);
+    }
+
+    // This really-big orphan should be ignored:
+    for (int i = 0; i < 10; i++)
+    {
+        CTransaction txPrev = RandomOrphan();
 
     CTransaction tx;
     tx.vout.resize(1);
     tx.vout[0].nValue = 1*CENT;
-    tx.vout[0].scriptPubKey.SetBitcoinAddress(key.GetPubKey());
-    tx.vin.resize(500);
-    for(int j = 0; j < tx.vin.size(); j++)
+        tx.vout[0].scriptPubKey.SetDestination(key.GetPubKey().GetID());
+        tx.vin.resize(500);
+        for (int j = 0; j < tx.vin.size(); j++)
     {
       tx.vin[j].prevout.n = j;
       tx.vin[j].prevout.hash = txPrev.GetHash();
@@ -246,7 +243,7 @@ BOOST_AUTO_TEST_CASE(DoS_checkSig)
     tx.vin[0].scriptSig << OP_1;
     tx.vout.resize(1);
     tx.vout[0].nValue = 1*CENT;
-    tx.vout[0].scriptPubKey.SetBitcoinAddress(key.GetPubKey());
+    tx.vout[0].scriptPubKey.SetDestination(key.GetPubKey().GetID());
 
     CDataStream ds(SER_DISK, CLIENT_VERSION);
     ds << tx;
@@ -257,7 +254,7 @@ BOOST_AUTO_TEST_CASE(DoS_checkSig)
   CTransaction tx;
   tx.vout.resize(1);
   tx.vout[0].nValue = 1*CENT;
-  tx.vout[0].scriptPubKey.SetBitcoinAddress(key.GetPubKey());
+  tx.vout[0].scriptPubKey.SetDestination(key.GetPubKey().GetID());
   tx.vin.resize(NPREV);
   for(int j = 0; j < tx.vin.size(); j++)
   {

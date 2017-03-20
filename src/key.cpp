@@ -240,27 +240,27 @@ CPrivKey CKey::GetPrivKey() const
   return vchPrivKey;
 }
 
-bool CKey::SetPubKey(const std::vector<unsigned char>& vchPubKey)
+bool CKey::SetPubKey(const CPubKey& vchPubKey)
 {
-  const unsigned char* pbegin = &vchPubKey[0];
-  if(!o2i_ECPublicKey(&pkey, &pbegin, vchPubKey.size()))
-    return false;
-  fSet = true;
-  if(vchPubKey.size() == 33)
-    SetCompressedPubKey();
-  return true;
+    const unsigned char* pbegin = &vchPubKey.vchPubKey[0];
+    if (!o2i_ECPublicKey(&pkey, &pbegin, vchPubKey.vchPubKey.size()))
+        return false;
+    fSet = true;
+    if (vchPubKey.vchPubKey.size() == 33)
+        SetCompressedPubKey();
+    return true;
 }
 
-std::vector<unsigned char> CKey::GetPubKey() const
+CPubKey CKey::GetPubKey() const
 {
-  int nSize = i2o_ECPublicKey(pkey, NULL);
-  if(!nSize)
-    throw key_error("CKey::GetPubKey() : i2o_ECPublicKey failed");
-  std::vector<unsigned char> vchPubKey(nSize, 0);
-  unsigned char* pbegin = &vchPubKey[0];
-  if(i2o_ECPublicKey(pkey, &pbegin) != nSize)
-    throw key_error("CKey::GetPubKey() : i2o_ECPublicKey returned unexpected size");
-  return vchPubKey;
+    int nSize = i2o_ECPublicKey(pkey, NULL);
+    if (!nSize)
+        throw key_error("CKey::GetPubKey() : i2o_ECPublicKey failed");
+    std::vector<unsigned char> vchPubKey(nSize, 0);
+    unsigned char* pbegin = &vchPubKey[0];
+    if (i2o_ECPublicKey(pkey, &pbegin) != nSize)
+        throw key_error("CKey::GetPubKey() : i2o_ECPublicKey returned unexpected size");
+    return CPubKey(vchPubKey);
 }
 
 bool CKey::Sign(uint256 hash, std::vector<unsigned char>& vchSig)
@@ -425,3 +425,24 @@ bool CKey::IsValid()
   key2.SetSecret(secret, fCompr);
   return GetPubKey() == key2.GetPubKey();
 }
+
+/*
+bool CPubKey::RecoverCompact(const uint256 &hash, const std::vector<unsigned char>& vchSig) {
+    if (vchSig.size() != 65)
+        return false;
+    CKey key;
+    if (!key.SetCompactSignature(hash, vchSig))
+        return false;
+    vchPubKey = key.GetPubKey();
+    return true;
+}
+
+bool CPubKey::IsFullyValid() const {
+    if (!IsValid())
+        return false;
+    CKey key;
+    if (!key.SetPubKey(*this))
+        return false;
+    return true;
+}
+*/

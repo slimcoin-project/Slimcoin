@@ -10,6 +10,7 @@
 #include "bignum.h"
 #include "net.h"
 #include "script.h"
+#include "base58.h"
 #include <math.h>       /* pow */
 
 #ifdef WIN32
@@ -112,6 +113,8 @@ extern int64 nTransactionFee;
 //Burn addresses
 const CBitcoinAddress burnOfficialAddress("SfSLMCoinMainNetworkBurnAddr1DeTK5");
 const CBitcoinAddress burnTestnetAddress("mmSLiMCoinTestnetBurnAddress1XU5fu");
+// const std::string burnOfficialAddress = "SfSLMCoinMainNetworkBurnAddr1DeTK5";
+// const std::string burnTestnetAddress = "mmSLiMCoinTestnetBurnAddress1XU5fu";
 
 #define BURN_CONSTANT      .01 * CENT
 
@@ -186,7 +189,6 @@ inline int64 BurnCalcEffectiveCoins(int64 nCoins, s32int depthInChain)
 inline void GetBurnAddress(CBitcoinAddress &addressRet)
 {
     addressRet = fTestNet ? burnTestnetAddress : burnOfficialAddress;
-    return;
 }
 
 //the burn address, when created, the constuctor automatically assigns its value
@@ -200,6 +202,7 @@ public:
     }
 };
 
+
 //if any == true, then compare address with both testnet and realnet burn addresses
 // else compare only with the address that corresponds to which network the client is connected to
 inline bool IsBurnAddress(const CBitcoinAddress &address, bool any=false)
@@ -212,6 +215,7 @@ inline bool IsBurnAddress(const CBitcoinAddress &address, bool any=false)
     }
         
 }
+
 
 //makes a uint256 number into its compact form and returns it as a uint256 again
 inline const uint256 becomeCompact(const uint256 &num)
@@ -727,11 +731,13 @@ public:
         u32int i;
         for(i = 0; i < vout.size(); i++)
         {
-            CBitcoinAddress address;
-            if(!ExtractAddress(vout[i].scriptPubKey, address))
+            // CBitcoinAddress address;
+            // CTxDestination ctx_address = CTxDestination(address);
+            CTxDestination address;
+            if(!ExtractDestination(vout[i].scriptPubKey, address))
                 continue;
-
-            if(address == burnAddress)
+            /* FIXME: sanity check required */
+            if(address == burnAddress.Get())
                 break;
         }
 

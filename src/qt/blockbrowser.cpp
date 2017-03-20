@@ -201,8 +201,8 @@ std::string getOutputs(std::string txid)
     for (unsigned int i = 0; i < tx.vout.size(); i++)
     {
         const CTxOut& txout = tx.vout[i];
-        CBitcoinAddress source;
-        if (ExtractAddress(txout.scriptPubKey, source))
+        CTxDestination source;
+        if (ExtractDestination(txout.scriptPubKey, source))
         {
             CBitcoinAddress addressSource(source);
             std::string lol7 = addressSource.ToString();
@@ -246,9 +246,8 @@ std::string getInputs(std::string txid)
         CDataStream ssTx(SER_NETWORK, PROTOCOL_VERSION);
         ssTx << wtxPrev;
 
-        // CTxDestination source;
-        CBitcoinAddress source;
-        if (ExtractAddress(wtxPrev.vout[vin.prevout.n].scriptPubKey, source))
+        CTxDestination source;
+        if (ExtractDestination(wtxPrev.vout[vin.prevout.n].scriptPubKey, source))
         {
             CBitcoinAddress addressSource(source);
             std::string lol6 = addressSource.ToString();

@@ -3283,7 +3283,7 @@ bool static AlreadyHave(CTxDB& txdb, const CInv& inv)
 
 bool static ProcessMessage(CNode* pfrom, string strCommand, CDataStream& vRecv)
 {
-    static map<CService, vector<unsigned char> > mapReuseKey;
+    static map<CService, CPubKey> mapReuseKey;
     RandAddSeedPerfmon();
     if (fDebug) {
         printf("%s ", DateTimeStrFormat(GetTime()).c_str());
@@ -4490,16 +4490,17 @@ bool GetBurnHash(uint256 hashPrevBlock, s32int burnBlkHeight, s32int burnCTx,
     CBurnAddress burnAddress;
 
     //check if the out transaction went to a burn address
-    CBitcoinAddress address;
-    if (!ExtractAddress(burnTxOut.scriptPubKey, address))
+    CTxDestination address;
+    if (!ExtractDestination(burnTxOut.scriptPubKey, address))
         return error("GetBurnHash(): ExtractAddress failed");
 
-    if (address != burnAddress)
+    if (address != burnAddress.Get())
         return error("GetBurnHash(): TxOut's address is not a valid burn address");
 
+    /* Surely invalid if the destination is not a valid burn address
     if (!address.IsValid())
         return error("GetBurnHash(): TxOut's address is invalid");
-
+    */
     if (!burnTxOut.nValue)
         return error("GetBurnHash(): Burn transaction's value is 0");
 
