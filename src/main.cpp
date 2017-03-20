@@ -4658,8 +4658,7 @@ CBlock *CreateNewBlock(CWallet* pwallet, bool fProofOfStake, const CWalletTx *bu
     CReserveKey *reservekey = resKey ? resKey : &tmpResKey;
 
     // Create new block
-    // FIXME: schedule refactor
-    auto_ptr<CBlock> pblock(new CBlock());
+    unique_ptr<CBlock> pblock(new CBlock());
     if (!pblock.get())
         return NULL;
 
@@ -5101,8 +5100,7 @@ void SlimCoinMiner(CWallet *pwallet, bool fProofOfStake)
         //
         unsigned int nTransactionsUpdatedLast = nTransactionsUpdated;
         CBlockIndex* pindexPrev = pindexBest;
-        // FIXME: schedule refactor
-        auto_ptr<CBlock> pblock(CreateNewBlock(pwallet, fProofOfStake));
+        unique_ptr<CBlock> pblock(CreateNewBlock(pwallet, fProofOfStake));
         if (!pblock.get())
             return;
 
@@ -5289,11 +5287,7 @@ void SlimCoinAfterBurner(CWallet *pwallet)
             //
             // Create new block
             //
-            /* FIXME: refactor?
             unique_ptr<CBlock> pblock(CreateNewBlock(pwallet, false, &smallestWTx));
-            auto_ptr<CBlock> pblock(CreateNewBlock(reservekey, pwallet, false, &smallestWTx));
-            */
-            auto_ptr<CBlock> pblock(CreateNewBlock(pwallet, false, &smallestWTx));
             if (!pblock.get())
                 continue;
 
