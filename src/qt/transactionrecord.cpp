@@ -48,9 +48,16 @@ QList<TransactionRecord> TransactionRecord::decomposeTransaction(const CWallet *
     }
     else if (wtx.IsCoinStake()) // slimcoin: coinstake transaction
     {
-      parts.append(TransactionRecord(hash, nTime, TransactionRecord::StakeMint, "", -nDebit, wtx.GetValueOut()));
+        TransactionRecord sub(hash, nTime, TransactionRecord::StakeMint, "", -nDebit, wtx.GetValueOut());
+        CTxDestination address;
+        CTxOut txout = wtx.vout[1];
+
+        if(ExtractDestination(txout.scriptPubKey, address) && IsMine(*wallet, address))
+            sub.address = CBitcoinAddress(address).ToString();
+
+        parts.append(sub);
     }
-    else if(nNet > 0 || wtx.IsCoinBase())
+    else if (nNet > 0 || wtx.IsCoinBase())
     {
             //
             // Credit
