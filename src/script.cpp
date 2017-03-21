@@ -1550,12 +1550,6 @@ bool ExtractDestinations(const CScript& scriptPubKey, txnouttype& typeRet, vecto
         return false;
     }
 
-    if (typeRet == TX_NULL_DATA)
-    {
-        // This is data, not addresses
-        return false;
-    }
-
     if (typeRet == TX_MULTISIG)
     {
         nRequiredRet = vSolutions.front()[0];

@@ -450,6 +450,13 @@ bool CTransaction::IsStandard() const
     txnouttype whichType;
     BOOST_FOREACH(const CTxOut& txout, vout) {
         if (!::IsStandard(txout.scriptPubKey, whichType)) {
+            strReason = "scriptpubkey";
+            return false;
+        }
+        if (whichType == TX_NULL_DATA)
+            nDataOut++;
+        else if (txout.IsDust()) {
+            strReason = "dust";
             return false;
         }
         if (whichType == TX_NULL_DATA)
@@ -458,6 +465,7 @@ bool CTransaction::IsStandard() const
 
     // only one OP_RETURN txout is permitted
     if (nDataOut > 1) {
+        strReason = "mucho-data";
         return false;
     }
 
