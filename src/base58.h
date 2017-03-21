@@ -407,17 +407,6 @@ public:
         return fExpectTestNet == fTestNet && vchData.size() == nExpectedSize;
     }
 
-    /* LEGACY:
-    bool IsScript() const
-    {
-        if (!IsValid())
-            return false;
-        if (fTestNet)
-            return nVersion == SCRIPT_ADDRESS_TEST;
-        return nVersion == SCRIPT_ADDRESS;
-    }
-    */
-
     CBitcoinAddress()
     {
     }

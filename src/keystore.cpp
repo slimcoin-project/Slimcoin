@@ -132,9 +132,9 @@ bool CCryptoKeyStore::AddCryptedKey(const CPubKey &vchPubKey, const std::vector<
     if (!SetCrypted())
         return false;
 
-    mapCryptedKeys[vchPubKey.GetID()] = make_pair(vchPubKey, vchCryptedSecret);
-  }
-  return true;
+        mapCryptedKeys[vchPubKey.GetID()] = make_pair(vchPubKey, vchCryptedSecret);
+    }
+    return true;
 }
 
 bool CCryptoKeyStore::GetKey(const CKeyID &address, CKey& keyOut) const
@@ -186,21 +186,21 @@ bool CCryptoKeyStore::EncryptKeys(CKeyingMaterial& vMasterKeyIn)
     if(!mapCryptedKeys.empty() || IsCrypted())
       return false;
 
-    fUseCrypto = true;
-    BOOST_FOREACH(KeyMap::value_type& mKey, mapKeys)
-    {
-        CKey key;
-        if (!key.SetSecret(mKey.second.first, mKey.second.second))
-            return false;
-        const CPubKey vchPubKey = key.GetPubKey();
-        std::vector<unsigned char> vchCryptedSecret;
-        bool fCompressed;
-        if (!EncryptSecret(vMasterKeyIn, key.GetSecret(fCompressed), vchPubKey.GetHash(), vchCryptedSecret))
-            return false;
-        if (!AddCryptedKey(vchPubKey, vchCryptedSecret))
-            return false;
-    }
-    mapKeys.clear();
+        fUseCrypto = true;
+        BOOST_FOREACH(KeyMap::value_type& mKey, mapKeys)
+        {
+            CKey key;
+            if (!key.SetSecret(mKey.second.first, mKey.second.second))
+                return false;
+            const CPubKey vchPubKey = key.GetPubKey();
+            std::vector<unsigned char> vchCryptedSecret;
+            bool fCompressed;
+            if (!EncryptSecret(vMasterKeyIn, key.GetSecret(fCompressed), vchPubKey.GetHash(), vchCryptedSecret))
+                return false;
+            if (!AddCryptedKey(vchPubKey, vchCryptedSecret))
+                return false;
+        }
+        mapKeys.clear();
   }
   return true;
 }

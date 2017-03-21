@@ -156,7 +156,7 @@ Value dumpprivkey(const Array& params, bool fHelp)
     string strAddress = params[0].get_str();
     CBitcoinAddress address;
     if (!address.SetString(strAddress))
-    throw JSONRPCError(-5, "Invalid slimcoin address");
+        throw JSONRPCError(-5, "Invalid slimcoin address");
     if (pwalletMain->IsLocked())
         throw JSONRPCError(-13, "Error: Please enter the wallet passphrase with walletpassphrase first.");
     if (fWalletUnlockMintOnly) // slimcoin: no dumpprivkey in mint-only mode

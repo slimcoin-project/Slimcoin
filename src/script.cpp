@@ -1607,8 +1607,8 @@ bool VerifyScript(const CScript &scriptSig, const CScript &scriptPubKey, const C
     return true;
 }
 
-bool SignSignature(const CKeyStore &keystore, const CScript &fromPubKey, 
-                                     CTransaction& txTo, unsigned int nIn, int nHashType)
+
+bool SignSignature(const CKeyStore &keystore, const CScript& fromPubKey, CTransaction& txTo, unsigned int nIn, int nHashType)
 {
     assert(nIn < txTo.vin.size());
     CTxIn& txin = txTo.vin[nIn];
@@ -1643,47 +1643,15 @@ bool SignSignature(const CKeyStore &keystore, const CScript &fromPubKey,
     return VerifyScript(txin.scriptSig, fromPubKey, txTo, nIn, true, 0);
 }
 
-bool SignSignature(const CKeyStore &keystore, const CTransaction &txFrom, 
-                                     CTransaction &txTo, unsigned int nIn, int nHashType)
+bool SignSignature(const CKeyStore &keystore, const CTransaction& txFrom, CTransaction& txTo, unsigned int nIn, int nHashType)
 {
     assert(nIn < txTo.vin.size());
-    CTxIn &txin = txTo.vin[nIn];
+    CTxIn& txin = txTo.vin[nIn];
     assert(txin.prevout.n < txFrom.vout.size());
-    assert(txin.prevout.hash == txFrom.GetHash());
-    const CTxOut &txout = txFrom.vout[txin.prevout.n];
+    const CTxOut& txout = txFrom.vout[txin.prevout.n];
 
-    // Leave out the signature from the hash, since a signature can't sign itself.
-    // The checksig op will also drop the signatures from its hash.
-    uint256 hash = SignatureHash(txout.scriptPubKey, txTo, nIn, nHashType);
-
-    txnouttype whichType;
-    if (!Solver(keystore, txout.scriptPubKey, hash, nHashType, txin.scriptSig, whichType))
-        return false;
-
-    if (whichType == TX_SCRIPTHASH)
-    {
-        // Solver returns the subscript that need to be evaluated;
-        // the final scriptSig is the signatures from that
-        // and then the serialized subscript:
-        CScript subscript = txin.scriptSig;
-
-        // Recompute txn hash using subscript in place of scriptPubKey:
-        uint256 hash2 = SignatureHash(subscript, txTo, nIn, nHashType);
-        txnouttype subType;
-        if (!Solver(keystore, subscript, hash2, nHashType, txin.scriptSig, subType))
-            return false;
-        if (subType == TX_SCRIPTHASH)
-            return false;
-        txin.scriptSig << static_cast<valtype>(subscript); // Append serialized subscript
-    }
-
-    // Test solution
-    if (!VerifyScript(txin.scriptSig, txout.scriptPubKey, txTo, nIn, true, 0))
-        return false;
-
-    return true;
+    return SignSignature(keystore, txout.scriptPubKey, txTo, nIn, nHashType);
 }
-
 
 bool VerifySignature(const CTransaction& txFrom, const CTransaction& txTo, 
                                          unsigned int nIn, bool fValidatePayToScriptHash, int nHashType)
@@ -1714,8 +1682,8 @@ static CScript PushAll(const vector<valtype>& values)
 }
 
 static CScript CombineMultisig(CScript scriptPubKey, const CTransaction& txTo, unsigned int nIn,
-                                                             const vector<valtype>& vSolutions,
-                                                             vector<valtype>& sigs1, vector<valtype>& sigs2)
+                               const vector<valtype>& vSolutions,
+                               vector<valtype>& sigs1, vector<valtype>& sigs2)
 {
     // Combine all the signatures we've got:
     set<valtype> allsigs;
@@ -1750,7 +1718,6 @@ static CScript CombineMultisig(CScript scriptPubKey, const CTransaction& txTo, u
             }
         }
     }
-
     // Now build a merged CScript:
     unsigned int nSigsHave = 0;
     CScript result; result << OP_0; // pop-one-too-many workaround
@@ -1770,8 +1737,8 @@ static CScript CombineMultisig(CScript scriptPubKey, const CTransaction& txTo, u
 }
 
 static CScript CombineSignatures(CScript scriptPubKey, const CTransaction& txTo, unsigned int nIn,
-                                                                 const txnouttype txType, const vector<valtype>& vSolutions,
-                                                                 vector<valtype>& sigs1, vector<valtype>& sigs2)
+                                 const txnouttype txType, const vector<valtype>& vSolutions,
+                                 vector<valtype>& sigs1, vector<valtype>& sigs2)
 {
     switch (txType)
     {
@@ -1815,7 +1782,7 @@ static CScript CombineSignatures(CScript scriptPubKey, const CTransaction& txTo,
 }
 
 CScript CombineSignatures(CScript scriptPubKey, const CTransaction& txTo, unsigned int nIn,
-                                                    const CScript& scriptSig1, const CScript& scriptSig2)
+                          const CScript& scriptSig1, const CScript& scriptSig2)
 {
     txnouttype txType;
     vector<vector<unsigned char> > vSolutions;

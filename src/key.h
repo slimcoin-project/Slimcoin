@@ -99,8 +99,10 @@ public:
         return vchPubKey;
     }
 
+    /* FIXME: dubious inheritance
     bool RecoverCompact(const uint256 &hash, const std::vector<unsigned char>& vchSig);
     bool IsFullyValid() const;
+	*/
 };
 
 

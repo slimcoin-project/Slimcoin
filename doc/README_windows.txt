@@ -1,7 +1,7 @@
-SLIMCoin 0.4.0 BETA
+SLIMCoin 0.5.0 BETA
 
-Copyright (c) 2011-2014 Peercoin (PPCoin) Developers
-Copyright (c) 2013-2014 SLIMCoin Developers
+Copyright (c) 2011-2016 Peercoin (PPCoin) Developers
+Copyright (c) 2013-2017 SLIMCoin Developers
 Distributed under the MIT/X11 software license, see the accompanying
 file license.txt or http://www.opensource.org/licenses/mit-license.php.
 This product includes software developed by the OpenSSL Project for use in
@@ -37,13 +37,11 @@ but allowing incoming connections helps the SLIMCoin network.
 Upgrade
 -------
 All your existing coins/transactions should be intact with the upgrade.
-To upgrade from 0.3, first backup wallet
+To upgrade from 0.4, first backup wallet
 slimcoind backupwallet <destination_backup_file>
 Then shutdown slimcoind by
 slimcoind stop
-Uninstall v0.3 client, download and install v0.4 client.
-If upgrade is performed after upgrade deadline, blockchain re-download is
-required.
+Uninstall v0.4 client, download and install v0.5 client.
 
 
 See the documentation/wiki at the slimcoin website:

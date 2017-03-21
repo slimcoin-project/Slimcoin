@@ -114,6 +114,7 @@ int CWalletDB::LoadWallet(CWallet* pwallet)
   vector<uint256> vWalletUpgrade;
   bool fIsEncrypted = false;
 
+  /* FIXME: dubious inheritance
   //// todo: shouldn't we catch exceptions and try to recover and continue?
   {
     LOCK(pwallet->cs_wallet);
@@ -132,6 +133,7 @@ int CWalletDB::LoadWallet(CWallet* pwallet)
       printf("Error getting wallet database cursor\n");
       return DB_CORRUPT;
     }
+    */
 
     while (true)
     {
@@ -177,7 +179,8 @@ int CWalletDB::LoadWallet(CWallet* pwallet)
             char fTmp;
             char fUnused;
             ssValue >> fTmp >> fUnused >> wtx.strFromAccount;
-            printf("LoadWallet() upgrading tx ver=%d %d '%s' %s\n", wtx.fTimeReceivedIsTxTime, fTmp, wtx.strFromAccount.c_str(), hash.ToString().c_str());
+            printf("LoadWallet() upgrading tx ver=%d %d '%s' %s\n",
+                   wtx.fTimeReceivedIsTxTime, fTmp, wtx.strFromAccount.c_str(), hash.ToString().c_str());
             wtx.fTimeReceivedIsTxTime = fTmp;
           }else{
             printf("LoadWallet() repairing tx ver=%d %s\n", wtx.fTimeReceivedIsTxTime, hash.ToString().c_str());
@@ -207,7 +210,7 @@ int CWalletDB::LoadWallet(CWallet* pwallet)
         if(wtx.GetHash() != hash)
         printf("Error in wallet.dat, hash mismatch\n");
 
-      }else if(strType == "acentry")
+      }else if (strType == "acentry")
       {
         string strAccount;
         ssKey >> strAccount;
@@ -235,9 +238,9 @@ int CWalletDB::LoadWallet(CWallet* pwallet)
           if (!key.IsValid())
           {
             printf("Error reading wallet database: invalid CPrivKey\n");
-            return DB_CORRUPT;
-          }
+          return DB_CORRUPT;
         }
+      }
         else
         {
           CWalletKey wkey;
@@ -314,9 +317,9 @@ int CWalletDB::LoadWallet(CWallet* pwallet)
         if (!pwallet->LoadCScript(script))
         {
           printf("Error reading wallet database: LoadCScript failed\n");
-          return DB_CORRUPT;
+            return DB_CORRUPT;
+          }
         }
-      }
     }
     pcursor->close();
   }
