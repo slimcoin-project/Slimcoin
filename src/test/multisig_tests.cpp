@@ -129,36 +129,38 @@ BOOST_AUTO_TEST_CASE(multisig_verify)
 
 BOOST_AUTO_TEST_CASE(multisig_IsStandard)
 {
-  CKey key[4];
-  for(int i = 0; i < 4; i++)
-    key[i].MakeNewKey(true);
+    CKey key[4];
+    for (int i = 0; i < 4; i++)
+        key[i].MakeNewKey(true);
 
-  CScript a_and_b;
-  a_and_b << OP_2 << key[0].GetPubKey() << key[1].GetPubKey() << OP_2 << OP_CHECKMULTISIG;
-  BOOST_CHECK(::IsStandard(a_and_b));
+    txnouttype whichType;
 
-  CScript a_or_b;
-  a_or_b  << OP_1 << key[0].GetPubKey() << key[1].GetPubKey() << OP_2 << OP_CHECKMULTISIG;
-  BOOST_CHECK(::IsStandard(a_or_b));
+    CScript a_and_b;
+    a_and_b << OP_2 << key[0].GetPubKey() << key[1].GetPubKey() << OP_2 << OP_CHECKMULTISIG;
+    BOOST_CHECK(::IsStandard(a_and_b, whichType));
 
-  CScript escrow;
-  escrow << OP_2 << key[0].GetPubKey() << key[1].GetPubKey() << key[2].GetPubKey() << OP_3 << OP_CHECKMULTISIG;
-  BOOST_CHECK(::IsStandard(escrow));
+    CScript a_or_b;
+    a_or_b  << OP_1 << key[0].GetPubKey() << key[1].GetPubKey() << OP_2 << OP_CHECKMULTISIG;
+    BOOST_CHECK(::IsStandard(a_or_b, whichType));
 
-  CScript one_of_four;
-  one_of_four << OP_1 << key[0].GetPubKey() << key[1].GetPubKey() << key[2].GetPubKey() << key[3].GetPubKey() << OP_4 << OP_CHECKMULTISIG;
-  BOOST_CHECK(!::IsStandard(one_of_four));
+    CScript escrow;
+    escrow << OP_2 << key[0].GetPubKey() << key[1].GetPubKey() << key[2].GetPubKey() << OP_3 << OP_CHECKMULTISIG;
+    BOOST_CHECK(::IsStandard(escrow, whichType));
 
-  CScript malformed[6];
-  malformed[0] << OP_3 << key[0].GetPubKey() << key[1].GetPubKey() << OP_2 << OP_CHECKMULTISIG;
-  malformed[1] << OP_2 << key[0].GetPubKey() << key[1].GetPubKey() << OP_3 << OP_CHECKMULTISIG;
-  malformed[2] << OP_0 << key[0].GetPubKey() << key[1].GetPubKey() << OP_2 << OP_CHECKMULTISIG;
-  malformed[3] << OP_1 << key[0].GetPubKey() << key[1].GetPubKey() << OP_0 << OP_CHECKMULTISIG;
-  malformed[4] << OP_1 << key[0].GetPubKey() << key[1].GetPubKey() << OP_CHECKMULTISIG;
-  malformed[5] << OP_1 << key[0].GetPubKey() << key[1].GetPubKey();
+    CScript one_of_four;
+    one_of_four << OP_1 << key[0].GetPubKey() << key[1].GetPubKey() << key[2].GetPubKey() << key[3].GetPubKey() << OP_4 << OP_CHECKMULTISIG;
+    BOOST_CHECK(!::IsStandard(one_of_four, whichType));
 
-  for(int i = 0; i < 6; i++)
-    BOOST_CHECK(!::IsStandard(malformed[i]));
+    CScript malformed[6];
+    malformed[0] << OP_3 << key[0].GetPubKey() << key[1].GetPubKey() << OP_2 << OP_CHECKMULTISIG;
+    malformed[1] << OP_2 << key[0].GetPubKey() << key[1].GetPubKey() << OP_3 << OP_CHECKMULTISIG;
+    malformed[2] << OP_0 << key[0].GetPubKey() << key[1].GetPubKey() << OP_2 << OP_CHECKMULTISIG;
+    malformed[3] << OP_1 << key[0].GetPubKey() << key[1].GetPubKey() << OP_0 << OP_CHECKMULTISIG;
+    malformed[4] << OP_1 << key[0].GetPubKey() << key[1].GetPubKey() << OP_CHECKMULTISIG;
+    malformed[5] << OP_1 << key[0].GetPubKey() << key[1].GetPubKey();
+
+    for (int i = 0; i < 6; i++)
+        BOOST_CHECK(!::IsStandard(malformed[i], whichType));
 }
 
 BOOST_AUTO_TEST_CASE(multisig_Solver1)

@@ -107,26 +107,40 @@ BOOST_AUTO_TEST_CASE(test_Get)
 
 BOOST_AUTO_TEST_CASE(test_GetThrow)
 {
-  CBasicKeyStore keystore;
-  MapPrevTx dummyInputs;
-  std::vector<CTransaction> dummyTransactions = SetupDummyInputs(keystore, dummyInputs);
+    CBasicKeyStore keystore;
+    MapPrevTx dummyInputs;
+    std::vector<CTransaction> dummyTransactions = SetupDummyInputs(keystore, dummyInputs);
 
-  MapPrevTx missingInputs;
+    MapPrevTx missingInputs;
 
-  CTransaction t1;
-  t1.vin.resize(3);
-  t1.vin[0].prevout.hash = dummyTransactions[0].GetHash();
-  t1.vin[0].prevout.n = 0;
-  t1.vin[1].prevout.hash = dummyTransactions[1].GetHash();;
-  t1.vin[1].prevout.n = 0;
-  t1.vin[2].prevout.hash = dummyTransactions[1].GetHash();;
-  t1.vin[2].prevout.n = 1;
-  t1.vout.resize(2);
-  t1.vout[0].nValue = 90*CENT;
-  t1.vout[0].scriptPubKey << OP_1;
+    CTransaction t1;
+    t1.vin.resize(3);
+    t1.vin[0].prevout.hash = dummyTransactions[0].GetHash();
+    t1.vin[0].prevout.n = 0;
+    t1.vin[1].prevout.hash = dummyTransactions[1].GetHash();;
+    t1.vin[1].prevout.n = 0;
+    t1.vin[2].prevout.hash = dummyTransactions[1].GetHash();;
+    t1.vin[2].prevout.n = 1;
+    t1.vout.resize(2);
+    t1.vout[0].nValue = 90*CENT;
+    t1.vout[0].scriptPubKey << OP_1;
 
-  BOOST_CHECK_THROW(t1.AreInputsStandard(missingInputs), runtime_error);
-  BOOST_CHECK_THROW(t1.GetValueIn(missingInputs), runtime_error);
+    t.vout[0].scriptPubKey = CScript() << OP_1;
+    BOOST_CHECK(t.IsStandard());
+
+    // 80-byte TX_NULL_DATA (standard)
+    t.vout[0].scriptPubKey = CScript() << OP_RETURN << ParseHex("04678afdb0fe5548271967f1a67130b7105cd6a828e03909a67962e0ea1f61deb649f6bc3f4cef3804678afdb0fe5548271967f1a67130b7105cd6a828e03909a67962e0ea1f61deb649f6bc3f4cef38");
+    BOOST_CHECK(t.IsStandard());
+
+    // 81-byte TX_NULL_DATA (non-standard)
+    t.vout[0].scriptPubKey = CScript() << OP_RETURN << ParseHex("04678afdb0fe5548271967f1a67130b7105cd6a828e03909a67962e0ea1f61deb649f6bc3f4cef3804678afdb0fe5548271967f1a67130b7105cd6a828e03909a67962e0ea1f61deb649f6bc3f4cef3800");
+    BOOST_CHECK(!t.IsStandard());
+
+    // Only one TX_NULL_DATA permitted
+    t.vout.resize(2);
+    t.vout[0].scriptPubKey = CScript() << OP_RETURN << ParseHex("04678afdb0fe5548271967f1a67130b7105cd6a828e03909a67962e0ea1f61deb649f6bc3f4cef3804678afdb0fe5548271967f1a67130b7105cd6a828e03909a67962e0ea1f61deb649f6bc3f4cef38");
+    t.vout[1].scriptPubKey = CScript() << OP_RETURN << ParseHex("04678afdb0fe5548271967f1a67130b7105cd6a828e03909a67962e0ea1f61deb649f6bc3f4cef3804678afdb0fe5548271967f1a67130b7105cd6a828e03909a67962e0ea1f61deb649f6bc3f4cef38");
+    BOOST_CHECK(!t.IsStandard());
 }
 
 BOOST_AUTO_TEST_SUITE_END()
