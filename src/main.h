@@ -264,9 +264,7 @@ bool GetTransaction(const uint256 &hash, CTransaction &tx, uint256 &hashBlock);
 uint256 WantedByOrphan(const CBlock* pblockOrphan);
 const CBlockIndex* GetLastBlockIndex(const CBlockIndex* pindex, bool fProofOfStake);
 void SlimCoinMiner(CWallet *pwallet, bool fProofOfStake);
-/* FIXME: dubious inheritance
 CBlockIndex *pindexByHeight(s32int nHeight);
-*/
 bool GetTransaction(const uint256 &hash, CTransaction &tx, uint256 &hashBlock);
 
 //Returns the number of proof of work blocks between (not including) the

@@ -107,6 +107,7 @@ void CWalletDB::ListAccountCreditDebit(const string& strAccount, list<CAccountin
   pcursor->close();
 }
 
+
 int CWalletDB::LoadWallet(CWallet* pwallet)
 {
   pwallet->vchDefaultKey = CPubKey();
@@ -114,7 +115,6 @@ int CWalletDB::LoadWallet(CWallet* pwallet)
   vector<uint256> vWalletUpgrade;
   bool fIsEncrypted = false;
 
-  /* FIXME: dubious inheritance
   //// todo: shouldn't we catch exceptions and try to recover and continue?
   {
     LOCK(pwallet->cs_wallet);
@@ -133,7 +133,6 @@ int CWalletDB::LoadWallet(CWallet* pwallet)
       printf("Error getting wallet database cursor\n");
       return DB_CORRUPT;
     }
-    */
 
     while (true)
     {

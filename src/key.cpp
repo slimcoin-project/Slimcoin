@@ -130,6 +130,8 @@ void CKey::SetCompressedPubKey()
 void CKey::Reset()
 {
   fCompressedPubKey = false;
+  if (pkey != NULL)
+    EC_KEY_free(pkey);
   pkey = EC_KEY_new_by_curve_name(NID_secp256k1);
   if(pkey == NULL)
     throw key_error("CKey::CKey() : EC_KEY_new_by_curve_name failed");
@@ -138,6 +140,7 @@ void CKey::Reset()
 
 CKey::CKey()
 {
+  pkey = NULL;
   Reset();
 }
 
@@ -184,10 +187,25 @@ void CKey::MakeNewKey(bool fCompressed)
 bool CKey::SetPrivKey(const CPrivKey& vchPrivKey)
 {
   const unsigned char* pbegin = &vchPrivKey[0];
-  if(!d2i_ECPrivateKey(&pkey, &pbegin, vchPrivKey.size()))
+    if (d2i_ECPrivateKey(&pkey, &pbegin, vchPrivKey.size()))
+    {
+        // In testing, d2i_ECPrivateKey can return true
+        // but fill in pkey with a key that fails
+        // EC_KEY_check_key, so:
+        if (EC_KEY_check_key(pkey))
+        {
+            fSet = true;
+            return true;
+         }
+    }
+ 
+   // If vchPrivKey data is bad d2i_ECPrivateKey() can
+    // leave pkey in a state where calling EC_KEY_free()
+    // crashes. To avoid that, set pkey to NULL and
+    // leak the memory (a leak is better than a crash)
+    pkey = NULL;
+    Reset();
     return false;
-  fSet = true;
-  return true;
 }
 
 bool CKey::SetSecret(const CSecret& vchSecret, bool fCompressed)
@@ -243,12 +261,16 @@ CPrivKey CKey::GetPrivKey() const
 bool CKey::SetPubKey(const CPubKey& vchPubKey)
 {
     const unsigned char* pbegin = &vchPubKey.vchPubKey[0];
-    if (!o2i_ECPublicKey(&pkey, &pbegin, vchPubKey.vchPubKey.size()))
-        return false;
-    fSet = true;
-    if (vchPubKey.vchPubKey.size() == 33)
-        SetCompressedPubKey();
-    return true;
+    if (o2i_ECPublicKey(&pkey, &pbegin, vchPubKey.vchPubKey.size()))
+    {
+        fSet = true;
+        if (vchPubKey.vchPubKey.size() == 33)
+            SetCompressedPubKey();
+        return true;
+    }
+    pkey = NULL;
+    Reset();
+    return false;
 }
 
 CPubKey CKey::GetPubKey() const
@@ -308,7 +330,10 @@ bool CKey::SignCompact(uint256 hash, std::vector<unsigned char>& vchSig)
     }
 
     if(nRecId == -1)
+        {
+            ECDSA_SIG_free(sig);
       throw key_error("CKey::SignCompact() : unable to construct recoverable key");
+        }
 
     vchSig[0] = nRecId+27+(fCompressedPubKey ? 4 : 0);
     BN_bn2bin(sig->r,&vchSig[33-(nBitsR+7)/8]);
@@ -347,9 +372,92 @@ bool CKey::SetCompactSignature(uint256 hash, const std::vector<unsigned char>& v
     ECDSA_SIG_free(sig);
     return true;
   }
+  ECDSA_SIG_free(sig);
   return false;
 }
 
+/* FIXME: add later
+bool CKey::Verify(uint256 hash, const std::vector<unsigned char>& vchSigParam)
+{
+    std::vector<unsigned char> vchSig(vchSigParam.begin(), vchSigParam.end());
+
+    if (!NormalizeSignature(vchSig))
+        return false;
+*/
+bool CKey::Verify(uint256 hash, const std::vector<unsigned char>& vchSig)
+{
+    if (vchSig.empty())
+        return false;
+
+    // New versions of OpenSSL will reject non-canonical DER signatures. de/re-serialize first.
+    unsigned char *norm_der = NULL;
+    ECDSA_SIG *norm_sig = ECDSA_SIG_new();
+    const unsigned char* sigptr = &vchSig[0];
+    assert(norm_sig);
+    if (d2i_ECDSA_SIG(&norm_sig, &sigptr, vchSig.size()) == NULL)
+    {
+        /* As of OpenSSL 1.0.0p d2i_ECDSA_SIG frees and nulls the pointer on
+         * error. But OpenSSL's own use of this function redundantly frees the
+         * result. As ECDSA_SIG_free(NULL) is a no-op, and in the absence of a
+         * clear contract for the function behaving the same way is more
+         * conservative.
+         */
+        ECDSA_SIG_free(norm_sig);
+        return false;
+    }
+    int derlen = i2d_ECDSA_SIG(norm_sig, &norm_der);
+    ECDSA_SIG_free(norm_sig);
+    if (derlen <= 0)
+        return false;
+
+    // -1 = error, 0 = bad sig, 1 = good
+    bool ret = ECDSA_verify(0, (unsigned char*)&hash, sizeof(hash), norm_der, derlen, pkey) == 1;
+    OPENSSL_free(norm_der);
+    return ret;
+}
+
+bool CKey::VerifyCompact(uint256 hash, const std::vector<unsigned char>& vchSig)
+{
+  CKey key;
+  if(!key.SetCompactSignature(hash, vchSig))
+    return false;
+  if(GetPubKey() != key.GetPubKey())
+    return false;
+
+  return true;
+}
+
+bool CKey::IsValid()
+{
+  if(!fSet)
+    return false;
+
+  bool fCompr;
+  CSecret secret = GetSecret(fCompr);
+  CKey key2;
+  key2.SetSecret(secret, fCompr);
+  return GetPubKey() == key2.GetPubKey();
+}
+
+bool CPubKey::RecoverCompact(const uint256 &hash, const std::vector<unsigned char>& vchSig) {
+    if (vchSig.size() != 65)
+        return false;
+    CKey key;
+    if (!key.SetCompactSignature(hash, vchSig))
+        return false;
+    vchPubKey = key.GetPubKey().Raw();
+    return true;
+}
+
+bool CPubKey::IsFullyValid() const {
+    if (!IsValid())
+        return false;
+    CKey key;
+    if (!key.SetPubKey(*this))
+        return false;
+    return true;
+}
+/*
 static bool ParseLength(
         const std::vector<unsigned char>::iterator& begin,
         const std::vector<unsigned char>::iterator& end,
@@ -454,205 +562,6 @@ static bool NormalizeSignature(std::vector<unsigned char>& vchSig)
     vchSig.insert(vchSig.end(), vchSLength.begin(), vchSLength.end());
     vchSig.insert(vchSig.end(), S.begin(), S.end());
 
-    int64 nLength = 0;
-    for (unsigned char i = 0; i < nLengthBytes; i++)
-    {
-        it++;
-        if (it == end)
-            return false;
-        nLength = (nLength << 8) | *it;
-        if (nLength > 0x7fffffff)
-            return false;
-        nLengthSizeRet++;
-    }
-    nLengthRet = nLength;
-    return true;
-}
-
-static std::vector<unsigned char> EncodeLength(size_t nLength)
-{
-    std::vector<unsigned char> vchRet;
-    if (nLength < 0x80)
-        vchRet.push_back(nLength);
-    else
-    {
-        vchRet.push_back(0x84);
-        vchRet.push_back((nLength >> 24) & 0xff);
-        vchRet.push_back((nLength >> 16) & 0xff);
-        vchRet.push_back((nLength >> 8) & 0xff);
-        vchRet.push_back(nLength & 0xff);
-    }
-    return vchRet;
-}
-
-static bool NormalizeSignature(std::vector<unsigned char>& vchSig)
-{
-    // Prevent the problem described here: https://lists.linuxfoundation.org/pipermail/bitcoin-dev/2015-July/009697.html
-    // by removing the extra length bytes
-
-    if (vchSig.size() < 2 || vchSig[0] != 0x30)
-        return false;
-
-    size_t nTotalLength, nTotalLengthSize;
-    if (!ParseLength(vchSig.begin() + 1, vchSig.end(), nTotalLength, nTotalLengthSize))
-        return false;
-
-    size_t nRStart = 1 + nTotalLengthSize;
-    if (vchSig.size() < nRStart + 2 || vchSig[nRStart] != 0x02)
-        return false;
-
-    size_t nRLength, nRLengthSize;
-    if (!ParseLength(vchSig.begin() + nRStart + 1, vchSig.end(), nRLength, nRLengthSize))
-        return false;
-    const size_t nRDataStart = nRStart + 1 + nRLengthSize;
-    std::vector<unsigned char> R(vchSig.begin() + nRDataStart, vchSig.begin() + nRDataStart + nRLength);
-
-    size_t nSStart = nRStart + 1 + nRLengthSize + nRLength;
-    if (vchSig.size() < nSStart + 2 || vchSig[nSStart] != 0x02)
-        return false;
-
-    size_t nSLength, nSLengthSize;
-    if (!ParseLength(vchSig.begin() + nSStart + 1, vchSig.end(), nSLength, nSLengthSize))
-        return false;
-    const size_t nSDataStart = nSStart + 1 + nSLengthSize;
-    std::vector<unsigned char> S(vchSig.begin() + nSDataStart, vchSig.begin() + nSDataStart + nSLength);
-
-    std::vector<unsigned char> vchRLength = EncodeLength(R.size());
-    std::vector<unsigned char> vchSLength = EncodeLength(S.size());
-
-    nTotalLength = 1 + vchRLength.size() + R.size() + 1 + vchSLength.size() + S.size();
-    std::vector<unsigned char> vchTotalLength = EncodeLength(nTotalLength);
-
-    vchSig.clear();
-    vchSig.reserve(1 + vchTotalLength.size() + nTotalLength);
-    vchSig.push_back(0x30);
-    vchSig.insert(vchSig.end(), vchTotalLength.begin(), vchTotalLength.end());
-
-    vchSig.push_back(0x02);
-    vchSig.insert(vchSig.end(), vchRLength.begin(), vchRLength.end());
-    vchSig.insert(vchSig.end(), R.begin(), R.end());
-
-    vchSig.push_back(0x02);
-    vchSig.insert(vchSig.end(), vchSLength.begin(), vchSLength.end());
-    vchSig.insert(vchSig.end(), S.begin(), S.end());
-
-    return true;
-}
-
-bool CKey::Verify(uint256 hash, const std::vector<unsigned char>& vchSigParam)
-{
-    std::vector<unsigned char> vchSig(vchSigParam.begin(), vchSigParam.end());
-
-    if (!NormalizeSignature(vchSig))
-        return false;
-
-    if (vchSig.empty())
-        return false;
-
-    // New versions of OpenSSL will reject non-canonical DER signatures. de/re-serialize first.
-    unsigned char *norm_der = NULL;
-    ECDSA_SIG *norm_sig = ECDSA_SIG_new();
-    const unsigned char* sigptr = &vchSig[0];
-    assert(norm_sig);
-    if (d2i_ECDSA_SIG(&norm_sig, &sigptr, vchSig.size()) == NULL)
-    {
-        /* As of OpenSSL 1.0.0p d2i_ECDSA_SIG frees and nulls the pointer on
-         * error. But OpenSSL's own use of this function redundantly frees the
-         * result. As ECDSA_SIG_free(NULL) is a no-op, and in the absence of a
-         * clear contract for the function behaving the same way is more
-         * conservative.
-         */
-        ECDSA_SIG_free(norm_sig);
-        return false;
-    }
-    int derlen = i2d_ECDSA_SIG(norm_sig, &norm_der);
-    ECDSA_SIG_free(norm_sig);
-    if (derlen <= 0)
-        return false;
-
-    // -1 = error, 0 = bad sig, 1 = good
-    bool ret = ECDSA_verify(0, (unsigned char*)&hash, sizeof(hash), norm_der, derlen, pkey) == 1;
-    OPENSSL_free(norm_der);
-    return ret;
-}
-
-bool CKey::VerifyCompact(uint256 hash, const std::vector<unsigned char>& vchSig)
-{
-    std::vector<unsigned char> vchSig(vchSigParam.begin(), vchSigParam.end());
-
-    if (!NormalizeSignature(vchSig))
-        return false;
-
-    if (vchSig.empty())
-        return false;
-
-    // New versions of OpenSSL will reject non-canonical DER signatures. de/re-serialize first.
-    unsigned char *norm_der = NULL;
-    ECDSA_SIG *norm_sig = ECDSA_SIG_new();
-    const unsigned char* sigptr = &vchSig[0];
-    assert(norm_sig);
-    if (d2i_ECDSA_SIG(&norm_sig, &sigptr, vchSig.size()) == NULL)
-    {
-        /* As of OpenSSL 1.0.0p d2i_ECDSA_SIG frees and nulls the pointer on
-         * error. But OpenSSL's own use of this function redundantly frees the
-         * result. As ECDSA_SIG_free(NULL) is a no-op, and in the absence of a
-         * clear contract for the function behaving the same way is more
-         * conservative.
-         */
-        ECDSA_SIG_free(norm_sig);
-        return false;
-    }
-    int derlen = i2d_ECDSA_SIG(norm_sig, &norm_der);
-    ECDSA_SIG_free(norm_sig);
-    if (derlen <= 0)
-        return false;
-
-    // -1 = error, 0 = bad sig, 1 = good
-    bool ret = ECDSA_verify(0, (unsigned char*)&hash, sizeof(hash), norm_der, derlen, pkey) == 1;
-    OPENSSL_free(norm_der);
-    return ret;
-}
-
-bool CKey::VerifyCompact(uint256 hash, const std::vector<unsigned char>& vchSig)
-{
-  CKey key;
-  if(!key.SetCompactSignature(hash, vchSig))
-    return false;
-  if(GetPubKey() != key.GetPubKey())
-    return false;
-
-  return true;
-}
-
-bool CKey::IsValid()
-{
-  if(!fSet)
-    return false;
-
-  bool fCompr;
-  CSecret secret = GetSecret(fCompr);
-  CKey key2;
-  key2.SetSecret(secret, fCompr);
-  return GetPubKey() == key2.GetPubKey();
-}
-
-/*
-bool CPubKey::RecoverCompact(const uint256 &hash, const std::vector<unsigned char>& vchSig) {
-    if (vchSig.size() != 65)
-        return false;
-    CKey key;
-    if (!key.SetCompactSignature(hash, vchSig))
-        return false;
-    vchPubKey = key.GetPubKey();
-    return true;
-}
-
-bool CPubKey::IsFullyValid() const {
-    if (!IsValid())
-        return false;
-    CKey key;
-    if (!key.SetPubKey(*this))
-        return false;
     return true;
 }
 */
