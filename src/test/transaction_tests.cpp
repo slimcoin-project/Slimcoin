@@ -156,4 +156,29 @@ BOOST_AUTO_TEST_CASE(test_GetThrow)
     BOOST_CHECK(!t.IsStandard());
 }
 
+BOOST_AUTO_TEST_CASE(test_GetThrow)
+{
+    CBasicKeyStore keystore;
+    MapPrevTx dummyInputs;
+    std::vector<CTransaction> dummyTransactions = SetupDummyInputs(keystore, dummyInputs);
+
+    MapPrevTx missingInputs;
+
+    CTransaction t;
+    t.vin.resize(3);
+    t.vin[0].prevout.hash = dummyTransactions[0].GetHash();
+    t.vin[0].prevout.n = 0;
+    t.vin[1].prevout.hash = dummyTransactions[1].GetHash();
+    t.vin[1].prevout.n = 0;
+    t.vin[2].prevout.hash = dummyTransactions[1].GetHash();
+    t.vin[2].prevout.n = 1;
+    t.vout.resize(2);
+    t.vout[0].nValue = 90*CENT;
+    t.vout[0].scriptPubKey << OP_1;
+
+    t.vout[0].scriptPubKey = CScript() << OP_1;
+    BOOST_CHECK_THROW(t.AreInputsStandard(missingInputs), runtime_error);
+    BOOST_CHECK_THROW(t.GetValueIn(missingInputs), runtime_error);
+}
+
 BOOST_AUTO_TEST_SUITE_END()
