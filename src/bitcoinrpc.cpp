@@ -3533,7 +3533,39 @@ Value sendalert(const Array& params, bool fHelp)
     return result;
 }
 
+Value getrawmempool(const Array& params, bool fHelp)
+{
+    if (fHelp || params.size() != 0)
+        throw runtime_error(
+            "getrawmempool\n"
+            "Returns all transaction ids in memory pool.");
 
+    vector<uint256> vtxid;
+    mempool.queryHashes(vtxid);
+
+    Array a;
+    BOOST_FOREACH(const uint256& hash, vtxid)
+        a.push_back(hash.ToString());
+
+    return a;
+}
+
+Value getrawmempool(const Array& params, bool fHelp)
+{
+    if (fHelp || params.size() != 0)
+        throw runtime_error(
+            "getrawmempool\n"
+            "Returns all transaction ids in memory pool.");
+
+    vector<uint256> vtxid;
+    mempool.queryHashes(vtxid);
+
+    Array a;
+    BOOST_FOREACH(const uint256& hash, vtxid)
+        a.push_back(hash.ToString());
+
+    return a;
+}
 
 //
 // Call Table
@@ -3542,72 +3574,74 @@ Value sendalert(const Array& params, bool fHelp)
 
 static const CRPCCommand vRPCCommands[] =
 { //  name                      function                 safe mode?
-    //  ------------------------  -----------------------  ----------
-    { "help",                     &help,                   true   },
-    { "stop",                     &stop,                   true   },
-    { "calcburnhash",             &calcburnhash,           true   },
-    { "burncoins",                &burncoins,              false  },
-    { "getblockcount",            &getblockcount,          true   },
-    { "getblocknumber",           &getblocknumber,         true   },
-    { "getburndata",              &getburndata,            true   },
-    { "getconnectioncount",       &getconnectioncount,     true   },
-    { "getdifficulty",            &getdifficulty,          true   },
-    { "getpeerinfo",              &getpeerinfo,            true   },
-    { "getgenerate",              &getgenerate,            true   },
-    { "setgenerate",              &setgenerate,            true   },
-    { "gethashespersec",          &gethashespersec,        true   },
-    { "getnetworkghps",           &getnetworkghps,         true   },
-    { "getinfo",                  &getinfo,                true   },
-    { "getmininginfo",            &getmininginfo,          true   },
-    { "getnewaddress",            &getnewaddress,          true   },
-    { "getaccountaddress",        &getaccountaddress,      true   },
-    { "setaccount",               &setaccount,             true   },
-    { "getaccount",               &getaccount,             false  },
-    { "getaddressesbyaccount",    &getaddressesbyaccount,  true   },
-    { "sendtoaddress",            &sendtoaddress,          false  },
-    { "getreceivedbyaddress",     &getreceivedbyaddress,   false  },
-    { "getreceivedbyaccount",     &getreceivedbyaccount,   false  },
-    { "listreceivedbyaddress",    &listreceivedbyaddress,  false  },
-    { "listreceivedbyaccount",    &listreceivedbyaccount,  false  },
-    { "backupwallet",             &backupwallet,           true   },
-    { "keypoolrefill",            &keypoolrefill,          true   },
-    { "walletpassphrase",         &walletpassphrase,       true   },
-    { "walletpassphrasechange",   &walletpassphrasechange, false  },
-    { "walletlock",               &walletlock,             true   },
-    { "encryptwallet",            &encryptwallet,          false  },
-    { "validateaddress",          &validateaddress,        true   },
-    { "getbalance",               &getbalance,             false  },
-    { "move",                     &movecmd,                false  },
-    { "sendfrom",                 &sendfrom,               false  },
-    { "sendmany",                 &sendmany,               false  },
-    { "addmultisigaddress",       &addmultisigaddress,     false  },
-    { "getblock",                 &getblock,               false  },
-    { "getblockhash",             &getblockhash,           false  },
-    { "gettransaction",           &gettransaction,         false  },
-    { "listtransactions",         &listtransactions,       false  },
-    { "listburnminted",           &listburnminted,         false  },
-    { "signmessage",              &signmessage,            false  },
-    { "verifymessage",            &verifymessage,          false  },
-    { "getwork",                  &getwork,                true   },
-    { "getblocktemplate",         &getblocktemplate,       true   },
-    { "submitblock",              &submitblock,            false  },
-    { "listaccounts",             &listaccounts,           false  },
-    { "settxfee",                 &settxfee,               false  },
-    { "getmemorypool",            &getmemorypool,          true   },
-    { "listsinceblock",           &listsinceblock,         false  },
-    { "dumpprivkey",              &dumpprivkey,            false  },
-    { "importprivkey",            &importprivkey,          false  },
-    { "importpassphrase",         &importpassphrase,       false  },
-    { "getrawtransaction",        &getrawtransaction,      false  },
-    { "sendrawtransaction",       &sendrawtransaction,     false  },
-    { "signrawtransaction",       &signrawtransaction,     false  },
-    { "getcheckpoint",            &getcheckpoint,          true   },
-    { "reservebalance",           &reservebalance,         false  },
-    { "checkwallet",              &checkwallet,            false  },
-    { "repairwallet",             &repairwallet,           false  },
-    { "makekeypair",              &makekeypair,            false  },
-    { "sendalert",                &sendalert,              false  },
-    { "getsubsidy",               &getsubsidy,             false  },
+  //  ------------------------  -----------------------  ----------
+    { "help",                   &help,                   true },
+    { "stop",                   &stop,                   true },
+    { "calcburnhash",           &calcburnhash,           true },
+    { "burncoins",              &burncoins,              false},
+    { "getblockcount",          &getblockcount,          true },
+    { "getblocknumber",         &getblocknumber,         true },
+    { "getburndata",            &getburndata,            true },
+    { "getconnectioncount",     &getconnectioncount,     true },
+    { "getpeerinfo",            &getpeerinfo,            true },
+    { "getdifficulty",          &getdifficulty,          true },
+    { "getgenerate",            &getgenerate,            true },
+    { "setgenerate",            &setgenerate,            true },
+    { "gethashespersec",        &gethashespersec,        true },
+    { "getnetworkghps",         &getnetworkghps,         true },
+    { "getinfo",                &getinfo,                true },
+    { "getmininginfo",          &getmininginfo,          true },
+    { "getnewaddress",          &getnewaddress,          true },
+    { "getaccountaddress",      &getaccountaddress,      true },
+    { "setaccount",             &setaccount,             true },
+    { "getaccount",             &getaccount,             false },
+    { "getaddressesbyaccount",  &getaddressesbyaccount,  true },
+    { "sendtoaddress",          &sendtoaddress,          false },
+    { "getreceivedbyaddress",   &getreceivedbyaddress,   false },
+    { "getreceivedbyaccount",   &getreceivedbyaccount,   false },
+    { "listreceivedbyaddress",  &listreceivedbyaddress,  false },
+    { "listreceivedbyaccount",  &listreceivedbyaccount,  false },
+    { "backupwallet",           &backupwallet,           true },
+    { "keypoolrefill",          &keypoolrefill,          true },
+    { "walletpassphrase",       &walletpassphrase,       true },
+    { "walletpassphrasechange", &walletpassphrasechange, false },
+    { "walletlock",             &walletlock,             true },
+    { "encryptwallet",          &encryptwallet,          false },
+    { "validateaddress",        &validateaddress,        true },
+    { "getbalance",             &getbalance,             false },
+    { "move",                   &movecmd,                false },
+    { "sendfrom",               &sendfrom,               false },
+    { "sendmany",               &sendmany,               false },
+    { "addmultisigaddress",     &addmultisigaddress,     false },
+    { "getblock",               &getblock,               false },
+    { "getblockhash",           &getblockhash,           false },
+    { "gettransaction",         &gettransaction,         false },
+    { "listtransactions",       &listtransactions,       false },
+    { "listburnminted",         &listburnminted,         false  },
+    { "signmessage",            &signmessage,            false  },
+    { "verifymessage",          &verifymessage,          false  },
+    { "getwork",                &getwork,                true   },
+    { "listaccounts",           &listaccounts,           false  },
+    { "settxfee",               &settxfee,               false  },
+    { "getblocktemplate",       &getblocktemplate,       true   },
+    { "submitblock",            &submitblock,            false  },
+    { "listsinceblock",         &listsinceblock,         false  },
+    { "dumpprivkey",            &dumpprivkey,            false  },
+    { "importprivkey",          &importprivkey,          false },
+    { "getcheckpoint",          &getcheckpoint,          true },
+    { "reservebalance",         &reservebalance,         false},
+    { "checkwallet",            &checkwallet,            false},
+    { "repairwallet",           &repairwallet,           false},
+    { "makekeypair",            &makekeypair,            false},
+    { "sendalert",              &sendalert,              false},
+    { "listunspent",            &listunspent,            false},
+    { "getrawtransaction",      &getrawtransaction,      false},
+    { "createrawtransaction",   &createrawtransaction,   false},
+    { "decoderawtransaction",   &decoderawtransaction,   false},
+    { "signrawtransaction",     &signrawtransaction,     false},
+    { "sendrawtransaction",     &sendrawtransaction,     false},
+    { "getmemorypool",          &getmemorypool,          true },
+    { "getrawmempool",          &getrawmempool,          true },
 };
 
 CRPCTable::CRPCTable()
