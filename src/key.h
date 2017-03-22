@@ -139,8 +139,8 @@ public:
     bool SetSecret(const CSecret& vchSecret, bool fCompressed = false);
     CSecret GetSecret(bool &fCompressed) const;
     CPrivKey GetPrivKey() const;
-    bool SetPubKey(const std::vector<unsigned char>& vchPubKey);
-    std::vector<unsigned char> GetPubKey() const;
+    bool SetPubKey(const CPubKey& vchPubKey);
+    CPubKey GetPubKey() const;
 
     bool Sign(uint256 hash, std::vector<unsigned char>& vchSig);
 

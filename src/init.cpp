@@ -349,16 +349,13 @@ bool AppInit2(int argc, char *argv[])
   {
     int nMaxVersion = GetArg("-upgradewallet", 0);
 
-    if(!nMaxVersion) // the -walletupgrade without argument case
+    if(nMaxVersion == 0) // the -walletupgrade without argument case
     {
       printf("Performing wallet upgrade to %i\n", FEATURE_LATEST);
       nMaxVersion = CLIENT_VERSION;
-      pwalletMain->SetMinVersion(FEATURE_LATEST); // permanently upgrade the wallet immediately
-    }else
-      printf("Allowing wallet upgrade up to %i\n", nMaxVersion);
-
+    }
     if(nMaxVersion < pwalletMain->GetVersion())
-      strErrors << _("Cannot downgrade wallet") << "\n";
+        strErrors << _("Cannot downgrade wallet") << "\n";
 
     pwalletMain->SetMaxVersion(nMaxVersion);
   }
@@ -368,14 +365,12 @@ bool AppInit2(int argc, char *argv[])
     // Create new keyUser and set as default key
     RandAddSeedPerfmon();
 
-    std::vector<unsigned char> newDefaultKey;
-    if(!pwalletMain->GetKeyFromPool(newDefaultKey, false))
-      strErrors << _("Cannot initialize keypool") << "\n";
-
+    CPubKey newDefaultKey;
+    if (!pwalletMain->GetKeyFromPool(newDefaultKey, false))
+        strErrors << _("Cannot initialize keypool") << "\n";
     pwalletMain->SetDefaultKey(newDefaultKey);
-
-    if(!pwalletMain->SetAddressBookName(CBitcoinAddress(pwalletMain->vchDefaultKey), ""))
-      strErrors << _("Cannot write default address") << "\n";
+    if (!pwalletMain->SetAddressBookName(pwalletMain->vchDefaultKey.GetID(), ""))
+        strErrors << _("Cannot write default address") << "\n";
   }
 
   printf("%s", strErrors.str().c_str());
@@ -588,81 +583,81 @@ std::string HelpMessage()
     string strUsage = string() +
       _("Slimcoin version") + " " + FormatFullVersion() + "\n\n" +
       _("Usage:") + "\t\t\t\t\t\t\t\t\t\t\n" +
-      "  slimcoind [options]                   \t  " + "\n" +
-      "  slimcoind [options] <command> [params]\t  " + _("Send command to -server or slimcoind") + "\n" +
-      "  slimcoind [options] help              \t\t  " + _("List commands") + "\n" +
-      "  slimcoind [options] help <command>    \t\t  " + _("Get help for a command") + "\n" +
-      _("Options:") + "\n" +
-      "  -conf=<file>     \t\t  " + _("Specify configuration file (default: slimcoin.conf)") + "\n" +
-      "  -pid=<file>      \t\t  " + _("Specify pid file (default: slimcoind.pid)") + "\n" +
-      "  -gen             \t\t  " + _("Generate coins") + "\n" +
-      "  -gen=0           \t\t  " + _("Don't generate coins") + "\n" +
-      "  -min             \t\t  " + _("Start minimized") + "\n" +
-      "  -splash          \t\t  " + _("Show splash screen on startup (default: 1)") + "\n" +
-      "  -datadir=<dir>   \t\t  " + _("Specify data directory") + "\n" +
-      "  -dbcache=<n>     \t\t  " + _("Set database cache size in megabytes (default: 25)") + "\n" +
-      "  -dblogsize=<n>   \t\t  " + _("Set database disk log size in megabytes (default: 100)") + "\n" +
-      "  -timeout=<n>     \t  "   + _("Specify connection timeout (in milliseconds)") + "\n" +
-      "  -proxy=<ip:port> \t  "   + _("Connect through socks4 proxy") + "\n" +
-      "  -dns             \t  "   + _("Allow DNS lookups for addnode and connect") + "\n" +
-      "  -port=<port>     \t\t  " + _("Listen for connections on <port> (default: 41682 or testnet: 41684)") + "\n" +
-      "  -maxconnections=<n>\t  " + _("Maintain at most <n> connections to peers (default: 125)") + "\n" +
-      "  -addnode=<ip>    \t  "   + _("Add a node to connect to and attempt to keep the connection open") + "\n" +
-      "  -connect=<ip>    \t\t  " + _("Connect only to the specified node") + "\n" +
-      "  -listen          \t  "   + _("Accept connections from outside (default: 1)") + "\n" +
+        "  slimcoind [options]                   \t  " + "\n" +
+        "  slimcoind [options] <command> [params]\t  " + _("Send command to -server or slimcoind") + "\n" +
+        "  slimcoind [options] help              \t\t  " + _("List commands") + "\n" +
+        "  slimcoind [options] help <command>    \t\t  " + _("Get help for a command") + "\n" +
+        _("Options:") + "\n" +
+        "  -conf=<file>     \t\t  " + _("Specify configuration file (default: slimcoin.conf)") + "\n" +
+        "  -pid=<file>      \t\t  " + _("Specify pid file (default: slimcoind.pid)") + "\n" +
+        "  -gen             \t\t  " + _("Generate coins") + "\n" +
+        "  -gen=0           \t\t  " + _("Don't generate coins") + "\n" +
+        "  -min             \t\t  " + _("Start minimized") + "\n" +
+        "  -splash          \t\t  " + _("Show splash screen on startup (default: 1)") + "\n" +
+        "  -datadir=<dir>   \t\t  " + _("Specify data directory") + "\n" +
+        "  -dbcache=<n>     \t\t  " + _("Set database cache size in megabytes (default: 25)") + "\n" +
+        "  -dblogsize=<n>   \t\t  " + _("Set database disk log size in megabytes (default: 100)") + "\n" +
+        "  -timeout=<n>     \t  "   + _("Specify connection timeout (in milliseconds)") + "\n" +
+        "  -proxy=<ip:port> \t  "   + _("Connect through socks4 proxy") + "\n" +
+        "  -dns             \t  "   + _("Allow DNS lookups for addnode and connect") + "\n" +
+        "  -port=<port>     \t\t  " + _("Listen for connections on <port> (default: 41682 or testnet: 41684)") + "\n" +
+        "  -maxconnections=<n>\t  " + _("Maintain at most <n> connections to peers (default: 125)") + "\n" +
+        "  -addnode=<ip>    \t  "   + _("Add a node to connect to and attempt to keep the connection open") + "\n" +
+        "  -connect=<ip>    \t\t  " + _("Connect only to the specified node") + "\n" +
+        "  -listen          \t  "   + _("Accept connections from outside (default: 1)") + "\n" +
 #ifdef QT_GUI
-      "  -lang=<lang>     \t\t  " + _("Set language, for example \"de_DE\" (default: system locale)") + "\n" +
+        "  -lang=<lang>     \t\t  " + _("Set language, for example \"de_DE\" (default: system locale)") + "\n" +
 #endif
-      "  -dnsseed         \t  "   + _("Find peers using DNS lookup (default: 1)") + "\n" +
-      "  -banscore=<n>    \t  "   + _("Threshold for disconnecting misbehaving peers (default: 100)") + "\n" +
-      "  -bantime=<n>     \t  "   + _("Number of seconds to keep misbehaving peers from reconnecting (default: 86400)") + "\n" +
-      "  -maxreceivebuffer=<n>\t " + _("Maximum per-connection receive buffer, <n>*1000 bytes (default: 10000)") + "\n" +
-      "  -maxsendbuffer=<n>\t    "   + _("Maximum per-connection send buffer, <n>*1000 bytes (default: 10000)") + "\n" +
-      "  -maxorphanblocks=<n>\t  "  + _("Maximum number of orphan blocks to store in the memory (default: 750)") + "\n" +
+        "  -dnsseed         \t  "   + _("Find peers using DNS lookup (default: 1)") + "\n" +
+        "  -banscore=<n>    \t  "   + _("Threshold for disconnecting misbehaving peers (default: 100)") + "\n" +
+        "  -bantime=<n>     \t  "   + _("Number of seconds to keep misbehaving peers from reconnecting (default: 86400)") + "\n" +
+        "  -maxreceivebuffer=<n>\t " + _("Maximum per-connection receive buffer, <n>*1000 bytes (default: 10000)") + "\n" +
+        "  -maxsendbuffer=<n>\t    "   + _("Maximum per-connection send buffer, <n>*1000 bytes (default: 10000)") + "\n" +
+        "  -maxorphanblocks=<n>\t  "  + _("Maximum number of orphan blocks to store in the memory (default: 750)") + "\n" +
 #ifdef USE_UPNP
 #if USE_UPNP
-      "  -upnp            \t  "   + _("Use Universal Plug and Play to map the listening port (default: 1)") + "\n" +
+        "  -upnp            \t  "   + _("Use Universal Plug and Play to map the listening port (default: 1)") + "\n" +
 #else
-      "  -upnp            \t  "   + _("Use Universal Plug and Play to map the listening port (default: 0)") + "\n" +
+        "  -upnp            \t  "   + _("Use Universal Plug and Play to map the listening port (default: 0)") + "\n" +
 #endif
-      "  -detachdb        \t  "   + _("Detach block and address databases. Increases shutdown time (default: 0)") + "\n" +
+        "  -detachdb        \t  "   + _("Detach block and address databases. Increases shutdown time (default: 0)") + "\n" +
 #endif
-      "  -paytxfee=<amt>  \t  "   + _("Fee per KB to add to transactions you send") + "\n" +
+        "  -paytxfee=<amt>  \t  "   + _("Fee per KB to add to transactions you send") + "\n" +
 #ifdef QT_GUI
-      "  -server          \t\t  " + _("Accept command line and JSON-RPC commands") + "\n" +
+        "  -server          \t\t  " + _("Accept command line and JSON-RPC commands") + "\n" +
 #endif
 #if !defined(WIN32) && !defined(QT_GUI)
-      "  -daemon          \t\t  " + _("Run in the background as a daemon and accept commands") + "\n" +
+        "  -daemon          \t\t  " + _("Run in the background as a daemon and accept commands") + "\n" +
 #endif
-      "  -testnet         \t\t  " + _("Use the test network") + "\n" +
-      "  -debug           \t\t  " + _("Output extra debugging information") + "\n" +
-      "  -logtimestamps   \t  "   + _("Prepend debug output with timestamp") + "\n" +
-      "  -printtoconsole  \t  "   + _("Send trace/debug info to console instead of debug.log file") + "\n" +
+        "  -testnet         \t\t  " + _("Use the test network") + "\n" +
+        "  -debug           \t\t  " + _("Output extra debugging information") + "\n" +
+        "  -logtimestamps   \t  "   + _("Prepend debug output with timestamp") + "\n" +
+        "  -printtoconsole  \t  "   + _("Send trace/debug info to console instead of debug.log file") + "\n" +
 #ifdef WIN32
-      "  -printtodebugger \t  "   + _("Send trace/debug info to debugger") + "\n" +
+        "  -printtodebugger \t  "   + _("Send trace/debug info to debugger") + "\n" +
 #endif
-      "  -rpcuser=<user>  \t  "   + _("Username for JSON-RPC connections") + "\n" +
-      "  -rpcpassword=<pw>\t  "   + _("Password for JSON-RPC connections") + "\n" +
-      "  -rpcport=<port>  \t\t  " + _("Listen for JSON-RPC connections on <port> (default: 41683)") + "\n" +
-      "  -rpcallowip=<ip> \t\t  " + _("Allow JSON-RPC connections from specified IP address") + "\n" +
-      "  -rpcconnect=<ip> \t  "   + _("Send commands to node running on <ip> (default: 127.0.0.1)") + "\n" +
-      "  -blocknotify=<cmd> "     + _("Execute command when the best block changes (%s in cmd is replaced by block hash)") + "\n" +
-      "  -walletnotify=<cmd> "    + _("Execute command when a wallet transaction changes (%s in cmd is replaced by TxID)") + "\n" +
-      "  -upgradewallet   \t  "   + _("Upgrade wallet to latest format") + "\n" +
-      "  -keypool=<n>     \t  "   + _("Set key pool size to <n> (default: 100)") + "\n" +
-      "  -rescan          \t  "   + _("Rescan the block chain for missing wallet transactions") + "\n" +
-      "  -checkblocks=<n> \t\t  " + _("How many blocks to check at startup (default: 2500, 0 = all)") + "\n" +
-      "  -checklevel=<n>  \t\t  " + _("How thorough the block verification is (0-6, default: 1)") + "\n";
+        "  -rpcuser=<user>  \t  "   + _("Username for JSON-RPC connections") + "\n" +
+        "  -rpcpassword=<pw>\t  "   + _("Password for JSON-RPC connections") + "\n" +
+        "  -rpcport=<port>  \t\t  " + _("Listen for JSON-RPC connections on <port> (default: 41683)") + "\n" +
+        "  -rpcallowip=<ip> \t\t  " + _("Allow JSON-RPC connections from specified IP address") + "\n" +
+        "  -rpcconnect=<ip> \t  "   + _("Send commands to node running on <ip> (default: 127.0.0.1)") + "\n" +
+        "  -blocknotify=<cmd> "     + _("Execute command when the best block changes (%s in cmd is replaced by block hash)") + "\n" +
+        "  -walletnotify=<cmd> "    + _("Execute command when a wallet transaction changes (%s in cmd is replaced by TxID)") + "\n" +
+        "  -upgradewallet   \t  "   + _("Upgrade wallet to latest format") + "\n" +
+        "  -keypool=<n>     \t  "   + _("Set key pool size to <n> (default: 100)") + "\n" +
+        "  -rescan          \t  "   + _("Rescan the block chain for missing wallet transactions") + "\n" +
+        "  -checkblocks=<n> \t\t  " + _("How many blocks to check at startup (default: 2500, 0 = all)") + "\n" +
+        "  -checklevel=<n>  \t\t  " + _("How thorough the block verification is (0-6, default: 1)") + "\n";
 
-    strUsage += string() +
-      _("\nSSL options: (see the Bitcoin Wiki for SSL setup instructions)") + "\n" +
-      "  -rpcssl                                \t  " + _("Use OpenSSL (https) for JSON-RPC connections") + "\n" +
-      "  -rpcsslcertificatechainfile=<file.cert>\t  " + _("Server certificate file (default: server.cert)") + "\n" +
-      "  -rpcsslprivatekeyfile=<file.pem>       \t  " + _("Server private key (default: server.pem)") + "\n" +
-      "  -rpcsslciphers=<ciphers>               \t  " + _("Acceptable ciphers (default: TLSv1+HIGH:!SSLv2:!aNULL:!eNULL:!AH:!3DES:@STRENGTH)") + "\n";
+      strUsage += string() +
+        _("\nSSL options: (see the Bitcoin Wiki for SSL setup instructions)") + "\n" +
+        "  -rpcssl                                \t  " + _("Use OpenSSL (https) for JSON-RPC connections") + "\n" +
+        "  -rpcsslcertificatechainfile=<file.cert>\t  " + _("Server certificate file (default: server.cert)") + "\n" +
+        "  -rpcsslprivatekeyfile=<file.pem>       \t  " + _("Server private key (default: server.pem)") + "\n" +
+        "  -rpcsslciphers=<ciphers>               \t  " + _("Acceptable ciphers (default: TLSv1+HIGH:!SSLv2:!aNULL:!eNULL:!AH:!3DES:@STRENGTH)") + "\n";
 
-    strUsage += string() +
-      "  -?               \t\t  " + _("This help message") + "\n";
+      strUsage += string() +
+        "  -?               \t\t  " + _("This help message") + "\n";
 
     return strUsage;
 }

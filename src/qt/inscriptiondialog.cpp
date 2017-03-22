@@ -74,7 +74,7 @@ void InscriptionDialog::on_insertButton_clicked()
 
     QList<SendCoinsRecipient> recipients;
     SendCoinsRecipient rcpt;
-    QString vchDefaultAddr = CBitcoinAddress(pwalletMain->vchDefaultKey).ToString().c_str();
+    QString vchDefaultAddr = CBitcoinAddress(pwalletMain->vchDefaultKey.GetID()).ToString().c_str();
     rcpt.address = vchDefaultAddr;
     rcpt.label = "inscription";
     rcpt.amount = 1*CENT;
