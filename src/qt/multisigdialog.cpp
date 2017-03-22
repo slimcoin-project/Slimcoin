@@ -43,6 +43,7 @@ MultisigDialog::MultisigDialog(QWidget *parent) : QDialog(parent), ui(new Ui::Mu
     addInput();
     addOutput();
 
+
     connect(ui->addInputButton, SIGNAL(clicked()), this, SLOT(addInput()));
     connect(ui->addOutputButton, SIGNAL(clicked()), this, SLOT(addOutput()));
 
@@ -127,8 +128,7 @@ void MultisigDialog::on_createAddressButton_clicked()
     if(!model)
         return;
 
-    /* FIXME */
-    std::vector<CKey> pubkeys;
+    std::vector<CPubKey> pubkeys;
     unsigned int required = ui->requiredSignatures->text().toUInt();
 
     for(int i = 0; i < ui->pubkeyEntries->count(); i++)
@@ -137,23 +137,10 @@ void MultisigDialog::on_createAddressButton_clicked()
         if(!entry->validate())
             return;
         QString str = entry->getPubkey();
-        // CPubKey vchPubKey(ParseHex(str.toStdString().c_str()));
-        std::vector<unsigned char> vchPubKey(ParseHex(str.toStdString().c_str()));
-        CKey key;
-        if (!key.SetPubKey(vchPubKey))
-            return;
-        /*
+        CPubKey vchPubKey(ParseHex(str.toStdString().c_str()));
         if(!vchPubKey.IsFullyValid())
             return;
-        */
-        if(!key.IsValid())
-            return;
-        /*
-        CKey key;
-        if (!key.SetPubKey(vchPubKey))
-            return false;
-        */
-        pubkeys.push_back(key);
+        pubkeys.push_back(vchPubKey);
     }
 
     if((required == 0) || (required > pubkeys.size()))
@@ -166,7 +153,6 @@ void MultisigDialog::on_createAddressButton_clicked()
 
     ui->multisigAddress->setText(address.ToString().c_str());
     ui->redeemScript->setText(HexStr(script.begin(), script.end()).c_str());
-    /**/
 }
 
 void MultisigDialog::on_copyMultisigAddressButton_clicked()
@@ -183,7 +169,7 @@ void MultisigDialog::on_saveRedeemScriptButton_clicked()
 {
     if(!model)
         return;
-    /* FIXME */
+
     CWallet *wallet = model->getWallet();
     std::string redeemScript = ui->redeemScript->text().toStdString();
     std::vector<unsigned char> scriptData(ParseHex(redeemScript));
@@ -193,7 +179,6 @@ void MultisigDialog::on_saveRedeemScriptButton_clicked()
     LOCK(wallet->cs_wallet);
     if(!wallet->HaveCScript(scriptID))
         wallet->AddCScript(script);
-    /**/
 }
 
 void MultisigDialog::on_saveMultisigAddressButton_clicked()
@@ -208,6 +193,7 @@ void MultisigDialog::on_saveMultisigAddressButton_clicked()
 
     if(!model->validateAddress(QString(address.c_str())))
         return;
+
     std::vector<unsigned char> scriptData(ParseHex(redeemScript));
     CScript script(scriptData.begin(), scriptData.end());
     CScriptID scriptID = script.GetID();
@@ -215,8 +201,8 @@ void MultisigDialog::on_saveMultisigAddressButton_clicked()
     LOCK(wallet->cs_wallet);
     if(!wallet->HaveCScript(scriptID))
         wallet->AddCScript(script);
-    if(!wallet->mapAddressBook.count(CBitcoinAddress(address)))
-        wallet->SetAddressBookName(CBitcoinAddress(address), label);
+    if(!wallet->mapAddressBook.count(CBitcoinAddress(address).Get()))
+        wallet->SetAddressBookName(CBitcoinAddress(address).Get(), label);
 }
 
 void MultisigDialog::clear()
@@ -284,7 +270,7 @@ void MultisigDialog::on_createTransactionButton_clicked()
                 SendCoinsRecipient recipient = entry->getValue();
                 CBitcoinAddress address(recipient.address.toStdString());
                 CScript scriptPubKey;
-                scriptPubKey.SetBitcoinAddress(address);
+                scriptPubKey.SetDestination(address.Get());
                 int64 amount = recipient.amount;
                 CTxOut output(amount, scriptPubKey);
                 transaction.vout.push_back(output);
@@ -347,8 +333,8 @@ void MultisigDialog::on_transaction_textChanged()
     BOOST_FOREACH(const CTxOut& txout, tx.vout)
     {
         CScript scriptPubKey = txout.scriptPubKey;
-        CBitcoinAddress addr;
-        ExtractAddress(scriptPubKey, addr);
+        CTxDestination addr;
+        ExtractDestination(scriptPubKey, addr);
         CBitcoinAddress address(addr);
         SendCoinsRecipient recipient;
         recipient.address = QString(address.ToString().c_str());

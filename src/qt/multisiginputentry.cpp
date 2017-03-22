@@ -124,8 +124,8 @@ void MultisigInputEntry::on_transactionId_textChanged(const QString &transaction
         QString amountStr;
         amountStr.sprintf("%.6f", (double) amount / COIN);
         CScript script = txOut.scriptPubKey;
-        CBitcoinAddress addr;
-        if(ExtractAddress(script, addr))
+        CTxDestination addr;
+        if(ExtractDestination(script, addr))
         {
             CBitcoinAddress address(addr);
             QString addressStr(address.ToString().c_str());

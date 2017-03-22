@@ -56,33 +56,33 @@ BOOST_AUTO_TEST_CASE(basic_transaction_tests)
 static std::vector<CTransaction>
 SetupDummyInputs(CBasicKeyStore& keystoreRet, MapPrevTx& inputsRet)
 {
-  std::vector<CTransaction> dummyTransactions;
-  dummyTransactions.resize(2);
+    std::vector<CTransaction> dummyTransactions;
+    dummyTransactions.resize(2);
 
-  // Add some keys to the keystore:
-  CKey key[4];
-  for(int i = 0; i < 4; i++)
-  {
-    key[i].MakeNewKey(i % 2);
-    keystoreRet.AddKey(key[i]);
-  }
+    // Add some keys to the keystore:
+    CKey key[4];
+    for (int i = 0; i < 4; i++)
+    {
+        key[i].MakeNewKey(i % 2);
+        keystoreRet.AddKey(key[i]);
+    }
 
-  // Create some dummy input transactions
-  dummyTransactions[0].vout.resize(2);
-  dummyTransactions[0].vout[0].nValue = 11*CENT;
-  dummyTransactions[0].vout[0].scriptPubKey << key[0].GetPubKey() << OP_CHECKSIG;
-  dummyTransactions[0].vout[1].nValue = 50*CENT;
-  dummyTransactions[0].vout[1].scriptPubKey << key[1].GetPubKey() << OP_CHECKSIG;
-  inputsRet[dummyTransactions[0].GetHash()] = make_pair(CTxIndex(), dummyTransactions[0]);
+    // Create some dummy input transactions
+    dummyTransactions[0].vout.resize(2);
+    dummyTransactions[0].vout[0].nValue = 11*CENT;
+    dummyTransactions[0].vout[0].scriptPubKey << key[0].GetPubKey() << OP_CHECKSIG;
+    dummyTransactions[0].vout[1].nValue = 50*CENT;
+    dummyTransactions[0].vout[1].scriptPubKey << key[1].GetPubKey() << OP_CHECKSIG;
+    inputsRet[dummyTransactions[0].GetHash()] = make_pair(CTxIndex(), dummyTransactions[0]);
 
-  dummyTransactions[1].vout.resize(2);
-  dummyTransactions[1].vout[0].nValue = 21*CENT;
-  dummyTransactions[1].vout[0].scriptPubKey.SetBitcoinAddress(key[2].GetPubKey());
-  dummyTransactions[1].vout[1].nValue = 22*CENT;
-  dummyTransactions[1].vout[1].scriptPubKey.SetBitcoinAddress(key[3].GetPubKey());
-  inputsRet[dummyTransactions[1].GetHash()] = make_pair(CTxIndex(), dummyTransactions[1]);
+    dummyTransactions[1].vout.resize(2);
+    dummyTransactions[1].vout[0].nValue = 21*CENT;
+    dummyTransactions[1].vout[0].scriptPubKey.SetDestination(key[2].GetPubKey().GetID());
+    dummyTransactions[1].vout[1].nValue = 22*CENT;
+    dummyTransactions[1].vout[1].scriptPubKey.SetDestination(key[3].GetPubKey().GetID());
+    inputsRet[dummyTransactions[1].GetHash()] = make_pair(CTxIndex(), dummyTransactions[1]);
 
-  return dummyTransactions;
+    return dummyTransactions;
 }
 
 BOOST_AUTO_TEST_CASE(test_Get)
@@ -120,49 +120,127 @@ BOOST_AUTO_TEST_CASE(test_Get)
 
 BOOST_AUTO_TEST_CASE(test_GetThrow)
 {
-  CBasicKeyStore keystore;
-  MapPrevTx dummyInputs;
-  std::vector<CTransaction> dummyTransactions = SetupDummyInputs(keystore, dummyInputs);
+    CBasicKeyStore keystore;
+    MapPrevTx dummyInputs;
+    std::vector<CTransaction> dummyTransactions = SetupDummyInputs(keystore, dummyInputs);
 
-  MapPrevTx missingInputs;
+    MapPrevTx missingInputs;
 
-  CTransaction t1;
-  t1.vin.resize(3);
-  t1.vin[0].prevout.hash = dummyTransactions[0].GetHash();
-  t1.vin[0].prevout.n = 0;
-  t1.vin[1].prevout.hash = dummyTransactions[1].GetHash();
-  t1.vin[1].prevout.n = 0;
-  t1.vin[2].prevout.hash = dummyTransactions[1].GetHash();
-  t1.vin[2].prevout.n = 1;
-  t1.vout.resize(2);
-  t1.vout[0].nValue = 90*CENT;
-  t1.vout[0].scriptPubKey << OP_1;
+    CTransaction t1;
+    t1.vin.resize(3);
+    t1.vin[0].prevout.hash = dummyTransactions[0].GetHash();
+    t1.vin[0].prevout.n = 0;
+    t1.vin[1].prevout.hash = dummyTransactions[1].GetHash();;
+    t1.vin[1].prevout.n = 0;
+    t1.vin[2].prevout.hash = dummyTransactions[1].GetHash();;
+    t1.vin[2].prevout.n = 1;
+    t1.vout.resize(2);
+    t1.vout[0].nValue = 90*CENT;
+    t1.vout[0].scriptPubKey << OP_1;
 
-  BOOST_CHECK_THROW(t1.AreInputsStandard(missingInputs), runtime_error);
-  BOOST_CHECK_THROW(t1.GetValueIn(missingInputs), runtime_error);
+    t1.vout[0].scriptPubKey = CScript() << OP_1;
+    BOOST_CHECK(t1.IsStandard());
 
-  t1.vout[0].scriptPubKey = CScript() << OP_1;
-  BOOST_CHECK(t1.IsStandard());
+    // 80-byte TX_NULL_DATA (standard)
+    t1.vout[0].scriptPubKey = CScript() << OP_RETURN << ParseHex("04678afdb0fe5548271967f1a67130b7105cd6a828e03909a67962e0ea1f61deb649f6bc3f4cef3804678afdb0fe5548271967f1a67130b7105cd6a828e03909a67962e0ea1f61deb649f6bc3f4cef38");
+    BOOST_CHECK(t.IsStandard());
 
-  /* OP_RETURN tests */
-  // 80-byte TX_NULL_DATA (standard)
-  t1.vout[0].scriptPubKey = CScript() << OP_RETURN << ParseHex("04678afdb0fe5548271967f1a67130b7105cd6a828e03909a67962e0ea1f61deb649f6bc3f4cef3804678afdb0fe5548271967f1a67130b7105cd6a828e03909a67962e0ea1f61deb649f6bc3f4cef38");
-  BOOST_CHECK(t1.IsStandard());
+    // 81-byte TX_NULL_DATA (non-standard)
+    t1.vout[0].scriptPubKey = CScript() << OP_RETURN << ParseHex("04678afdb0fe5548271967f1a67130b7105cd6a828e03909a67962e0ea1f61deb649f6bc3f4cef3804678afdb0fe5548271967f1a67130b7105cd6a828e03909a67962e0ea1f61deb649f6bc3f4cef3800");
+    BOOST_CHECK(!t.IsStandard());
 
-  // 81-byte TX_NULL_DATA (non-standard)
-  t1.vout[0].scriptPubKey = CScript() << OP_RETURN << ParseHex("04678afdb0fe5548271967f1a67130b7105cd6a828e03909a67962e0ea1f61deb649f6bc3f4cef3804678afdb0fe5548271967f1a67130b7105cd6a828e03909a67962e0ea1f61deb649f6bc3f4cef3800");
-  BOOST_CHECK(!t1.IsStandard());
+    // TX_NULL_DATA w/o PUSHDATA
+    t1.vout.resize(1);
+    t1.vout[0].scriptPubKey = CScript() << OP_RETURN;
+    BOOST_CHECK(t.IsStandard());
 
-  // TX_NULL_DATA w/o PUSHDATA
-  t1.vout.resize(1);
-  t1.vout[0].scriptPubKey = CScript() << OP_RETURN;
-  BOOST_CHECK(t1.IsStandard());
+    // Only one TX_NULL_DATA permitted in all cases
+    t1.vout.resize(2);
+    t1.vout[0].scriptPubKey = CScript() << OP_RETURN << ParseHex("04678afdb0fe5548271967f1a67130b7105cd6a828e03909a67962e0ea1f61deb649f6bc3f4cef3804678afdb0fe5548271967f1a67130b7105cd6a828e03909a67962e0ea1f61deb649f6bc3f4cef38");
+    t1.vout[1].scriptPubKey = CScript() << OP_RETURN << ParseHex("04678afdb0fe5548271967f1a67130b7105cd6a828e03909a67962e0ea1f61deb649f6bc3f4cef3804678afdb0fe5548271967f1a67130b7105cd6a828e03909a67962e0ea1f61deb649f6bc3f4cef38");
+    BOOST_CHECK(!t1.IsStandard());
 
-  // Only one TX_NULL_DATA permitted in all cases
-  t1.vout.resize(2);
-  t1.vout[0].scriptPubKey = CScript() << OP_RETURN << ParseHex("04678afdb0fe5548271967f1a67130b7105cd6a828e03909a67962e0ea1f61deb649f6bc3f4cef3804678afdb0fe5548271967f1a67130b7105cd6a828e03909a67962e0ea1f61deb649f6bc3f4cef38");
-  t1.vout[1].scriptPubKey = CScript() << OP_RETURN << ParseHex("04678afdb0fe5548271967f1a67130b7105cd6a828e03909a67962e0ea1f61deb649f6bc3f4cef3804678afdb0fe5548271967f1a67130b7105cd6a828e03909a67962e0ea1f61deb649f6bc3f4cef38");
-  BOOST_CHECK(!t1.IsStandard());
+    t1.vout[0].scriptPubKey = CScript() << OP_RETURN << ParseHex("04678afdb0fe5548271967f1a67130b7105cd6a828e03909a67962e0ea1f61deb649f6bc3f4cef3804678afdb0fe5548271967f1a67130b7105cd6a828e03909a67962e0ea1f61deb649f6bc3f4cef38");
+    t1.vout[1].scriptPubKey = CScript() << OP_RETURN;
+    BOOST_CHECK(!t1.IsStandard());
+
+    t1.vout[0].scriptPubKey = CScript() << OP_RETURN;
+    t1.vout[1].scriptPubKey = CScript() << OP_RETURN;
+    BOOST_CHECK(!t.IsStandard());
+}
+
+BOOST_AUTO_TEST_CASE(test_IsStandard)
+{
+    CBasicKeyStore keystore;
+    MapPrevTx dummyInputs;
+    std::vector<CTransaction> dummyTransactions = SetupDummyInputs(keystore, dummyInputs);
+
+    CTransaction t1;
+    t1.vin.resize(1);
+    t1.vin[0].prevout.hash = dummyTransactions[0].GetHash();
+    t1.vin[0].prevout.n = 1;
+    t1.vin[0].scriptSig << std::vector<unsigned char>(65, 0);
+    t1.vout.resize(1);
+    t1.vout[0].nValue = 90*CENT;
+    CKey key;
+    key.MakeNewKey(true);
+    t1.vout[0].scriptPubKey.SetDestination(key.GetPubKey().GetID());
+    BOOST_CHECK(t1.IsStandard());
+
+    t1.vout[0].scriptPubKey = CScript() << OP_1;
+    BOOST_CHECK(!t1.IsStandard());
+
+    // 80-byte TX_NULL_DATA (standard)
+    t1.vout[0].scriptPubKey = CScript() << OP_RETURN << ParseHex("04678afdb0fe5548271967f1a67130b7105cd6a828e03909a67962e0ea1f61deb649f6bc3f4cef3804678afdb0fe5548271967f1a67130b7105cd6a828e03909a67962e0ea1f61deb649f6bc3f4cef38");
+    BOOST_CHECK(t1.IsStandard());
+
+    // 81-byte TX_NULL_DATA (non-standard)
+    t1.vout[0].scriptPubKey = CScript() << OP_RETURN << ParseHex("04678afdb0fe5548271967f1a67130b7105cd6a828e03909a67962e0ea1f61deb649f6bc3f4cef3804678afdb0fe5548271967f1a67130b7105cd6a828e03909a67962e0ea1f61deb649f6bc3f4cef3800");
+    BOOST_CHECK(!t1.IsStandard());
+
+    // TX_NULL_DATA w/o PUSHDATA
+    t1.vout.resize(1);
+    t1.vout[0].scriptPubKey = CScript() << OP_RETURN;
+    BOOST_CHECK(t1.IsStandard());
+
+    // Only one TX_NULL_DATA permitted in all cases
+    t1.vout.resize(2);
+    t1.vout[0].scriptPubKey = CScript() << OP_RETURN << ParseHex("04678afdb0fe5548271967f1a67130b7105cd6a828e03909a67962e0ea1f61deb649f6bc3f4cef3804678afdb0fe5548271967f1a67130b7105cd6a828e03909a67962e0ea1f61deb649f6bc3f4cef38");
+    t1.vout[1].scriptPubKey = CScript() << OP_RETURN << ParseHex("04678afdb0fe5548271967f1a67130b7105cd6a828e03909a67962e0ea1f61deb649f6bc3f4cef3804678afdb0fe5548271967f1a67130b7105cd6a828e03909a67962e0ea1f61deb649f6bc3f4cef38");
+    BOOST_CHECK(!t1.IsStandard());
+
+    t1.vout[0].scriptPubKey = CScript() << OP_RETURN << ParseHex("04678afdb0fe5548271967f1a67130b7105cd6a828e03909a67962e0ea1f61deb649f6bc3f4cef3804678afdb0fe5548271967f1a67130b7105cd6a828e03909a67962e0ea1f61deb649f6bc3f4cef38");
+    t1.vout[1].scriptPubKey = CScript() << OP_RETURN;
+    BOOST_CHECK(!t1.IsStandard());
+
+    t1.vout[0].scriptPubKey = CScript() << OP_RETURN;
+    t1.vout[1].scriptPubKey = CScript() << OP_RETURN;
+    BOOST_CHECK(!t1.IsStandard());
+}
+
+BOOST_AUTO_TEST_CASE(test_GetThrow)
+{
+    CBasicKeyStore keystore;
+    MapPrevTx dummyInputs;
+    std::vector<CTransaction> dummyTransactions = SetupDummyInputs(keystore, dummyInputs);
+
+    MapPrevTx missingInputs;
+
+    CTransaction t1;
+    t1.vin.resize(3);
+    t1.vin[0].prevout.hash = dummyTransactions[0].GetHash();
+    t1.vin[0].prevout.n = 0;
+    t1.vin[1].prevout.hash = dummyTransactions[1].GetHash();
+    t1.vin[1].prevout.n = 0;
+    t1.vin[2].prevout.hash = dummyTransactions[1].GetHash();
+    t1.vin[2].prevout.n = 1;
+    t1.vout.resize(2);
+    t1.vout[0].nValue = 90*CENT;
+    t1.vout[0].scriptPubKey << OP_1;
+
+    t1.vout[0].scriptPubKey = CScript() << OP_1;
+    BOOST_CHECK_THROW(t1.AreInputsStandard(missingInputs), runtime_error);
+    BOOST_CHECK_THROW(t1.GetValueIn(missingInputs), runtime_error);
 }
 
 BOOST_AUTO_TEST_SUITE_END()
