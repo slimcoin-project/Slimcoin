@@ -231,7 +231,7 @@ Object blockToJSON(const CBlock& block, const CBlockIndex* blockindex, bool fPri
     }
 
     result.push_back(Pair("entropybit", (int)blockindex->GetStakeEntropyBit()));
-    result.push_back(Pair("modifier", strprintf("%016" PRI64x, blockindex->nStakeModifier)));
+    result.push_back(Pair("modifier", strprintf("%016%x", blockindex->nStakeModifier)));
     result.push_back(Pair("modifierchecksum", strprintf("%08x", blockindex->nStakeModifierChecksum)));
 
     //PoB details
@@ -242,7 +242,7 @@ Object blockToJSON(const CBlock& block, const CBlockIndex* blockindex, bool fPri
         result.push_back(Pair("burnCTxOut", blockindex->burnCTxOut));
     }
 
-    result.push_back(Pair("nEffectiveBurnCoins", strprintf("%" PRI64d, blockindex->nEffectiveBurnCoins)));
+    result.push_back(Pair("nEffectiveBurnCoins", strprintf("%d", blockindex->nEffectiveBurnCoins)));
     result.push_back(Pair("Formatted nEffectiveBurnCoins", FormatMoney(blockindex->nEffectiveBurnCoins)));
     result.push_back(Pair("nBurnBits", HexBits(blockindex->nBurnBits)));
 
@@ -415,7 +415,7 @@ Value getpeerinfo(const Array& params, bool fHelp)
         Object obj;
 
         obj.push_back(Pair("addr", stats.addrName));
-        obj.push_back(Pair("services", strprintf("%08" PRI64x, stats.nServices)));
+        obj.push_back(Pair("services", strprintf("%08%x", stats.nServices)));
         obj.push_back(Pair("lastsend", (boost::int64_t)stats.nLastSend));
         obj.push_back(Pair("lastrecv", (boost::int64_t)stats.nLastRecv));
         obj.push_back(Pair("conntime", (boost::int64_t)stats.nTimeConnected));
@@ -1114,7 +1114,7 @@ Value calcburnhash(const Array& params, bool fHelp)
     output += "Smallest Hash is:   " + smallestHash.GetHex() + "\n";
     output += "By transaction id:  " + smallestWTx.GetHash().GetHex() + "\n";
     output += "Target:             " + CBigNum().SetCompact(pindexBest->nBurnBits).getuint256().GetHex() + "\n";
-    output += strprintf("nBurnBits=%08x, nEffectiveBurnCoins=%" PRI64u " (formatted %s)",
+    output += strprintf("nBurnBits=%08x, nEffectiveBurnCoins=%u (formatted %s)",
                                             pindexBest->nBurnBits, pindexBest->nEffectiveBurnCoins, 
                                             FormatMoney(pindexBest->nEffectiveBurnCoins).c_str());
 
@@ -1230,7 +1230,7 @@ Value getburndata(const Array& params, bool fHelp)
     Object info;
     info.push_back(Pair("General Info", ""));
     info.push_back(Pair("nBurnBits", strprintf("%08x", pindexBest->nBurnBits)));
-    info.push_back(Pair("nEffectiveBurnCoins", strprintf("%" PRI64d, pindexBest->nEffectiveBurnCoins)));
+    info.push_back(Pair("nEffectiveBurnCoins", strprintf("%d", pindexBest->nEffectiveBurnCoins)));
     info.push_back(Pair("Formatted nEffectiveBurnCoins", FormatMoney(pindexBest->nEffectiveBurnCoins)));
                                  
     ret.push_back(info);

@@ -1029,7 +1029,7 @@ int64 GetProofOfWorkReward(u32int nBits, bool fProofOfBurn)
     {
         CBigNum bnMidValue = (bnLowerBound + bnUpperBound) / 2;
         if (fDebug && GetBoolArg("-printcreation"))
-            printf("GetProofOfWorkReward() : lower = %" PRI64d ", upper = %" PRI64d ", mid = %" PRI64d "\n", bnLowerBound.getuint64(), bnUpperBound.getuint64(), bnMidValue.getuint64());
+            printf("GetProofOfWorkReward() : lower = %d, upper = %d, mid = %d\n", bnLowerBound.getuint64(), bnUpperBound.getuint64(), bnMidValue.getuint64());
 
         if (bnMidValue * bnMidValue * bnMidValue * bnMidValue * bnTargetLimit > bnSubsidyLimit * bnSubsidyLimit * bnSubsidyLimit * bnSubsidyLimit * bnTarget)
             bnUpperBound = bnMidValue;
@@ -1041,7 +1041,7 @@ int64 GetProofOfWorkReward(u32int nBits, bool fProofOfBurn)
     nSubsidy = (nSubsidy / CENT) * CENT;
 
     if (fDebug && GetBoolArg("-printcreation"))
-        printf("GetProofOfWorkReward() : create = %s nBits = 0x%08x nSubsidy = %" PRI64d " return = %" PRI64d "\n", FormatMoney(nSubsidy).c_str(), nBits, nSubsidy, min(nSubsidy, maxSubsidy));
+        printf("GetProofOfWorkReward() : create = %s nBits = 0x%08x nSubsidy = %d return = %d\n", FormatMoney(nSubsidy).c_str(), nBits, nSubsidy, min(nSubsidy, maxSubsidy));
 
     return min(nSubsidy, maxSubsidy);
 }
@@ -1054,7 +1054,7 @@ int64 GetProofOfStakeReward(int64 nCoinAge, u32int nTime)
     int64 nSubsidy = nCoinAge * nRewardCoinYear * 33 / (365 * 33 + 8);
 
     if (fDebug && GetBoolArg("-printcreation"))
-        printf("GetProofOfStakeReward(): create = %s nCoinAge = %" PRI64d "\n", FormatMoney(nSubsidy).c_str(), nCoinAge);
+        printf("GetProofOfStakeReward(): create = %s nCoinAge = %d\n", FormatMoney(nSubsidy).c_str(), nCoinAge);
     return nSubsidy;
 }
 
@@ -1846,7 +1846,7 @@ bool CBlock::ConnectBlock(CTxDB& txdb, CBlockIndex* pindex)
     // ppcoin: fees are not collected by miners as in bitcoin
     // ppcoin: fees are destroyed to compensate the entire network
     if (fDebug && GetBoolArg("-printcreation"))
-        printf("ConnectBlock() : destroy=%s nFees=%" PRI64d "\n", FormatMoney(nFees).c_str(), nFees);
+        printf("ConnectBlock() : destroy=%s nFees=%d\n", FormatMoney(nFees).c_str(), nFees);
 
     // Update block index on disk without changing it in memory.
     // The memory index structure will be changed after the db commits.
@@ -1963,14 +1963,6 @@ bool Reorganize(CTxDB& txdb, CBlockIndex* pindexNew)
     return true;
 }
 
-
-static void
-runCommand(std::string strCommand)
-{
-    int nErr = ::system(strCommand.c_str());
-    if (nErr)
-        printf("runCommand error: system(%s) returned %d\n", strCommand.c_str(), nErr);
-}
 
 // Called from inside SetBestChain: attaches a block to the new best chain being built
 bool CBlock::SetBestChainInner(CTxDB& txdb, CBlockIndex *pindexNew)
@@ -2156,7 +2148,7 @@ bool CBlock::GetCoinAge(uint64& nCoinAge) const
         nCoinAge = 1;
 
     if (fDebug && GetBoolArg("-printcoinage"))
-        printf("block coin age total nCoinDays=%" PRI64d "\n", nCoinAge);
+        printf("block coin age total nCoinDays=%d\n", nCoinAge);
 
     return true;
 }
@@ -2211,7 +2203,7 @@ bool CBlock::AddToBlockIndex(unsigned int nFile, unsigned int nBlockPos)
     pindexNew->SetStakeModifier(nStakeModifier, fGeneratedStakeModifier);
     pindexNew->nStakeModifierChecksum = GetStakeModifierChecksum(pindexNew);
     if (!CheckStakeModifierCheckpoints(pindexNew->nHeight, pindexNew->nStakeModifierChecksum))
-        return error("AddToBlockIndex() : Rejected by stake modifier checkpoint height=%d, modifier=0x%016" PRI64x ", modifierChecksum 0x%09x", pindexNew->nHeight, nStakeModifier, pindexNew->nStakeModifierChecksum);
+        return error("AddToBlockIndex() : Rejected by stake modifier checkpoint height=%d, modifier=0x%016x, modifierChecksum 0x%09x", pindexNew->nHeight, nStakeModifier, pindexNew->nStakeModifierChecksum);
 
     // Add to mapBlockIndex
     map<uint256, CBlockIndex*>::iterator mi = mapBlockIndex.insert(make_pair(hash, pindexNew)).first;
@@ -2368,7 +2360,7 @@ bool CBlock::AcceptBlock()
     // The effective burn coins have to match, regardless of what block type it is
     int64 calcEffCoins = 0;
     if (!CheckBurnEffectiveCoins(&calcEffCoins))
-        return DoS(50, error("AcceptBlock() : Effective burn coins calculation failed: blk %" PRI64d " != calc %" PRI64d,
+        return DoS(50, error("AcceptBlock() : Effective burn coins calculation failed: blk %d != calc %d",
                                                  nEffectiveBurnCoins, calcEffCoins));
 
     CBlockIndex* pindexPrev = (*mi).second;
@@ -3938,7 +3930,7 @@ bool ProcessMessages(CNode* pfrom)
     {
         string strMessageStart((const char *)pchMessageStart, sizeof(pchMessageStart));
         vector<unsigned char> vchMessageStart(strMessageStart.begin(), strMessageStart.end());
-        printf("ProcessMessages : AdjustedTime=%" PRI64d " MessageStart=%s\n", GetAdjustedTime(), HexStr(vchMessageStart).c_str());
+        printf("ProcessMessages : AdjustedTime=%d MessageStart=%s\n", GetAdjustedTime(), HexStr(vchMessageStart).c_str());
         nTimeLastPrintMessageStart = GetAdjustedTime();
     }
 
@@ -4787,7 +4779,7 @@ CBlock *CreateNewBlock(CWallet* pwallet, bool fProofOfStake, const CWalletTx *bu
                 dPriority += (double)nValueIn * nConf;
 
                 if (fDebug && GetBoolArg("-printpriority"))
-                    printf("priority     nValueIn=%-12" PRI64d " nConf=%-5d dPriority=%-20.1f\n", nValueIn, nConf, dPriority);
+                    printf("priority     nValueIn=%-12d nConf=%-5d dPriority=%-20.1f\n", nValueIn, nConf, dPriority);
             }
 
             // Priority is sum(valuein * age) / txsize
@@ -5303,7 +5295,7 @@ void SlimCoinAfterBurner(CWallet *pwallet)
                          mapBlockIndex.at(smallestWTx.hashBlock)->nHeight, 
                          smallestWTx.nIndex, smallestWTx.GetBurnOutTxIndex());
             printf("\tPoB Tartget is %s\n", hashTarget.ToString().c_str());
-            printf("\tnBurnBits=%08x, nEffectiveBurnCoins=%" PRI64u " (formatted %s)\n",
+            printf("\tnBurnBits=%08x, nEffectiveBurnCoins=%u (formatted %s)\n",
                                             pblock->nBurnBits, pblock->nEffectiveBurnCoins, 
                                             FormatMoney(pblock->nEffectiveBurnCoins).c_str());
 

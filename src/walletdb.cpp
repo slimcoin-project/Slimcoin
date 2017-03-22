@@ -391,7 +391,7 @@ void ThreadFlushWalletDB(void* parg)
             dbenv.lsn_reset(strFile.c_str(), 0);
 
             mapFileUseCount.erase(mi++);
-            printf("Flushed wallet.dat %" PRI64d "ms\n", GetTimeMillis() - nStart);
+            printf("Flushed wallet.dat %dms\n", GetTimeMillis() - nStart);
           }
         }
       }

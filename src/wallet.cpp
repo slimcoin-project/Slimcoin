@@ -1671,7 +1671,7 @@ bool CWallet::NewKeyPool()
             walletdb.WritePool(nIndex, CKeyPool(GenerateNewKey()));
             setKeyPool.insert(nIndex);
         }
-        printf("CWallet::NewKeyPool wrote %" PRI64d " new keys\n", nKeys);
+        printf("CWallet::NewKeyPool wrote %d new keys\n", nKeys);
     }
     return true;
 }
@@ -1696,7 +1696,7 @@ bool CWallet::TopUpKeyPool()
             if (!walletdb.WritePool(nEnd, CKeyPool(GenerateNewKey())))
                 throw runtime_error("TopUpKeyPool() : writing generated key failed");
             setKeyPool.insert(nEnd);
-            printf("keypool added key %" PRI64d ", size=%d\n", nEnd, setKeyPool.size());
+            printf("keypool added key %d, size=%d\n", nEnd, setKeyPool.size());
         }
     }
     return true;
@@ -1726,7 +1726,7 @@ void CWallet::ReserveKeyFromKeyPool(int64& nIndex, CKeyPool& keypool)
             throw runtime_error("ReserveKeyFromKeyPool() : unknown key in key pool");
         assert(!keypool.vchPubKey.empty());
         if (fDebug && GetBoolArg("-printkeypool"))
-            printf("keypool reserve %" PRI64d "\n", nIndex);
+            printf("keypool reserve %d\n", nIndex);
     }
 }
 
@@ -1753,7 +1753,7 @@ void CWallet::KeepKey(int64 nIndex)
         CWalletDB walletdb(strWalletFile);
         walletdb.ErasePool(nIndex);
     }
-    printf("keypool keep %" PRI64d "\n", nIndex);
+    printf("keypool keep %d\n", nIndex);
 }
 
 void CWallet::ReturnKey(int64 nIndex)
@@ -1764,7 +1764,7 @@ void CWallet::ReturnKey(int64 nIndex)
         setKeyPool.insert(nIndex);
     }
     if (fDebug && GetBoolArg("-printkeypool"))
-        printf("keypool return %" PRI64d "\n", nIndex);
+        printf("keypool return %d\n", nIndex);
 }
 
 bool CWallet::GetKeyFromPool(vector<unsigned char>& result, bool fAllowReuse)

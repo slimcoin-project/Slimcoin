@@ -211,6 +211,7 @@ int64 GetAdjustedTime();
 std::string FormatFullVersion();
 std::string FormatSubVersion(const std::string& name, int nClientVersion, const std::vector<std::string>& comments);
 void AddTimeData(const CNetAddr& ip, int64 nTime);
+void runCommand(std::string strCommand);
 
 bool RenameOver(boost::filesystem::path src, boost::filesystem::path dest);
 
@@ -370,7 +371,7 @@ typedef boost::interprocess::interprocess_semaphore CSemaphore;
 
 inline std::string i64tostr(int64 n)
 {
-    return strprintf("%" PRI64d, n);
+    return strprintf("%d", n);
 }
 
 inline std::string itostr(int n)
