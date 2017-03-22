@@ -272,7 +272,7 @@ void BitcoinGUI::createActions()
     miningAction = new QAction(QIcon(":/icons/mining"), tr("&Mining"), this);
     miningAction->setStatusTip(tr("Configure mining"));
     miningAction->setToolTip(miningAction->statusTip());
-    miningAction->setShortcut(QKeySequence(Qt::ALT + Qt::Key_9));
+    miningAction->setShortcut(QKeySequence(Qt::ALT + Qt::Key_6));
     miningAction->setCheckable(true);
     tabGroup->addAction(miningAction);
 
@@ -835,15 +835,6 @@ void BitcoinGUI::gotoOverviewPage()
     disconnect(exportAction, SIGNAL(triggered()), 0, 0);
 }
 
-void BitcoinGUI::gotoMiningPage()
-{
-    miningAction->setChecked(true);
-    centralWidget->setCurrentWidget(miningPage);
-
-    exportAction->setEnabled(false);
-    disconnect(exportAction, SIGNAL(triggered()), 0, 0);
-}
-
 void BitcoinGUI::gotoHistoryPage()
 {
     historyAction->setChecked(true);
@@ -878,6 +869,15 @@ void BitcoinGUI::gotoSendCoinsPage()
 {
     sendCoinsAction->setChecked(true);
     centralWidget->setCurrentWidget(sendCoinsPage);
+
+    exportAction->setEnabled(false);
+    disconnect(exportAction, SIGNAL(triggered()), 0, 0);
+}
+
+void BitcoinGUI::gotoMiningPage()
+{
+    miningAction->setChecked(true);
+    centralWidget->setCurrentWidget(miningPage);
 
     exportAction->setEnabled(false);
     disconnect(exportAction, SIGNAL(triggered()), 0, 0);
