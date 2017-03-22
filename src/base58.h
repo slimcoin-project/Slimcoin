@@ -472,21 +472,6 @@ public:
         default: return false;
         }
     }
-
-    bool GetKeyID(CKeyID &keyID) const {
-        if (!IsValid())
-            return false;
-        switch (nVersion) {
-        case PUBKEY_ADDRESS:
-        case PUBKEY_ADDRESS_TEST: {
-            uint160 id;
-            memcpy(&id, &vchData[0], 20);
-            keyID = CKeyID(id);
-            return true;
-        }
-        default: return false;
-        }
-    }
     */
 };
 

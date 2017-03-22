@@ -290,6 +290,17 @@ int CWalletDB::LoadWallet(CWallet* pwallet)
           return DB_CORRUPT;
         }
         fIsEncrypted = true;
+        } else if (strType == "sxKeyMeta")
+        {
+            if (fDebug)
+                printf("WalletDB ReadKeyValue sxKeyMeta\n");
+            
+            CKeyID keyId;
+            ssKey >> keyId;
+            CStealthKeyMetadata sxKeyMeta;
+            ssValue >> sxKeyMeta;
+
+            pwallet->mapStealthKeyMeta[keyId] = sxKeyMeta;
       }
       else if (strType == "defaultkey")
       {
