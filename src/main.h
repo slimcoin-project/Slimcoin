@@ -10,6 +10,7 @@
 #include "bignum.h"
 #include "net.h"
 #include "script.h"
+#include "base58.h"
 #include <math.h>       /* pow */
 
 #ifdef WIN32
@@ -104,6 +105,7 @@ extern std::map<uint256, CBlock*> mapOrphanBlocks;
 
 // Settings
 extern int64 nTransactionFee;
+extern int64 nReserveBalance;
 
 //////////////////////////////////////////////////////////////////////////////
 /*                              Proof Of Burn                               */
@@ -112,6 +114,8 @@ extern int64 nTransactionFee;
 //Burn addresses
 const CBitcoinAddress burnOfficialAddress("SfSLMCoinMainNetworkBurnAddr1DeTK5");
 const CBitcoinAddress burnTestnetAddress("mmSLiMCoinTestnetBurnAddress1XU5fu");
+// const std::string burnOfficialAddress = "SfSLMCoinMainNetworkBurnAddr1DeTK5";
+// const std::string burnTestnetAddress = "mmSLiMCoinTestnetBurnAddress1XU5fu";
 
 #define BURN_CONSTANT      .01 * CENT
 
@@ -186,7 +190,6 @@ inline int64 BurnCalcEffectiveCoins(int64 nCoins, s32int depthInChain)
 inline void GetBurnAddress(CBitcoinAddress &addressRet)
 {
     addressRet = fTestNet ? burnTestnetAddress : burnOfficialAddress;
-    return;
 }
 
 //the burn address, when created, the constuctor automatically assigns its value
@@ -200,6 +203,7 @@ public:
     }
 };
 
+
 //if any == true, then compare address with both testnet and realnet burn addresses
 // else compare only with the address that corresponds to which network the client is connected to
 inline bool IsBurnAddress(const CBitcoinAddress &address, bool any=false)
@@ -212,6 +216,7 @@ inline bool IsBurnAddress(const CBitcoinAddress &address, bool any=false)
     }
         
 }
+
 
 //makes a uint256 number into its compact form and returns it as a uint256 again
 inline const uint256 becomeCompact(const uint256 &num)
@@ -234,7 +239,7 @@ class CTxIndex;
 
 void RegisterWallet(CWallet* pwalletIn);
 void UnregisterWallet(CWallet* pwalletIn);
-void SyncWithWallets(const CTransaction& tx, const CBlock* pblock=NULL, bool fUpdate=false, bool fConnect=true);
+void SyncWithWallets(const CTransaction& tx, const CBlock* pblock = NULL, bool fUpdate = false, bool fConnect = true);
 bool ProcessBlock(CNode* pfrom, CBlock* pblock);
 bool CheckDiskSpace(uint64 nAdditionalBytes=0);
 FILE* OpenBlockFile(unsigned int nFile, unsigned int nBlockPos, const char* pszMode="rb");
@@ -261,6 +266,7 @@ uint256 WantedByOrphan(const CBlock* pblockOrphan);
 const CBlockIndex* GetLastBlockIndex(const CBlockIndex* pindex, bool fProofOfStake);
 void SlimCoinMiner(CWallet *pwallet, bool fProofOfStake);
 CBlockIndex *pindexByHeight(s32int nHeight);
+bool GetTransaction(const uint256 &hash, CTransaction &tx, uint256 &hashBlock);
 
 //Returns the number of proof of work blocks between (not including) the
 // blocks with heights startHeight and endHeight
@@ -538,8 +544,6 @@ public:
     std::string ToString() const
     {
         if (IsEmpty()) return "CTxOut(empty)";
-        if (scriptPubKey.size() < 6)
-            return "CTxOut(error)";
         return strprintf("CTxOut(nValue=%s, scriptPubKey=%s)", FormatMoney(nValue).c_str(), scriptPubKey.ToString().c_str());
     }
 
@@ -727,11 +731,13 @@ public:
         u32int i;
         for(i = 0; i < vout.size(); i++)
         {
-            CBitcoinAddress address;
-            if(!ExtractAddress(vout[i].scriptPubKey, address))
+            // CBitcoinAddress address;
+            // CTxDestination ctx_address = CTxDestination(address);
+            CTxDestination address;
+            if(!ExtractDestination(vout[i].scriptPubKey, address))
                 continue;
-
-            if(address == burnAddress)
+            /* FIXME: sanity check required */
+            if(address == burnAddress.Get())
                 break;
         }
 
@@ -914,6 +920,7 @@ public:
     }
 
 
+    bool ReadFromDisk(CTxDB& txdb, const uint256& hash, CTxIndex& txindexRet);
     bool ReadFromDisk(CTxDB& txdb, COutPoint prevout, CTxIndex& txindexRet);
     bool ReadFromDisk(CTxDB& txdb, COutPoint prevout);
     bool ReadFromDisk(COutPoint prevout);
@@ -2209,6 +2216,7 @@ public:
                 bool fCheckInputs, bool* pfMissingInputs);
     bool addUnchecked(CTransaction &tx);
     bool remove(CTransaction &tx);
+    void queryHashes(std::vector<uint256>& vtxid);
 
     unsigned long size()
     {

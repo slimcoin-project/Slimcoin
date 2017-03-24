@@ -25,11 +25,13 @@ public:
     ~OverviewPage();
 
     void setModel(WalletModel *model);
+    void setClientModel(ClientModel *model);
     void updatePlot(int count);
     
     public slots:
-        void setBalance(qint64 balance, qint64 stake, qint64 unconfirmedBalance, BurnCoinsBalances burnBalances);
+        void setBalance(qint64 balance, qint64 stake, qint64 unconfirmedBalance, qint64 reserveBalance, BurnCoinsBalances burnBalances);
         void setNumTransactions(int count);
+        void setReserveBalance(qint64 nreserveBalance);
 
 signals:
     void transactionClicked(const QModelIndex &index);
@@ -40,6 +42,7 @@ private:
     WalletModel *model;
     qint64 currentBalance;
     qint64 currentStake;
+    qint64 currentReserveBalance;
     qint64 currentUnconfirmedBalance;
 
     qint64 currentNetBurnCoins;
@@ -54,6 +57,7 @@ private:
 
     private slots:
         void displayUnitChanged();
+        void reserveBalanceChanged();
 };
 
 #endif // OVERVIEWPAGE_H

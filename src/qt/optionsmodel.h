@@ -24,6 +24,7 @@ public:
         ProxyIP, // QString
         ProxyPort, // QString
         Fee, // qint64
+        ReserveBalance, // qint64
         DisplayUnit, // BitcoinUnits::Unit
         DisplayAddresses, // bool
         DetachDatabases, // bool
@@ -41,6 +42,7 @@ public:
 
     /* Explicit getters */
     qint64 getTransactionFee();
+    qint64 getReserveBalance();
     bool getMinimizeToTray();
     bool getMinimizeOnClose();
     int getDisplayUnit();
@@ -52,6 +54,7 @@ private:
     bool fMinimizeOnClose;
 signals:
     void displayUnitChanged(int unit);
+    // void reserveBalanceChanged(qint64 resbal);
 
 public slots:
 

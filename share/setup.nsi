@@ -5,7 +5,7 @@ SetCompressor /SOLID lzma
 
 # General Symbol Definitions
 !define REGKEY "SOFTWARE\$(^Name)"
-!define VERSION 0.4.0
+!define VERSION 0.5.0
 !define COMPANY "Slimcoin project"
 !define URL http://www.slimcoin.org/
 
@@ -45,13 +45,13 @@ Var StartMenuGroup
 !insertmacro MUI_LANGUAGE English
 
 # Installer attributes
-OutFile slimcoin-0.4.0-win32-setup.exe
+OutFile slimcoin-0.5.0-win32-setup.exe
 InstallDir $PROGRAMFILES\SLIMCoin
 CRCCheck on
 XPStyle on
 BrandingText " "
 ShowInstDetails show
-VIProductVersion 0.4.0.0
+VIProductVersion 0.5.0.0
 VIAddVersionKey ProductName SLIMCoin
 VIAddVersionKey ProductVersion "${VERSION}"
 VIAddVersionKey CompanyName "${COMPANY}"

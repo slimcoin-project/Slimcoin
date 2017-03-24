@@ -415,43 +415,45 @@ QVariant TransactionTableModel::txAddressDecoration(const TransactionRecord *wtx
 
 QString TransactionTableModel::formatTxToAddress(const TransactionRecord *wtx, bool tooltip) const
 {
-  switch(wtx->type)
-  {
-  case TransactionRecord::RecvFromOther:
-    return QString::fromStdString(wtx->address);
-  case TransactionRecord::RecvWithAddress:
-  case TransactionRecord::SendToAddress:
-    return lookupAddress(wtx->address, tooltip);
-  case TransactionRecord::SendToOther:
-    return QString::fromStdString(wtx->address);
-  case TransactionRecord::Burned:
-    return QString(fTestNet ? "Testnet Burn Address" : "Burn Address");
-  case TransactionRecord::SendToSelf:
-  case TransactionRecord::Generated:
-  default:
-    return tr("(n/a)");
-  }
+    switch(wtx->type)
+    {
+    case TransactionRecord::RecvFromOther:
+        return QString::fromStdString(wtx->address);
+    case TransactionRecord::RecvWithAddress:
+    case TransactionRecord::SendToAddress:
+    case TransactionRecord::StakeMint:
+        return lookupAddress(wtx->address, tooltip);
+    case TransactionRecord::SendToOther:
+        return QString::fromStdString(wtx->address);
+    case TransactionRecord::Burned:
+        return QString(fTestNet ? "Testnet Burn Address" : "Burn Address");
+    case TransactionRecord::SendToSelf:
+    case TransactionRecord::Generated:
+    default:
+        return tr("(n/a)");
+    }
 }
 
 QVariant TransactionTableModel::addressColor(const TransactionRecord *wtx) const
 {
-  // Show addresses without label in a less visible color
-  switch(wtx->type)
-  {
-  case TransactionRecord::RecvWithAddress:
-  case TransactionRecord::SendToAddress:
-  {
-    QString label = walletModel->getAddressTableModel()->labelForAddress(QString::fromStdString(wtx->address));
-    if(label.isEmpty())
-      return COLOR_BAREADDRESS;
-  } break;
-  case TransactionRecord::SendToSelf:
-  case TransactionRecord::Generated:
-    return COLOR_BAREADDRESS;
-  default:
-    break;
-  }
-  return QVariant();
+    // Show addresses without label in a less visible color
+    switch(wtx->type)
+    {
+    case TransactionRecord::RecvWithAddress:
+    case TransactionRecord::SendToAddress:
+    case TransactionRecord::StakeMint:
+        {
+        QString label = walletModel->getAddressTableModel()->labelForAddress(QString::fromStdString(wtx->address));
+        if(label.isEmpty())
+            return COLOR_BAREADDRESS;
+        } break;
+    case TransactionRecord::SendToSelf:
+    case TransactionRecord::Generated:
+        return COLOR_BAREADDRESS;
+    default:
+        break;
+    }
+    return QVariant();
 }
 
 QString TransactionTableModel::formatTxAmount(const TransactionRecord *wtx, bool showUnconfirmed) const

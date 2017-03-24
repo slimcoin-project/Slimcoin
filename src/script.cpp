@@ -84,11 +84,11 @@ const char* GetTxnOutputType(txnouttype t)
     switch (t)
     {
     case TX_NONSTANDARD: return "nonstandard";
-    case TX_PUBKEY:      return "pubkey";
-    case TX_PUBKEYHASH:  return "pubkeyhash";
-    case TX_SCRIPTHASH:  return "scripthash";
-    case TX_MULTISIG:    return "multisig";
-    case TX_NULL_DATA:   return "nulldata";
+    case TX_PUBKEY: return "pubkey";
+    case TX_PUBKEYHASH: return "pubkeyhash";
+    case TX_SCRIPTHASH: return "scripthash";
+    case TX_MULTISIG: return "multisig";
+    case TX_NULL_DATA: return "nulldata";
     }
     return NULL;
 }
@@ -230,6 +230,7 @@ const char* GetOpName(opcodetype opcode)
         // template matching params
     case OP_PUBKEYHASH             : return "OP_PUBKEYHASH";
     case OP_PUBKEY                 : return "OP_PUBKEY";
+    case OP_SMALLDATA              : return "OP_SMALLDATA";
 
     case OP_INVALIDOPCODE          : return "OP_INVALIDOPCODE";
     default:
@@ -1216,6 +1217,9 @@ bool Solver(const CScript &scriptPubKey, txnouttype &typeRet, vector<vector<unsi
         // Sender provides N pubkeys, receivers provides M signatures
         mTemplates.insert(make_pair(TX_MULTISIG, CScript() << OP_SMALLINTEGER << OP_PUBKEYS << OP_SMALLINTEGER << OP_CHECKMULTISIG));
 
+        // Empty, provably prunable, data-carrying output
+        mTemplates.insert(make_pair(TX_NULL_DATA, CScript() << OP_RETURN << OP_SMALLDATA));
+        mTemplates.insert(make_pair(TX_NULL_DATA, CScript() << OP_RETURN));
     }
 
     // Shortcut for pay-to-script-hash, which are more constrained than the other types:
@@ -1300,6 +1304,12 @@ bool Solver(const CScript &scriptPubKey, txnouttype &typeRet, vector<vector<unsi
                 else
                     break;
             }
+            else if (opcode2 == OP_SMALLDATA)
+            {
+                // small pushdata, <= MAX_OP_RETURN_RELAY bytes
+                if (vch1.size() > MAX_OP_RETURN_RELAY)
+                    break;
+            }
             else if (opcode1 != opcode2 || vch1 != vch2)
             {
                 // Others must match exactly
@@ -1314,7 +1324,7 @@ bool Solver(const CScript &scriptPubKey, txnouttype &typeRet, vector<vector<unsi
 }
 
 
-bool Sign1(const CBitcoinAddress& address, const CKeyStore& keystore, uint256 hash, int nHashType, CScript& scriptSigRet)
+bool Sign1(const CKeyID& address, const CKeyStore& keystore, uint256 hash, int nHashType, CScript& scriptSigRet)
 {
     CKey key;
     if (!keystore.GetKey(address, key))
@@ -1336,9 +1346,8 @@ bool SignN(const vector<valtype>& multisigdata, const CKeyStore& keystore, uint2
     for (vector<valtype>::const_iterator it = multisigdata.begin()+1; it != multisigdata.begin()+multisigdata.size()-1; it++)
     {
         const valtype& pubkey = *it;
-        CBitcoinAddress address;
-        address.SetPubKey(pubkey);
-        if (Sign1(address, keystore, hash, nHashType, scriptSigRet))
+        CKeyID keyID = CPubKey(pubkey).GetID();
+        if (Sign1(keyID, keystore, hash, nHashType, scriptSigRet))
         {
             ++nSigned;
             if (nSigned == nRequired) break;
@@ -1362,23 +1371,23 @@ bool Solver(const CKeyStore& keystore, const CScript& scriptPubKey, uint256 hash
     if (!Solver(scriptPubKey, whichTypeRet, vSolutions))
         return false;
 
-    CBitcoinAddress address;
+    CKeyID keyID;
     switch (whichTypeRet)
     {
     case TX_NONSTANDARD:
     case TX_NULL_DATA:
         return false;
     case TX_PUBKEY:
-        address.SetPubKey(vSolutions[0]);
-        return Sign1(address, keystore, hash, nHashType, scriptSigRet);
+        keyID = CPubKey(vSolutions[0]).GetID();
+        return Sign1(keyID, keystore, hash, nHashType, scriptSigRet);
     case TX_PUBKEYHASH:
-        address.SetHash160(uint160(vSolutions[0]));
-        if (!Sign1(address, keystore, hash, nHashType, scriptSigRet))
+        keyID = CKeyID(uint160(vSolutions[0]));
+        if (!Sign1(keyID, keystore, hash, nHashType, scriptSigRet))
             return false;
         else
         {
-            valtype vch;
-            keystore.GetPubKey(address, vch);
+            CPubKey vch;
+            keystore.GetPubKey(keyID, vch);
             scriptSigRet << vch;
         }
         return true;
@@ -1413,10 +1422,9 @@ int ScriptSigArgsExpected(txnouttype t, const std::vector<std::vector<unsigned c
     return -1;
 }
 
-bool IsStandard(const CScript& scriptPubKey)
+bool IsStandard(const CScript& scriptPubKey, txnouttype& whichType)
 {
     vector<valtype> vSolutions;
-    txnouttype whichType;
     if (!Solver(scriptPubKey, whichType, vSolutions))
         return false;
 
@@ -1440,12 +1448,28 @@ unsigned int HaveKeys(const vector<valtype>& pubkeys, const CKeyStore& keystore)
     unsigned int nResult = 0;
     BOOST_FOREACH(const valtype& pubkey, pubkeys)
     {
-        CBitcoinAddress address;
-        address.SetPubKey(pubkey);
-        if (keystore.HaveKey(address))
+        CKeyID keyID = CPubKey(pubkey).GetID();
+        if (keystore.HaveKey(keyID))
             ++nResult;
     }
     return nResult;
+}
+
+
+class CKeyStoreIsMineVisitor : public boost::static_visitor<bool>
+{
+private:
+    const CKeyStore *keystore;
+public:
+    CKeyStoreIsMineVisitor(const CKeyStore *keystoreIn) : keystore(keystoreIn) { }
+    bool operator()(const CNoDestination &dest) const { return false; }
+    bool operator()(const CKeyID &keyID) const { return keystore->HaveKey(keyID); }
+    bool operator()(const CScriptID &scriptID) const { return keystore->HaveCScript(scriptID); }
+};
+
+bool IsMine(const CKeyStore &keystore, const CTxDestination &dest)
+{
+    return boost::apply_visitor(CKeyStoreIsMineVisitor(&keystore), dest);
 }
 
 bool IsMine(const CKeyStore &keystore, const CScript& scriptPubKey)
@@ -1455,22 +1479,22 @@ bool IsMine(const CKeyStore &keystore, const CScript& scriptPubKey)
     if (!Solver(scriptPubKey, whichType, vSolutions))
         return false;
 
-    CBitcoinAddress address;
+    CKeyID keyID;
     switch (whichType)
     {
     case TX_NONSTANDARD:
     case TX_NULL_DATA:
         return false;
     case TX_PUBKEY:
-        address.SetPubKey(vSolutions[0]);
-        return keystore.HaveKey(address);
+        keyID = CPubKey(vSolutions[0]).GetID();
+        return keystore.HaveKey(keyID);
     case TX_PUBKEYHASH:
-        address.SetHash160(uint160(vSolutions[0]));
-        return keystore.HaveKey(address);
+        keyID = CKeyID(uint160(vSolutions[0]));
+        return keystore.HaveKey(keyID);
     case TX_SCRIPTHASH:
     {
         CScript subscript;
-        if (!keystore.GetCScript(uint160(vSolutions[0]), subscript))
+        if (!keystore.GetCScript(CScriptID(uint160(vSolutions[0])), subscript))
             return false;
         return IsMine(keystore, subscript);
     }
@@ -1488,7 +1512,7 @@ bool IsMine(const CKeyStore &keystore, const CScript& scriptPubKey)
     return false;
 }
 
-bool ExtractAddress(const CScript &scriptPubKey, CBitcoinAddress &addressRet)
+bool ExtractDestination(const CScript& scriptPubKey, CTxDestination& addressRet)
 {
     vector<valtype> vSolutions;
     txnouttype whichType;
@@ -1497,33 +1521,31 @@ bool ExtractAddress(const CScript &scriptPubKey, CBitcoinAddress &addressRet)
 
     if (whichType == TX_PUBKEY)
     {
-        addressRet.SetPubKey(vSolutions[0]);
+        addressRet = CPubKey(vSolutions[0]).GetID();
         return true;
     }
     else if (whichType == TX_PUBKEYHASH)
     {
-        addressRet.SetHash160(uint160(vSolutions[0]));
+        addressRet = CKeyID(uint160(vSolutions[0]));
         return true;
     }
     else if (whichType == TX_SCRIPTHASH)
     {
-        addressRet.SetScriptHash160(uint160(vSolutions[0]));
+        addressRet = CScriptID(uint160(vSolutions[0]));
         return true;
     }
     // Multisig txns have more than one address...
     return false;
 }
 
-bool ExtractAddresses(const CScript &scriptPubKey, txnouttype &typeRet, vector<CBitcoinAddress> &addressRet, int &nRequiredRet)
+bool ExtractDestinations(const CScript& scriptPubKey, txnouttype& typeRet, vector<CTxDestination>& addressRet, int& nRequiredRet)
 {
     addressRet.clear();
     typeRet = TX_NONSTANDARD;
     vector<valtype> vSolutions;
     if (!Solver(scriptPubKey, typeRet, vSolutions))
         return false;
-
-    if (typeRet == TX_NULL_DATA)
-    {
+    if (typeRet == TX_NULL_DATA){
         // This is data, not addresses
         return false;
     }
@@ -1533,21 +1555,16 @@ bool ExtractAddresses(const CScript &scriptPubKey, txnouttype &typeRet, vector<C
         nRequiredRet = vSolutions.front()[0];
         for (unsigned int i = 1; i < vSolutions.size()-1; i++)
         {
-            CBitcoinAddress address;
-            address.SetPubKey(vSolutions[i]);
+            CTxDestination address = CPubKey(vSolutions[i]).GetID();
             addressRet.push_back(address);
         }
     }
     else
     {
         nRequiredRet = 1;
-        CBitcoinAddress address;
-        if (typeRet == TX_PUBKEYHASH)
-            address.SetHash160(uint160(vSolutions.front()));
-        else if (typeRet == TX_SCRIPTHASH)
-            address.SetScriptHash160(uint160(vSolutions.front()));
-        else if (typeRet == TX_PUBKEY)
-            address.SetPubKey(vSolutions.front());
+        CTxDestination address;
+        if (!ExtractDestination(scriptPubKey, address))
+           return false;
         addressRet.push_back(address);
     }
 
@@ -1590,8 +1607,8 @@ bool VerifyScript(const CScript &scriptSig, const CScript &scriptPubKey, const C
     return true;
 }
 
-bool SignSignature(const CKeyStore &keystore, const CScript &fromPubKey, 
-                                     CTransaction& txTo, unsigned int nIn, int nHashType)
+
+bool SignSignature(const CKeyStore &keystore, const CScript& fromPubKey, CTransaction& txTo, unsigned int nIn, int nHashType)
 {
     assert(nIn < txTo.vin.size());
     CTxIn& txin = txTo.vin[nIn];
@@ -1626,47 +1643,15 @@ bool SignSignature(const CKeyStore &keystore, const CScript &fromPubKey,
     return VerifyScript(txin.scriptSig, fromPubKey, txTo, nIn, true, 0);
 }
 
-bool SignSignature(const CKeyStore &keystore, const CTransaction &txFrom, 
-                                     CTransaction &txTo, unsigned int nIn, int nHashType)
+bool SignSignature(const CKeyStore &keystore, const CTransaction& txFrom, CTransaction& txTo, unsigned int nIn, int nHashType)
 {
     assert(nIn < txTo.vin.size());
-    CTxIn &txin = txTo.vin[nIn];
+    CTxIn& txin = txTo.vin[nIn];
     assert(txin.prevout.n < txFrom.vout.size());
-    assert(txin.prevout.hash == txFrom.GetHash());
-    const CTxOut &txout = txFrom.vout[txin.prevout.n];
+    const CTxOut& txout = txFrom.vout[txin.prevout.n];
 
-    // Leave out the signature from the hash, since a signature can't sign itself.
-    // The checksig op will also drop the signatures from its hash.
-    uint256 hash = SignatureHash(txout.scriptPubKey, txTo, nIn, nHashType);
-
-    txnouttype whichType;
-    if (!Solver(keystore, txout.scriptPubKey, hash, nHashType, txin.scriptSig, whichType))
-        return false;
-
-    if (whichType == TX_SCRIPTHASH)
-    {
-        // Solver returns the subscript that need to be evaluated;
-        // the final scriptSig is the signatures from that
-        // and then the serialized subscript:
-        CScript subscript = txin.scriptSig;
-
-        // Recompute txn hash using subscript in place of scriptPubKey:
-        uint256 hash2 = SignatureHash(subscript, txTo, nIn, nHashType);
-        txnouttype subType;
-        if (!Solver(keystore, subscript, hash2, nHashType, txin.scriptSig, subType))
-            return false;
-        if (subType == TX_SCRIPTHASH)
-            return false;
-        txin.scriptSig << static_cast<valtype>(subscript); // Append serialized subscript
-    }
-
-    // Test solution
-    if (!VerifyScript(txin.scriptSig, txout.scriptPubKey, txTo, nIn, true, 0))
-        return false;
-
-    return true;
+    return SignSignature(keystore, txout.scriptPubKey, txTo, nIn, nHashType);
 }
-
 
 bool VerifySignature(const CTransaction& txFrom, const CTransaction& txTo, 
                                          unsigned int nIn, bool fValidatePayToScriptHash, int nHashType)
@@ -1697,8 +1682,8 @@ static CScript PushAll(const vector<valtype>& values)
 }
 
 static CScript CombineMultisig(CScript scriptPubKey, const CTransaction& txTo, unsigned int nIn,
-                                                             const vector<valtype>& vSolutions,
-                                                             vector<valtype>& sigs1, vector<valtype>& sigs2)
+                               const vector<valtype>& vSolutions,
+                               vector<valtype>& sigs1, vector<valtype>& sigs2)
 {
     // Combine all the signatures we've got:
     set<valtype> allsigs;
@@ -1733,7 +1718,6 @@ static CScript CombineMultisig(CScript scriptPubKey, const CTransaction& txTo, u
             }
         }
     }
-
     // Now build a merged CScript:
     unsigned int nSigsHave = 0;
     CScript result; result << OP_0; // pop-one-too-many workaround
@@ -1753,8 +1737,8 @@ static CScript CombineMultisig(CScript scriptPubKey, const CTransaction& txTo, u
 }
 
 static CScript CombineSignatures(CScript scriptPubKey, const CTransaction& txTo, unsigned int nIn,
-                                                                 const txnouttype txType, const vector<valtype>& vSolutions,
-                                                                 vector<valtype>& sigs1, vector<valtype>& sigs2)
+                                 const txnouttype txType, const vector<valtype>& vSolutions,
+                                 vector<valtype>& sigs1, vector<valtype>& sigs2)
 {
     switch (txType)
     {
@@ -1798,7 +1782,7 @@ static CScript CombineSignatures(CScript scriptPubKey, const CTransaction& txTo,
 }
 
 CScript CombineSignatures(CScript scriptPubKey, const CTransaction& txTo, unsigned int nIn,
-                                                    const CScript& scriptSig1, const CScript& scriptSig2)
+                          const CScript& scriptSig1, const CScript& scriptSig2)
 {
     txnouttype txType;
     vector<vector<unsigned char> > vSolutions;
@@ -1869,29 +1853,42 @@ bool CScript::IsPayToScriptHash() const
                     this->at(22) == OP_EQUAL);
 }
 
-void CScript::SetBitcoinAddress(const CBitcoinAddress &address)
+class CScriptVisitor : public boost::static_visitor<bool>
 {
-    this->clear();
-    if (address.IsScript())
-        *this << OP_HASH160 << address.GetHash160() << OP_EQUAL;
-    else
-        *this << OP_DUP << OP_HASH160 << address.GetHash160() << OP_EQUALVERIFY << OP_CHECKSIG;
+private:
+    CScript *script;
+public:
+    CScriptVisitor(CScript *scriptin) { script = scriptin; }
+
+    bool operator()(const CNoDestination &dest) const {
+        script->clear();
+        return false;
+    }
+
+    bool operator()(const CKeyID &keyID) const {
+        script->clear();
+        *script << OP_DUP << OP_HASH160 << keyID << OP_EQUALVERIFY << OP_CHECKSIG;
+        return true;
+    }
+
+    bool operator()(const CScriptID &scriptID) const {
+        script->clear();
+        *script << OP_HASH160 << scriptID << OP_EQUAL;
+        return true;
+    }
+};
+
+void CScript::SetDestination(const CTxDestination& dest)
+{
+    boost::apply_visitor(CScriptVisitor(this), dest);
 }
 
-void CScript::SetMultisig(int nRequired, const std::vector<CKey> &keys)
+void CScript::SetMultisig(int nRequired, const std::vector<CPubKey>& keys)
 {
     this->clear();
 
     *this << EncodeOP_N(nRequired);
-    BOOST_FOREACH(const CKey& key, keys)
-        *this << key.GetPubKey();
+    BOOST_FOREACH(const CPubKey& key, keys)
+        *this << key;
     *this << EncodeOP_N(keys.size()) << OP_CHECKMULTISIG;
-}
-
-void CScript::SetPayToScriptHash(const CScript &subscript)
-{
-    assert(!subscript.empty());
-    uint160 subscriptHash = Hash160(subscript);
-    this->clear();
-    *this << OP_HASH160 << subscriptHash << OP_EQUAL;
 }

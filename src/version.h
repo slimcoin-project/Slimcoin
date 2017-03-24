@@ -32,8 +32,8 @@ extern const std::string CLIENT_DATE;
 
 // slimcoin version - intended for display purpose ONLY
 #define SLIMCOIN_VERSION_MAJOR       0
-#define SLIMCOIN_VERSION_MINOR       4
-#define SLIMCOIN_VERSION_REVISION    1
+#define SLIMCOIN_VERSION_MINOR       5
+#define SLIMCOIN_VERSION_REVISION    0
 #define SLIMCOIN_VERSION_BUILD       0
 
 static const int SLIMCOIN_VERSION =
@@ -45,7 +45,7 @@ static const int SLIMCOIN_VERSION =
 //
 // network protocol versioning
 //
-
+/* FIXME: bump protocol */
 static const int PROTOCOL_VERSION = 60003;
 
 // earlier versions not supported as of Feb 2012, and are disconnected

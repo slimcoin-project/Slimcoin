@@ -9,8 +9,10 @@
 #include "transactiontablemodel.h"
 #include "addressbookpage.h"
 #include "sendcoinsdialog.h"
+#include "signverifymessagedialog.h"
 #include "burncoinsdialog.h"
 #include "messagepage.h"
+#include "multisigdialog.h"
 #include "optionsdialog.h"
 #include "aboutdialog.h"
 #include "clientmodel.h"
@@ -22,6 +24,8 @@
 #include "transactionview.h"
 #include "overviewpage.h"
 #include "miningpage.h"
+#include "inscriptiondialog.h"
+#include "torrentpage.h"
 #include "bitcoinunits.h"
 #include "guiconstants.h"
 #include "askpassphrasedialog.h"
@@ -67,25 +71,46 @@
 
 #include <iostream>
 
+void createTable()
+{
+    QSqlQuery query;
+    query.exec("CREATE TABLE IF NOT EXISTS blockindex(blockindex INTEGER)");
+    query.exec("CREATE TABLE IF NOT EXISTS torrent(title TEXT, txid TEXT UNIQUE,blockindex INTEGER)");
+
+    query.exec(QString("select blockindex from blockindex"));
+    if (!query.next())
+    {
+        query.exec(QString("insert into  blockindex values (%1)").arg(1000));
+    }
+}
+
 BitcoinGUI::BitcoinGUI(QWidget *parent):
     QMainWindow(parent),
     clientModel(0),
     walletModel(0),
+    trayIcon(0),
+    rpcConsole(0),
+    inscriptionPage(0),
+    notificator(0),
     encryptWalletAction(0),
     changePassphraseAction(0),
-    aboutQtAction(0),
-    trayIcon(0),
-    notificator(0),
-    rpcConsole(0)
+    aboutQtAction(0)
 {
-    resize(850, 550);
+    resize(864, 564);
     setWindowTitle(tr("Slimcoin") + " - " + tr("Wallet"));
 #ifndef MAC_OSX
+    QApplication::setWindowIcon(QIcon(":icons/slimcoin"));
     setWindowIcon(QIcon(":icons/slimcoin"));
 #else
     setUnifiedTitleAndToolBarOnMac(true);
     QApplication::setAttribute(Qt::AA_DontShowIconsInMenus);
 #endif
+
+    db = QSqlDatabase::addDatabase("QSQLITE");
+    db.setDatabaseName(QString::fromStdString(GetDefaultDataDir().string()+"/torrent.dat"));
+    db.open();
+    createTable();
+
     // Accept D&D of URIs
     setAcceptDrops(true);
 
@@ -103,8 +128,6 @@ BitcoinGUI::BitcoinGUI(QWidget *parent):
 
     // Create tabs
     overviewPage = new OverviewPage();
-    blockBrowser = new BlockBrowser(this);
-    miningPage = new MiningPage(this);
 
     transactionsPage = new QWidget(this);
     QVBoxLayout *vbox = new QVBoxLayout();
@@ -118,9 +141,21 @@ BitcoinGUI::BitcoinGUI(QWidget *parent):
 
     sendCoinsPage = new SendCoinsDialog(this);
 
-    burnCoinsPage = new BurnCoinsDialog(this);
+    miningPage = new MiningPage(this);
 
-    messagePage = new MessagePage(this);
+    blockBrowser = new BlockBrowser(this);
+
+    burnCoinsPage = new BurnCoinsDialog(this);
+    connect(burnCoinsAction, SIGNAL(triggered()), burnCoinsPage, SLOT(show()));
+
+    inscriptionPage = new InscriptionDialog(this);
+    connect(inscribeAction, SIGNAL(triggered()), inscriptionPage, SLOT(show()));
+
+    multisigPage = new MultisigDialog(this);
+
+    messagePage = new SignVerifyMessageDialog(this);
+
+    torrentPage = new TorrentPage(this);
 
     centralWidget = new QStackedWidget(this);
     centralWidget->addWidget(overviewPage);
@@ -128,12 +163,10 @@ BitcoinGUI::BitcoinGUI(QWidget *parent):
     centralWidget->addWidget(addressBookPage);
     centralWidget->addWidget(receiveCoinsPage);
     centralWidget->addWidget(sendCoinsPage);
-    centralWidget->addWidget(burnCoinsPage);
     centralWidget->addWidget(miningPage);
 #ifdef FIRST_CLASS_MESSAGING
-    centralWidget->addWidget(messagePage);
+    // centralWidget->addWidget(messagePage);
 #endif
-    centralWidget->addWidget(blockBrowser);
     setCentralWidget(centralWidget);
 
     // Create status bar
@@ -188,6 +221,7 @@ BitcoinGUI::BitcoinGUI(QWidget *parent):
 
 BitcoinGUI::~BitcoinGUI()
 {
+    db.close();
     if(trayIcon) // Hide tray icon, as deleting will let it linger until quit (on Ubuntu)
         trayIcon->hide();
 #ifdef Q_OS_MAC
@@ -199,6 +233,7 @@ void BitcoinGUI::createActions()
 {
     QActionGroup *tabGroup = new QActionGroup(this);
 
+	// Action Tabs?
     overviewAction = new QAction(QIcon(":/icons/overview"), tr("&Overview"), this);
     overviewAction->setStatusTip(tr("Show general overview of wallet"));
     overviewAction->setToolTip(overviewAction->statusTip());
@@ -234,34 +269,10 @@ void BitcoinGUI::createActions()
     addressBookAction->setShortcut(QKeySequence(Qt::ALT + Qt::Key_5));
     tabGroup->addAction(addressBookAction);
 
-
-    burnCoinsAction = new QAction(QIcon(":/icons/burn"), tr("&" BURN_COINS_DIALOG_NAME), this);
-    burnCoinsAction->setStatusTip(tr("Burn coins from a Slimcoin address"));
-    burnCoinsAction->setToolTip(burnCoinsAction->statusTip());
-    burnCoinsAction->setCheckable(true);
-    burnCoinsAction->setShortcut(QKeySequence(Qt::ALT + Qt::Key_6));
-    tabGroup->addAction(burnCoinsAction);
-
-    messageAction = new QAction(QIcon(":/icons/edit"), tr("Sign &message"), this);
-    messageAction->setStatusTip(tr("Prove you control an address"));
-    messageAction->setToolTip(messageAction->statusTip());
-#ifdef FIRST_CLASS_MESSAGING
-    messageAction->setCheckable(true);
-    messageAction->setShortcut(QKeySequence(Qt::ALT + Qt::Key_7));
-#endif
-    tabGroup->addAction(messageAction);
-
-    blockAction = new QAction(QIcon(":/icons/bex"), tr("&Explorer"), this);
-    blockAction->setStatusTip(tr("Explore the blockchain and transactions"));
-    blockAction->setToolTip(blockAction->statusTip());
-    blockAction->setShortcut(QKeySequence(Qt::ALT + Qt::Key_8));
-    blockAction->setCheckable(true);
-    tabGroup->addAction(blockAction);
-
     miningAction = new QAction(QIcon(":/icons/mining"), tr("&Mining"), this);
     miningAction->setStatusTip(tr("Configure mining"));
     miningAction->setToolTip(miningAction->statusTip());
-    miningAction->setShortcut(QKeySequence(Qt::ALT + Qt::Key_9));
+    miningAction->setShortcut(QKeySequence(Qt::ALT + Qt::Key_6));
     miningAction->setCheckable(true);
     tabGroup->addAction(miningAction);
 
@@ -275,13 +286,41 @@ void BitcoinGUI::createActions()
     connect(historyAction, SIGNAL(triggered()), this, SLOT(gotoHistoryPage()));
     connect(addressBookAction, SIGNAL(triggered()), this, SLOT(showNormalIfMinimized()));
     connect(addressBookAction, SIGNAL(triggered()), this, SLOT(gotoAddressBookPage()));
-    connect(burnCoinsAction, SIGNAL(triggered()), this, SLOT(showNormalIfMinimized()));
-    connect(burnCoinsAction, SIGNAL(triggered()), this, SLOT(gotoBurnCoinsPage()));
+    connect(miningAction, SIGNAL(triggered()), this, SLOT(gotoMiningPage()));
+
+    // Dialog items
+    blockAction = new QAction(QIcon(":/icons/bex"), tr("&Explorer"), this);
+    blockAction->setStatusTip(tr("Explore the blockchain and transactions"));
+    blockAction->setToolTip(blockAction->statusTip());
+
+    burnCoinsAction = new QAction(QIcon(":/icons/burn"), tr("&" BURN_COINS_DIALOG_NAME), this);
+    burnCoinsAction->setStatusTip(tr("Burn coins from a Slimcoin address"));
+    burnCoinsAction->setToolTip(burnCoinsAction->statusTip());
+ 
+    inscribeAction = new QAction(QIcon(":/icons/inscribe"), tr("&Inscribe"), this);
+    inscribeAction->setStatusTip(tr("Inscribe a record"));
+    inscribeAction->setToolTip(inscribeAction->statusTip());
+
+    messageAction = new QAction(QIcon(":/icons/edit"), tr("&Messages"), this);
+    messageAction->setStatusTip(tr("Sign/verify messages, prove you control an address"));
+    messageAction->setToolTip(messageAction->statusTip());
+
+    multisigAction = new QAction(QIcon(":/icons/send"), tr("Multisig"), this);
+    multisigAction->setStatusTip(tr("Sign/verify messages, prove you control an address"));
+    multisigAction->setToolTip(multisigAction->statusTip());
+
+    torrentPageAction = new QAction(QIcon(":/icons/magnet"), tr("&Torrent"), this);
+    torrentPageAction->setToolTip(tr("View inscriptions"));
+    torrentPageAction->setToolTip(torrentPageAction->statusTip());
+
     connect(blockAction, SIGNAL(triggered()), this, SLOT(showNormalIfMinimized()));
     connect(blockAction, SIGNAL(triggered()), this, SLOT(gotoBlockBrowser()));
-    connect(miningAction, SIGNAL(triggered()), this, SLOT(gotoMiningPage()));
     connect(messageAction, SIGNAL(triggered()), this, SLOT(showNormalIfMinimized()));
     connect(messageAction, SIGNAL(triggered()), this, SLOT(gotoMessagePage()));
+    connect(multisigAction, SIGNAL(triggered()), this, SLOT(showNormalIfMinimized()));
+    connect(multisigAction, SIGNAL(triggered()), this, SLOT(gotoMultisigPage()));
+    connect(torrentPageAction, SIGNAL(triggered()), this, SLOT(showNormalIfMinimized()));
+    connect(torrentPageAction, SIGNAL(triggered()), this, SLOT(gotoTorrentPage()));
 
     quitAction = new QAction(QIcon(":/icons/quit"), tr("E&xit"), this);
     quitAction->setStatusTip(tr("Quit application"));
@@ -344,9 +383,6 @@ void BitcoinGUI::createMenuBar()
     QMenu *file = appMenuBar->addMenu(tr("&File"));
     file->addAction(backupWalletAction);
     file->addAction(exportAction);
-#ifndef FIRST_CLASS_MESSAGING
-    file->addAction(messageAction);
-#endif
     file->addSeparator();
     file->addAction(quitAction);
 
@@ -356,11 +392,22 @@ void BitcoinGUI::createMenuBar()
     settings->addSeparator();
     settings->addAction(optionsAction);
 
+    QMenu *tools = appMenuBar->addMenu(tr("&Tools"));
+    tools->addAction(blockAction);
+    tools->addAction(burnCoinsAction);
+    tools->addAction(inscribeAction);
+#ifndef FIRST_CLASS_MESSAGING
+    tools->addAction(messageAction);
+#endif
+    tools->addAction(multisigAction);
+    tools->addAction(torrentPageAction);
+
     QMenu *help = appMenuBar->addMenu(tr("&Help"));
     help->addAction(openRPCConsoleAction);
     help->addSeparator();
     help->addAction(aboutAction);
     help->addAction(aboutQtAction);
+    help->addSeparator();
 }
 
 void BitcoinGUI::createToolBars()
@@ -372,8 +419,6 @@ void BitcoinGUI::createToolBars()
     toolbar->addAction(receiveCoinsAction);
     toolbar->addAction(historyAction);
     toolbar->addAction(addressBookAction);
-    toolbar->addAction(burnCoinsAction);
-    toolbar->addAction(blockAction);
     toolbar->addAction(miningAction);
 #ifdef FIRST_CLASS_MESSAGING
     toolbar->addAction(messageAction);
@@ -420,8 +465,11 @@ void BitcoinGUI::setClientModel(ClientModel *clientModel)
         // Report errors from network/worker thread
         connect(clientModel, SIGNAL(error(QString,QString, bool)), this, SLOT(error(QString,QString,bool)));
 
+        overviewPage->setClientModel(clientModel);
         rpcConsole->setClientModel(clientModel);
         miningPage->setModel(clientModel);
+        inscriptionPage->setClientModel(clientModel);
+        torrentPage->setClientModel(clientModel);
     }
 }
 
@@ -443,6 +491,9 @@ void BitcoinGUI::setWalletModel(WalletModel *walletModel)
         burnCoinsPage->setModel(walletModel);
         miningPage->setWalletModel(walletModel);
         messagePage->setModel(walletModel);
+        inscriptionPage->setWalletModel(walletModel);
+        torrentPage->setModel(walletModel->getTorrentTableModel());
+        multisigPage->setModel(walletModel);
 
         setEncryptionStatus(walletModel->getEncryptionStatus());
         connect(walletModel, SIGNAL(encryptionStatusChanged(int)), this, SLOT(setEncryptionStatus(int)));
@@ -484,13 +535,19 @@ void BitcoinGUI::createTrayIcon()
     trayIconMenu->addAction(receiveCoinsAction);
     trayIconMenu->addAction(sendCoinsAction);
     trayIconMenu->addAction(burnCoinsAction);
+    trayIconMenu->addAction(multisigAction);
+    trayIconMenu->addAction(inscribeAction);
+    trayIconMenu->addAction(blockAction);
+    trayIconMenu->addAction(torrentPageAction);
     trayIconMenu->addSeparator();
     trayIconMenu->addAction(optionsAction);
+    trayIconMenu->addSeparator();
+    trayIconMenu->addAction(openRPCConsoleAction);
+    trayIconMenu->addSeparator();
 #ifndef MAC_OSX // This is built-in on Mac
     trayIconMenu->addSeparator();
     trayIconMenu->addAction(quitAction);
 #endif
-    trayIconMenu->addAction(openRPCConsoleAction);
     notificator = new Notificator(tr("SLIMCoin-qt"), trayIcon);
 }
 
@@ -778,24 +835,6 @@ void BitcoinGUI::gotoOverviewPage()
     disconnect(exportAction, SIGNAL(triggered()), 0, 0);
 }
 
-void BitcoinGUI::gotoBlockBrowser()
-{
-    blockAction->setChecked(true);
-    centralWidget->setCurrentWidget(blockBrowser);
-
-    exportAction->setEnabled(false);
-    disconnect(exportAction, SIGNAL(triggered()), 0, 0);
-}
-
-void BitcoinGUI::gotoMiningPage()
-{
-    miningAction->setChecked(true);
-    centralWidget->setCurrentWidget(miningPage);
-
-    exportAction->setEnabled(false);
-    disconnect(exportAction, SIGNAL(triggered()), 0, 0);
-}
-
 void BitcoinGUI::gotoHistoryPage()
 {
     historyAction->setChecked(true);
@@ -835,17 +874,50 @@ void BitcoinGUI::gotoSendCoinsPage()
     disconnect(exportAction, SIGNAL(triggered()), 0, 0);
 }
 
+void BitcoinGUI::gotoMiningPage()
+{
+    miningAction->setChecked(true);
+    centralWidget->setCurrentWidget(miningPage);
+
+    exportAction->setEnabled(false);
+    disconnect(exportAction, SIGNAL(triggered()), 0, 0);
+}
+
+void BitcoinGUI::gotoBlockBrowser()
+{
+    /*
+    blockAction->setChecked(true);
+    centralWidget->setCurrentWidget(blockBrowser);
+
+    exportAction->setEnabled(false);
+    disconnect(exportAction, SIGNAL(triggered()), 0, 0);
+    */
+    blockBrowser->show();
+    blockBrowser->setFocus();
+}
+
 void BitcoinGUI::gotoBurnCoinsPage()
 {
+  /*
   burnCoinsAction->setChecked(true);
   centralWidget->setCurrentWidget(burnCoinsPage);
 
   exportAction->setEnabled(false);
   disconnect(exportAction, SIGNAL(triggered()), 0, 0);
+  */
+  burnCoinsPage->show();
+  burnCoinsPage->setFocus();
+}
+
+void BitcoinGUI::gotoInscriptionPage()
+{
+    inscriptionPage->show();
+    inscriptionPage->setFocus();
 }
 
 void BitcoinGUI::gotoMessagePage()
 {
+/*
 #ifdef FIRST_CLASS_MESSAGING
     messageAction->setChecked(true);
     centralWidget->setCurrentWidget(messagePage);
@@ -856,12 +928,27 @@ void BitcoinGUI::gotoMessagePage()
     messagePage->show();
     messagePage->setFocus();
 #endif
+*/
+    messagePage->show();
+    messagePage->setFocus();
 }
 
 void BitcoinGUI::gotoMessagePage(QString addr)
 {
     gotoMessagePage();
-    messagePage->setAddress(addr);
+    messagePage->setAddress_SM(addr);
+}
+
+void BitcoinGUI::gotoMultisigPage()
+{
+    multisigPage->show();
+    multisigPage->setFocus();
+}
+
+void BitcoinGUI::gotoTorrentPage()
+{
+  torrentPage->show();
+  torrentPage->setFocus();
 }
 
 void BitcoinGUI::dragEnterEvent(QDragEnterEvent *event)

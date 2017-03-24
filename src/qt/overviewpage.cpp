@@ -105,6 +105,7 @@ OverviewPage::OverviewPage(QWidget *parent) :
     ui(new Ui::OverviewPage),
     currentBalance(-1),
     currentStake(0),
+    currentReserveBalance(0),
     currentUnconfirmedBalance(-1),
     txdelegate(new TxViewDelegate())
 {
@@ -126,6 +127,7 @@ OverviewPage::OverviewPage(QWidget *parent) :
     ui->labelUnconfirmed->setTextInteractionFlags(Qt::TextSelectableByMouse|Qt::TextSelectableByKeyboard);
 
     ui->labelNumTransactions->setToolTip(tr("Total number of transactions in wallet"));
+    ui->labelReserveBalance->setToolTip(tr("Reserve balance of coins, excluded from staking."));
 
     // Recent transactions
     ui->listTransactions->setStyleSheet("QListView { background:transparent }");
@@ -193,15 +195,17 @@ OverviewPage::~OverviewPage()
     delete ui;
 }
 
-void OverviewPage::setBalance(qint64 balance, qint64 stake, qint64 unconfirmedBalance, BurnCoinsBalances burnBalances)
+void OverviewPage::setBalance(qint64 balance, qint64 stake, qint64 unconfirmedBalance, qint64 reserveBalance, BurnCoinsBalances burnBalances)
 {
     int unit = model->getOptionsModel()->getDisplayUnit();
     currentBalance = balance;
     currentStake = stake;
     currentUnconfirmedBalance = unconfirmedBalance;
+    currentReserveBalance = reserveBalance;
     ui->labelBalance->setText(BitcoinUnits::formatWithUnit(unit, balance));
     ui->labelStake->setText(BitcoinUnits::formatWithUnit(unit, stake));
     ui->labelUnconfirmed->setText(BitcoinUnits::formatWithUnit(unit, unconfirmedBalance));
+    ui->labelReserveBalance->setText(BitcoinUnits::formatWithUnit(unit, reserveBalance));
 
     //burn information
     currentNetBurnCoins = burnBalances.netBurnCoins;
@@ -220,6 +224,20 @@ void OverviewPage::setNumTransactions(int count)
     ui->labelNumTransactions->setText(QLocale::system().toString(count));
 }
 
+void OverviewPage::setReserveBalance(qint64 nreserveBalance)
+{
+    int unit = model->getOptionsModel()->getDisplayUnit();
+    ui->labelReserveBalance->setText(BitcoinUnits::formatWithUnit(unit, nreserveBalance));
+}
+
+void OverviewPage::setClientModel(ClientModel *model)
+{
+    this->clientModel = model;
+    if(model)
+    {
+    }
+};
+
 void OverviewPage::setModel(WalletModel *model)
 {
     this->model = model;
@@ -237,13 +255,16 @@ void OverviewPage::setModel(WalletModel *model)
         ui->listTransactions->setModelColumn(TransactionTableModel::ToAddress);
 
         // Keep up to date with wallet
-        setBalance(model->getBalance(), model->getStake(), model->getUnconfirmedBalance(), model->getBurnCoinBalances());
-        connect(model, SIGNAL(balanceChanged(qint64, qint64, qint64, BurnCoinsBalances)), this, SLOT(setBalance(qint64, qint64, qint64, BurnCoinsBalances)));
+        setBalance(model->getBalance(), model->getStake(), model->getUnconfirmedBalance(), model->getReserveBalance(), model->getBurnCoinBalances());
+        connect(model, SIGNAL(balanceChanged(qint64, qint64, qint64, qint64, BurnCoinsBalances)), this, SLOT(setBalance(qint64, qint64, qint64, qint64, BurnCoinsBalances)));
 
         setNumTransactions(model->getNumTransactions());
         connect(model, SIGNAL(numTransactionsChanged(int)), this, SLOT(setNumTransactions(int)));
 
         connect(model->getOptionsModel(), SIGNAL(displayUnitChanged(int)), this, SLOT(displayUnitChanged()));
+
+        setReserveBalance(model->getReserveBalance());
+        connect(model->getOptionsModel(), SIGNAL(reserveBalanceChanged(qint64)), this, SLOT(reserveBalanceChanged()));
     }
 }
 
@@ -252,12 +273,26 @@ void OverviewPage::displayUnitChanged()
     if(!model || !model->getOptionsModel())
         return;
     if(currentBalance != -1)
-        setBalance(currentBalance, currentStake, currentUnconfirmedBalance, BurnCoinsBalances(currentNetBurnCoins, currentEffectiveBurnCoins, currentImmatureBurnCoins));
+        setBalance(currentBalance, currentStake, currentUnconfirmedBalance, currentReserveBalance, BurnCoinsBalances(currentNetBurnCoins, currentEffectiveBurnCoins, currentImmatureBurnCoins));
 
     txdelegate->unit = model->getOptionsModel()->getDisplayUnit();
     ui->listTransactions->update();
 }
 
+void OverviewPage::reserveBalanceChanged()
+{
+    if(!model || !model->getOptionsModel())
+        return;
+    if(currentBalance != -1)
+        setBalance(currentBalance, currentStake, currentUnconfirmedBalance, currentReserveBalance, BurnCoinsBalances(currentNetBurnCoins, currentEffectiveBurnCoins, currentImmatureBurnCoins));
+
+    /*
+    int unit = model->getOptionsModel()->getDisplayUnit();
+    qint64 nreservebalance = model->getOptionsModel()->getReserveBalance();
+    ui->labelReserveBalance->setText(BitcoinUnits::formatWithUnit(unit, nreservebalance));
+    ui->labelReserveBalance->update();
+    */
+}
 
 void OverviewPage::updatePlot(int count)
 {

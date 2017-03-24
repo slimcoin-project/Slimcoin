@@ -209,7 +209,7 @@ inline int OutputDebugStringF(const char* pszFormat, ...)
         ret = vprintf(pszFormat, arg_ptr);
         va_end(arg_ptr);
     }
-    else
+    else if (!fPrintToDebugger)
     {
         // print to debug.log
         if (!fileout)
@@ -569,6 +569,7 @@ int64 GetArg(const std::string& strArg, int64 nDefault)
 
 bool GetBoolArg(const std::string& strArg, bool fDefault)
 {
+
     if (mapArgs.count(strArg))
     {
         if (mapArgs[strArg].empty())

@@ -1,0 +1,86 @@
+gettransaction 7206eb9f2e7acf03d9d9d909065cec79b63f7fbe131bea4ea8d868881b4f9920
+{
+    "amount" : 0.00000000,
+    "fee" : -0.01000000,
+    "confirmations" : 0,
+    "txid" : "7206eb9f2e7acf03d9d9d909065cec79b63f7fbe131bea4ea8d868881b4f9920",
+    "time" : 1484194638,
+    "comment" : "",
+    "from" : "",
+    "message" : "",
+    "to" : "",
+    "details" : [
+      {
+          "account" : "",
+          "address" : "msQd2xVVsXPEPkaUKegVwd531mXyKSnFax",
+          "category" : "send",
+          "amount" : -0.01000000,
+          "fee" : -0.01000000
+      },
+      {
+          "account" : "",
+          "address" : "1Wh4bh",
+          "category" : "send",
+          "amount" : 0.00000000,
+          "fee" : -0.01000000
+      },
+      {
+          "account" : "inscription",
+          "address" : "msQd2xVVsXPEPkaUKegVwd531mXyKSnFax",
+          "category" : "receive",
+          "amount" : 0.01000000
+      }
+    ]
+}
+
+getrawtransaction 7206eb9f2e7acf03d9d9d909065cec79b63f7fbe131bea4ea8d868881b4f9920 1
+￼
+{
+    "hex" : "010000004e0377580121251f2c2af4baeb9369cc57e44ef6c821e3bed8c968fd6719e8703c3b098c69000000004a493046022100ebca2724051e4d95f7f9bbf97e3cc42614a9f46f5af6a51871c56b25783cbee60221008ccdf9bb2d5d2c8b56fddacc853a36ecf00a78fd0650cb683f4ae799f882f1d601ffffffff035076f200000000001976a91479dc215797b4b61ec29fe3252309fbd96f8d4a5d88ac10270000000000001976a914826eef9b08e72c682285a6a54e5a9ec746e8fa8388ac00000000000000000a6a08face010060d6870100000000",
+    "txid" : "7206eb9f2e7acf03d9d9d909065cec79b63f7fbe131bea4ea8d868881b4f9920",
+    "version" : 1,
+    "time" : 1484194638,
+    "locktime" : 0,
+    "IsBurnTx" : false,
+    "vin" : [
+        {
+            "txid" : "698c093b3c70e81967fd68c9d8bee321c8f64ee457cc6993ebbaf42a2c1f2521",
+            "vout" : 0,
+            "scriptSig" : {
+                "asm" : "3046022100ebca2724051e4d95f7f9bbf97e3cc42614a9f46f5af6a51871c56b25783cbee60221008ccdf9bb2d5d2c8b56fddacc853a36ecf00a78fd0650cb683f4ae799f882f1d601",
+                "hex" : "493046022100ebca2724051e4d95f7f9bbf97e3cc42614a9f46f5af6a51871c56b25783cbee60221008ccdf9bb2d5d2c8b56fddacc853a36ecf00a78fd0650cb683f4ae799f882f1d601"
+              },
+            "sequence" : 4294967295
+        }
+    ],
+    "vout" : [
+        {
+            "value" : 15.89000000,
+            "n" : 0,
+            "scriptPubKey" : {
+                "asm" : "OP_DUP OP_HASH160 79dc215797b4b61ec29fe3252309fbd96f8d4a5d OP_EQUALVERIFY OP_CHECKSIG",
+                "reqSigs" : 1,
+                "type" : "pubkeyhash",
+                "addresses" : ["mrdHmBZZazjYsV81xbh1r915EbLzBtApvx"]
+            }
+        },
+        {
+            "value" : 0.01000000,
+            "n" : 1,
+            "scriptPubKey" : {
+                "asm" : "OP_DUP OP_HASH160 826eef9b08e72c682285a6a54e5a9ec746e8fa83 OP_EQUALVERIFY OP_CHECKSIG",
+                "reqSigs" : 1,
+                "type" : "pubkeyhash",
+                "addresses" : ["msQd2xVVsXPEPkaUKegVwd531mXyKSnFax"]
+            }
+        },
+        {
+            "value" : 0.00000000,
+            "n" : 2,
+            "scriptPubKey" : {
+                "asm" : "OP_RETURN face010060d68701",
+                "type" : "nulldata"
+            }
+        }
+    ]
+}

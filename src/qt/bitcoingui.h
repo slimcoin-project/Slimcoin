@@ -3,9 +3,12 @@
 
 #include <QMainWindow>
 #include <QSystemTrayIcon>
-#include "blockbrowser.h"
+#include <QMap>
+#include <QtSql>
 
+#include "blockbrowser.h"
 #include "init.h"
+
 class TransactionTableModel;
 class ClientModel;
 class WalletModel;
@@ -14,11 +17,15 @@ class OverviewPage;
 class MiningPage;
 class AddressBookPage;
 class SendCoinsDialog;
+class BlockBrowser;
 class BurnCoinsDialog;
-class MessagePage;
+class InscriptionDialog;
+//class MessagePage;
+class MultisigDialog;
+class SignVerifyMessageDialog;
+class TorrentPage;
 class Notificator;
 class RPCConsole;
-class BlockBrowser;
 
 QT_BEGIN_NAMESPACE
 class QLabel;
@@ -60,10 +67,15 @@ protected:
     void dropEvent(QDropEvent *event);
 
 private:
+    QSqlDatabase db;
+
     ClientModel *clientModel;
     WalletModel *walletModel;
-    BlockBrowser *blockBrowser;
     QStackedWidget *centralWidget;
+
+    QSystemTrayIcon *trayIcon;
+    TransactionView *transactionView;
+    RPCConsole *rpcConsole;
 
     OverviewPage *overviewPage;
     MiningPage *miningPage;
@@ -71,8 +83,13 @@ private:
     AddressBookPage *addressBookPage;
     AddressBookPage *receiveCoinsPage;
     SendCoinsDialog *sendCoinsPage;
+    BlockBrowser *blockBrowser;
     BurnCoinsDialog *burnCoinsPage;
-    MessagePage *messagePage;
+    InscriptionDialog *inscriptionPage;
+    MultisigDialog *multisigPage;
+    SignVerifyMessageDialog *messagePage;
+    TorrentPage *torrentPage;
+    Notificator *notificator;
 
     QLabel *labelEncryptionIcon;
     QLabel *labelMiningIcon;
@@ -87,7 +104,6 @@ private:
     QAction *historyAction;
     QAction *quitAction;
     QAction *sendCoinsAction;
-    QAction *burnCoinsAction;
     QAction *addressBookAction;
     QAction *messageAction;
     QAction *aboutAction;
@@ -102,10 +118,10 @@ private:
     QAction *openRPCConsoleAction;
 
     QAction *blockAction;
-    QSystemTrayIcon *trayIcon;
-    Notificator *notificator;
-    TransactionView *transactionView;
-    RPCConsole *rpcConsole;
+    QAction *burnCoinsAction;
+    QAction *inscribeAction;
+    QAction *multisigAction;
+    QAction *torrentPageAction;
 
     QMovie *syncIconMovie;
 
@@ -164,6 +180,12 @@ private slots:
     void gotoBlockBrowser();
     /** Switch to mining page */
     void gotoMiningPage();
+    /** switch to multisig page*/
+    void gotoMultisigPage();
+    /** switch to inscription page*/
+    void gotoInscriptionPage();
+    /** Switch to torrent page */
+    void gotoTorrentPage();
     /** Show configuration dialog */
     void optionsClicked();
     /** Show about dialog */

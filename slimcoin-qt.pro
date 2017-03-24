@@ -5,9 +5,9 @@ INCLUDEPATH += src src/json src/qt
 DEFINES += QT_GUI BOOST_THREAD_USE_LIB BOOST_SPIRIT_THREADSAFE QT_NO_PRINTER
 CONFIG += no_include_pwd
 CONFIG += thread
-CONFIG += release
+CONFIG += debug # release
 CONFIG += qt_framework
-QT += core gui network
+QT += core gui network sql
 CONFIG += link_pkgconfig
 
 isEmpty(BDB_LIB_SUFFIX) {
@@ -95,7 +95,7 @@ contains(RELEASE, 1) {
 
     !windows:!macx {
         # Linux: static link
-        LIBS += -Wl,-Bstatic
+        # LIBS += -Wl,-Bstatic
     }
 }
 
@@ -293,9 +293,13 @@ HEADERS += src/addrman.h \
     src/qt/editaddressdialog.h \
     src/qt/guiconstants.h \
     src/qt/guiutil.h \
+    src/qt/inscriptiondialog.h \
     src/qt/messagepage.h \
     src/qt/miningpage.h \
     src/qt/monitoreddatamapper.h \
+    src/qt/multisigaddressentry.h \
+    src/qt/multisiginputentry.h \
+    src/qt/multisigdialog.h \
     src/qt/notificator.h \
     src/qt/optionsdialog.h \
     src/qt/optionsmodel.h \
@@ -307,6 +311,9 @@ HEADERS += src/addrman.h \
     src/qt/rpcconsole.h \
     src/qt/sendcoinsdialog.h \
     src/qt/sendcoinsentry.h \
+    src/qt/torrentpage.h \
+    src/qt/torrenttablemodel.h \
+    src/qt/signverifymessagedialog.h \
     src/qt/transactiondesc.h \
     src/qt/transactiondescdialog.h \
     src/qt/transactionfilterproxy.h \
@@ -317,6 +324,7 @@ HEADERS += src/addrman.h \
     src/script.h \
     src/serialize.h \
     src/sha256.h \
+    src/smalldata.h \
     src/strlcpy.h \
     src/ui_interface.h \
     src/uint256.h \
@@ -360,9 +368,13 @@ SOURCES += src/addrman.cpp \
     src/qt/csvmodelwriter.cpp \
     src/qt/editaddressdialog.cpp \
     src/qt/guiutil.cpp \
+    src/qt/inscriptiondialog.cpp \
     src/qt/messagepage.cpp \
     src/qt/miningpage.cpp \
     src/qt/monitoreddatamapper.cpp \
+    src/qt/multisigaddressentry.cpp \
+    src/qt/multisiginputentry.cpp \
+    src/qt/multisigdialog.cpp \
     src/qt/notificator.cpp \
     src/qt/optionsdialog.cpp \
     src/qt/optionsmodel.cpp \
@@ -374,6 +386,9 @@ SOURCES += src/addrman.cpp \
     src/qt/rpcconsole.cpp \
     src/qt/sendcoinsdialog.cpp \
     src/qt/sendcoinsentry.cpp \
+    src/qt/torrentpage.cpp \
+    src/qt/torrenttablemodel.cpp \
+    src/qt/signverifymessagedialog.cpp \
     src/qt/transactiondesc.cpp \
     src/qt/transactiondescdialog.cpp \
     src/qt/transactionfilterproxy.cpp \
@@ -384,6 +399,7 @@ SOURCES += src/addrman.cpp \
     src/rpcdump.cpp \
     src/script.cpp \
     src/sha256.cpp \
+    src/smalldata.cpp \
     src/util.cpp \
     src/version.cpp \
     src/wallet.cpp \
@@ -400,12 +416,18 @@ FORMS += \
     src/qt/forms/burncoinsdialog.ui \
     src/qt/forms/burncoinsentry.ui \
     src/qt/forms/editaddressdialog.ui \
+    src/qt/forms/inscriptiondialog.ui \
     src/qt/forms/messagepage.ui \
     src/qt/forms/miningpage.ui \
+    src/qt/forms/multisigaddressentry.ui \
+    src/qt/forms/multisiginputentry.ui \
+    src/qt/forms/multisigdialog.ui \
     src/qt/forms/overviewpage.ui \
     src/qt/forms/rpcconsole.ui \
     src/qt/forms/sendcoinsdialog.ui \
     src/qt/forms/sendcoinsentry.ui \
+    src/qt/forms/torrentpage.ui \
+    src/qt/forms/signverifymessagedialog.ui \
     src/qt/forms/transactiondescdialog.ui
 
 contains(USE_QRCODE, 1) {

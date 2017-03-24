@@ -7,6 +7,7 @@
 #define BITCOIN_WALLETDB_H
 
 #include "db.h"
+#include "base58.h"
 
 class CKeyPool;
 class CAccount;
@@ -33,139 +34,138 @@ private:
   CWalletDB(const CWalletDB&);
   void operator=(const CWalletDB&);
 public:
-  bool ReadName(const std::string& strAddress, std::string& strName)
-  {
-    strName = "";
-    return Read(std::make_pair(std::string("name"), strAddress), strName);
-  }
-
-  bool WriteName(const std::string& strAddress, const std::string& strName);
-
-  bool EraseName(const std::string& strAddress);
-
-  //All transactions
-  bool ReadTx(uint256 hash, CWalletTx& wtx)
-  {
-    return Read(std::make_pair(std::string("tx"), hash), wtx);
-  }
-
-  bool WriteTx(uint256 hash, const CWalletTx& wtx)
-  {
-    nWalletDBUpdated++;
-    return Write(std::make_pair(std::string("tx"), hash), wtx);
-  }
-
-  bool EraseTx(uint256 hash)
-  {
-    nWalletDBUpdated++;
-    return Erase(std::make_pair(std::string("tx"), hash));
-  }
-    
-  //Burn transactions' hashes
-  bool ReadBurnTx(uint256 hash, CWalletTx& wtx)
-  {
-    return Read(std::make_pair(std::string("burnHash"), hash), wtx);
-  }
-
-  bool WriteBurnTx(uint256 hash, const CWalletTx& wtx)
-  {
-    nWalletDBUpdated++;
-    return Write(std::make_pair(std::string("burnHash"), hash), wtx);
-  }
-
-  bool EraseBurnTx(uint256 hash)
-  {
-    nWalletDBUpdated++;
-    return Erase(std::make_pair(std::string("burnHash"), hash));
-  }
-
-  bool ReadKey(const std::vector<unsigned char>& vchPubKey, CPrivKey& vchPrivKey)
-  {
-    vchPrivKey.clear();
-    return Read(std::make_pair(std::string("key"), vchPubKey), vchPrivKey);
-  }
-
-  bool WriteKey(const std::vector<unsigned char>& vchPubKey, const CPrivKey& vchPrivKey)
-  {
-    nWalletDBUpdated++;
-    return Write(std::make_pair(std::string("key"), vchPubKey), vchPrivKey, false);
-  }
-
-  bool WriteCryptedKey(const std::vector<unsigned char>& vchPubKey, const std::vector<unsigned char>& vchCryptedSecret, bool fEraseUnencryptedKey = true)
-  {
-    nWalletDBUpdated++;
-    if (!Write(std::make_pair(std::string("ckey"), vchPubKey), vchCryptedSecret, false))
-      return false;
-    if (fEraseUnencryptedKey)
+    bool ReadName(const std::string& strAddress, std::string& strName)
     {
-      Erase(std::make_pair(std::string("key"), vchPubKey));
-      Erase(std::make_pair(std::string("wkey"), vchPubKey));
+        strName = "";
+        return Read(std::make_pair(std::string("name"), strAddress), strName);
     }
-    return true;
-  }
 
-  bool WriteMasterKey(unsigned int nID, const CMasterKey& kMasterKey)
-  {
-    nWalletDBUpdated++;
-    return Write(std::make_pair(std::string("mkey"), nID), kMasterKey, true);
-  }
+    bool WriteName(const std::string& strAddress, const std::string& strName);
 
-  // Support for BIP 0013 : see https://en.bitcoin.it/wiki/BIP_0013
-  bool ReadCScript(const uint160 &hash, CScript& redeemScript)
-  {
-    redeemScript.clear();
-    return Read(std::make_pair(std::string("cscript"), hash), redeemScript);
-  }
+    bool EraseName(const std::string& strAddress);
 
-  bool WriteCScript(const uint160& hash, const CScript& redeemScript)
-  {
-    nWalletDBUpdated++;
-    return Write(std::make_pair(std::string("cscript"), hash), redeemScript, false);
-  }
+    bool ReadTx(uint256 hash, CWalletTx& wtx)
+    {
+        return Read(std::make_pair(std::string("tx"), hash), wtx);
+    }
 
-  bool WriteBestBlock(const CBlockLocator& locator)
-  {
-    nWalletDBUpdated++;
-    return Write(std::string("bestblock"), locator);
-  }
+    bool WriteTx(uint256 hash, const CWalletTx& wtx)
+    {
+        nWalletDBUpdated++;
+        return Write(std::make_pair(std::string("tx"), hash), wtx);
+    }
 
-  bool ReadBestBlock(CBlockLocator& locator)
-  {
-    return Read(std::string("bestblock"), locator);
-  }
+    bool EraseTx(uint256 hash)
+    {
+        nWalletDBUpdated++;
+        return Erase(std::make_pair(std::string("tx"), hash));
+    }
+    
+    //Burn transactions' hashes
+    bool ReadBurnTx(uint256 hash, CWalletTx& wtx)
+    {
+        return Read(std::make_pair(std::string("burnHash"), hash), wtx);
+    }
 
-  bool ReadDefaultKey(std::vector<unsigned char>& vchPubKey)
-  {
-    vchPubKey.clear();
-    return Read(std::string("defaultkey"), vchPubKey);
-  }
+    bool WriteBurnTx(uint256 hash, const CWalletTx& wtx)
+    {
+        nWalletDBUpdated++;
+        return Write(std::make_pair(std::string("burnHash"), hash), wtx);
+    }
 
-  bool WriteDefaultKey(const std::vector<unsigned char>& vchPubKey)
-  {
-    nWalletDBUpdated++;
-    return Write(std::string("defaultkey"), vchPubKey);
-  }
+    bool EraseBurnTx(uint256 hash)
+    {
+        nWalletDBUpdated++;
+        return Erase(std::make_pair(std::string("burnHash"), hash));
+    }
 
-  bool ReadPool(int64 nPool, CKeyPool& keypool)
-  {
-    return Read(std::make_pair(std::string("pool"), nPool), keypool);
-  }
+    bool ReadKey(const CPubKey& vchPubKey, CPrivKey& vchPrivKey)
+    {
+        vchPrivKey.clear();
+        return Read(std::make_pair(std::string("key"), vchPubKey.Raw()), vchPrivKey);
+    }
 
-  bool WritePool(int64 nPool, const CKeyPool& keypool)
-  {
-    nWalletDBUpdated++;
-    return Write(std::make_pair(std::string("pool"), nPool), keypool);
-  }
+    bool WriteKey(const CPubKey& vchPubKey, const CPrivKey& vchPrivKey)
+    {
+        nWalletDBUpdated++;
+        return Write(std::make_pair(std::string("key"), vchPubKey.Raw()), vchPrivKey, false);
+    }
 
-  bool ErasePool(int64 nPool)
-  {
-    nWalletDBUpdated++;
-    return Erase(std::make_pair(std::string("pool"), nPool));
-  }
+    bool WriteCryptedKey(const CPubKey& vchPubKey, const std::vector<unsigned char>& vchCryptedSecret, bool fEraseUnencryptedKey = true)
+    {
+        nWalletDBUpdated++;
+        if (!Write(std::make_pair(std::string("ckey"), vchPubKey.Raw()), vchCryptedSecret, false))
+            return false;
+        if (fEraseUnencryptedKey)
+        {
+            Erase(std::make_pair(std::string("key"), vchPubKey.Raw()));
+            Erase(std::make_pair(std::string("wkey"), vchPubKey.Raw()));
+        }
+        return true;
+    }
 
-  // Settings are no longer stored in wallet.dat; these are
-  // used only for backwards compatibility:
-  template<typename T>
+    bool WriteMasterKey(unsigned int nID, const CMasterKey& kMasterKey)
+    {
+        nWalletDBUpdated++;
+        return Write(std::make_pair(std::string("mkey"), nID), kMasterKey, true);
+    }
+
+    // Support for BIP 0013 : see https://en.bitcoin.it/wiki/BIP_0013
+    bool ReadCScript(const uint160 &hash, CScript& redeemScript)
+    {
+        redeemScript.clear();
+        return Read(std::make_pair(std::string("cscript"), hash), redeemScript);
+    }
+
+    bool WriteCScript(const uint160& hash, const CScript& redeemScript)
+    {
+        nWalletDBUpdated++;
+        return Write(std::make_pair(std::string("cscript"), hash), redeemScript, false);
+    }
+
+    bool WriteBestBlock(const CBlockLocator& locator)
+    {
+        nWalletDBUpdated++;
+        return Write(std::string("bestblock"), locator);
+    }
+
+    bool ReadBestBlock(CBlockLocator& locator)
+    {
+        return Read(std::string("bestblock"), locator);
+    }
+
+    bool ReadDefaultKey(std::vector<unsigned char>& vchPubKey)
+    {
+        vchPubKey.clear();
+        return Read(std::string("defaultkey"), vchPubKey);
+    }
+
+    bool WriteDefaultKey(const CPubKey& vchPubKey)
+    {
+        nWalletDBUpdated++;
+        return Write(std::string("defaultkey"), vchPubKey.Raw());
+    }
+
+    bool ReadPool(int64 nPool, CKeyPool& keypool)
+    {
+        return Read(std::make_pair(std::string("pool"), nPool), keypool);
+    }
+
+    bool WritePool(int64 nPool, const CKeyPool& keypool)
+    {
+        nWalletDBUpdated++;
+        return Write(std::make_pair(std::string("pool"), nPool), keypool);
+    }
+
+    bool ErasePool(int64 nPool)
+    {
+        nWalletDBUpdated++;
+        return Erase(std::make_pair(std::string("pool"), nPool));
+    }
+
+    // Settings are no longer stored in wallet.dat; these are
+    // used only for backwards compatibility:
+    template<typename T>
     bool ReadSetting(const std::string& strKey, T& value)
   {
     return Read(std::make_pair(std::string("setting"), strKey), value);

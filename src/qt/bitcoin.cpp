@@ -169,9 +169,9 @@ int main(int argc, char *argv[])
 
   // Basic Qt initialization (not dependent on parameters or configuration)
 #if QT_VERSION < 0x050000
-    // Internal string conversion is all UTF-8
-    QTextCodec::setCodecForTr(QTextCodec::codecForName("UTF-8"));
-    QTextCodec::setCodecForCStrings(QTextCodec::codecForTr());
+  // Internal string conversion is all UTF-8
+  QTextCodec::setCodecForTr(QTextCodec::codecForName("UTF-8"));
+  QTextCodec::setCodecForCStrings(QTextCodec::codecForTr());
 #endif
 
 #if QT_VERSION > 0x050100
@@ -231,9 +231,12 @@ int main(int argc, char *argv[])
   if(!translator.isEmpty())
     app.installTranslator(&translator);
 
+  QPixmap testnet_splash_pixmap = QPixmap(":/images/splash_testnet");
   QSplashScreen splash(QPixmap(":/images/splash"), 0);
   if(GetBoolArg("-splash", true) && !GetBoolArg("-min"))
   {
+    if(GetBoolArg("-testnet", false))
+      splash.setPixmap(testnet_splash_pixmap);
     splash.show();
     splash.setAutoFillBackground(true);
     splashref = &splash;

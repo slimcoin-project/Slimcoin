@@ -105,6 +105,7 @@ int64 nHPSTimerStart;
 
 // Settings
 int64 nTransactionFee = MIN_TX_FEE;
+int64 nReserveBalance;
 
 // Dcrypt hash scanner
 static u32int ScanDcryptHash(CBlock *pblock, u32int *nHashesDone, uint256 *phash);
@@ -164,15 +165,32 @@ bool GetTransaction(const uint256 &hash, CTransaction &tx, uint256 &hashBlock)
                 return true;
             }
         }
-
         CTxDB txdb("r");
         CTxIndex txindex;
-        if (tx.ReadFromDisk(txdb, COutPoint(hash, 0), txindex))
+        if (tx.ReadFromDisk(txdb, hash, txindex))
         {
             CBlock block;
             if (block.ReadFromDisk(txindex.pos.nFile, txindex.pos.nBlockPos, false))
                 hashBlock = block.GetHash();
             return true;
+        }
+        // look for transaction in disconnected blocks to find orphaned CoinBase and CoinStake transactions
+        BOOST_FOREACH(PAIRTYPE(const uint256, CBlockIndex*)& item, mapBlockIndex)
+        {
+            CBlockIndex* pindex = item.second;
+            if (pindex == pindexBest || pindex->pnext != 0)
+                continue;
+            CBlock block;
+            if (!block.ReadFromDisk(pindex))
+                continue;
+            BOOST_FOREACH(const CTransaction& txOrphan, block.vtx)
+            {
+                if (txOrphan.GetHash() == hash)
+                {
+                    tx = txOrphan;
+                    return true;
+                }
+            }
         }
     }
     return false;
@@ -327,12 +345,19 @@ unsigned int LimitOrphanTxSize(unsigned int nMaxOrphans)
 // CTransaction and CTxIndex
 //
 
-bool CTransaction::ReadFromDisk(CTxDB& txdb, COutPoint prevout, CTxIndex& txindexRet)
+bool CTransaction::ReadFromDisk(CTxDB& txdb, const uint256& hash, CTxIndex& txindexRet)
 {
     SetNull();
-    if (!txdb.ReadTxIndex(prevout.hash, txindexRet))
-        return false;
+    if (!txdb.ReadTxIndex(hash, txindexRet))
+         return false;
     if (!ReadFromDisk(txindexRet.pos))
+         return false;
+    return true;
+}
+
+bool CTransaction::ReadFromDisk(CTxDB& txdb, COutPoint prevout, CTxIndex& txindexRet)
+{
+    if (!ReadFromDisk(txdb, prevout.hash, txindexRet))
         return false;
     if (prevout.n >= vout.size())
     {
@@ -421,9 +446,22 @@ bool CTransaction::IsStandard() const
         if (!txin.scriptSig.IsPushOnly())
             return false;
     }
-    BOOST_FOREACH(const CTxOut& txout, vout)
-        if (!::IsStandard(txout.scriptPubKey))
+
+    unsigned int nDataOut = 0;
+    txnouttype whichType;
+    BOOST_FOREACH(const CTxOut& txout, vout) {
+        if (!::IsStandard(txout.scriptPubKey, whichType)) {
             return false;
+        }
+        if (whichType == TX_NULL_DATA)
+            nDataOut++;
+    }
+
+    // only one OP_RETURN txout is permitted
+    if (nDataOut > 1) {
+        return false;
+    }
+
     return true;
 }
 
@@ -584,7 +622,9 @@ bool CTransaction::CheckTransaction() const
         if (txout.IsEmpty() && (!IsCoinBase()) && (!IsCoinStake()))
             return DoS(100, error("CTransaction::CheckTransaction() : txout empty for user transaction"));
         // ppcoin: enforce minimum output amount
-        if ((!txout.IsEmpty()) && txout.nValue < MIN_TXOUT_AMOUNT)
+        // v0.5 protocol: zero amount allowed
+        if ((!txout.IsEmpty()) && txout.nValue < MIN_TXOUT_AMOUNT &&
+            !(IsProtocolV05(nTime) && (txout.nValue == 0)))
             return DoS(100, error("CTransaction::CheckTransaction() : txout.nValue below minimum"));
         if (txout.nValue > MAX_MONEY)
             return DoS(100, error("CTransaction::CheckTransaction() : txout.nValue too high"));
@@ -598,7 +638,7 @@ bool CTransaction::CheckTransaction() const
     BOOST_FOREACH(const CTxIn& txin, vin)
     {
         if (vInOutPoints.count(txin.prevout))
-            return false;
+            return DoS(100, error("CTransaction::CheckTransaction() : duplicate inputs"));
         vInOutPoints.insert(txin.prevout);
     }
 
@@ -805,6 +845,18 @@ bool CTxMemPool::remove(CTransaction &tx)
 }
 
 
+void CTxMemPool::queryHashes(std::vector<uint256>& vtxid)
+{
+    vtxid.clear();
+
+    LOCK(cs);
+    vtxid.reserve(mapTx.size());
+    for (map<uint256, CTransaction>::iterator mi = mapTx.begin(); mi != mapTx.end(); ++mi)
+        vtxid.push_back((*mi).first);
+}
+
+
+
 
 
 
@@ -922,15 +974,6 @@ int CTxIndex::GetDepthInMainChain() const
         return 0;
     return 1 + nBestHeight - pindex->nHeight;
 }
-
-
-
-
-
-
-
-
-
 
 //////////////////////////////////////////////////////////////////////////////
 //
@@ -3011,8 +3054,22 @@ bool LoadBlockIndex(bool fAllowNew)
         // ppcoin: initialize synchronized checkpoint
         if (!Checkpoints::WriteSyncCheckpoint(hashGenesisBlock))
             return error("LoadBlockIndex() : failed to init sync checkpoint");
+
+        // ppcoin: upgrade time set to zero if txdb initialized
+        /* FIXME: ppcoin-specific, expungable
+        {
+            CTxDB txdb;
+            if (!txdb.WriteV04UpgradeTime(0))
+                return error("LoadBlockIndex() : failed to init upgrade info");
+            if (!txdb.WriteV05UpgradeTime(0))
+                return error("LoadBlockIndex() : failed to init upgrade info");
+            printf(" Upgrade Info: v0.5+ txdb initialization\n");
+            txdb.Close();
+        }
+        */
     }
 
+    /* FIXME: ppcoin-specific, expungable
     // ppcoin: if checkpoint master key changed must reset sync-checkpoint
     {
         CTxDB txdb;
@@ -3030,7 +3087,48 @@ bool LoadBlockIndex(bool fAllowNew)
         }
         txdb.Close();
     }
-
+    */
+    /* FIXME: ppcoin-specific, expungable
+    // ppcoin: upgrade time set to zero if txdb initialized
+    {
+        CTxDB txdb;
+        if (txdb.ReadV04UpgradeTime(nProtocolV04UpgradeTime))
+        {
+            if (nProtocolV04UpgradeTime)
+                printf(" Upgrade Info: txdb upgrade v0.3->v0.4 detected at timestamp %d\n", nProtocolV04UpgradeTime);
+            else
+                printf(" Upgrade Info: no txdb upgrade v0.3->v0.4 detected.\n");
+        }
+        else
+        {
+            nProtocolV04UpgradeTime = GetTime();
+            printf(" Upgrade Info: upgrading txdb from v0.3->v0.5 at timestamp %u\n", nProtocolV04UpgradeTime);
+            if (!txdb.WriteV04UpgradeTime(nProtocolV04UpgradeTime))
+                return error("LoadBlockIndex() : failed to write upgrade info");
+        }
+        txdb.Close();
+    }
+    */
+    /* FIXME: ppcoin-specific, expungable
+    {
+        CTxDB txdb;
+        if (txdb.ReadV05UpgradeTime(nProtocolV05UpgradeTime))
+        {
+            if (nProtocolV05UpgradeTime)
+                printf(" Upgrade Info: txdb upgrade to v0.5 detected at timestamp %d\n", nProtocolV05UpgradeTime);
+            else
+                printf(" Upgrade Info: v0.5+ no txdb upgrade detected.\n");
+        }
+        else
+        {
+            nProtocolV05UpgradeTime = GetTime();
+            printf(" Upgrade Info: upgrading txdb to v0.5 at timestamp %u\n", nProtocolV05UpgradeTime);
+            if (!txdb.WriteV05UpgradeTime(nProtocolV05UpgradeTime))
+                return error("LoadBlockIndex() : failed to write upgrade info");
+        }
+        txdb.Close();
+    }
+    */
     return true;
 }
 
@@ -3170,6 +3268,24 @@ string GetWarnings(string strFor)
         strStatusBar = strRPC = "WARNING: Invalid checkpoint found! Displayed transactions may not be correct! You may need to upgrade, or notify developers of the issue.";
     }
 
+    /* FIXME: ppcoin-specific, expungable
+    // ppcoin: if detected unmet upgrade requirement enter safe mode
+    // Note: v0.4 upgrade requires blockchain redownload if past protocol switch
+    if (IsProtocolV04(nProtocolV04UpgradeTime + 60*60*24)) // 1 day margin
+    {
+        nPriority = 5000;
+        strStatusBar = strRPC = "WARNING: Blockchain redownload required upgrading from pre v0.4 wallet.";
+    }
+    else if (IsProtocolV05(nProtocolV05UpgradeTime + 60*60*24)) // 1 day margin
+    {
+        // v0.5 protocol does not change modifier computation from v0.4.
+        // So redownload of blockchain is not required for late upgrades, 
+        // but still recommended.
+        nPriority = 200;
+        strStatusBar = strRPC = "WARNING: Blockchain redownload recommended approaching or past v0.5 upgrade deadline.";
+    }
+    */
+
     // Alerts
     {
         LOCK(cs_mapAlerts);
@@ -3283,7 +3399,7 @@ bool static AlreadyHave(CTxDB& txdb, const CInv& inv)
 
 bool static ProcessMessage(CNode* pfrom, string strCommand, CDataStream& vRecv)
 {
-    static map<CService, vector<unsigned char> > mapReuseKey;
+    static map<CService, CPubKey> mapReuseKey;
     RandAddSeedPerfmon();
     if (fDebug) {
         printf("%s ", DateTimeStrFormat(GetTime()).c_str());
@@ -4490,16 +4606,17 @@ bool GetBurnHash(uint256 hashPrevBlock, s32int burnBlkHeight, s32int burnCTx,
     CBurnAddress burnAddress;
 
     //check if the out transaction went to a burn address
-    CBitcoinAddress address;
-    if (!ExtractAddress(burnTxOut.scriptPubKey, address))
+    CTxDestination address;
+    if (!ExtractDestination(burnTxOut.scriptPubKey, address))
         return error("GetBurnHash(): ExtractAddress failed");
 
-    if (address != burnAddress)
+    if (address != burnAddress.Get())
         return error("GetBurnHash(): TxOut's address is not a valid burn address");
 
+    /* Surely invalid if the destination is not a valid burn address
     if (!address.IsValid())
         return error("GetBurnHash(): TxOut's address is invalid");
-
+    */
     if (!burnTxOut.nValue)
         return error("GetBurnHash(): Burn transaction's value is 0");
 

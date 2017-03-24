@@ -9,6 +9,9 @@ class OptionsModel;
 class AddressTableModel;
 class TransactionTableModel;
 class CWallet;
+class CKeyID;
+class CPubKey;
+class TorrentTableModel;
 
 class BurnCoinsBalances
 {
@@ -85,8 +88,10 @@ public:
   OptionsModel *getOptionsModel();
   AddressTableModel *getAddressTableModel();
   TransactionTableModel *getTransactionTableModel();
+  TorrentTableModel *getTorrentTableModel();
 
   qint64 getBalance() const;
+  qint64 getReserveBalance() const;
   qint64 getStake() const;
   qint64 getUnconfirmedBalance() const;
   int getNumTransactions() const;
@@ -110,7 +115,7 @@ public:
   };
 
   // Send coins to a list of recipients
-  SendCoinsReturn sendCoins(const QList<SendCoinsRecipient> &recipients, bool fBurnTx);
+  SendCoinsReturn sendCoins(const QList<SendCoinsRecipient> &recipients, QString &txmessage, bool fBurnTx);
 
   // Wallet encryption
   bool setWalletEncrypted(bool encrypted, const SecureString &passphrase);
@@ -142,6 +147,9 @@ public:
 
   UnlockContext requestUnlock();
 
+  bool getPubKey(const CKeyID &address, CPubKey& vchPubKeyOut) const;
+  CWallet * getWallet();
+
 private:
   CWallet *wallet;
 
@@ -151,9 +159,11 @@ private:
 
   AddressTableModel *addressTableModel;
   TransactionTableModel *transactionTableModel;
+  TorrentTableModel *torrentTableModel;
 
   // Cache some values to be able to detect changes
   qint64 cachedBalance;
+  qint64 cachedReserveBalance;
   qint64 cachedUnconfirmedBalance;
   qint64 cachedNumTransactions;
   EncryptionStatus cachedEncryptionStatus;
@@ -161,10 +171,13 @@ private:
 
 signals:
   // Signal that balance in wallet changed
-  void balanceChanged(qint64 balance, qint64 stake, qint64 unconfirmedBalance, BurnCoinsBalances cachedBurnCoinsBalances);
+  void balanceChanged(qint64 balance, qint64 stake, qint64 unconfirmedBalance, qint64 reserveBalance, BurnCoinsBalances cachedBurnCoinsBalances);
 
   // Number of transactions in wallet changed
   void numTransactionsChanged(int count);
+
+  // Number of transactions in wallet changed
+  void reserveBalanceChanged(int count);
 
   // Encryption status of wallet changed
   void encryptionStatusChanged(int status);
