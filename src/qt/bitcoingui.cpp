@@ -543,7 +543,6 @@ void BitcoinGUI::createTrayIcon()
     trayIconMenu->addAction(optionsAction);
     trayIconMenu->addSeparator();
     trayIconMenu->addAction(openRPCConsoleAction);
-    trayIconMenu->addSeparator();
 #ifndef MAC_OSX // This is built-in on Mac
     trayIconMenu->addSeparator();
     trayIconMenu->addAction(quitAction);
@@ -885,25 +884,12 @@ void BitcoinGUI::gotoMiningPage()
 
 void BitcoinGUI::gotoBlockBrowser()
 {
-    /*
-    blockAction->setChecked(true);
-    centralWidget->setCurrentWidget(blockBrowser);
-
-    exportAction->setEnabled(false);
-    disconnect(exportAction, SIGNAL(triggered()), 0, 0);
-    */
     blockBrowser->show();
     blockBrowser->setFocus();
 }
 
 void BitcoinGUI::gotoBurnCoinsPage()
 {
-  /*
-  burnCoinsAction->setChecked(true);
-  centralWidget->setCurrentWidget(burnCoinsPage);
-
-  exportAction->setEnabled(false);
-  disconnect(exportAction, SIGNAL(triggered()), 0, 0);
   */
   burnCoinsPage->show();
   burnCoinsPage->setFocus();
@@ -917,18 +903,6 @@ void BitcoinGUI::gotoInscriptionPage()
 
 void BitcoinGUI::gotoMessagePage()
 {
-/*
-#ifdef FIRST_CLASS_MESSAGING
-    messageAction->setChecked(true);
-    centralWidget->setCurrentWidget(messagePage);
-
-    exportAction->setEnabled(false);
-    disconnect(exportAction, SIGNAL(triggered()), 0, 0);
-#else
-    messagePage->show();
-    messagePage->setFocus();
-#endif
-*/
     messagePage->show();
     messagePage->setFocus();
 }
