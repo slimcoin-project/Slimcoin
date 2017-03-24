@@ -166,7 +166,7 @@ BOOST_AUTO_TEST_CASE(test_GetThrow)
 
     t1.vout[0].scriptPubKey = CScript() << OP_RETURN;
     t1.vout[1].scriptPubKey = CScript() << OP_RETURN;
-    BOOST_CHECK(!t.IsStandard());
+    BOOST_CHECK(!t1.IsStandard());
 }
 
 BOOST_AUTO_TEST_CASE(test_IsStandard)
