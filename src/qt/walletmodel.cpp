@@ -11,6 +11,8 @@
 #include "walletdb.h" // for BackupWallet
 #include "bitcoinrpc.h" // getBurnCoinBalances()
 #include "base58.h"
+#include "smalldata.h"
+#include "keystore.h"
 
 #include <QSet>
 
@@ -98,7 +100,15 @@ void WalletModel::updateAddressList()
 
 bool WalletModel::validateAddress(const QString &address)
 {
-    CBitcoinAddress addressParsed(address.toStdString());
+    std::string sAddr = address.toStdString();
+    
+    if (sAddr.length() > 75)
+    {
+        if (IsStealthAddress(sAddr))
+            return true;
+    };
+    
+    CBitcoinAddress addressParsed(sAddr);
     return addressParsed.IsValid();
 }
 
@@ -151,6 +161,66 @@ WalletModel::SendCoinsReturn WalletModel::sendCoins(const QList<SendCoinsRecipie
         std::vector<std::pair<CScript, int64> > vecSend;
         foreach(const SendCoinsRecipient &rcp, recipients)
         {
+            std::string sAddr = rcp.address.toStdString();
+            
+            if (rcp.typeInd == AddressTableModel::AT_Stealth)
+            {
+                CStealthAddress sxAddr;
+                if (sxAddr.SetEncoded(sAddr))
+                {
+                    ec_secret ephem_secret;
+                    ec_secret secretShared;
+                    ec_point pkSendTo;
+                    ec_point ephem_pubkey;
+                    
+                    
+                    if (GenerateRandomSecret(ephem_secret) != 0)
+                    {
+                        printf("GenerateRandomSecret failed.\n");
+                        return Aborted;
+                    };
+                    
+                    if (StealthSecret(ephem_secret, sxAddr.scan_pubkey, sxAddr.spend_pubkey, secretShared, pkSendTo) != 0)
+                    {
+                        printf("Could not generate receiving public key.\n");
+                        return Aborted;
+                    };
+                    
+                    CPubKey cpkTo(pkSendTo);
+                    if (!cpkTo.IsValid())
+                    {
+                        printf("Invalid public key generated.\n");
+                        return Aborted;
+                    };
+                    
+                    CKeyID ckidTo = cpkTo.GetID();
+                    
+                    CBitcoinAddress addrTo(ckidTo);
+                    
+                    if (SecretToPublicKey(ephem_secret, ephem_pubkey) != 0)
+                    {
+                        printf("Could not generate ephem public key.\n");
+                        return Aborted;
+                    };
+                    
+                    if (fDebug)
+                    {
+                        printf("Stealth send to generated pubkey %" PRI64u ": %s\n", pkSendTo.size(), HexStr(pkSendTo).c_str());
+                        printf("hash %s\n", addrTo.ToString().c_str());
+                        printf("ephem_pubkey %" PRI64u ": %s\n", ephem_pubkey.size(), HexStr(ephem_pubkey).c_str());
+                    };
+                    
+                    CScript scriptPubKey;
+                    scriptPubKey.SetBitcoinAddress(addrTo.ToString());
+                    
+                    vecSend.push_back(make_pair(scriptPubKey, rcp.amount));
+                    
+                    CScript scriptP = CScript() << OP_RETURN << ephem_pubkey;
+                    vecSend.push_back(make_pair(scriptP, 0));
+                    
+                    continue;
+                }; // else drop through to normal
+            }
             CScript scriptPubKey;
             scriptPubKey.SetDestination(CBitcoinAddress(rcp.address.toStdString()).Get());
             vecSend.push_back(make_pair(scriptPubKey, rcp.amount));
@@ -171,6 +241,25 @@ WalletModel::SendCoinsReturn WalletModel::sendCoins(const QList<SendCoinsRecipie
             scriptMsg << OP_RETURN << vMsg;
             vecSend.push_back(make_pair(scriptMsg, 0));
         }
+
+
+        if ( txmessage.length() )
+        {
+            const char* msg = txmessage.toStdString().c_str();
+            CScript scriptMsg;
+            const unsigned char *msgHeader = GetSmallDataHeader(SMALLDATA_TYPE_PLAINTEXT);
+            std::vector<unsigned char> vMsg;
+            int i;
+            for ( i = 0; i < 4; ++ i )
+                vMsg.push_back(msgHeader[i]);
+            for ( i = 0; i < std::strlen(msg); ++ i )
+                vMsg.push_back(msg[i]);
+
+            scriptMsg << OP_RETURN << vMsg;
+            vecSend.push_back(make_pair(scriptMsg, 0));
+        }
+
+
 
         CWalletTx wtx;
         CReserveKey keyChange(wallet);
@@ -279,7 +368,7 @@ bool WalletModel::setWalletLocked(bool locked, const SecureString &passPhrase)
     if(locked)
     {
         // Lock
-        return wallet->Lock();
+        return wallet->LockKeyStore();
     }
     else
     {
@@ -293,7 +382,7 @@ bool WalletModel::changePassphrase(const SecureString &oldPass, const SecureStri
     bool retval;
     {
         LOCK(wallet->cs_wallet);
-        wallet->Lock(); // Make sure wallet is locked before attempting pass change
+        wallet->LockKeyStore(); // Make sure wallet is locked before attempting pass change
         retval = wallet->ChangeWalletPassphrase(oldPass, newPass);
     }
     return retval;

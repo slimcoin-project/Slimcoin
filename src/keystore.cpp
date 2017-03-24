@@ -73,6 +73,20 @@ bool CCryptoKeyStore::SetCrypted()
   return true;
 }
 
+bool CCryptoKeyStore::LockKeyStore()
+{
+    if (!SetCrypted())
+        return false;
+
+    {
+        LOCK(cs_KeyStore);
+        vMasterKey.clear();
+    }
+
+    // NotifyStatusChanged(this);
+    return true;
+}
+
 bool CCryptoKeyStore::Unlock(const CKeyingMaterial& vMasterKeyIn)
 {
   {
@@ -99,6 +113,7 @@ bool CCryptoKeyStore::Unlock(const CKeyingMaterial& vMasterKeyIn)
     }
     vMasterKey = vMasterKeyIn;
   }
+  // NotifyStatusChanged(this);
   return true;
 }
 
@@ -133,8 +148,8 @@ bool CCryptoKeyStore::AddCryptedKey(const CPubKey &vchPubKey, const std::vector<
         return false;
 
         mapCryptedKeys[vchPubKey.GetID()] = make_pair(vchPubKey, vchCryptedSecret);
-    }
-    return true;
+  }
+  return true;
 }
 
 bool CCryptoKeyStore::GetKey(const CKeyID &address, CKey& keyOut) const
