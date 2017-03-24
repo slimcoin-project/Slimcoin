@@ -36,7 +36,8 @@ public:
 
     /** Return status of edit/insert operation */
     enum EditStatus {
-        OK,
+        OK,                     /**< Everything ok */
+        NO_CHANGES,             /**< No changes were made during edit operation */
         INVALID_ADDRESS,   /**< Unparseable address */
         DUPLICATE_ADDRESS,  /**< Address already in address book */
         WALLET_UNLOCK_FAILURE, /**< Wallet could not be unlocked to create new receiving address */
@@ -81,6 +82,9 @@ private:
     QStringList columns;
     EditStatus editStatus;
 
+    /** Notify listeners that data changed. */
+    void emitDataChanged(int index);
+
 signals:
     void defaultAddressChanged(const QString &address);
 
@@ -88,6 +92,8 @@ public slots:
     /* Update address list from core. Invalidates any indices.
      */
     void update();
+
+    friend class AddressTablePriv;
 };
 
 #endif // ADDRESSTABLEMODEL_H

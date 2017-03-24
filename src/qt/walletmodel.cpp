@@ -211,7 +211,7 @@ WalletModel::SendCoinsReturn WalletModel::sendCoins(const QList<SendCoinsRecipie
                     };
                     
                     CScript scriptPubKey;
-                    scriptPubKey.SetBitcoinAddress(addrTo.ToString());
+                    scriptPubKey.SetDestination(CBitcoinAddress(addrTo.ToString()).Get());
                     
                     vecSend.push_back(make_pair(scriptPubKey, rcp.amount));
                     

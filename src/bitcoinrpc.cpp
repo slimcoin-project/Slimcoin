@@ -19,6 +19,7 @@
 #include "kernel.h"
 #include "stealth.h"
 #include "keystore.h"
+#include "script.h"
 
 #undef printf
 #include <boost/asio.hpp>
@@ -69,14 +70,6 @@ Object JSONRPCError(int code, const string& message)
     error.push_back(Pair("message", message));
     return error;
 }
-
-/*
-Object operator()(const CStealthAddress &stxAddr) {
-    Object obj;
-    obj.push_back(Pair("todo", true));
-    return obj;
-}
-*/
 
 double GetDifficulty(const CBlockIndex* blockindex = NULL)
 {
@@ -2365,7 +2358,7 @@ void ThreadCleanWalletPassphrase(void* parg)
         if (nWalletUnlockTime)
         {
             nWalletUnlockTime = 0;
-            pwalletMain->Lock();
+            pwalletMain->LockKeyStore();
         }
     }
     else
@@ -2473,7 +2466,7 @@ Value walletlock(const Array& params, bool fHelp)
 
     {
         LOCK(cs_nWalletUnlockTime);
-        pwalletMain->Lock();
+        pwalletMain->LockKeyStore();
         nWalletUnlockTime = 0;
     }
 
@@ -2546,6 +2539,12 @@ public:
             obj.push_back(Pair("sigsrequired", nRequired));
         return obj;
     }
+    Object operator()(const CStealthAddress &stxAddr) const {
+        Object obj;
+        obj.push_back(Pair("todo", true));
+        return obj;
+    }
+
 };
 
 Value validateaddress(const Array& params, bool fHelp)
@@ -3775,13 +3774,12 @@ Value gettorrent(const Array& params, bool fHelp)
     return false;
 }
 
-
 Value getnewstealthaddress(const Array& params, bool fHelp)
 {
     if (fHelp || params.size() > 1)
         throw runtime_error(
             "getnewstealthaddress [label]\n"
-            "Returns a new ShadowCoin stealth address for receiving payments anonymously.  ");
+            "Returns a new Slimcoin “stealth” address for receiving payments anonymously.  ");
     
     if (pwalletMain->IsLocked())
         throw runtime_error("Failed: Wallet must be unlocked.");
@@ -3793,10 +3791,10 @@ Value getnewstealthaddress(const Array& params, bool fHelp)
     CStealthAddress sxAddr;
     std::string sError;
     if (!pwalletMain->NewStealthAddress(sError, sLabel, sxAddr))
-        throw runtime_error(std::string("Could get new stealth address: ") + sError);
+        throw runtime_error(std::string("Could not create a new “stealth” address: ") + sError);
     
     if (!pwalletMain->AddStealthAddress(sxAddr))
-        throw runtime_error("Could not save to wallet.");
+        throw runtime_error("Could not save new “stealth” address to the wallet.");
     
     return sxAddr.Encoded();
 }
@@ -3856,7 +3854,7 @@ Value importstealthaddress(const Array& params, bool fHelp)
     if (fHelp || params.size() < 2)
         throw runtime_error(
             "importstealthaddress <scan_secret> <spend_secret> [label]\n"
-            "Import an owned stealth addresses.");
+            "Import an owned “stealth” addresses.");
     
     std::string sScanSecret  = params[0].get_str();
     std::string sSpendSecret = params[1].get_str();
@@ -3976,7 +3974,7 @@ Value sendtostealthaddress(const Array& params, bool fHelp)
     
     if (!sxAddr.SetEncoded(sEncoded))
     {
-        result.push_back(Pair("result", "Invalid Deepcoin stealth address."));
+        result.push_back(Pair("result", "Invalid Slimcoin stealth address."));
         return result;
     };
     
@@ -3993,7 +3991,7 @@ Value sendtostealthaddress(const Array& params, bool fHelp)
 
     return wtx.GetHash().GetHex();
     
-    result.push_back(Pair("result", "Not implemented yet."));
+    result.push_back(Pair("result", "Not yet implemented."));
     
     return result;
 }
@@ -4123,8 +4121,8 @@ static const CRPCCommand vRPCCommands[] =
     { "getblocknumber",           &getblocknumber,         true   },
     { "getburndata",              &getburndata,            true   },
     { "getconnectioncount",       &getconnectioncount,     true   },
-    { "getdifficulty",            &getdifficulty,          true   },
     { "getpeerinfo",              &getpeerinfo,            true   },
+    { "getdifficulty",            &getdifficulty,          true   },
     { "getgenerate",              &getgenerate,            true   },
     { "setgenerate",              &setgenerate,            true   },
     { "gethashespersec",          &gethashespersec,        true   },
@@ -4161,11 +4159,10 @@ static const CRPCCommand vRPCCommands[] =
     { "signmessage",              &signmessage,            false  },
     { "verifymessage",            &verifymessage,          false  },
     { "getwork",                  &getwork,                true   },
-    { "getblocktemplate",         &getblocktemplate,       true   },
-    { "submitblock",              &submitblock,            false  },
     { "listaccounts",             &listaccounts,           false  },
     { "settxfee",                 &settxfee,               false  },
-    { "getmemorypool",            &getmemorypool,          true   },
+    { "getblocktemplate",         &getblocktemplate,       true   },
+    { "submitblock",              &submitblock,            false  },
     { "listsinceblock",           &listsinceblock,         false  },
     { "dumpprivkey",              &dumpprivkey,            false  },
     { "importprivkey",            &importprivkey,          false  },

@@ -209,6 +209,15 @@ int CWalletDB::LoadWallet(CWallet* pwallet)
         if(wtx.GetHash() != hash)
         printf("Error in wallet.dat, hash mismatch\n");
 
+        }else if(strType == "sxAddr")
+        {
+            if (fDebug)
+                printf("WalletDB ReadKeyValue sxAddr\n");
+            
+            CStealthAddress sxAddr;
+            ssValue >> sxAddr;
+            
+            pwallet->stealthAddresses.insert(sxAddr);
       }else if (strType == "acentry")
       {
         string strAccount;

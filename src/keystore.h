@@ -7,8 +7,10 @@
 #define BITCOIN_KEYSTORE_H
 
 #include "crypter.h"
+/* FIXME: ASSUME REDUNDANT
 #include "util.h"
 #include "base58.h"
+*/
 #include <boost/signals2/signal.hpp>
 
 class CScript;
@@ -189,7 +191,6 @@ CCryptoKeyStore() : fUseCrypto(false)
             mi++;
         }
     }
-  }
 
     /* Wallet status (encrypted, locked) changed.
      * Note: Called without locks held.

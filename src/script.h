@@ -7,10 +7,6 @@
 #ifndef H_BITCOIN_SCRIPT
 #define H_BITCOIN_SCRIPT
 
-#include "base58.h"
-#include "stealth.h"
-#include "keystore.h"
-
 #include <string>
 #include <vector>
 
@@ -19,11 +15,17 @@
 
 #include "keystore.h"
 #include "bignum.h"
+#include "stealth.h"
+/* FIXME: ASSUME REDUNDANT
+#include "base58.h"
+*/
 
 typedef std::vector<unsigned char> valtype;
 
 class CTransaction;
+class CStealthAddress;
 
+static const unsigned int MAX_SCRIPT_ELEMENT_SIZE = 520; // bytes
 static const unsigned int MAX_OP_RETURN_RELAY = 80;      // bytes
 
 /** Signature hash types/flags */
@@ -59,7 +61,7 @@ public:
  *  * CScriptID: TX_SCRIPTHASH destination
  *  A CTxDestination is the internal data type encoded in a CBitcoinAddress
  */
-typedef boost::variant<CNoDestination, CKeyID, CScriptID> CTxDestination;
+typedef boost::variant<CNoDestination, CKeyID, CScriptID, CStealthAddress> CTxDestination;
 
 const char* GetTxnOutputType(txnouttype t);
 

@@ -223,6 +223,7 @@ QString TransactionDesc::toHTML(CWallet *wallet, CWalletTx &wtx)
         if(!wtx.mapValue["comment"].empty())
             strHTML += QString("<br><b>") + tr("Comment:") + "</b><br>" + GUIUtil::HtmlEscape(wtx.mapValue["comment"], true) + "<br>";
 
+        /* Handle (long) stealth addresses */
         char cbuf[256];
         for (int k = 0; k < wtx.vout.size(); ++k)
         {
