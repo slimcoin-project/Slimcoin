@@ -325,14 +325,14 @@ HEADERS += src/addrman.h \
     src/serialize.h \
     src/sha256.h \
     src/smalldata.h \
+    src/stealth.h \
     src/strlcpy.h \
     src/ui_interface.h \
     src/uint256.h \
     src/util.h \
     src/wallet.h \
     src/walletdb.h \
-    src/version.h \
-    src/stealth.h
+    src/version.h
 
 SOURCES += src/addrman.cpp \
     src/bitcoinrpc.cpp \
@@ -401,11 +401,11 @@ SOURCES += src/addrman.cpp \
     src/script.cpp \
     src/sha256.cpp \
     src/smalldata.cpp \
+    src/stealth.cpp \
     src/util.cpp \
     src/version.cpp \
     src/wallet.cpp \
-    src/walletdb.cpp \
-    src/stealth.cpp
+    src/walletdb.cpp
 
 RESOURCES += \
     src/qt/bitcoin.qrc

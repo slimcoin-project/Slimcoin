@@ -327,7 +327,7 @@ typedef CMutexLock<CCriticalSection> CCriticalBlock;
         LeaveCritical();                            \
     }
 
-#ifdef MAC_OSX
+#ifdef Q_OS_MAC
 // boost::interprocess::interprocess_semaphore seems to spinlock on OSX; prefer polling instead
 class CSemaphore
 {
@@ -371,7 +371,7 @@ typedef boost::interprocess::interprocess_semaphore CSemaphore;
 
 inline std::string i64tostr(int64 n)
 {
-    return strprintf("%" PRI64d, n);
+    return strprintf("%d", n);
 }
 
 inline std::string itostr(int n)

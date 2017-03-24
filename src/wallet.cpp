@@ -68,10 +68,12 @@ bool CWallet::AddCryptedKey(const CPubKey &vchPubKey, const vector<unsigned char
     return false;
 }
 
-bool CWallet::LoadCryptedKey(const std::vector<unsigned char>  &vchPubKey, const std::vector<unsigned char> &vchCryptedSecret)
+/* FIXME: Causes redefinition error
+bool CWallet::LoadCryptedKey(const CPubKey &vchPubKey, const std::vector<unsigned char> &vchCryptedSecret)
 {
     return CCryptoKeyStore::AddCryptedKey(vchPubKey, vchCryptedSecret);
 }
+*/
 
 bool CWallet::AddCScript(const CScript& redeemScript)
 {
@@ -357,6 +359,9 @@ bool CWallet::EncryptWallet(const SecureString& strWalletPassphrase)
         // bits of the unencrypted private key in slack space in the database file.
         CDB::Rewrite(strWalletFile);
     }
+    /* FIXME: implement function
+    NotifyStatusChanged(this);
+    */
 
     return true;
 }
@@ -374,12 +379,17 @@ void CWallet::WalletUpdateSpent(const CTransaction &tx)
             if (mi != mapWallet.end())
             {
                 CWalletTx& wtx = (*mi).second;
-                if (!wtx.IsSpent(txin.prevout.n) && IsMine(wtx.vout[txin.prevout.n]))
+                if (txin.prevout.n >= wtx.vout.size())
+                    printf("WalletUpdateSpent: bad wtx %s\n", wtx.GetHash().ToString().c_str());
+                else if (!wtx.IsSpent(txin.prevout.n) && IsMine(wtx.vout[txin.prevout.n]))
                 {
                     printf("WalletUpdateSpent found spent coin %sslm %s\n", FormatMoney(wtx.GetCredit()).c_str(), wtx.GetHash().ToString().c_str());
                     wtx.MarkSpent(txin.prevout.n);
                     wtx.WriteToDisk();
                     vWalletUpdated.push_back(txin.prevout.hash);
+                    /* FIXME: implement function
+                    NotifyTransactionChanged(this, txin.prevout.hash, CT_UPDATED);
+                    */
                 }
             }
         }
@@ -445,17 +455,19 @@ bool CWallet::AddToWallet(const CWalletTx &wtxIn, bool fBurnTx)
                 return false;
 #ifndef QT_GUI
         // If default receiving address gets used, replace it with a new one
-        CScript scriptDefaultKey;
-        scriptDefaultKey.SetDestination(vchDefaultKey.GetID());
-        BOOST_FOREACH(const CTxOut& txout, wtx.vout)
-        {
-            if (txout.scriptPubKey == scriptDefaultKey)
+        if (vchDefaultKey.IsValid()) {
+            CScript scriptDefaultKey;
+            scriptDefaultKey.SetDestination(vchDefaultKey.GetID());
+            BOOST_FOREACH(const CTxOut& txout, wtx.vout)
             {
-                CPubKey newDefaultKey;
-                if (GetKeyFromPool(newDefaultKey, false))
+                if (txout.scriptPubKey == scriptDefaultKey)
                 {
-                    SetDefaultKey(newDefaultKey);
-                    SetAddressBookName(vchDefaultKey.GetID(), "");
+                    CPubKey newDefaultKey;
+                    if (GetKeyFromPool(newDefaultKey, false))
+                    {
+                        SetDefaultKey(newDefaultKey);
+                        SetAddressBookName(vchDefaultKey.GetID(), "");
+                    }
                 }
             }
         }
@@ -465,6 +477,11 @@ bool CWallet::AddToWallet(const CWalletTx &wtxIn, bool fBurnTx)
 
         // since AddToWallet is called directly for self-originating transactions, check for consumption of own coins
         WalletUpdateSpent(wtx);
+
+        /* FIXME: implement function
+        // Notify UI of new or updated transaction
+        NotifyTransactionChanged(this, hash, fInsertedNew ? CT_NEW : CT_UPDATED);
+        */
 
         // notify an external script when a wallet transaction comes in or is updated
         std::string strCmd = GetArg("-walletnotify", "");
@@ -497,7 +514,6 @@ bool CWallet::AddToWalletIfInvolvingMe(const CTransaction& tx, const CBlock* pbl
         if (fExisted || IsMine(tx) || IsFromMe(tx))
         {
             CWalletTx wtx(this,tx);
-            
             // Get merkle branch if transaction was found in a block
             if (pblock)
                 wtx.SetMerkleBranch(pblock);
@@ -1952,7 +1968,7 @@ bool CWallet::SendStealthMoneyToDestination(CStealthAddress& sxAddress, int64_t 
     
     // -- Parse Bitcoin address
     CScript scriptPubKey;
-    scriptPubKey.SetBitcoinAddress(addrTo);
+    scriptPubKey.SetDestination(addrTo.Get());
     
     if ((sError = SendStealthMoney(scriptPubKey, nValue, ephem_pubkey, wtxNew, fAskFee)) != "")
         return false;
@@ -2001,28 +2017,18 @@ bool CWallet::FindStealthTransactions(const CTransaction& tx)
             bool txnMatch = false; // only 1 txn will match an ephem pk
             //printf("txoutB scriptPubKey %s\n",  txoutB.scriptPubKey.ToString().c_str());
             
-            CBitcoinAddress address;
-            if (!ExtractAddress(txoutB.scriptPubKey, address))
+            CTxDestination address;
+            if (!ExtractDestination(txoutB.scriptPubKey, address))
                 continue;
-
-            /* FIXME!!
-            printf("typeid of CKeyID: %s", typeid(CKeyID));
+            
             if (address.type() != typeid(CKeyID))
                 continue;
-
-            CKeyID ckid = pubKey.GetID();
-            CBitcoinAddress addr(ckid);
-
-            */
-            CKeyID ckidMatch;
-            if (address.GetKeyID(ckidMatch))
-                continue;
+            
+            CKeyID ckidMatch = boost::get<CKeyID>(address);
             
             if (HaveKey(ckidMatch)) // no point checking if already have key
                 continue;
 
-  
-            
             std::set<CStealthAddress>::iterator it;
             for (it = stealthAddresses.begin(); it != stealthAddresses.end(); ++it)
             {
@@ -2045,10 +2051,8 @@ bool CWallet::FindStealthTransactions(const CTransaction& tx)
                     continue;
                 CKeyID ckidE = cpkE.GetID();
                 
-                /* FIXME
                 if (ckidMatch != ckidE)
                     continue;
-                */
 
                 if (fDebug)
                     printf("Found stealth txn to address %s\n", it->Encoded().c_str());
@@ -2397,7 +2401,7 @@ bool CWallet::NewKeyPool()
             walletdb.WritePool(nIndex, CKeyPool(GenerateNewKey()));
             setKeyPool.insert(nIndex);
         }
-        printf("CWallet::NewKeyPool wrote %" PRI64d " new keys\n", nKeys);
+        printf("CWallet::NewKeyPool wrote %d new keys\n", nKeys);
     }
     return true;
 }
@@ -2422,7 +2426,7 @@ bool CWallet::TopUpKeyPool()
             if (!walletdb.WritePool(nEnd, CKeyPool(GenerateNewKey())))
                 throw runtime_error("TopUpKeyPool() : writing generated key failed");
             setKeyPool.insert(nEnd);
-            printf("keypool added key %" PRI64d ", size=%d\n", nEnd, setKeyPool.size());
+            printf("keypool added key %d, size=%d\n", nEnd, setKeyPool.size());
         }
     }
     return true;
@@ -2452,7 +2456,7 @@ void CWallet::ReserveKeyFromKeyPool(int64& nIndex, CKeyPool& keypool)
             throw runtime_error("ReserveKeyFromKeyPool() : unknown key in key pool");
         assert(keypool.vchPubKey.IsValid());
         if (fDebug && GetBoolArg("-printkeypool"))
-            printf("keypool reserve %" PRI64d "\n", nIndex);
+            printf("keypool reserve %d\n", nIndex);
     }
 }
 
@@ -2479,7 +2483,7 @@ void CWallet::KeepKey(int64 nIndex)
         CWalletDB walletdb(strWalletFile);
         walletdb.ErasePool(nIndex);
     }
-    printf("keypool keep %" PRI64d "\n", nIndex);
+    printf("keypool keep %d\n", nIndex);
 }
 
 void CWallet::ReturnKey(int64 nIndex)
@@ -2490,7 +2494,7 @@ void CWallet::ReturnKey(int64 nIndex)
         setKeyPool.insert(nIndex);
     }
     if (fDebug && GetBoolArg("-printkeypool"))
-        printf("keypool return %" PRI64d "\n", nIndex);
+        printf("keypool return %d\n", nIndex);
 }
 
 bool CWallet::GetKeyFromPool(CPubKey& result, bool fAllowReuse)

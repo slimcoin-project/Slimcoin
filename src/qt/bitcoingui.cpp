@@ -34,7 +34,7 @@
 #include "rpcconsole.h"
 #include "wallet.h"
 
-#ifdef MAC_OSX
+#ifdef Q_OS_MAC
 #include "macdockiconhandler.h"
 #endif
 
@@ -224,7 +224,7 @@ BitcoinGUI::~BitcoinGUI()
     db.close();
     if(trayIcon) // Hide tray icon, as deleting will let it linger until quit (on Ubuntu)
         trayIcon->hide();
-#ifdef MAC_OSX
+#ifdef Q_OS_MAC
     delete appMenuBar;
 #endif
 }
@@ -371,7 +371,7 @@ void BitcoinGUI::createActions()
 
 void BitcoinGUI::createMenuBar()
 {
-#ifdef MAC_OSX
+#ifdef Q_OS_MAC
     // Create a decoupled menu bar on Mac which stays even if the window is closed
     appMenuBar = new QMenuBar();
 #else

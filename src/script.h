@@ -7,10 +7,6 @@
 #ifndef H_BITCOIN_SCRIPT
 #define H_BITCOIN_SCRIPT
 
-#include "base58.h"
-#include "stealth.h"
-#include "keystore.h"
-
 #include <string>
 #include <vector>
 
@@ -19,11 +15,17 @@
 
 #include "keystore.h"
 #include "bignum.h"
+#include "stealth.h"
+/* FIXME: ASSUME REDUNDANT
+#include "base58.h"
+*/
 
 typedef std::vector<unsigned char> valtype;
 
 class CTransaction;
+class CStealthAddress;
 
+static const unsigned int MAX_SCRIPT_ELEMENT_SIZE = 520; // bytes
 static const unsigned int MAX_OP_RETURN_RELAY = 80;      // bytes
 
 /** Signature hash types/flags */
@@ -59,7 +61,7 @@ public:
  *  * CScriptID: TX_SCRIPTHASH destination
  *  A CTxDestination is the internal data type encoded in a CBitcoinAddress
  */
-typedef boost::variant<CNoDestination, CKeyID, CScriptID> CTxDestination;
+typedef boost::variant<CNoDestination, CKeyID, CScriptID, CStealthAddress> CTxDestination;
 
 const char* GetTxnOutputType(txnouttype t);
 
@@ -211,7 +213,8 @@ enum opcodetype
 };
 
 const char* GetOpName(opcodetype opcode);
-
+bool ExtractDestination(const CScript& scriptPubKey, CTxDestination& addressRet);
+bool Solver(const CScript& scriptPubKey, txnouttype& typeRet, std::vector<std::vector<unsigned char> >& vSolutionsRet);
 
 
 inline std::string ValueString(const std::vector<unsigned char>& vch)
@@ -521,11 +524,10 @@ public:
 
     bool comparePubKeySignature(const CScript &scriptPubKey) const
     {
-    /*
         //Get the solutions for this CScript
         std::vector<valtype> vSolutionsThis;
         txnouttype whichTypeThis;
-        if (!Solver(*this, whichTypeThis, vSolutionsThis))
+        if (!::Solver(*this, whichTypeThis, vSolutionsThis))
             return false;
 
         //This CScript must be a TX_PUBKEY
@@ -535,23 +537,22 @@ public:
         //Get the solutions for the testing CScript
         std::vector<valtype> vSolutionsTesting;
         txnouttype whichTypeTesting;
-        if (!Solver(scriptPubKey, whichTypeTesting, vSolutionsTesting))
+        if (!::Solver(scriptPubKey, whichTypeTesting, vSolutionsTesting))
             return false;
 
         //The testing pubkey can be either a TX_PUBKEY or TX_PUBKEYHASH
         if (whichTypeTesting == TX_PUBKEY || whichTypeTesting == TX_PUBKEYHASH)
         {
-            CBitcoinAddress thisAddr, testingAddr;
-            if (!ExtractAddress(*this, thisAddr))
+            CTxDestination thisAddr, testingAddr;
+            if (!ExtractDestination(*this, thisAddr))
                 return false;
-            if (!ExtractAddress(scriptPubKey, testingAddr))
+            if (!ExtractDestination(scriptPubKey, testingAddr))
                 return false;
 
             // the testing is a hash, so hash this and compare
             return thisAddr == testingAddr;
         }else
             return false;
-    */
         return false;
     }
 
@@ -632,12 +633,10 @@ public:
 
 
 bool EvalScript(std::vector<std::vector<unsigned char> >& stack, const CScript& script, const CTransaction& txTo, unsigned int nIn, int nHashType);
-bool Solver(const CScript& scriptPubKey, txnouttype& typeRet, std::vector<std::vector<unsigned char> >& vSolutionsRet);
 int ScriptSigArgsExpected(txnouttype t, const std::vector<std::vector<unsigned char> >& vSolutions);
 bool IsStandard(const CScript& scriptPubKey, txnouttype& whichType);
 bool IsMine(const CKeyStore& keystore, const CScript& scriptPubKey);
 bool IsMine(const CKeyStore& keystore, const CTxDestination &dest);
-bool ExtractDestination(const CScript& scriptPubKey, CTxDestination& addressRet);
 bool ExtractDestinations(const CScript& scriptPubKey, txnouttype& typeRet, std::vector<CTxDestination>& addressRet, int& nRequiredRet);
 bool SignSignature(const CKeyStore& keystore, const CScript& fromPubKey, CTransaction& txTo, unsigned int nIn, int nHashType=SIGHASH_ALL);
 bool SignSignature(const CKeyStore& keystore, const CTransaction& txFrom, CTransaction& txTo, unsigned int nIn, int nHashType=SIGHASH_ALL);

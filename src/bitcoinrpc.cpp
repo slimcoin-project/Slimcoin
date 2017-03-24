@@ -19,6 +19,7 @@
 #include "kernel.h"
 #include "stealth.h"
 #include "keystore.h"
+#include "script.h"
 
 #undef printf
 #include <boost/asio.hpp>
@@ -30,7 +31,7 @@
 #include <boost/lexical_cast.hpp>
 #include <boost/asio/ssl.hpp> 
 #include <boost/filesystem/fstream.hpp>
-#include <boost/assign/list_of.hpp>
+
 typedef boost::asio::ssl::stream<boost::asio::ip::tcp::socket> SSLStream;
 
 #define printf OutputDebugStringF
@@ -69,14 +70,6 @@ Object JSONRPCError(int code, const string& message)
     error.push_back(Pair("message", message));
     return error;
 }
-
-/*
-Object operator()(const CStealthAddress &stxAddr) {
-    Object obj;
-    obj.push_back(Pair("todo", true));
-    return obj;
-}
-*/
 
 double GetDifficulty(const CBlockIndex* blockindex = NULL)
 {
@@ -415,7 +408,7 @@ Object blockToJSON(const CBlock& block, const CBlockIndex* blockindex, bool fTxI
     }
 
     result.push_back(Pair("entropybit", (int)blockindex->GetStakeEntropyBit()));
-    result.push_back(Pair("modifier", strprintf("%016" PRI64x, blockindex->nStakeModifier)));
+    result.push_back(Pair("modifier", strprintf("%016%x", blockindex->nStakeModifier)));
     result.push_back(Pair("modifierchecksum", strprintf("%08x", blockindex->nStakeModifierChecksum)));
 
     //PoB details
@@ -426,7 +419,7 @@ Object blockToJSON(const CBlock& block, const CBlockIndex* blockindex, bool fTxI
         result.push_back(Pair("burnCTxOut", blockindex->burnCTxOut));
     }
 
-    result.push_back(Pair("nEffectiveBurnCoins", strprintf("%" PRI64d, blockindex->nEffectiveBurnCoins)));
+    result.push_back(Pair("nEffectiveBurnCoins", strprintf("%d", blockindex->nEffectiveBurnCoins)));
     result.push_back(Pair("Formatted nEffectiveBurnCoins", FormatMoney(blockindex->nEffectiveBurnCoins)));
     result.push_back(Pair("nBurnBits", HexBits(blockindex->nBurnBits)));
 
@@ -605,7 +598,7 @@ Value getpeerinfo(const Array& params, bool fHelp)
         Object obj;
 
         obj.push_back(Pair("addr", stats.addrName));
-        obj.push_back(Pair("services", strprintf("%08" PRI64x, stats.nServices)));
+        obj.push_back(Pair("services", strprintf("%08x", stats.nServices)));
         obj.push_back(Pair("lastsend", (boost::int64_t)stats.nLastSend));
         obj.push_back(Pair("lastrecv", (boost::int64_t)stats.nLastRecv));
         obj.push_back(Pair("conntime", (boost::int64_t)stats.nTimeConnected));
@@ -1311,7 +1304,7 @@ Value calcburnhash(const Array& params, bool fHelp)
     output += "Smallest Hash is:   " + smallestHash.GetHex() + "\n";
     output += "By transaction id:  " + smallestWTx.GetHash().GetHex() + "\n";
     output += "Target:             " + CBigNum().SetCompact(pindexBest->nBurnBits).getuint256().GetHex() + "\n";
-    output += strprintf("nBurnBits=%08x, nEffectiveBurnCoins=%" PRI64u " (formatted %s)",
+    output += strprintf("nBurnBits=%08x, nEffectiveBurnCoins=%u (formatted %s)",
                                             pindexBest->nBurnBits, pindexBest->nEffectiveBurnCoins, 
                                             FormatMoney(pindexBest->nEffectiveBurnCoins).c_str());
 
@@ -1428,7 +1421,7 @@ Value getburndata(const Array& params, bool fHelp)
     Object info;
     info.push_back(Pair("General Info", ""));
     info.push_back(Pair("nBurnBits", strprintf("%08x", pindexBest->nBurnBits)));
-    info.push_back(Pair("nEffectiveBurnCoins", strprintf("%" PRI64d, pindexBest->nEffectiveBurnCoins)));
+    info.push_back(Pair("nEffectiveBurnCoins", strprintf("%d", pindexBest->nEffectiveBurnCoins)));
     info.push_back(Pair("Formatted nEffectiveBurnCoins", FormatMoney(pindexBest->nEffectiveBurnCoins)));
                                  
     ret.push_back(info);
@@ -2365,7 +2358,7 @@ void ThreadCleanWalletPassphrase(void* parg)
         if (nWalletUnlockTime)
         {
             nWalletUnlockTime = 0;
-            pwalletMain->Lock();
+            pwalletMain->LockKeyStore();
         }
     }
     else
@@ -2473,7 +2466,7 @@ Value walletlock(const Array& params, bool fHelp)
 
     {
         LOCK(cs_nWalletUnlockTime);
-        pwalletMain->Lock();
+        pwalletMain->LockKeyStore();
         nWalletUnlockTime = 0;
     }
 
@@ -2546,6 +2539,12 @@ public:
             obj.push_back(Pair("sigsrequired", nRequired));
         return obj;
     }
+    Object operator()(const CStealthAddress &stxAddr) const {
+        Object obj;
+        obj.push_back(Pair("todo", true));
+        return obj;
+    }
+
 };
 
 Value validateaddress(const Array& params, bool fHelp)
@@ -3775,13 +3774,12 @@ Value gettorrent(const Array& params, bool fHelp)
     return false;
 }
 
-
 Value getnewstealthaddress(const Array& params, bool fHelp)
 {
     if (fHelp || params.size() > 1)
         throw runtime_error(
             "getnewstealthaddress [label]\n"
-            "Returns a new ShadowCoin stealth address for receiving payments anonymously.  ");
+            "Returns a new Slimcoin “stealth” address for receiving payments anonymously.  ");
     
     if (pwalletMain->IsLocked())
         throw runtime_error("Failed: Wallet must be unlocked.");
@@ -3793,10 +3791,10 @@ Value getnewstealthaddress(const Array& params, bool fHelp)
     CStealthAddress sxAddr;
     std::string sError;
     if (!pwalletMain->NewStealthAddress(sError, sLabel, sxAddr))
-        throw runtime_error(std::string("Could get new stealth address: ") + sError);
+        throw runtime_error(std::string("Could not create a new “stealth” address: ") + sError);
     
     if (!pwalletMain->AddStealthAddress(sxAddr))
-        throw runtime_error("Could not save to wallet.");
+        throw runtime_error("Could not save new “stealth” address to the wallet.");
     
     return sxAddr.Encoded();
 }
@@ -3856,7 +3854,7 @@ Value importstealthaddress(const Array& params, bool fHelp)
     if (fHelp || params.size() < 2)
         throw runtime_error(
             "importstealthaddress <scan_secret> <spend_secret> [label]\n"
-            "Import an owned stealth addresses.");
+            "Import an owned “stealth” addresses.");
     
     std::string sScanSecret  = params[0].get_str();
     std::string sSpendSecret = params[1].get_str();
@@ -3935,7 +3933,7 @@ Value importstealthaddress(const Array& params, bool fHelp)
                 break;
             };
             
-            result.push_back(Pair("result", "Import failed - stealth address exists."));
+            result.push_back(Pair("result", "Import failed - “stealth” address exists."));
             return result;
         };
     };
@@ -3976,7 +3974,7 @@ Value sendtostealthaddress(const Array& params, bool fHelp)
     
     if (!sxAddr.SetEncoded(sEncoded))
     {
-        result.push_back(Pair("result", "Invalid Deepcoin stealth address."));
+        result.push_back(Pair("result", "Invalid Slimcoin stealth address."));
         return result;
     };
     
@@ -3993,7 +3991,7 @@ Value sendtostealthaddress(const Array& params, bool fHelp)
 
     return wtx.GetHash().GetHex();
     
-    result.push_back(Pair("result", "Not implemented yet."));
+    result.push_back(Pair("result", "Not yet implemented."));
     
     return result;
 }
@@ -4045,7 +4043,7 @@ Value scanforstealthtxns(const Array& params, bool fHelp)
     if (fHelp || params.size() > 1)
         throw runtime_error(
             "scanforstealthtxns [fromHeight]\n"
-            "Scan blockchain for owned stealth transactions.");
+            "Scan blockchain for owned “stealth” transactions.");
     
     Object result;
     uint32_t nBlocks = 0;
@@ -4096,11 +4094,11 @@ Value scanforstealthtxns(const Array& params, bool fHelp)
     };
     
     printf("Scanned %u blocks, %u transactions\n", nBlocks, nTransactions);
-    printf("Found %u stealth transactions in blockchain.\n", pwalletMain->nStealth);
-    printf("Found %u new owned stealth transactions.\n", pwalletMain->nFoundStealth);
+    printf("Found %u “stealth” transactions in blockchain.\n", pwalletMain->nStealth);
+    printf("Found %u new owned “stealth” transactions.\n", pwalletMain->nFoundStealth);
     
     char cbuf[256];
-    snprintf(cbuf, sizeof(cbuf), "%u new stealth transactions.", pwalletMain->nFoundStealth);
+    snprintf(cbuf, sizeof(cbuf), "%u new “stealth” transactions.", pwalletMain->nFoundStealth);
     
     result.push_back(Pair("result", "Scan complete."));
     result.push_back(Pair("found", std::string(cbuf)));
@@ -4123,8 +4121,8 @@ static const CRPCCommand vRPCCommands[] =
     { "getblocknumber",           &getblocknumber,         true   },
     { "getburndata",              &getburndata,            true   },
     { "getconnectioncount",       &getconnectioncount,     true   },
+    { "getpeerinfo",            &getpeerinfo,            true },
     { "getdifficulty",            &getdifficulty,          true   },
-    { "getpeerinfo",              &getpeerinfo,            true   },
     { "getgenerate",              &getgenerate,            true   },
     { "setgenerate",              &setgenerate,            true   },
     { "gethashespersec",          &gethashespersec,        true   },
@@ -4161,11 +4159,10 @@ static const CRPCCommand vRPCCommands[] =
     { "signmessage",              &signmessage,            false  },
     { "verifymessage",            &verifymessage,          false  },
     { "getwork",                  &getwork,                true   },
+    { "listaccounts",           &listaccounts,           false  },
+    { "settxfee",               &settxfee,               false  },
     { "getblocktemplate",         &getblocktemplate,       true   },
     { "submitblock",              &submitblock,            false  },
-    { "listaccounts",             &listaccounts,           false  },
-    { "settxfee",                 &settxfee,               false  },
-    { "getmemorypool",            &getmemorypool,          true   },
     { "listsinceblock",           &listsinceblock,         false  },
     { "dumpprivkey",              &dumpprivkey,            false  },
     { "importprivkey",            &importprivkey,          false  },
