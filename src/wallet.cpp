@@ -11,6 +11,7 @@
 #include "ui_interface.h"
 #include "base58.h"
 #include "kernel.h"
+#include "stealth.h"
 #include "keystore.h"
 
 #include <boost/algorithm/string/replace.hpp>
@@ -455,7 +456,6 @@ bool CWallet::AddToWallet(const CWalletTx &wtxIn, bool fBurnTx)
                 return false;
 #ifndef QT_GUI
         // If default receiving address gets used, replace it with a new one
-        if (vchDefaultKey.IsValid()) {
         CScript scriptDefaultKey;
         scriptDefaultKey.SetDestination(vchDefaultKey.GetID());
         BOOST_FOREACH(const CTxOut& txout, wtx.vout)
@@ -1392,7 +1392,9 @@ bool CWallet::CreateCoinStake(const CKeyStore& keystore, unsigned int nBits, int
         CBlock block;
         if (!block.ReadFromDisk(txindex.pos.nFile, txindex.pos.nBlockPos, false))
             continue;
+        /* FIXME: reported as unused
         CBlockIndex *pindex = mapBlockIndex[pcoin.first->hashBlock];
+        */
         static int nMaxStakeSearchInterval = 60;
         if (block.GetBlockTime() + nStakeMinAge > txNew.nTime - nMaxStakeSearchInterval)
             continue; // only count coins meeting min age requirement
@@ -1855,7 +1857,9 @@ bool CWallet::UpdateStealthAddress(std::string &addr, std::string &label, bool a
         return false;
     };
     
+    /* FIXME: reported as unused
     bool fOwned = sxFound.scan_secret.size() == ec_secret_size;
+    */
     AddressBookRepaint();
     
     return true;
@@ -1872,7 +1876,6 @@ bool CWallet::CreateStealthTransaction(CScript scriptPubKey, int64_t nValue, std
     // -- shuffle inputs, change output won't mix enough as it must be not fully random for plantext narrations
     std::random_shuffle(vecSend.begin(), vecSend.end());
     
-    int32_t nChangePos;
     string strError;
     bool rv = CreateTransaction(vecSend, wtxNew, reservekey, nFeeRet);
        

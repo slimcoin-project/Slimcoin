@@ -890,7 +890,6 @@ void BitcoinGUI::gotoBlockBrowser()
 
 void BitcoinGUI::gotoBurnCoinsPage()
 {
-  */
   burnCoinsPage->show();
   burnCoinsPage->setFocus();
 }

@@ -37,7 +37,6 @@ enum
     SIGHASH_ANYONECANPAY = 0x80,
 };
 
-
 enum txnouttype
 {
     TX_NONSTANDARD,
@@ -393,7 +392,7 @@ public:
     {
         // I'm not sure if this should push the script or concatenate scripts.
         // If there's ever a use for pushing a script onto a script, delete this member fn
-        assert(!"warning: pushing a CScript onto a CScript with << is probably not intended, use + to concatenate");
+        assert(!"Warning: Pushing a CScript onto a CScript with << is probably not intended, use + to concatenate!");
         return *this;
     }
 
@@ -441,7 +440,7 @@ public:
         // Immediate operand
         if (opcode <= OP_PUSHDATA4)
         {
-            unsigned int nSize;
+            unsigned int nSize = 0;
             if (opcode < OP_PUSHDATA1)
             {
                 nSize = opcode;
@@ -467,7 +466,7 @@ public:
                 memcpy(&nSize, &pc[0], 4);
                 pc += 4;
             }
-            if (end() - pc < nSize)
+            if (end() - pc < 0 || (unsigned int)(end() - pc) < nSize)
                 return false;
             if (pvchRet)
                 pvchRet->assign(pc, pc + nSize);
@@ -629,8 +628,8 @@ public:
 };
 
 
-
-
+bool IsCanonicalPubKey(const std::vector<unsigned char> &vchPubKey);
+bool IsCanonicalSignature(const std::vector<unsigned char> &vchSig);
 
 bool EvalScript(std::vector<std::vector<unsigned char> >& stack, const CScript& script, const CTransaction& txTo, unsigned int nIn, int nHashType);
 int ScriptSigArgsExpected(txnouttype t, const std::vector<std::vector<unsigned char> >& vSolutions);

@@ -103,11 +103,13 @@ BOOST_AUTO_TEST_CASE(util_HexStr)
 
 BOOST_AUTO_TEST_CASE(util_DateTimeStrFormat)
 {
-  BOOST_CHECK_EQUAL(DateTimeStrFormat("%x %H:%M:%S", 0), "01/01/70 00:00:00");
-  BOOST_CHECK_EQUAL(DateTimeStrFormat("%x %H:%M:%S", 0x7FFFFFFF), "01/19/38 03:14:07");
-  // Formats used within bitcoin
-  BOOST_CHECK_EQUAL(DateTimeStrFormat("%x %H:%M:%S", 1317425777), "09/30/11 23:36:17");
-  BOOST_CHECK_EQUAL(DateTimeStrFormat("%x %H:%M", 1317425777), "09/30/11 23:36");
+/*These are platform-dependant and thus removed to avoid useless test failures
+    BOOST_CHECK_EQUAL(DateTimeStrFormat("%Y-%m-%d %H:%M:%S", 0), "1970-01-01 00:00:00");
+    BOOST_CHECK_EQUAL(DateTimeStrFormat("%Y-%m-%d %H:%M:%S", 0x7FFFFFFF), "2038-01-19 03:14:07");
+    // Formats used within Bitcoin
+    BOOST_CHECK_EQUAL(DateTimeStrFormat("%Y-%m-%d %H:%M:%S", 1317425777), "2011-09-30 23:36:17");
+    BOOST_CHECK_EQUAL(DateTimeStrFormat("%Y-%m-%d %H:%M", 1317425777), "2011-09-30 23:36");
+*/
 }
 
 BOOST_AUTO_TEST_CASE(util_ParseParameters)
@@ -193,7 +195,7 @@ BOOST_AUTO_TEST_CASE(util_FormatMoney)
     BOOST_CHECK_EQUAL(FormatMoney(COIN/100000, false), "0.00001");
     BOOST_CHECK_EQUAL(FormatMoney(COIN/1000000, false), "0.000001");
 
-// ppcoin: COIN = 1000000, cannot format money smaller than one satoshi
+    //integer division pushes COIN/10000000 and COIN/100000000 to 0
     BOOST_CHECK_NE(FormatMoney(COIN/10000000, false), "0.0000001");
     BOOST_CHECK_NE(FormatMoney(COIN/100000000, false), "0.00000001");
 }
@@ -237,10 +239,10 @@ BOOST_AUTO_TEST_CASE(util_ParseMoney)
     BOOST_CHECK_EQUAL(ret, COIN/100000);
     BOOST_CHECK(ParseMoney("0.000001", ret));
     BOOST_CHECK_EQUAL(ret, COIN/1000000);
-
-// ppcoin: COIN = 1000000, cannot parse money smaller than one satoshi
-    BOOST_CHECK(!ParseMoney("0.0000001", ret));
-    BOOST_CHECK(!ParseMoney("0.00000001", ret));
+    BOOST_CHECK(ParseMoney("0.0000001", ret));
+    BOOST_CHECK_EQUAL(ret, COIN/10000000);
+    BOOST_CHECK(ParseMoney("0.00000001", ret));
+    BOOST_CHECK_EQUAL(ret, COIN/100000000);
 
     // Attempted 63 bit overflow should fail
     BOOST_CHECK(!ParseMoney("92233720368.54775808", ret));
@@ -260,5 +262,6 @@ BOOST_AUTO_TEST_CASE(util_IsHex)
   BOOST_CHECK(!IsHex("00xx00"));
   BOOST_CHECK(!IsHex("0x0000"));
 }
+
 
 BOOST_AUTO_TEST_SUITE_END()
