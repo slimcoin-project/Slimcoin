@@ -503,7 +503,7 @@ isEmpty(BDB_INCLUDE_PATH) {
         contains(BDB_LIB_SUFFIX, -4.8) {
             macx:BDB_INCLUDE_PATH = /usr/local/opt/berkeley-db4/include
         }else{
-            macx:BDB_INCLUDE_PATH = /usr/local/bekerley-db/include
+            macx:BDB_INCLUDE_PATH = /usr/local/berkeley-db/include
         }
     }else{
         contains(BDB_LIB_SUFFIX, -4.8) {
