@@ -239,10 +239,10 @@ BOOST_AUTO_TEST_CASE(util_ParseMoney)
     BOOST_CHECK_EQUAL(ret, COIN/100000);
     BOOST_CHECK(ParseMoney("0.000001", ret));
     BOOST_CHECK_EQUAL(ret, COIN/1000000);
-    BOOST_CHECK(ParseMoney("0.0000001", ret));
-    BOOST_CHECK_EQUAL(ret, COIN/10000000);
-    BOOST_CHECK(ParseMoney("0.00000001", ret));
-    BOOST_CHECK_EQUAL(ret, COIN/100000000);
+
+// ppcoin: COIN = 1000000, cannot parse money smaller than one satoshi
+    BOOST_CHECK(!ParseMoney("0.0000001", ret));
+    BOOST_CHECK(!ParseMoney("0.00000001", ret));
 
     // Attempted 63 bit overflow should fail
     BOOST_CHECK(!ParseMoney("92233720368.54775808", ret));
