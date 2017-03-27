@@ -13,68 +13,23 @@ using namespace std;
 /*
 
 FAIL:
-
-test/key_tests.cpp(120): error in "key_test1": check fCompressed == false failed
-test/key_tests.cpp(122): error in "key_test1": check fCompressed == false failed
-test/key_tests.cpp(128): error in "key_test1": check secret1 == secret1C failed
-test/key_tests.cpp(129): error in "key_test1": check secret2 == secret2C failed
-test/key_tests.cpp(137): error in "key_test1": check addr1.Get() == CTxDestination(key1.GetPubKey().GetID()) failed
-test/key_tests.cpp(138): error in "key_test1": check addr2.Get() == CTxDestination(key2.GetPubKey().GetID()) failed
-test/key_tests.cpp(139): error in "key_test1": check addr1C.Get() == CTxDestination(key1C.GetPubKey().GetID()) failed
-test/key_tests.cpp(140): error in "key_test1": check addr2C.Get() == CTxDestination(key2C.GetPubKey().GetID()) failed
 test/Checkpoints_tests.cpp(29): error in "sanity": check !Checkpoints::CheckHardened(19080, p121300) failed
 test/Checkpoints_tests.cpp(30): error in "sanity": check !Checkpoints::CheckHardened(99999, p15165) failed
-
-PEERCOIN: 
-
-// strSecret?C (compressed?) keys are one char longer andstart with "U" and not "7"
-
-static const string strSecret1     ("7AChr8cfXUxKJCpjekqEQGoRgpN1iFw44egp4jtqzmX8xTdtsiy");
-static const string strSecret2     ("79kbfhqh1HV1B8ZxnsbSnu2F9jbm7XryrNBgvSKusoTpeppWmZr");
-static const string strSecret1C    ("UBcfHrcR3YP9kwBhFeTt9ijuxk3k96uaX7LijWKqFyW27MPrVSuX");
-static const string strSecret2C    ("U9dS1qFuaFkbmiQVFUK2qacVTZ2RhqDbvtWBCrnUPE5PKkLweTka");
-static const CBitcoinAddress addr1 ("PKkaDEczLygWFN1C3ccEGraLshKMMEoBgn");
-static const CBitcoinAddress addr2 ("PXYTm8BcoygtXB7VrAn77DeXhXCNSxxwsW");
-static const CBitcoinAddress addr1C("PJC1cL5mBMKmQ357ZNMDVAWH5sDVJNX3p8");
-static const CBitcoinAddress addr2C("P95CZ3kFgAvjnMdRgqLoApDuQ49ir7VAP7");
-
-POINTERS:
-
-gjh@ashpool:~/minkiz/fabshop/SlimCoinWork/slimcoin-master/src$ grep -rni compressed *.h
-base58.h:487:    void SetSecret(const CSecret& vchSecret, bool fCompressed)
-base58.h:491:        if (fCompressed)
-base58.h:495:    CSecret GetSecret(bool &fCompressedOut)
-base58.h:500:        fCompressedOut = vchData.size() == 33;
-base58.h:532:    CBitcoinSecret(const CSecret& vchSecret, bool fCompressed)
-base58.h:534:        SetSecret(vchSecret, fCompressed);
-key.h:94:    bool IsCompressed() const {
-key.h:119:    bool fCompressedPubKey;
-key.h:121:    void SetCompressedPubKey();
-key.h:135:    bool IsCompressed() const;
-key.h:137:    void MakeNewKey(bool fCompressed);
-key.h:139:    bool SetSecret(const CSecret& vchSecret, bool fCompressed = false);
-key.h:140:    CSecret GetSecret(bool &fCompressed) const;
-keystore.h:41:    virtual bool GetSecret(const CKeyID &address, CSecret& vchSecret, bool &fCompressed) const
-keystore.h:46:        vchSecret = key.GetSecret(fCompressed);
-stealth.h:20:const size_t ec_compressed_size = 33;
-stealth.h:21:const size_t ec_uncompressed_size = 65;
-stealth.h:80:        return memcmp(&scan_pubkey[0], &y.scan_pubkey[0], ec_compressed_size) < 0;
-wallet.h:34:    FEATURE_COMPRPUBKEY = 60000, // compressed public keys
 */
 
-static const string strSecret1     ("VJr4tdTFU87CjnwoPzuKzwH2daH81WbQZvvTmB9jT5DKFM5nszpy");
-static const string strSecret2     ("VNQPm5Ae4CcsMmB5zikMBAnjgFSV5nDM9VHXjS2ATov1qLHNLsM1");
-static const string strSecret1C    ("VGrCNNAPJkkjoCho1sKocvXhvfFehXkfzShSKuFtefakZxd9yPTf");
-static const string strSecret2C    ("VGTiwmUNWL97xjVf453UMXRqydBBG8kFjwGmamM19svnVBAyDyGJ");
-static const CBitcoinAddress addr1 ("SNnyYwAqWtBx2TdJdCPKx3P1LeGA4HJWYm");
-static const CBitcoinAddress addr2 ("SZDDecteHQQoAvhm5bGE4sxj4Cw7byMhDR");
-static const CBitcoinAddress addr1C("SYXN6XMmwoCXeaSm3uSg2LF92qiGnrUN4o");
-static const CBitcoinAddress addr2C("SNmAEnZKEoBbfinnQwE8KiAjpwEixfH5vM");
-
+static const string strSecret1     ("7S6tNvKusdpZgJFa1J8xexnjLyaW8kiP4JM2nzk5jbiAbcDTL7U");
+static const string strSecret2     ("7S7ALrZX4VpV5YwjZv8UDQ5aCCK7XRr7vzoCZau8fNZhfbk4oHL");
+static const string strSecret1C    ("VPnymkNUNVWwET9JgJe8eZEquAisbDweMZZQv1s9u2ChMgq6kyaC");
+static const string strSecret2C    ("VPpCEdkXgSCaw5zatHVy7isBWQvwoJfobL6v2pd6pNBLVFXxSwDK");
+static const CBitcoinAddress addr1 ("SkN6PJvVwRuzQiMpgBqXDxWc2sgqNg1Z8V");
+static const CBitcoinAddress addr2 ("SiTugxzh2f9HvgyuPnPJjTWBJsgkTqT2Kb");
+static const CBitcoinAddress addr1C("SNmWiM8cqiqDAj5KrPj96XiMw8jSnbeVei");
+static const CBitcoinAddress addr2C("SRWiVc1t3wchvYXzveVRYDwa17KmPdgpkw");
 
 static const string strAddressBad("1HV9Lc3sNHZxwj4Zk6fB38tEmBryq2cBiF");
 
-bool KEY_TESTS_DUMPINFO = true;
+
+bool KEY_TESTS_DUMPINFO = false;
 
 #ifdef KEY_TESTS_DUMPINFO
 void dumpKeyInfo(uint256 privkey)
@@ -85,26 +40,73 @@ void dumpKeyInfo(uint256 privkey)
   vector<unsigned char> sec;
   sec.resize(32);
   memcpy(&sec[0], &secret[0], 32);
-  printf("  * secret (hex): %s\n", HexStr(sec).c_str());
+  BOOST_TEST_MESSAGE("  * secret (hex): " << HexStr(sec).c_str());
 
   for(int nCompressed=0; nCompressed<2; nCompressed++)
   {
     bool fCompressed = nCompressed == 1;
-    printf("  * %s:\n", fCompressed ? "compressed" : "uncompressed");
+    if (fCompressed) {
+      fcompressed = "compressed";
+    }
+    else {
+      fcompressed = "uncompressed";
+    }
+    BOOST_TEST_MESSAGE("  * : " << fcompressed);
     CBitcoinSecret bsecret;
     bsecret.SetSecret(secret, fCompressed);
-    printf("    * secret (base58): %s\n", bsecret.ToString().c_str());
+    BOOST_TEST_MESSAGE("    * secret (base58): " << bsecret.ToString().c_str());
     CKey key;
     key.SetSecret(secret, fCompressed);
-    vector<unsigned char> vchPubKey = key.GetPubKey();
-    printf("    * pubkey (hex): %s\n", HexStr(vchPubKey).c_str());
-    printf("    * address (base58): %s\n", CBitcoinAddress(vchPubKey).ToString().c_str());
+    CPubKey vchPubKey = key.GetPubKey();
+    vector<unsigned char> xvchPubKey = vchPubKey.Raw();
+    BOOST_TEST_MESSAGE("    * pubkey (hex): " << HexStr(xvchPubKey.begin(), xvchPubKey.end()).c_str());
+    BOOST_TEST_MESSAGE("    * address (base58): " << CBitcoinAddress(vchPubKey.GetID()).ToString().c_str());
   }
 }
 #endif
 
 
 BOOST_AUTO_TEST_SUITE(key_tests)
+
+/* Outputs key data for secret?[C] bindings above. 
+   Assumes BOOST_TEST_LOG_LEVEL=message on command line
+*/
+BOOST_AUTO_TEST_CASE(compression)
+{
+    std::string fcompressed  = "";
+    CKey testkey = CKey();
+    testkey.MakeNewKey(true);
+    CPrivKey privkey = testkey.GetPrivKey();
+    CSecret secret;
+    secret.resize(32);
+    memcpy(&secret[0], &privkey, 32);
+    vector<unsigned char> sec;
+    sec.resize(32);
+    memcpy(&sec[0], &secret[0], 32);
+    BOOST_TEST_MESSAGE("  * secret (hex): " << HexStr(sec).c_str());
+
+    for(int nCompressed=0; nCompressed<2; nCompressed++)
+    {
+      bool fCompressed = nCompressed == 1;
+      if (fCompressed) {
+        fcompressed = "compressed";
+      }
+      else {
+        fcompressed = "uncompressed";
+      }
+      BOOST_TEST_MESSAGE("  * : " << fcompressed);
+      CBitcoinSecret bsecret;
+      bsecret.SetSecret(secret, fCompressed);
+      BOOST_TEST_MESSAGE("    * secret (base58): " << bsecret.ToString().c_str());
+      CKey key;
+      key.SetSecret(secret, fCompressed);
+      CPubKey vchPubKey = key.GetPubKey();
+      vector<unsigned char> xvchPubKey = vchPubKey.Raw();
+      BOOST_TEST_MESSAGE("    * pubkey (hex): " << HexStr(xvchPubKey.begin(), xvchPubKey.end()).c_str());
+      BOOST_TEST_MESSAGE("    * address (base58): " << CBitcoinAddress(vchPubKey.GetID()).ToString().c_str());
+    } 
+}
+
 
 BOOST_AUTO_TEST_CASE(key_test1)
 {
@@ -117,6 +119,7 @@ BOOST_AUTO_TEST_CASE(key_test1)
 
     bool fCompressed;
     CSecret secret1  = bsecret1.GetSecret (fCompressed);
+    // BOOST_TEST_MESSAGE("    * secret1 (base58): " << HexStr(secret1.begin(), secret1.end()).c_str());
     BOOST_CHECK(fCompressed == false);
     CSecret secret2  = bsecret2.GetSecret (fCompressed);
     BOOST_CHECK(fCompressed == false);
