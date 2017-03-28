@@ -408,7 +408,7 @@ Object blockToJSON(const CBlock& block, const CBlockIndex* blockindex, bool fTxI
     }
 
     result.push_back(Pair("entropybit", (int)blockindex->GetStakeEntropyBit()));
-    result.push_back(Pair("modifier", strprintf("%016%x", blockindex->nStakeModifier)));
+    result.push_back(Pair("modifier", strprintf("%016x", blockindex->nStakeModifier)));
     result.push_back(Pair("modifierchecksum", strprintf("%08x", blockindex->nStakeModifierChecksum)));
 
     //PoB details
