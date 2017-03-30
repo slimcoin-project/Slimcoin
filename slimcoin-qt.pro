@@ -332,7 +332,11 @@ HEADERS += src/addrman.h \
     src/util.h \
     src/wallet.h \
     src/walletdb.h \
-    src/version.h
+    src/version.h \
+    src/optionsdialog.moc \
+    src/overviewpage.moc \
+    src/rpcconsole.moc \
+    src/torrentpage.moc
 
 SOURCES += src/addrman.cpp \
     src/bitcoinrpc.cpp \
@@ -503,7 +507,7 @@ isEmpty(BDB_INCLUDE_PATH) {
         contains(BDB_LIB_SUFFIX, -4.8) {
             macx:BDB_INCLUDE_PATH = /usr/local/opt/berkeley-db4/include
         }else{
-            macx:BDB_INCLUDE_PATH = /usr/local/berkeley-db/include
+            macx:BDB_INCLUDE_PATH = /usr/local/opt/berkeley-db/include
         }
     }else{
         contains(BDB_LIB_SUFFIX, -4.8) {
@@ -593,6 +597,7 @@ isEmpty(OPENSSL_LIB_PATH) {
 macx {
 	CONFIG += 11 x86_64
 	HEADERS += src/qt/macdockiconhandler.h src/qt/macnotificationhandler.h
+    INCLUDEPATH += $$MOC_DIR // enable #include of moc_* files
 	OBJECTIVE_SOURCES += src/qt/macdockiconhandler.mm src/qt/macnotificationhandler.mm
 	LIBS += -framework Foundation -framework ApplicationServices -framework AppKit
 	LIBS += /usr/local/opt/miniupnpc/lib/libminiupnpc.a
