@@ -41,13 +41,13 @@ void OptionsModel::Init()
         if (nreservebalance > 0) {
             SoftSetArg("-reservebalance", BitcoinUnits::formatWithUnit(BitcoinUnits::BTC, nreservebalance).toStdString());
             settings.setValue("nReserveBalance", nreservebalance);
-            // printf("nreservebalance set to %s", settings.value("nReserveBalance").toString().toStdString());
-            printf("nreservebalance set to %" PRI64u ".\n", settings.value("nReserveBalance"));
+            printf("nreservebalance set to %s", settings.value("nReserveBalance").toString().toStdString().c_str());
+            // printf("nreservebalance set to %u.\n", settings.value("nReserveBalance"));
         }
         else {
             SoftSetArg("-reservebalance", settings.value("nReserveBalance").toString().toStdString());
-            // printf("nReserveBalance set to %s", settings.value("nReserveBalance").toString().toStdString());
-            printf("nReserveBalance set to %" PRI64u ".\n", settings.value("nReserveBalance"));
+            printf("nReserveBalance set to %s", settings.value("nReserveBalance").toString().toStdString().c_str());
+            // printf("nReserveBalance set to %u.\n", settings.value("nReserveBalance"));
         }
     }
     if(settings.contains("detachDB"))
