@@ -221,6 +221,16 @@ SCRIPT_ADDRESS: 125 - slimcoin: script addresses begin with 's'
 PUBKEY_ADDRESS_TEST: 111
 SCRIPT_ADDRESS_TEST: 196
 
+### Status printout on startup...
+
+    Slimcoin Network: 
+        genesis=0x00000766be5a4bb74c04 
+        nBitsLimit=0x1e0fffff 
+        nBitsInitial=0x1e07ffff
+        nStakeMinAge=604800 
+        nCoinbaseMaturity=500 
+        nModifierInterval=21600
+
 ## Repository Guidelines
 
 * Developers work in their own forks, then submit pull requests when they think their feature or bug fix is ready.

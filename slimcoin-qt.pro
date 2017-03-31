@@ -9,6 +9,7 @@ CONFIG += debug # release
 CONFIG += qt_framework
 QT += core gui network sql
 CONFIG += link_pkgconfig
+CONFIG += moc
 
 isEmpty(BDB_LIB_SUFFIX) {
 	# !macx:unix:BDB_LIB_SUFFIX = -5.3
@@ -78,6 +79,11 @@ windows {
 OBJECTS_DIR = build
 MOC_DIR = build
 UI_DIR = build
+QMAKE_MOC_SRC = \
+    src/qt/optionsdialog.moc \
+    src/qt/overviewpage.moc \
+    src/qt/rpcconsole.moc \
+    src/qt/torrentpage.moc
 
 # use: qmake "RELEASE=1"
 contains(RELEASE, 1) {
@@ -332,11 +338,7 @@ HEADERS += src/addrman.h \
     src/util.h \
     src/wallet.h \
     src/walletdb.h \
-    src/version.h \
-    src/optionsdialog.moc \
-    src/overviewpage.moc \
-    src/rpcconsole.moc \
-    src/torrentpage.moc
+    src/version.h
 
 SOURCES += src/addrman.cpp \
     src/bitcoinrpc.cpp \
