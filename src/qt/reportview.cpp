@@ -367,7 +367,7 @@ void ReportView::showTotal()
    	reportModel->setHorizontalHeaderItem(2, new QStandardItem(tr("Type")));
     reportModel->setHorizontalHeaderItem(3, new QStandardItem(tr("Payment amount")));
     reportModel->setHorizontalHeaderItem(4, new QStandardItem(tr("Number of payments")));
-    reportView->horizontalHeader()->resizeSection(0, 270);
+    reportView->horizontalHeader()->resizeSection(0, 410);
     reportView->horizontalHeader()->resizeSection(1, 120);
     reportView->horizontalHeader()->resizeSection(2, 120);
     reportView->horizontalHeader()->resizeSection(3, 140);
@@ -389,7 +389,7 @@ void ReportView::showTotal()
    	reportModelT->setHorizontalHeaderItem(2, new QStandardItem(tr("Type")));
     reportModelT->setHorizontalHeaderItem(3, new QStandardItem(tr("Payment amount")));
     reportModelT->setHorizontalHeaderItem(4, new QStandardItem(tr("Number of payments")));
-    reportViewT->horizontalHeader()->resizeSection(0, 270);
+    reportViewT->horizontalHeader()->resizeSection(0, 410);
     reportViewT->horizontalHeader()->resizeSection(1, 120);
     reportViewT->horizontalHeader()->resizeSection(2, 120);
     reportViewT->horizontalHeader()->resizeSection(3, 140);
