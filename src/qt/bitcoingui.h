@@ -16,6 +16,7 @@ class TransactionView;
 class OverviewPage;
 class MiningPage;
 class AddressBookPage;
+class ReportView;
 class SendCoinsDialog;
 class BlockBrowser;
 class BurnCoinsDialog;
@@ -84,6 +85,7 @@ private:
     AddressBookPage *receiveCoinsPage;
     SendCoinsDialog *sendCoinsPage;
     BlockBrowser *blockBrowser;
+    ReportView *accountReportPage;
     BurnCoinsDialog *burnCoinsPage;
     InscriptionDialog *inscriptionPage;
     MultisigDialog *multisigPage;
@@ -122,6 +124,7 @@ private:
     QAction *inscribeAction;
     QAction *multisigAction;
     QAction *torrentPageAction;
+    QAction *accountReportAction;
 
     QMovie *syncIconMovie;
 
@@ -180,6 +183,8 @@ private slots:
     void gotoBlockBrowser();
     /** Switch to mining page */
     void gotoMiningPage();
+    /** Switch to account report page */
+    void gotoAccountReportPage();
     /** switch to multisig page*/
     void gotoMultisigPage();
     /** switch to inscription page*/

@@ -229,7 +229,7 @@
         <string/>
        </property>
        <property name="pixmap">
-        <pixmap resource="../bitcoin.qrc">:/icons/wallet_bgcoin</pixmap>
+        <pixmap resource="../bitcoin.qrc">:/images/wallet_bgcoin</pixmap>
        </property>
        <property name="scaledContents">
         <bool>false</bool>
@@ -306,7 +306,7 @@
             <property name="minimumSize">
              <size>
               <width>450</width>
-              <height>200</height>
+              <height>206</height>
              </size>
             </property>
            </widget>
