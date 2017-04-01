@@ -96,7 +96,7 @@ BitcoinGUI::BitcoinGUI(QWidget *parent):
     changePassphraseAction(0),
     aboutQtAction(0)
 {
-    resize(864, 564);
+    resize(900, 564);
     setWindowTitle(tr("Slimcoin") + " - " + tr("Wallet"));
 #ifndef MAC_OSX
     QApplication::setWindowIcon(QIcon(":icons/slimcoin"));
@@ -206,6 +206,7 @@ BitcoinGUI::BitcoinGUI(QWidget *parent):
     statusBar()->addPermanentWidget(frameBlocks);
 
     syncIconMovie = new QMovie(":/movies/update_spinner", "mng", this);
+    // this->setStyleSheet("background-color: #ebeeff;");
 
     // Clicking on a transaction on the overview page simply sends you to transaction history page
     connect(overviewPage, SIGNAL(transactionClicked(QModelIndex)), this, SLOT(gotoHistoryPage()));
@@ -286,6 +287,7 @@ void BitcoinGUI::createActions()
     connect(historyAction, SIGNAL(triggered()), this, SLOT(gotoHistoryPage()));
     connect(addressBookAction, SIGNAL(triggered()), this, SLOT(showNormalIfMinimized()));
     connect(addressBookAction, SIGNAL(triggered()), this, SLOT(gotoAddressBookPage()));
+    connect(miningAction, SIGNAL(triggered()), this, SLOT(showNormalIfMinimized()));
     connect(miningAction, SIGNAL(triggered()), this, SLOT(gotoMiningPage()));
 
     // Dialog items
@@ -396,9 +398,9 @@ void BitcoinGUI::createMenuBar()
     tools->addAction(blockAction);
     tools->addAction(burnCoinsAction);
     tools->addAction(inscribeAction);
-#ifndef FIRST_CLASS_MESSAGING
+// #ifdef FIRST_CLASS_MESSAGING
     tools->addAction(messageAction);
-#endif
+// #endif
     tools->addAction(multisigAction);
     tools->addAction(torrentPageAction);
 
@@ -419,10 +421,11 @@ void BitcoinGUI::createToolBars()
     toolbar->addAction(receiveCoinsAction);
     toolbar->addAction(historyAction);
     toolbar->addAction(addressBookAction);
+    toolbar->addAction(burnCoinsAction);
     toolbar->addAction(miningAction);
-#ifdef FIRST_CLASS_MESSAGING
-    toolbar->addAction(messageAction);
-#endif
+// #ifdef FIRST_CLASS_MESSAGING
+//     toolbar->addAction(messageAction);
+// #endif
 
     QToolBar *toolbar2 = addToolBar(tr("Actions toolbar"));
     toolbar2->setToolButtonStyle(Qt::ToolButtonTextBesideIcon);
@@ -529,11 +532,12 @@ void BitcoinGUI::createTrayIcon()
     trayIconMenu->addAction(toggleHideAction);
     trayIconMenu->addSeparator();
     trayIconMenu->addAction(messageAction);
-#ifndef FIRST_CLASS_MESSAGING
+//#ifndef FIRST_CLASS_MESSAGING
     trayIconMenu->addSeparator();
-#endif
+//#endif
     trayIconMenu->addAction(receiveCoinsAction);
     trayIconMenu->addAction(sendCoinsAction);
+    trayIconMenu->addSeparator();
     trayIconMenu->addAction(burnCoinsAction);
     trayIconMenu->addAction(multisigAction);
     trayIconMenu->addAction(inscribeAction);
