@@ -315,6 +315,7 @@ HEADERS += src/addrman.h \
     src/qt/qvalidatedlineedit.h \
     src/qt/qvaluecombobox.h \
     src/qt/rpcconsole.h \
+    src/qt/reportview.h \
     src/qt/sendcoinsdialog.h \
     src/qt/sendcoinsentry.h \
     src/qt/torrentpage.h \
@@ -391,6 +392,7 @@ SOURCES += src/addrman.cpp \
     src/qt/qvalidatedlineedit.cpp \
     src/qt/qvaluecombobox.cpp \
     src/qt/rpcconsole.cpp \
+    src/qt/reportview.cpp \
     src/qt/sendcoinsdialog.cpp \
     src/qt/sendcoinsentry.cpp \
     src/qt/torrentpage.cpp \

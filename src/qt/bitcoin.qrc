@@ -47,6 +47,7 @@
     <file alias="tx_mined">res/icons/tx_mined.png</file>
     <file alias="tx_output">res/icons/tx_output.png</file>
     <file alias="magnet">res/icons/magnet.png</file>
+    <file alias="account-report">res/icons/account-report.png</file>
   </qresource>
   <qresource prefix="/images">
     <file alias="about">res/images/about.png</file>
