@@ -522,7 +522,6 @@ Value help(const Array& params, bool fHelp)
     return tableRPC.help(strCommand);
 }
 
-
 Value stop(const Array& params, bool fHelp)
 {
     if (fHelp || params.size() != 0)
@@ -534,7 +533,6 @@ Value stop(const Array& params, bool fHelp)
     return "slimcoin server stopping";
 }
 
-
 Value getblockcount(const Array& params, bool fHelp)
 {
     if (fHelp || params.size() != 0)
@@ -544,7 +542,6 @@ Value getblockcount(const Array& params, bool fHelp)
 
     return nBestHeight;
 }
-
 
 // deprecated
 Value getblocknumber(const Array& params, bool fHelp)
@@ -556,7 +553,6 @@ Value getblocknumber(const Array& params, bool fHelp)
 
     return nBestHeight;
 }
-
 
 Value getconnectioncount(const Array& params, bool fHelp)
 {
@@ -615,7 +611,6 @@ Value getpeerinfo(const Array& params, bool fHelp)
     return ret;
 }
 
-
 Value getdifficulty(const Array& params, bool fHelp)
 {
     if (fHelp || params.size() != 0)
@@ -630,7 +625,6 @@ Value getdifficulty(const Array& params, bool fHelp)
     return obj;
 }
 
-
 Value getgenerate(const Array& params, bool fHelp)
 {
     if (fHelp || params.size() != 0)
@@ -640,7 +634,6 @@ Value getgenerate(const Array& params, bool fHelp)
 
     return GetBoolArg("-gen");
 }
-
 
 Value setgenerate(const Array& params, bool fHelp)
 {
@@ -667,7 +660,6 @@ Value setgenerate(const Array& params, bool fHelp)
     return Value::null;
 }
 
-
 Value gethashespersec(const Array& params, bool fHelp)
 {
     if (fHelp || params.size() != 0)
@@ -679,7 +671,6 @@ Value gethashespersec(const Array& params, bool fHelp)
         return (boost::int64_t)0;
     return (boost::int64_t)dHashesPerSec;
 }
-
 
 // ppcoin: get network Gh/s estimate
 Value getnetworkghps(const Array& params, bool fHelp)
@@ -711,7 +702,6 @@ Value getnetworkghps(const Array& params, bool fHelp)
     return dNetworkGhps;
 }
 
-
 Value getinfo(const Array& params, bool fHelp)
 {
     if (fHelp || params.size() != 0)
@@ -742,7 +732,6 @@ Value getinfo(const Array& params, bool fHelp)
     return obj;
 }
 
-
 Value getmininginfo(const Array& params, bool fHelp)
 {
     if (fHelp || params.size() != 0)
@@ -764,7 +753,6 @@ Value getmininginfo(const Array& params, bool fHelp)
     obj.push_back(Pair("testnet",       fTestNet));
     return obj;
 }
-
 
 Value getnewaddress(const Array& params, bool fHelp)
 {
@@ -793,7 +781,6 @@ Value getnewaddress(const Array& params, bool fHelp)
 
     return CBitcoinAddress(keyID).ToString();
 }
-
 
 CBitcoinAddress GetAccountAddress(string strAccount, bool bForceNew=false)
 {
@@ -850,8 +837,6 @@ Value getaccountaddress(const Array& params, bool fHelp)
     return ret;
 }
 
-
-
 Value setaccount(const Array& params, bool fHelp)
 {
     if (fHelp || params.size() < 1 || params.size() > 2)
@@ -881,7 +866,6 @@ Value setaccount(const Array& params, bool fHelp)
     return Value::null;
 }
 
-
 Value getaccount(const Array& params, bool fHelp)
 {
     if (fHelp || params.size() != 1)
@@ -899,7 +883,6 @@ Value getaccount(const Array& params, bool fHelp)
         strAccount = (*mi).second;
     return strAccount;
 }
-
 
 Value getaddressesbyaccount(const Array& params, bool fHelp)
 {
@@ -1045,7 +1028,6 @@ Value verifymessage(const Array& params, bool fHelp)
     return (key.GetPubKey().GetID() == keyID);
 }
 
-
 Value getreceivedbyaddress(const Array& params, bool fHelp)
 {
     if (fHelp || params.size() < 1 || params.size() > 2)
@@ -1083,7 +1065,6 @@ Value getreceivedbyaddress(const Array& params, bool fHelp)
 
     return  ValueFromAmount(nAmount);
 }
-
 
 void GetAccountAddresses(string strAccount, set<CTxDestination>& setAddress)
 {
@@ -1133,7 +1114,6 @@ Value getreceivedbyaccount(const Array& params, bool fHelp)
     return (double)nAmount / (double)COIN;
 }
 
-
 int64 GetAccountBalance(CWalletDB& walletdb, const string& strAccount, int nMinDepth)
 {
     int64 nBalance = 0;
@@ -1164,7 +1144,6 @@ int64 GetAccountBalance(const string& strAccount, int nMinDepth)
     CWalletDB walletdb(pwalletMain->strWalletFile);
     return GetAccountBalance(walletdb, strAccount, nMinDepth);
 }
-
 
 Value getbalance(const Array& params, bool fHelp)
 {
@@ -1218,7 +1197,6 @@ Value getbalance(const Array& params, bool fHelp)
     return ValueFromAmount(nBalance);
 }
 
-
 Value movecmd(const Array& params, bool fHelp)
 {
     if (fHelp || params.size() < 3 || params.size() > 5)
@@ -1265,7 +1243,6 @@ Value movecmd(const Array& params, bool fHelp)
 
     return true;
 }
-
 
 Value calcburnhash(const Array& params, bool fHelp)
 {
@@ -1476,7 +1453,6 @@ Value sendfrom(const Array& params, bool fHelp)
 
     return wtx.GetHash().GetHex();
 }
-
 
 Value sendmany(const Array& params, bool fHelp)
 {
@@ -2292,7 +2268,6 @@ Value gettransaction(const Array& params, bool fHelp)
     return entry;
 }
 
-
 Value backupwallet(const Array& params, bool fHelp)
 {
     if (fHelp || params.size() != 1)
@@ -2305,7 +2280,6 @@ Value backupwallet(const Array& params, bool fHelp)
 
     return Value::null;
 }
-
 
 Value keypoolrefill(const Array& params, bool fHelp)
 {
@@ -2324,7 +2298,6 @@ Value keypoolrefill(const Array& params, bool fHelp)
 
     return Value::null;
 }
-
 
 void ThreadTopUpKeyPool(void* parg)
 {
@@ -2417,7 +2390,6 @@ Value walletpassphrase(const Array& params, bool fHelp)
     return Value::null;
 }
 
-
 Value walletpassphrasechange(const Array& params, bool fHelp)
 {
     if (pwalletMain->IsCrypted() && (fHelp || params.size() != 2))
@@ -2450,7 +2422,6 @@ Value walletpassphrasechange(const Array& params, bool fHelp)
     return Value::null;
 }
 
-
 Value walletlock(const Array& params, bool fHelp)
 {
     if (pwalletMain->IsCrypted() && (fHelp || params.size() != 0))
@@ -2472,7 +2443,6 @@ Value walletlock(const Array& params, bool fHelp)
 
     return Value::null;
 }
-
 
 Value encryptwallet(const Array& params, bool fHelp)
 {
@@ -2505,6 +2475,7 @@ Value encryptwallet(const Array& params, bool fHelp)
     StartShutdown();
     return "wallet encrypted; slimcoin server stopping, restart to run with encrypted wallet";
 }
+
 
 class DescribeAddressVisitor : public boost::static_visitor<Object>
 {
@@ -3032,7 +3003,6 @@ Value getblock(const Array& params, bool fHelp)
     return blockToJSON(block, pblockindex, fTxInfo, fTxDetails);
 }
 
-
 // ppcoin: get information of sync-checkpoint
 Value getcheckpoint(const Array& params, bool fHelp)
 {
@@ -3053,7 +3023,6 @@ Value getcheckpoint(const Array& params, bool fHelp)
 
     return result;
 }
-
 
 // ppcoin: reserve balance from being staked for network protection
 Value reservebalance(const Array& params, bool fHelp)
@@ -3096,7 +3065,6 @@ Value reservebalance(const Array& params, bool fHelp)
     return result;
 }
 
-
 // ppcoin: check wallet integrity
 Value checkwallet(const Array& params, bool fHelp)
 {
@@ -3118,7 +3086,6 @@ Value checkwallet(const Array& params, bool fHelp)
     }
     return result;
 }
-
 
 // ppcoin: repair wallet
 Value repairwallet(const Array& params, bool fHelp)
@@ -3263,7 +3230,6 @@ Value getrawmempool(const Array& params, bool fHelp)
 
     return a;
 }
-
 
 //
 // Raw transactions
@@ -3954,7 +3920,6 @@ Value importstealthaddress(const Array& params, bool fHelp)
     return result;
 }
 
-
 Value sendtostealthaddress(const Array& params, bool fHelp)
 {
     if (fHelp || params.size() < 2 || params.size() > 5)
@@ -4105,6 +4070,7 @@ Value scanforstealthtxns(const Array& params, bool fHelp)
     
     return result;
 }
+
 //
 // Call Table
 //
@@ -4753,8 +4719,6 @@ Object CallRPC(const string& strMethod, const Array& params)
 }
 
 
-
-
 template<typename T>
 void ConvertTo(Value& value, bool fAllowNull=false)
 {
@@ -4776,7 +4740,6 @@ void ConvertTo(Value& value, bool fAllowNull=false)
         value = value.get_value<T>();
     }
 }
-
 
 // Convert strings to command-specific RPC representation
 Array RPCConvertValues(const std::string &strMethod, const std::vector<std::string> &strParams)
@@ -4928,9 +4891,6 @@ int CommandLineRPC(int argc, char *argv[])
     }
     return nRet;
 }
-
-
-
 
 #ifdef TEST
 int main(int argc, char *argv[])
