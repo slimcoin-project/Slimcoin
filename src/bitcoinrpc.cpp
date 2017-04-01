@@ -1405,7 +1405,7 @@ Value getburndata(const Array& params, bool fHelp)
 {
     if (fHelp)
         throw runtime_error("getburndata\n"
-                                                "Lists useful proof-of-burn information");
+                            "Lists useful proof-of-burn information");
 
     int64 netBurnCoins, nEffBurnCoins, immatureCoins;
  

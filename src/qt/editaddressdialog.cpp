@@ -100,6 +100,9 @@ void EditAddressDialog::accept()
     {
         switch(model->getEditStatus())
         {
+        case AddressTableModel::NO_CHANGES:
+            // No actual changes
+            break;
         case AddressTableModel::DUPLICATE_ADDRESS:
             QMessageBox::warning(this, windowTitle(),
                 tr("The entered address \"%1\" is already in the address book.").arg(ui->addressEdit->text()),

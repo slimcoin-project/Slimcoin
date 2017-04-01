@@ -225,7 +225,7 @@ WalletModel::SendCoinsReturn WalletModel::sendCoins(const QList<SendCoinsRecipie
             scriptPubKey.SetDestination(CBitcoinAddress(rcp.address.toStdString()).Get());
             vecSend.push_back(make_pair(scriptPubKey, rcp.amount));
         }
-
+        /* FIXME: choose one 
         if ( txmessage.length() )
         {
             const char* msg = txmessage.toStdString().c_str();
@@ -241,7 +241,7 @@ WalletModel::SendCoinsReturn WalletModel::sendCoins(const QList<SendCoinsRecipie
             scriptMsg << OP_RETURN << vMsg;
             vecSend.push_back(make_pair(scriptMsg, 0));
         }
-
+        */
 
         if ( txmessage.length() )
         {
@@ -300,12 +300,18 @@ WalletModel::SendCoinsReturn WalletModel::sendCoins(const QList<SendCoinsRecipie
         {
             LOCK(wallet->cs_wallet);
 
-            std::map<CTxDestination, std::string>::iterator mi = wallet->mapAddressBook.find(dest);
-
-            // Check if we have a new address or an updated label
-            if ((mi == wallet->mapAddressBook.end() || mi->second != strLabel) && strLabel != "")
+            if (rcp.typeInd == AddressTableModel::AT_Stealth)
             {
-                wallet->SetAddressBookName(dest, strLabel);
+                wallet->UpdateStealthAddress(strAddress, strLabel, true);
+            } else
+            {
+                std::map<CTxDestination, std::string>::iterator mi = wallet->mapAddressBook.find(dest);
+
+                // Check if we have a new address or an updated label
+                if ((mi == wallet->mapAddressBook.end() || mi->second != strLabel) && strLabel != "")
+                {
+                    wallet->SetAddressBookName(dest, strLabel);
+                }
             }
         }
     }
