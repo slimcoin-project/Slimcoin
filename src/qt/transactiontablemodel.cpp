@@ -430,7 +430,7 @@ QString TransactionTableModel::formatTxToAddress(const TransactionRecord *wtx, b
     case TransactionRecord::SendToSelf:
     case TransactionRecord::Generated:
     default:
-        return tr("(Default account)");
+        return tr("(n/a)");
     }
 }
 
