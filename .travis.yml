@@ -27,13 +27,13 @@ addons:
 
 install:
   - sudo apt-get -y install qt55base qt55tools
- - cd src
+  - cd src
  
 script: 
   - make -f makefile.unix -j 5 slimcoind
   - make -f makefile.unix test_slimcoin
   - ./test_slimcoin
- - cd ..
+  - cd ..
   - source /opt/qt55/bin/qt55-env.sh
   - /opt/qt55/bin/qmake RELEASE=1 USE_QRCODE=1 FIRST_CLASS_MESSAGING=1 USE_UPNPC=1 USE_OLDC=1
   - CXXFLAGS="-std=c++0x" make -j 5
