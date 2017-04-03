@@ -4,26 +4,26 @@ os: linux
 sudo: required
 dist: trusty
 env:
- - QT_BASE=55
+  - QT_BASE=55
 branches:
   only:
     - master
-  
-before_install:
-  - sudo add-apt-repository --yes ppa:beineri/opt-qt551-trusty
-  - sudo apt-get update -qq
 
 addons:
   apt:
     packages:
-    - build-essential
-    - libboost-all-dev
-    - libdb++-dev
-    - libminiupnpc-dev
-    - libqrencode-dev
-    - libprotobuf-dev
-    - libssl-dev
-    - libgmp3-dev
+      - build-essential
+      - libboost-all-dev
+      - libdb++-dev
+      - libminiupnpc-dev
+      - libqrencode-dev
+      - libprotobuf-dev
+      - libssl-dev
+      - libgmp3-dev
+
+before_install:
+  - sudo add-apt-repository --yes ppa:beineri/opt-qt551-trusty
+  - sudo apt-get update -qq
 
 install:
   - sudo apt-get -y install qt55base qt55tools
