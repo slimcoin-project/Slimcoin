@@ -14,7 +14,6 @@
 #include "ui_interface.h"
 #include "util.h"
 #include "walletdb.h"
-#include "stealth.h"
 
 extern bool fWalletUnlockMintOnly;
 
@@ -23,7 +22,6 @@ class CReserveKey;
 class CWalletDB;
 class COutput;
 
-typedef std::map<CKeyID, CStealthKeyMetadata> StealthKeyMetaMap;
 
 /** (client) version numbers for particular wallet features */
 enum WalletFeature
@@ -88,9 +86,6 @@ public:
 
     std::set<int64> setKeyPool;
 
-    std::set<CStealthAddress> stealthAddresses;
-    StealthKeyMetaMap mapStealthKeyMeta;
-    uint32_t nStealth, nFoundStealth; // for reporting, zero before use
 
     typedef std::map<unsigned int, CMasterKey> MasterKeyMap;
     MasterKeyMap mapMasterKeys;
@@ -175,16 +170,6 @@ public:
     bool CommitTransaction(CWalletTx& wtxNew, CReserveKey& reservekey, bool fBurnTx=false);
     std::string SendMoney(CScript scriptPubKey, int64 nValue, CWalletTx& wtxNew, bool fAskFee=false, bool fBurnTx=false);
     std::string SendMoneyToDestination(const CTxDestination &address, int64 nValue, CWalletTx& wtxNew, bool fAskFee=false, bool fBurnTx=false);
-
-    bool NewStealthAddress(std::string& sError, std::string& sLabel, CStealthAddress& sxAddr);
-    bool AddStealthAddress(CStealthAddress& sxAddr);
-    bool UnlockStealthAddresses(const CKeyingMaterial& vMasterKeyIn);
-    bool UpdateStealthAddress(std::string &addr, std::string &label, bool addIfNotExist);
-    
-    bool CreateStealthTransaction(CScript scriptPubKey, int64_t nValue, std::vector<uint8_t>& P, CWalletTx& wtxNew, CReserveKey& reservekey, int64& nFeeRet);
-    std::string SendStealthMoney(CScript scriptPubKey, int64_t nValue, std::vector<uint8_t>& P, CWalletTx& wtxNew, bool fAskFee=false);
-    bool SendStealthMoneyToDestination(CStealthAddress& sxAddress, int64_t nValue, CWalletTx& wtxNew, std::string& sError, bool fAskFee=false);
-    bool FindStealthTransactions(const CTransaction& tx);
     
     bool NewKeyPool();
     bool TopUpKeyPool();

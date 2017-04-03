@@ -12,18 +12,12 @@
 #include "net.h"
 #include "init.h"
 #include "checkpoints.h"
-#include "util.h"
 #include "ui_interface.h"
-#include "base58.h"
 #include "bitcoinrpc.h"
 #include "kernel.h"
-#include "stealth.h"
-#include "keystore.h"
-#include "script.h"
 
 #undef printf
 #include <boost/asio.hpp>
-#include <boost/assign/list_of.hpp>
 #include <boost/filesystem.hpp>
 #include <boost/iostreams/concepts.hpp>
 #include <boost/iostreams/stream.hpp>
@@ -31,7 +25,7 @@
 #include <boost/lexical_cast.hpp>
 #include <boost/asio/ssl.hpp> 
 #include <boost/filesystem/fstream.hpp>
-
+#include <boost/assign/list_of.hpp>
 typedef boost::asio::ssl::stream<boost::asio::ip::tcp::socket> SSLStream;
 
 #define printf OutputDebugStringF
@@ -2510,12 +2504,6 @@ public:
             obj.push_back(Pair("sigsrequired", nRequired));
         return obj;
     }
-    Object operator()(const CStealthAddress &stxAddr) const {
-        Object obj;
-        obj.push_back(Pair("todo", true));
-        return obj;
-    }
-
 };
 
 Value validateaddress(const Array& params, bool fHelp)
@@ -3740,336 +3728,6 @@ Value gettorrent(const Array& params, bool fHelp)
     return false;
 }
 
-Value getnewstealthaddress(const Array& params, bool fHelp)
-{
-    if (fHelp || params.size() > 1)
-        throw runtime_error(
-            "getnewstealthaddress [label]\n"
-            "Returns a new Slimcoin “stealth” address for receiving payments anonymously.  ");
-    
-    if (pwalletMain->IsLocked())
-        throw runtime_error("Failed: Wallet must be unlocked.");
-    
-    std::string sLabel;
-    if (params.size() > 0)
-        sLabel = params[0].get_str();
-    
-    CStealthAddress sxAddr;
-    std::string sError;
-    if (!pwalletMain->NewStealthAddress(sError, sLabel, sxAddr))
-        throw runtime_error(std::string("Could not create a new “stealth” address: ") + sError);
-    
-    if (!pwalletMain->AddStealthAddress(sxAddr))
-        throw runtime_error("Could not save new “stealth” address to the wallet.");
-    
-    return sxAddr.Encoded();
-}
-
-Value liststealthaddresses(const Array& params, bool fHelp)
-{
-    if (fHelp || params.size() > 1)
-        throw runtime_error(
-            "liststealthaddresses [show_secrets=0]\n"
-            "List owned stealth addresses.");
-    
-    bool fShowSecrets = false;
-    
-    if (params.size() > 0)
-    {
-        std::string str = params[0].get_str();
-        
-        if (str == "0" || str == "n" || str == "no" || str == "-" || str == "false")
-            fShowSecrets = false;
-        else
-            fShowSecrets = true;
-    };
-    
-    if (fShowSecrets)
-    {
-        if (pwalletMain->IsLocked())
-            throw runtime_error("Failed: Wallet must be unlocked.");
-    };
-    
-    Object result;
-    
-    std::set<CStealthAddress>::iterator it;
-    for (it = pwalletMain->stealthAddresses.begin(); it != pwalletMain->stealthAddresses.end(); ++it)
-    {
-        if (it->scan_secret.size() < 1)
-            continue; // stealth address is not owned
-        
-        if (fShowSecrets)
-        {
-            Object objA;
-            objA.push_back(Pair("Label        ", it->label));
-            objA.push_back(Pair("Address      ", it->Encoded()));
-            objA.push_back(Pair("Scan Secret  ", HexStr(it->scan_secret.begin(), it->scan_secret.end())));
-            objA.push_back(Pair("Spend Secret ", HexStr(it->spend_secret.begin(), it->spend_secret.end())));
-            result.push_back(Pair("Stealth Address", objA));
-        } else
-        {
-            result.push_back(Pair("Stealth Address", it->Encoded() + " - " + it->label));
-        };
-    };
-    
-    return result;
-}
-
-Value importstealthaddress(const Array& params, bool fHelp)
-{
-    if (fHelp || params.size() < 2)
-        throw runtime_error(
-            "importstealthaddress <scan_secret> <spend_secret> [label]\n"
-            "Import an owned “stealth” addresses.");
-    
-    std::string sScanSecret  = params[0].get_str();
-    std::string sSpendSecret = params[1].get_str();
-    std::string sLabel;
-    
-    
-    if (params.size() > 2)
-    {
-        sLabel = params[2].get_str();
-    };
-    
-    std::vector<uint8_t> vchScanSecret;
-    std::vector<uint8_t> vchSpendSecret;
-    
-    if (IsHex(sScanSecret))
-    {
-        vchScanSecret = ParseHex(sScanSecret);
-    } else
-    {
-        if (!DecodeBase58(sScanSecret, vchScanSecret))
-            throw runtime_error("Could not decode scan secret as hex or base58.");
-    };
-    
-    if (IsHex(sSpendSecret))
-    {
-        vchSpendSecret = ParseHex(sSpendSecret);
-    } else
-    {
-        if (!DecodeBase58(sSpendSecret, vchSpendSecret))
-            throw runtime_error("Could not decode spend secret as hex or base58.");
-    };
-    
-    if (vchScanSecret.size() != 32)
-        throw runtime_error("Scan secret is not 32 bytes.");
-    if (vchSpendSecret.size() != 32)
-        throw runtime_error("Spend secret is not 32 bytes.");
-    
-    
-    ec_secret scan_secret;
-    ec_secret spend_secret;
-    
-    memcpy(&scan_secret.e[0], &vchScanSecret[0], 32);
-    memcpy(&spend_secret.e[0], &vchSpendSecret[0], 32);
-    
-    ec_point scan_pubkey, spend_pubkey;
-    if (SecretToPublicKey(scan_secret, scan_pubkey) != 0)
-        throw runtime_error("Could not get scan public key.");
-    
-    if (SecretToPublicKey(spend_secret, spend_pubkey) != 0)
-        throw runtime_error("Could not get spend public key.");
-    
-    
-    CStealthAddress sxAddr;
-    sxAddr.label = sLabel;
-    sxAddr.scan_pubkey = scan_pubkey;
-    sxAddr.spend_pubkey = spend_pubkey;
-    
-    sxAddr.scan_secret = vchScanSecret;
-    sxAddr.spend_secret = vchSpendSecret;
-    
-    Object result;
-    bool fFound = false;
-    // -- find if address already exists
-    std::set<CStealthAddress>::iterator it;
-    for (it = pwalletMain->stealthAddresses.begin(); it != pwalletMain->stealthAddresses.end(); ++it)
-    {
-        CStealthAddress &sxAddrIt = const_cast<CStealthAddress&>(*it);
-        if (sxAddrIt.scan_pubkey == sxAddr.scan_pubkey
-            && sxAddrIt.spend_pubkey == sxAddr.spend_pubkey)
-        {
-            if (sxAddrIt.scan_secret.size() < 1)
-            {
-                sxAddrIt.scan_secret = sxAddr.scan_secret;
-                sxAddrIt.spend_secret = sxAddr.spend_secret;
-                fFound = true; // update stealth address with secrets
-                break;
-            };
-            
-            result.push_back(Pair("result", "Import failed - stealth address exists."));
-            return result;
-        };
-    };
-    
-    if (fFound)
-    {
-        result.push_back(Pair("result", "Success, updated " + sxAddr.Encoded()));
-    } else
-    {
-        pwalletMain->stealthAddresses.insert(sxAddr);
-        result.push_back(Pair("result", "Success, imported " + sxAddr.Encoded()));
-    };
-    
-    
-    if (!pwalletMain->AddStealthAddress(sxAddr))
-        throw runtime_error("Could not save to wallet.");
-    
-    return result;
-}
-
-Value sendtostealthaddress(const Array& params, bool fHelp)
-{
-    if (fHelp || params.size() < 2 || params.size() > 5)
-        throw runtime_error(
-            "sendtostealthaddress <stealth_address> <amount> [comment] [comment-to]\n"
-            "<amount> is a real and is rounded to the nearest 0.000001"
-            + HelpRequiringPassphrase());
-    
-    if (pwalletMain->IsLocked())
-        throw JSONRPCError(RPC_WALLET_UNLOCK_NEEDED, "Error: Please enter the wallet passphrase with walletpassphrase first.");
-    
-    std::string sEncoded = params[0].get_str();
-    int64_t nAmount = AmountFromValue(params[1]);
-    
-    CStealthAddress sxAddr;
-    Object result;
-    
-    if (!sxAddr.SetEncoded(sEncoded))
-    {
-        result.push_back(Pair("result", "Invalid Slimcoin stealth address."));
-        return result;
-    };
-    
-    
-    CWalletTx wtx;
-    if (params.size() > 2 && params[2].type() != null_type && !params[2].get_str().empty())
-        wtx.mapValue["comment"] = params[2].get_str();
-    if (params.size() > 3 && params[3].type() != null_type && !params[3].get_str().empty())
-        wtx.mapValue["to"]      = params[3].get_str();
-    
-    std::string sError;
-    if (!pwalletMain->SendStealthMoneyToDestination(sxAddr, nAmount, wtx, sError))
-        throw JSONRPCError(RPC_WALLET_ERROR, sError);
-
-    return wtx.GetHash().GetHex();
-    
-    result.push_back(Pair("result", "Not yet implemented."));
-    
-    return result;
-}
-
-Value scanforalltxns(const Array& params, bool fHelp)
-{
-    if (fHelp || params.size() > 1)
-        throw runtime_error(
-            "scanforalltxns [fromHeight]\n"
-            "Scan blockchain for owned transactions.");
-    
-    Object result;
-    int32_t nFromHeight = 0;
-    
-    CBlockIndex *pindex = pindexGenesisBlock;
-    
-    
-    if (params.size() > 0)
-        nFromHeight = params[0].get_int();
-    
-    
-    if (nFromHeight > 0)
-    {
-        pindex = mapBlockIndex[hashBestChain];
-        while (pindex->nHeight > nFromHeight
-            && pindex->pprev)
-            pindex = pindex->pprev;
-    };
-    
-    if (pindex == NULL)
-        throw runtime_error("Genesis Block is not set.");
-    
-    {
-        LOCK2(cs_main, pwalletMain->cs_wallet);
-        
-        pwalletMain->MarkDirty();
-        
-        pwalletMain->ScanForWalletTransactions(pindex, true);
-        pwalletMain->ReacceptWalletTransactions();
-    }
-    
-    result.push_back(Pair("result", "Scan complete."));
-    
-    return result;
-}
-
-Value scanforstealthtxns(const Array& params, bool fHelp)
-{
-    if (fHelp || params.size() > 1)
-        throw runtime_error(
-            "scanforstealthtxns [fromHeight]\n"
-            "Scan blockchain for owned stealth transactions.");
-    
-    Object result;
-    uint32_t nBlocks = 0;
-    uint32_t nTransactions = 0;
-    int32_t nFromHeight = 0;
-    
-    CBlockIndex *pindex = pindexGenesisBlock;
-    
-    
-    if (params.size() > 0)
-        nFromHeight = params[0].get_int();
-    
-    
-    if (nFromHeight > 0)
-    {
-        pindex = mapBlockIndex[hashBestChain];
-        while (pindex->nHeight > nFromHeight
-            && pindex->pprev)
-            pindex = pindex->pprev;
-    };
-    
-    if (pindex == NULL)
-        throw runtime_error("Genesis Block is not set.");
-    
-    // -- locks in AddToWalletIfInvolvingMe
-    
-    bool fUpdate = true; // todo: option?
-    
-    pwalletMain->nStealth = 0;
-    pwalletMain->nFoundStealth = 0;
-    
-    while (pindex)
-    {
-        nBlocks++;
-        CBlock block;
-        block.ReadFromDisk(pindex);
-        
-        BOOST_FOREACH(CTransaction& tx, block.vtx)
-        {
-            if (!tx.IsStandard())
-                continue; // leave out coinbase and others
-            nTransactions++;
-            
-            pwalletMain->AddToWalletIfInvolvingMe(tx, &block, fUpdate);
-        };
-        
-        pindex = pindex->pnext;
-    };
-    
-    printf("Scanned %u blocks, %u transactions\n", nBlocks, nTransactions);
-    printf("Found %u stealth transactions in blockchain.\n", pwalletMain->nStealth);
-    printf("Found %u new owned stealth transactions.\n", pwalletMain->nFoundStealth);
-    
-    char cbuf[256];
-    snprintf(cbuf, sizeof(cbuf), "%u new stealth transactions.", pwalletMain->nFoundStealth);
-    
-    result.push_back(Pair("result", "Scan complete."));
-    result.push_back(Pair("found", std::string(cbuf)));
-    
-    return result;
-}
 
 //
 // Call Table
@@ -4149,12 +3807,6 @@ static const CRPCCommand vRPCCommands[] =
     { "getrawmempool",          &getrawmempool,          true },
     { "getsubsidy",               &getsubsidy,             false  },
     { "gettorrent",               &gettorrent,             true   },
-    { "getnewstealthaddress",     &getnewstealthaddress,   false  },
-    { "liststealthaddresses",     &liststealthaddresses,   false  },
-    { "importstealthaddress",     &importstealthaddress,   false  },
-    { "sendtostealthaddress",     &sendtostealthaddress,   false  },
-    { "scanforalltxns",           &scanforalltxns,         false  },
-    { "scanforstealthtxns",       &scanforstealthtxns,     false  },
 };
 
 CRPCTable::CRPCTable()
@@ -4824,7 +4476,6 @@ Array RPCConvertValues(const std::string &strMethod, const std::vector<std::stri
     FORMAT_PARAM("getrawtransaction",  1, boost::int64_t);
     if (strMethod == "signrawtransaction"     && n > 1) ConvertTo<Array>(params[1], true);
     if (strMethod == "signrawtransaction"     && n > 2) ConvertTo<Array>(params[2], true);
-    if (strMethod == "sendtostealthaddress"   && n > 1) ConvertTo<double>(params[1]);
     return params;
 }
 

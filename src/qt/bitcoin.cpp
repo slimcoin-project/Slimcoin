@@ -184,6 +184,17 @@ int main(int argc, char *argv[])
 #ifdef Q_OS_MAC
     QApplication::setAttribute(Qt::AA_DontShowIconsInMenus);
 #endif
+/* FIXME: refactor to Qt5.6+
+#if QT_VERSION >= 0x050500
+    // Because of the POODLE attack it is recommended to disable SSLv3 (https://disablessl3.com/),
+    // so set SSL protocols to TLS1.0+.
+    QSslConfiguration sslconf = QSslConfiguration::defaultConfiguration();
+    sslconf.setProtocol(QSsl::TlsV1_0OrLater);
+    QSslConfiguration::setDefaultConfiguration(sslconf);
+#endif
+*/
+
+  // TODO: Do not refer to data directory yet, this can be overridden by Intro::pickDataDirectory
 
   // ... then bitcoin.conf:
   if(!boost::filesystem::is_directory(GetDataDir(false)))

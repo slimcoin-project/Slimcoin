@@ -569,9 +569,9 @@ int64 GetArg(const std::string& strArg, int64 nDefault)
 
 bool GetBoolArg(const std::string& strArg, bool fDefault)
 {
-     // FIXME: hack to force testnet, this is for testing only, should be removed later
-    if (strArg == "-testnet")
-        return true;
+    // FIXME: hack to force testnet, this is for testing only, should be removed later
+    // if (strArg == "-testnet")
+    //     return true;
  
     if (mapArgs.count(strArg))
     {
@@ -911,7 +911,7 @@ const boost::filesystem::path &GetDataDir(bool fNetSpecific)
     }
     // FIXME: hack to force testnet, this is for testing only, should be removed later
     // if (fNetSpecific && GetBoolArg("-testnet", false))
-    if (fNetSpecific && GetBoolArg("-testnet", true))
+    if (fNetSpecific && GetBoolArg("-testnet", false))
         path /= "testnet";
 
     fs::create_directory(path);

@@ -20,21 +20,16 @@ EditAddressDialog::EditAddressDialog(Mode mode, QWidget *parent) :
         setWindowTitle(tr("New receiving address"));
         ui->addressEdit->setEnabled(false);
         ui->addressEdit->setVisible(false);
-        ui->stealthCB->setEnabled(true);
-        ui->stealthCB->setVisible(true);
         break;
     case NewSendingAddress:
         setWindowTitle(tr("New sending address"));
-        ui->stealthCB->setVisible(false);
         break;
     case EditReceivingAddress:
         setWindowTitle(tr("Edit receiving address"));
         ui->addressEdit->setDisabled(true);
-        ui->stealthCB->setDisabled(true);
         break;
     case EditSendingAddress:
         setWindowTitle(tr("Edit sending address"));
-        ui->stealthCB->setVisible(false);
         break;
     }
 
@@ -56,7 +51,6 @@ void EditAddressDialog::setModel(AddressTableModel *model)
     mapper->setModel(model);
     mapper->addMapping(ui->labelEdit, AddressTableModel::Label);
     mapper->addMapping(ui->addressEdit, AddressTableModel::Address);
-    mapper->addMapping(ui->stealthCB, AddressTableModel::Type);
 }
 
 void EditAddressDialog::loadRow(int row)
@@ -73,12 +67,10 @@ bool EditAddressDialog::saveCurrentRow()
     case NewReceivingAddress:
     case NewSendingAddress:
         {
-        int typeInd  = ui->stealthCB->isChecked() ? AddressTableModel::AT_Stealth : AddressTableModel::AT_Normal;
         address = model->addRow(
                 mode == NewSendingAddress ? AddressTableModel::Send : AddressTableModel::Receive,
                 ui->labelEdit->text(),
-                ui->addressEdit->text(),
-                typeInd);
+                ui->addressEdit->text());
         }
         break;
     case EditReceivingAddress:

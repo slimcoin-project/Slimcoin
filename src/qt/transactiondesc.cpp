@@ -223,15 +223,6 @@ QString TransactionDesc::toHTML(CWallet *wallet, CWalletTx &wtx)
         if(!wtx.mapValue["comment"].empty())
             strHTML += QString("<br><b>") + tr("Comment:") + "</b><br>" + GUIUtil::HtmlEscape(wtx.mapValue["comment"], true) + "<br>";
 
-        /* Handle (long) stealth addresses */
-        char cbuf[256];
-        for (int k = 0; k < wtx.vout.size(); ++k)
-        {
-            snprintf(cbuf, sizeof(cbuf), "n_%d", k);
-            if (wtx.mapValue.count(cbuf) && !wtx.mapValue[cbuf].empty())
-                strHTML += QString("<br><b>") + tr(cbuf) + ":</b> " + GUIUtil::HtmlEscape(wtx.mapValue[cbuf], true) + "<br>";
-        }
-
         strHTML += QString("<b>") + tr("Transaction ID:") + "</b> " + wtx.GetHash().ToString().c_str() + "<br>";
 
         if(wtx.IsCoinBase())
