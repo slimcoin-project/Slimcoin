@@ -9,11 +9,19 @@
 # make -f makefile.unix slimcoind STATIC=1 LDFLAGS="-static-libgcc -static-libstdc++"
 
 USE_UPNP:=0
-
-DEFS=-DBOOST_THREAD_USE_LIB -DBOOST_SPIRIT_THREADSAFE
+DEFS=-DBOOST_THREAD_USE_LIB -DBOOST_SPIRIT_THREADSAFE -DBOOST_NO_CXX11_SCOPED_ENUMS
 
 DEFS += $(addprefix -I,$(DEPSDIR) $(CURDIR) $(CURDIR)/obj $(BOOST_INCLUDE_PATH) $(BDB_INCLUDE_PATH) $(OPENSSL_INCLUDE_PATH))
 LIBS = $(addprefix -L,$(BOOST_LIB_PATH) $(BDB_LIB_PATH) $(OPENSSL_LIB_PATH))
+
+ifndef USE_OLDC
+	override USE_OLDC = -
+endif
+ifneq (${USE_OLDC}, -)
+    DEFS += -std=c++0x
+else
+    DEFS += -std=c++11
+endif
 
 TESTDEFS = -DTEST_DATA_DIR=$(abspath test/data)
 
@@ -90,7 +98,7 @@ LIBS+= \
 
 DEBUGFLAGS=-g3
 CXXFLAGS=-O2
-EXTRA_CXXFLAGS = -pipe -fstack-protector -fstack-protector-all --param ssp-buffer-size=1 -D_FORTIFY_SOURCE=2 -g -std=gnu++11 -D_REENTRANT -Wno-ignored-qualifiers -Wno-unused-variable -fdiagnostics-show-option -fpermissive -fPIC $(DEFINES)
+EXTRA_CXXFLAGS = -pipe -fstack-protector -fstack-protector-all --param ssp-buffer-size=1 -D_FORTIFY_SOURCE=2 -g -D_REENTRANT -Wno-ignored-qualifiers -Wno-unused-variable -fdiagnostics-show-option -fpermissive -fPIC $(DEFINES)
 
 xCXXFLAGS= $(EXTRA_CXXFLAGS) -pthread -D_REENTRANT -Wall -Wextra -Wno-sign-compare -Wno-invalid-offsetof -Wno-unused-parameter -Wformat -Wformat-security \
     $(DEBUGFLAGS) $(DEFS) $(HARDENING) $(CXXFLAGS)

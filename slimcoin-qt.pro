@@ -2,13 +2,14 @@ TEMPLATE = app
 TARGET = slimcoin-qt
 VERSION = 0.6.4.0
 INCLUDEPATH += src src/json src/qt
-DEFINES += QT_GUI BOOST_THREAD_USE_LIB BOOST_SPIRIT_THREADSAFE QT_NO_PRINTER
+DEFINES += QT_GUI BOOST_THREAD_USE_LIB BOOST_SPIRIT_THREADSAFE QT_NO_PRINTER BOOST_NO_CXX11_SCOPED_ENUMS
+
 CONFIG += no_include_pwd
 CONFIG += thread
 CONFIG += debug # release
 CONFIG += qt_framework
 QT += core gui network sql
-CONFIG += link_pkgconfig c++11
+CONFIG += link_pkgconfig
 CONFIG += moc
 
 # qmake on Qt 5.3 and lower doesn't recognize c++14.
@@ -16,6 +17,8 @@ contains(QT_MAJOR_VERSION, 5):lessThan(QT_MINOR_VERSION, 4) {
     CONFIG += c++11
     QMAKE_CXXFLAGS_CXX11 = $$replace(QMAKE_CXXFLAGS_CXX11, "std=c\+\+11", "std=c++1y")
     QMAKE_CXXFLAGS_CXX11 = $$replace(QMAKE_CXXFLAGS_CXX11, "std=c\+\+0x", "std=c++1y")
+} else {
+     CONFIG += c++14
 }
 
 # Qt 4 doesn't even know about C++11.

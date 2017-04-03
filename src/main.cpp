@@ -14,7 +14,6 @@
 #include <boost/algorithm/string/replace.hpp>
 #include <boost/filesystem.hpp>
 #include <boost/filesystem/fstream.hpp>
-#include <boost/move/unique_ptr.hpp>
 #include <math.h>       /* pow */
 #include <cstdlib>      /* std::rand() */
 
@@ -4611,10 +4610,14 @@ bool GetBurnHash(uint256 hashPrevBlock, s32int burnBlkHeight, s32int burnCTx,
     if (!ExtractDestination(burnTxOut.scriptPubKey, address))
         return error("GetBurnHash(): ExtractAddress failed");
 
+#if BOOST_VERSION >= 158000
     if (address != burnAddress.Get())
         return error("GetBurnHash(): TxOut's address is not a valid burn address");
-
-    /* Surely invalid if the destination is not a valid burn address
+#else
+    if (!(address == burnAddress.Get()))
+        return error("GetBurnHash(): TxOut's address is not a valid burn address");
+#endif
+    /* FIXME: although the above test sort of obviates the below, this is crypto, so refactor anyway
     if (!address.IsValid())
         return error("GetBurnHash(): TxOut's address is invalid");
     */
@@ -4769,7 +4772,7 @@ CBlock *CreateNewBlock(CWallet* pwallet, bool fProofOfStake, const CWalletTx *bu
 
     // Create new block
     /* FIXME: boost::movelib::unique_ptr<CBlock> pblock(new CBlock()); */
-    boost::movelib::unique_ptr<CBlock> pblock(new CBlock());
+    unique_ptr<CBlock> pblock(new CBlock());
     if (!pblock.get())
         return NULL;
 
@@ -5211,8 +5214,8 @@ void SlimCoinMiner(CWallet *pwallet, bool fProofOfStake)
         //
         unsigned int nTransactionsUpdatedLast = nTransactionsUpdated;
         CBlockIndex* pindexPrev = pindexBest;
-        /* boost::movelib::unique_ptr<CBlock> pblock(CreateNewBlock(pwallet, fProofOfStake)); */
-        boost::movelib::unique_ptr<CBlock> pblock(CreateNewBlock(pwallet, fProofOfStake));
+        /* FIXME: boost::movelib::unique_ptr<CBlock> pblock(CreateNewBlock(pwallet, fProofOfStake)); */
+        unique_ptr<CBlock> pblock(CreateNewBlock(pwallet, fProofOfStake));
         if (!pblock.get())
             return;
 
@@ -5399,8 +5402,8 @@ void SlimCoinAfterBurner(CWallet *pwallet)
             //
             // Create new block
             //
-            /* boost::movelib::unique_ptr<CBlock> pblock(CreateNewBlock(pwallet, false, &smallestWTx)); */
-            boost::movelib::unique_ptr<CBlock> pblock(CreateNewBlock(pwallet, false, &smallestWTx));
+            /* FIXME: boost::movelib::unique_ptr<CBlock> pblock(CreateNewBlock(pwallet, false, &smallestWTx)); */
+            unique_ptr<CBlock> pblock(CreateNewBlock(pwallet, false, &smallestWTx));
             if (!pblock.get())
                 continue;
 

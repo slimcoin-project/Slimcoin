@@ -141,13 +141,19 @@ QList<TransactionRecord> TransactionRecord::decomposeTransaction(const CWallet *
           CTxDestination address;
           if (ExtractDestination(txout.scriptPubKey, address))
           {
-            /* FIXME: Sanity check required */
+#if BOOST_VERSION >= 158000
             if(address != burnAddress.Get())
               // Sent to Slimcoin Address
               sub.type = TransactionRecord::SendToAddress;
             else
               sub.type = TransactionRecord::Burned; // Burned coins
-
+#else
+            if(address == burnAddress.Get())
+              sub.type = TransactionRecord::Burned; // Burned coins
+            else
+              // Sent to Slimcoin Address
+              sub.type = TransactionRecord::SendToAddress;
+#endif
             sub.address = CBitcoinAddress(address).ToString();
           }
           else

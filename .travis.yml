@@ -1,28 +1,49 @@
 language: cpp
-
-compiler:
-  - gcc
+compiler: gcc
+os: linux
+sudo: required
+dist: trusty
+env:
+ - QT_BASE=55
+branches:
+  only:
+    - travis
   
 before_install:
+  - sudo add-apt-repository --yes ppa:beineri/opt-qt551-trusty
   - sudo apt-get update -qq
-  - sudo apt-get install build-essential libboost-all-dev libcurl4-openssl-dev libdb5.1-dev libdb5.1++-dev libssl-dev libminiupnpc-dev libqrencode-dev libglib2.0-dev libglibmm-2.4-dev libqt4-dev python-dev qt4-dev-tools libqt4-dev libqt4-core libqt4-gui 
+
+addons:
+  apt:
+    packages:
+    - build-essential
+    - libboost-all-dev
+    - libdb++-dev
+    - libminiupnpc-dev
+    - libqrencode-dev
+    - libprotobuf-dev
+    - libssl-dev
+    - libgmp3-dev
+
 install:
+  - sudo apt-get -y install qt55base qt55tools
  - cd src
  
 script: 
- - make -f makefile.unix -j 5
+  - make -f makefile.unix -j 5 slimcoind
+  - make -f makefile.unix test_slimcoin
+  - ./test_slimcoin
  - cd ..
- - qmake USE_UPNP=-
- - make -j 5
- 
+  - source /opt/qt55/bin/qt55-env.sh
+  - /opt/qt55/bin/qmake RELEASE=1 USE_QRCODE=1 FIRST_CLASS_MESSAGING=1 USE_UPNPC=1 USE_OLDC=1
+  - CXXFLAGS="-std=c++0x" make -j 5
 
 notifications:
   irc:
     channels:
-      - "chat.freenode.net#CoinWorks"
+      - "chat.freenode.net#slimcoin"
     template:
       - "%{repository}/%{branch} (%{commit} - %{author}): %{message}"
       - "Alt Message : %{repository_slug} - (%{commit} - %{author}): %{message}, Build Time: %{duration}"
       - "Change view : %{compare_url}"
       - "Build details : %{build_url}"
-
