@@ -114,8 +114,6 @@ extern int64 nReserveBalance;
 //Burn addresses
 const CBitcoinAddress burnOfficialAddress("SfSLMCoinMainNetworkBurnAddr1DeTK5");
 const CBitcoinAddress burnTestnetAddress("mmSLiMCoinTestnetBurnAddress1XU5fu");
-// const std::string burnOfficialAddress = "SfSLMCoinMainNetworkBurnAddr1DeTK5";
-// const std::string burnTestnetAddress = "mmSLiMCoinTestnetBurnAddress1XU5fu";
 
 #define BURN_CONSTANT      .01 * CENT
 
@@ -203,7 +201,6 @@ public:
     }
 };
 
-
 //if any == true, then compare address with both testnet and realnet burn addresses
 // else compare only with the address that corresponds to which network the client is connected to
 inline bool IsBurnAddress(const CBitcoinAddress &address, bool any=false)
@@ -216,7 +213,6 @@ inline bool IsBurnAddress(const CBitcoinAddress &address, bool any=false)
     }
         
 }
-
 
 //makes a uint256 number into its compact form and returns it as a uint256 again
 inline const uint256 becomeCompact(const uint256 &num)

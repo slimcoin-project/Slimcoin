@@ -14,7 +14,7 @@
 #include <boost/algorithm/string/replace.hpp>
 #include <boost/filesystem.hpp>
 #include <boost/filesystem/fstream.hpp>
-// #include <boost/move/unique_ptr.hpp>
+#include <boost/move/unique_ptr.hpp>
 #include <math.h>       /* pow */
 #include <cstdlib>      /* std::rand() */
 
@@ -4769,7 +4769,7 @@ CBlock *CreateNewBlock(CWallet* pwallet, bool fProofOfStake, const CWalletTx *bu
 
     // Create new block
     /* FIXME: boost::movelib::unique_ptr<CBlock> pblock(new CBlock()); */
-    unique_ptr<CBlock> pblock(new CBlock());
+    boost::movelib::unique_ptr<CBlock> pblock(new CBlock());
     if (!pblock.get())
         return NULL;
 
@@ -5212,7 +5212,7 @@ void SlimCoinMiner(CWallet *pwallet, bool fProofOfStake)
         unsigned int nTransactionsUpdatedLast = nTransactionsUpdated;
         CBlockIndex* pindexPrev = pindexBest;
         /* boost::movelib::unique_ptr<CBlock> pblock(CreateNewBlock(pwallet, fProofOfStake)); */
-        unique_ptr<CBlock> pblock(CreateNewBlock(pwallet, fProofOfStake));
+        boost::movelib::unique_ptr<CBlock> pblock(CreateNewBlock(pwallet, fProofOfStake));
         if (!pblock.get())
             return;
 
@@ -5400,7 +5400,7 @@ void SlimCoinAfterBurner(CWallet *pwallet)
             // Create new block
             //
             /* boost::movelib::unique_ptr<CBlock> pblock(CreateNewBlock(pwallet, false, &smallestWTx)); */
-            unique_ptr<CBlock> pblock(CreateNewBlock(pwallet, false, &smallestWTx));
+            boost::movelib::unique_ptr<CBlock> pblock(CreateNewBlock(pwallet, false, &smallestWTx));
             if (!pblock.get())
                 continue;
 

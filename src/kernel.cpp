@@ -429,7 +429,7 @@ bool CheckStakeKernelHash(unsigned int nBits, const CBlock& blockFrom, unsigned 
     }
 
     // Now check if proof-of-stake hash meets target protocol
-    if (CBigNum(hashProofOfStake) > bnCoinDayWeight * bnTargetPerCoinDay)
+    if (CBigNum(hashProofOfStake) > bnTargetPerCoinDay * bnCoinDayWeight)
         return false;
     if (fDebug && !fPrintProofOfStake)
     {

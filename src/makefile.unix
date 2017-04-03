@@ -118,7 +118,6 @@ OBJS= \
     obj/noui.o \
     obj/kernel.o \
     obj/dcrypt.o \
-    obj/stealth.o \
     obj/smalldata.o \
     obj/sha256.o
 

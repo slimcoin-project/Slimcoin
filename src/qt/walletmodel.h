@@ -55,7 +55,6 @@ class SendCoinsRecipient
 public:
   QString address;
   QString label;
-  int typeInd;
   qint64 amount;
 };
 

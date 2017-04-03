@@ -21,7 +21,6 @@ class SendCoinsDialog;
 class BlockBrowser;
 class BurnCoinsDialog;
 class InscriptionDialog;
-//class MessagePage;
 class MultisigDialog;
 class SignVerifyMessageDialog;
 class TorrentPage;
