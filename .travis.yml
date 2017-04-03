@@ -7,7 +7,7 @@ env:
  - QT_BASE=55
 branches:
   only:
-    - travis
+    - master
   
 before_install:
   - sudo add-apt-repository --yes ppa:beineri/opt-qt551-trusty
