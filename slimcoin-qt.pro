@@ -8,8 +8,22 @@ CONFIG += thread
 CONFIG += debug # release
 CONFIG += qt_framework
 QT += core gui network sql
-CONFIG += link_pkgconfig
+CONFIG += link_pkgconfig c++11
 CONFIG += moc
+
+# qmake on Qt 5.3 and lower doesn't recognize c++14.
+contains(QT_MAJOR_VERSION, 5):lessThan(QT_MINOR_VERSION, 4) {
+    CONFIG += c++11
+    QMAKE_CXXFLAGS_CXX11 = $$replace(QMAKE_CXXFLAGS_CXX11, "std=c\+\+11", "std=c++1y")
+    QMAKE_CXXFLAGS_CXX11 = $$replace(QMAKE_CXXFLAGS_CXX11, "std=c\+\+0x", "std=c++1y")
+}
+
+# Qt 4 doesn't even know about C++11.
+contains(QT_MAJOR_VERSION, 4) {
+    QMAKE_CXXFLAGS += -std=c++1y
+}
+
+static:DEFINES += STATIC_QT
 
 isEmpty(BDB_LIB_SUFFIX) {
 	# !macx:unix:BDB_LIB_SUFFIX = -5.3
@@ -229,6 +243,11 @@ QMAKE_CXXFLAGS_WARN_ON = -Wall \
     -Wno-unused-parameter \
     -Wno-unused-variable
 
+*-g++*|*-clang* {
+    # We require at least C11.
+    QMAKE_CFLAGS += -std=c11
+}
+
 # this option unrecognized when building on OSX 10.6.8
 # TODO: is this still the case with OSX 12.0?
 !macx {
@@ -332,7 +351,6 @@ HEADERS += src/addrman.h \
     src/serialize.h \
     src/sha256.h \
     src/smalldata.h \
-    src/stealth.h \
     src/strlcpy.h \
     src/ui_interface.h \
     src/uint256.h \
@@ -409,7 +427,6 @@ SOURCES += src/addrman.cpp \
     src/script.cpp \
     src/sha256.cpp \
     src/smalldata.cpp \
-    src/stealth.cpp \
     src/util.cpp \
     src/version.cpp \
     src/wallet.cpp \
