@@ -6,7 +6,7 @@ DEFINES += QT_GUI BOOST_THREAD_USE_LIB BOOST_SPIRIT_THREADSAFE QT_NO_PRINTER BOO
 
 CONFIG += no_include_pwd
 CONFIG += thread
-CONFIG += debug # release
+CONFIG += release
 CONFIG += qt_framework
 QT += core gui network sql
 CONFIG += link_pkgconfig
@@ -61,13 +61,15 @@ greaterThan(QT_MAJOR_VERSION, 4) {
 # winbuild dependencies
 windows {
     contains(MXE, 1) {
+        # DEPLOYMENT_PLUGIN += qsqlite
+        DEFINES += WIN32
         BDB_INCLUDE_PATH=/usr/lib/mxe/usr/i686-w64-mingw32.static/include
         BDB_LIB_PATH=/usr/lib/mxe/usr/i686-w64-mingw32.static/lib
         BOOST_INCLUDE_PATH=/usr/lib/mxe/usr/i686-w64-mingw32.static/include/boost
         BOOST_LIB_PATH=/usr/lib/mxe/usr/i686-w64-mingw32.static/lib
         BOOST_LIB_SUFFIX=-mt
         BOOST_THREAD_LIB_SUFFIX=_win32-mt
-        CXXFLAGS=-std=gnu++11 -march=i686
+        CXXFLAGS=-std=c++11 -march=i686
         LDFLAGS=-march=i686
         MINIUPNPC_INCLUDE_PATH=/usr/lib/mxe/usr/i686-w64-mingw32.static/include
         MINIUPNPC_LIB_PATH=/usr/lib/mxe/usr/i686-w64-mingw32.static/lib
@@ -97,6 +99,8 @@ OBJECTS_DIR = build
 MOC_DIR = build
 UI_DIR = build
 QMAKE_MOC_SRC = \
+    src/qt/chatclient.moc \
+    src/qt/chatwindow.moc \
     src/qt/optionsdialog.moc \
     src/qt/overviewpage.moc \
     src/qt/rpcconsole.moc \
@@ -316,6 +320,8 @@ HEADERS += src/addrman.h \
     src/qt/blockbrowser.h \
     src/qt/burncoinsdialog.h \
     src/qt/burncoinsentry.h \
+    src/qt/chatclient.h \
+    src/qt/chatwindow.h \
     src/qt/clientmodel.h \
     src/qt/csvmodelwriter.h \
     src/qt/editaddressdialog.h \
@@ -393,6 +399,8 @@ SOURCES += src/addrman.cpp \
     src/qt/blockbrowser.cpp \
     src/qt/burncoinsdialog.cpp \
     src/qt/burncoinsentry.cpp \
+    src/qt/chatclient.cpp \
+    src/qt/chatwindow.cpp \
     src/qt/clientmodel.cpp \
     src/qt/csvmodelwriter.cpp \
     src/qt/editaddressdialog.cpp \
@@ -445,6 +453,7 @@ FORMS += \
     src/qt/forms/blockbrowser.ui \
     src/qt/forms/burncoinsdialog.ui \
     src/qt/forms/burncoinsentry.ui \
+    src/qt/forms/chatwindow.ui \
     src/qt/forms/editaddressdialog.ui \
     src/qt/forms/inscriptiondialog.ui \
     src/qt/forms/messagepage.ui \

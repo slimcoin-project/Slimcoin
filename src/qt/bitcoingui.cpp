@@ -23,6 +23,7 @@
 #include "addresstablemodel.h"
 #include "transactionview.h"
 #include "overviewpage.h"
+#include "chatwindow.h"
 #include "miningpage.h"
 #include "reportview.h"
 #include "inscriptiondialog.h"
@@ -130,6 +131,7 @@ BitcoinGUI::BitcoinGUI(QWidget *parent):
     // Create tabs
     overviewPage = new OverviewPage();
 
+    chatPage = new ChatWindow(this);
     transactionsPage = new QWidget(this);
     QVBoxLayout *vbox = new QVBoxLayout();
     transactionView = new TransactionView(this);
@@ -327,6 +329,10 @@ void BitcoinGUI::createActions()
     torrentPageAction->setToolTip(tr("View inscriptions"));
     torrentPageAction->setToolTip(torrentPageAction->statusTip());
 
+    chatPageAction = new QAction(QIcon(":/icons/chat"), tr("&Social"), this);
+    chatPageAction->setToolTip(tr("View chat"));
+    chatPageAction->setToolTip(chatPageAction->statusTip());
+
     connect(blockAction, SIGNAL(triggered()), this, SLOT(showNormalIfMinimized()));
     connect(blockAction, SIGNAL(triggered()), this, SLOT(gotoBlockBrowser()));
     connect(messageAction, SIGNAL(triggered()), this, SLOT(showNormalIfMinimized()));
@@ -335,6 +341,8 @@ void BitcoinGUI::createActions()
     connect(multisigAction, SIGNAL(triggered()), this, SLOT(gotoMultisigPage()));
     connect(torrentPageAction, SIGNAL(triggered()), this, SLOT(showNormalIfMinimized()));
     connect(torrentPageAction, SIGNAL(triggered()), this, SLOT(gotoTorrentPage()));
+    connect(chatPageAction, SIGNAL(triggered()), this, SLOT(showNormalIfMinimized()));
+    connect(chatPageAction, SIGNAL(triggered()), this, SLOT(gotoChatPage()));
 
     quitAction = new QAction(QIcon(":/icons/quit"), tr("E&xit"), this);
     quitAction->setStatusTip(tr("Quit application"));
@@ -413,6 +421,7 @@ void BitcoinGUI::createMenuBar()
     tools->addAction(messageAction);
     tools->addAction(multisigAction);
     tools->addAction(torrentPageAction);
+    tools->addAction(chatPageAction);
 
     QMenu *help = appMenuBar->addMenu(tr("&Help"));
     help->addAction(openRPCConsoleAction);
@@ -484,6 +493,7 @@ void BitcoinGUI::setClientModel(ClientModel *clientModel)
         accountReportPage->setClientModel(clientModel);
         inscriptionPage->setClientModel(clientModel);
         torrentPage->setClientModel(clientModel);
+        chatPage->setModel(clientModel);
     }
 }
 
@@ -555,6 +565,7 @@ void BitcoinGUI::createTrayIcon()
     trayIconMenu->addAction(inscribeAction);
     trayIconMenu->addAction(blockAction);
     trayIconMenu->addAction(torrentPageAction);
+    trayIconMenu->addAction(chatPageAction);
     trayIconMenu->addSeparator();
     trayIconMenu->addAction(optionsAction);
     trayIconMenu->addSeparator();
@@ -948,6 +959,12 @@ void BitcoinGUI::gotoTorrentPage()
 {
   torrentPage->show();
   torrentPage->setFocus();
+}
+
+void BitcoinGUI::gotoChatPage()
+{
+  chatPage->show();
+  chatPage->setFocus();
 }
 
 void BitcoinGUI::dragEnterEvent(QDragEnterEvent *event)

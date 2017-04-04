@@ -24,6 +24,7 @@ class InscriptionDialog;
 class MultisigDialog;
 class SignVerifyMessageDialog;
 class TorrentPage;
+class ChatWindow;
 class Notificator;
 class RPCConsole;
 
@@ -90,6 +91,7 @@ private:
     MultisigDialog *multisigPage;
     SignVerifyMessageDialog *messagePage;
     TorrentPage *torrentPage;
+	ChatWindow *chatPage;
     Notificator *notificator;
 
     QLabel *labelEncryptionIcon;
@@ -123,6 +125,7 @@ private:
     QAction *inscribeAction;
     QAction *multisigAction;
     QAction *torrentPageAction;
+    QAction *chatPageAction;
     QAction *accountReportAction;
 
     QMovie *syncIconMovie;
@@ -190,11 +193,13 @@ private slots:
     void gotoInscriptionPage();
     /** Switch to torrent page */
     void gotoTorrentPage();
+    /** Switch to chat page */
+    void gotoChatPage();
     /** Show configuration dialog */
     void optionsClicked();
     /** Show about dialog */
     void aboutClicked();
-#ifndef MAC_OSX
+#ifndef Q_OS_MAC
     /** Handle tray icon clicked */
     void trayIconActivated(QSystemTrayIcon::ActivationReason reason);
 #endif

@@ -48,6 +48,12 @@
     <file alias="tx_output">res/icons/tx_output.png</file>
     <file alias="magnet">res/icons/magnet.png</file>
     <file alias="account-report">res/icons/account-report.png</file>
+    <file alias="chat">res/icons/chat.png</file>
+    <file alias="bitcointalk">res/icons/bitcointalk.png</file>
+    <file alias="cryptocointalk">res/icons/cryptocointalk.png</file>
+    <file alias="reddit">res/icons/reddit.png</file>
+    <file alias="facebook">res/icons/face.png</file>
+    <file alias="twitter">res/icons/twitter.png</file>
   </qresource>
   <qresource prefix="/images">
     <file alias="about">res/images/about.png</file>
