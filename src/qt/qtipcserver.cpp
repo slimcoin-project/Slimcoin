@@ -46,7 +46,7 @@ void ipcThread(void* parg)
 
 void ipcInit()
 {
-#ifdef Q_OS_MAC
+#ifdef MAC_OSX
     // TODO: implement bitcoin: URI handling the Mac Way
     return;
 #endif

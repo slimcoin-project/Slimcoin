@@ -100,7 +100,7 @@ BitcoinGUI::BitcoinGUI(QWidget *parent):
 {
     resize(980, 564);
     setWindowTitle(tr("Slimcoin") + " - " + tr("Wallet"));
-#ifndef MAC_OSX
+#ifndef Q_OS_MAC
     QApplication::setWindowIcon(QIcon(":icons/slimcoin"));
     setWindowIcon(QIcon(":icons/slimcoin"));
 #else
@@ -460,7 +460,7 @@ void BitcoinGUI::setClientModel(ClientModel *clientModel)
         {
             QString title_testnet = windowTitle() + QString(" ") + tr("[testnet]");
             setWindowTitle(title_testnet);
-#ifndef MAC_OSX
+#ifndef Q_OS_MAC
             setWindowIcon(QIcon(":icons/slimcoin_testnet"));
 #else
             MacDockIconHandler::instance()->setIcon(QIcon(":icons/slimcoin_testnet"));
@@ -535,7 +535,7 @@ void BitcoinGUI::setWalletModel(WalletModel *walletModel)
 void BitcoinGUI::createTrayIcon()
 {
     QMenu *trayIconMenu;
-#ifndef MAC_OSX
+#ifndef Q_OS_MAC
     trayIcon = new QSystemTrayIcon(this);
     trayIconMenu = new QMenu(this);
     trayIcon->setContextMenu(trayIconMenu);
@@ -570,14 +570,14 @@ void BitcoinGUI::createTrayIcon()
     trayIconMenu->addAction(optionsAction);
     trayIconMenu->addSeparator();
     trayIconMenu->addAction(openRPCConsoleAction);
-#ifndef MAC_OSX // This is built-in on Mac
+#ifndef Q_OS_MAC // This is built-in on Mac
     trayIconMenu->addSeparator();
     trayIconMenu->addAction(quitAction);
 #endif
     notificator = new Notificator(tr("SLIMCoin-qt"), trayIcon);
 }
 
-#ifndef MAC_OSX
+#ifndef Q_OS_MAC
 void BitcoinGUI::trayIconActivated(QSystemTrayIcon::ActivationReason reason)
 {
     if(reason == QSystemTrayIcon::Trigger)
@@ -773,7 +773,7 @@ void BitcoinGUI::error(const QString &title, const QString &message, bool modal)
 void BitcoinGUI::changeEvent(QEvent *e)
 {
     QMainWindow::changeEvent(e);
-#ifndef MAC_OSX // Ignored on Mac
+#ifndef Q_OS_MAC // Ignored on Mac
     if(e->type() == QEvent::WindowStateChange)
     {
         if(clientModel && clientModel->getOptionsModel()->getMinimizeToTray())
