@@ -38,7 +38,7 @@ TransactionView::TransactionView(QWidget *parent) :
 
     QHBoxLayout *hlayout = new QHBoxLayout();
     hlayout->setContentsMargins(0,0,0,0);
-#ifdef Q_OS_MAC
+#ifdef MAC_OSX
     hlayout->setSpacing(5);
     hlayout->addSpacing(26);
 #else
@@ -47,7 +47,7 @@ TransactionView::TransactionView(QWidget *parent) :
 #endif
 
     dateWidget = new QComboBox(this);
-#ifdef Q_OS_MAC
+#ifdef MAC_OSX
     dateWidget->setFixedWidth(121);
 #else
     dateWidget->setFixedWidth(120);
@@ -62,7 +62,7 @@ TransactionView::TransactionView(QWidget *parent) :
     hlayout->addWidget(dateWidget);
 
     typeWidget = new QComboBox(this);
-#ifdef Q_OS_MAC
+#ifdef MAC_OSX
     typeWidget->setFixedWidth(121);
 #else
     typeWidget->setFixedWidth(120);
@@ -92,7 +92,7 @@ TransactionView::TransactionView(QWidget *parent) :
 #if QT_VERSION >= 0x040700
     amountWidget->setPlaceholderText(tr("Min amount"));
 #endif
-#ifdef Q_OS_MAC
+#ifdef MAC_OSX
     amountWidget->setFixedWidth(97);
 #else
     amountWidget->setFixedWidth(100);
@@ -111,7 +111,7 @@ TransactionView::TransactionView(QWidget *parent) :
     vlayout->setSpacing(0);
     int width = view->verticalScrollBar()->sizeHint().width();
     // Cover scroll bar width with spacing
-#ifdef Q_OS_MAC
+#ifdef MAC_OSX
     hlayout->addSpacing(width+2);
 #else
     hlayout->addSpacing(width);

@@ -39,7 +39,7 @@ ReportView::ReportView(QWidget *parent) :
 
     QHBoxLayout *hlayout = new QHBoxLayout();
     hlayout->setContentsMargins(0,0,0,0);
-#ifdef Q_OS_MAC
+#ifdef MAC_OSX
     hlayout->setSpacing(5);
     hlayout->addSpacing(26);
 #else
@@ -48,7 +48,7 @@ ReportView::ReportView(QWidget *parent) :
 #endif
 
     dateWidget = new QComboBox(this);
-#ifdef Q_OS_MAC
+#ifdef MAC_OSX
     dateWidget->setFixedWidth(121);
 #else
     dateWidget->setFixedWidth(120);
@@ -65,7 +65,7 @@ ReportView::ReportView(QWidget *parent) :
     hlayout->addWidget(dateWidget);
 
     typeWidget = new QComboBox(this);
-#ifdef Q_OS_MAC
+#ifdef MAC_OSX
     typeWidget->setFixedWidth(121);
 #else
     typeWidget->setFixedWidth(120);
@@ -94,7 +94,7 @@ ReportView::ReportView(QWidget *parent) :
     /* Do not move this to the XML file, Qt before 4.7 will choke on it */
     amountWidget->setPlaceholderText(tr("Min amount"));
 #endif
-#ifdef Q_OS_MAC
+#ifdef MAC_OSX
     amountWidget->setFixedWidth(97);
 #else
     amountWidget->setFixedWidth(100);
@@ -118,7 +118,7 @@ ReportView::ReportView(QWidget *parent) :
     vlayout->setSpacing(0);
     int width = view->verticalScrollBar()->sizeHint().width();
      //Cover scroll bar width with spacing
-#ifdef Q_OS_MAC
+#ifdef MAC_OSX
     hlayout->addSpacing(width+2);
 #else
     hlayout->addSpacing(width);

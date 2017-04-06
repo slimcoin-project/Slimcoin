@@ -17,7 +17,7 @@ SendCoinsEntry::SendCoinsEntry(QWidget *parent) :
 {
     ui->setupUi(this);
 
-#ifdef Q_OS_MAC
+#ifdef MAC_OSX
     ui->payToLayout->setSpacing(4);
 #endif
 

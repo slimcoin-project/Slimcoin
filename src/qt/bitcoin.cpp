@@ -181,7 +181,7 @@ int main(int argc, char *argv[])
 #if QT_VERSION >= 0x050600
     QGuiApplication::setAttribute(Qt::AA_EnableHighDpiScaling);
 #endif
-#ifdef Q_OS_MAC
+#ifdef MAC_OSX
     QApplication::setAttribute(Qt::AA_DontShowIconsInMenus);
 #endif
 /* FIXME: refactor to Qt5.6+

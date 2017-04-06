@@ -184,7 +184,7 @@ private slots:
     void optionsClicked();
     /** Show about dialog */
     void aboutClicked();
-#ifndef Q_OS_MAC
+#ifndef MAC_OSX
     /** Handle tray icon clicked */
     void trayIconActivated(QSystemTrayIcon::ActivationReason reason);
 #endif
