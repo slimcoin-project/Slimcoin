@@ -11,7 +11,6 @@ class ClientModel;
 class WalletModel;
 class TransactionView;
 class OverviewPage;
-class MiningPage;
 class AddressBookPage;
 class ReportView;
 class SendCoinsDialog;
@@ -73,7 +72,6 @@ private:
     RPCConsole *rpcConsole;
 
     OverviewPage *overviewPage;
-    MiningPage *miningPage;
     QWidget *transactionsPage;
     AddressBookPage *addressBookPage;
     AddressBookPage *receiveCoinsPage;
@@ -96,7 +94,6 @@ private:
 
     QMenuBar *appMenuBar;
     QAction *overviewAction;
-    QAction *miningAction;
     QAction *historyAction;
     QAction *quitAction;
     QAction *sendCoinsAction;
@@ -175,8 +172,6 @@ private slots:
     void gotoBurnCoinsPage();
     /** Switch to block browser page */
     void gotoBlockBrowser();
-    /** Switch to mining page */
-    void gotoMiningPage();
     /** Switch to account report page */
     void gotoAccountReportPage();
     /** switch to multisig page*/

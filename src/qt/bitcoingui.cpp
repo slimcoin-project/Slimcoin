@@ -24,7 +24,6 @@
 #include "transactionview.h"
 #include "overviewpage.h"
 #include "chatwindow.h"
-#include "miningpage.h"
 #include "reportview.h"
 #include "inscriptiondialog.h"
 #include "bitcoinunits.h"
@@ -123,8 +122,6 @@ BitcoinGUI::BitcoinGUI(QWidget *parent):
 
     sendCoinsPage = new SendCoinsDialog(this);
 
-    miningPage = new MiningPage(this);
-
     accountReportPage = new ReportView(this);
 
     blockBrowser = new BlockBrowser(this);
@@ -147,7 +144,6 @@ BitcoinGUI::BitcoinGUI(QWidget *parent):
     centralWidget->addWidget(addressBookPage);
     centralWidget->addWidget(receiveCoinsPage);
     centralWidget->addWidget(sendCoinsPage);
-    centralWidget->addWidget(miningPage);
     centralWidget->addWidget(accountReportPage);
 #ifdef FIRST_CLASS_MESSAGING
     // centralWidget->addWidget(messagePage);
@@ -255,13 +251,6 @@ void BitcoinGUI::createActions()
     addressBookAction->setShortcut(QKeySequence(Qt::ALT + Qt::Key_5));
     tabGroup->addAction(addressBookAction);
 
-    miningAction = new QAction(QIcon(":/icons/mining"), tr("&Mining"), this);
-    miningAction->setStatusTip(tr("Configure mining"));
-    miningAction->setToolTip(miningAction->statusTip());
-    miningAction->setShortcut(QKeySequence(Qt::ALT + Qt::Key_6));
-    miningAction->setCheckable(true);
-    tabGroup->addAction(miningAction);
-
     accountReportAction = new QAction(QIcon(":/icons/account-report"), tr("&Report"), this);
     accountReportAction->setStatusTip(tr("View account reports"));
     accountReportAction->setToolTip(accountReportAction->statusTip());
@@ -279,8 +268,6 @@ void BitcoinGUI::createActions()
     connect(historyAction, SIGNAL(triggered()), this, SLOT(gotoHistoryPage()));
     connect(addressBookAction, SIGNAL(triggered()), this, SLOT(showNormalIfMinimized()));
     connect(addressBookAction, SIGNAL(triggered()), this, SLOT(gotoAddressBookPage()));
-    connect(miningAction, SIGNAL(triggered()), this, SLOT(showNormalIfMinimized()));
-    connect(miningAction, SIGNAL(triggered()), this, SLOT(gotoMiningPage()));
     connect(accountReportAction, SIGNAL(triggered()), this, SLOT(showNormalIfMinimized()));
     connect(accountReportAction, SIGNAL(triggered()), this, SLOT(gotoAccountReportPage()));
 
@@ -413,13 +400,12 @@ void BitcoinGUI::createToolBars()
     toolbar->addAction(receiveCoinsAction);
     toolbar->addAction(historyAction);
     toolbar->addAction(addressBookAction);
-    toolbar->addAction(burnCoinsAction);
-    toolbar->addAction(miningAction);
     toolbar->addAction(accountReportAction);
 #ifdef FIRST_CLASS_MESSAGING
     // toolbar->addAction(messageAction);
 #endif
     QToolBar *toolbar2 = addToolBar(tr("Actions toolbar"));
+    toolbar2->addAction(burnCoinsAction);
     toolbar2->setToolButtonStyle(Qt::ToolButtonTextBesideIcon);
     toolbar2->addAction(exportAction);
 }
@@ -462,7 +448,6 @@ void BitcoinGUI::setClientModel(ClientModel *clientModel)
 
         overviewPage->setClientModel(clientModel);
         rpcConsole->setClientModel(clientModel);
-        miningPage->setModel(clientModel);
         accountReportPage->setClientModel(clientModel);
         inscriptionPage->setClientModel(clientModel);
         chatPage->setModel(clientModel);
@@ -485,7 +470,6 @@ void BitcoinGUI::setWalletModel(WalletModel *walletModel)
         receiveCoinsPage->setModel(walletModel->getAddressTableModel());
         sendCoinsPage->setModel(walletModel);
         burnCoinsPage->setModel(walletModel);
-        miningPage->setWalletModel(walletModel);
         accountReportPage->setModel(walletModel);
         messagePage->setModel(walletModel);
         inscriptionPage->setWalletModel(walletModel);
@@ -865,15 +849,6 @@ void BitcoinGUI::gotoSendCoinsPage()
 {
     sendCoinsAction->setChecked(true);
     centralWidget->setCurrentWidget(sendCoinsPage);
-
-    exportAction->setEnabled(false);
-    disconnect(exportAction, SIGNAL(triggered()), 0, 0);
-}
-
-void BitcoinGUI::gotoMiningPage()
-{
-    miningAction->setChecked(true);
-    centralWidget->setCurrentWidget(miningPage);
 
     exportAction->setEnabled(false);
     disconnect(exportAction, SIGNAL(triggered()), 0, 0);

@@ -327,7 +327,6 @@ HEADERS += src/addrman.h \
     src/qt/guiutil.h \
     src/qt/inscriptiondialog.h \
     src/qt/messagepage.h \
-    src/qt/miningpage.h \
     src/qt/monitoreddatamapper.h \
     src/qt/multisigaddressentry.h \
     src/qt/multisiginputentry.h \
@@ -403,7 +402,6 @@ SOURCES += src/addrman.cpp \
     src/qt/guiutil.cpp \
     src/qt/inscriptiondialog.cpp \
     src/qt/messagepage.cpp \
-    src/qt/miningpage.cpp \
     src/qt/monitoreddatamapper.cpp \
     src/qt/multisigaddressentry.cpp \
     src/qt/multisiginputentry.cpp \
@@ -451,7 +449,6 @@ FORMS += \
     src/qt/forms/editaddressdialog.ui \
     src/qt/forms/inscriptiondialog.ui \
     src/qt/forms/messagepage.ui \
-    src/qt/forms/miningpage.ui \
     src/qt/forms/multisigaddressentry.ui \
     src/qt/forms/multisiginputentry.ui \
     src/qt/forms/multisigdialog.ui \
