@@ -27,6 +27,8 @@ export BDB_INCLUDE_PATH=${MXE_INCLUDE_PATH}
 export BDB_LIB_PATH=${MXE_LIB_PATH}
 export MINIUPNPC_INCLUDE_PATH=${MXE_INCLUDE_PATH}
 export MINIUPNPC_LIB_PATH=${MXE_LIB_PATH}
+export QRENCODE_INCLUDE_PATH=${MXE_INCLUDE_PATH}
+export QRENCODE_LIB_PATH=${MXE_LIB_PATH}
 export QMAKE_LRELEASE=${MXE_PATH}/usr/${target}/qt5/bin/lrelease
 
 # Call qmake to create Makefile.[Release|Debug]
@@ -47,6 +49,8 @@ ${target}-qmake-qt5 \
     BDB_LIB_PATH=${BDB_LIB_PATH} \
     MINIUPNPC_INCLUDE_PATH=${MINIUPNPC_INCLUDE_PATH} \
     MINIUPNPC_LIB_PATH=${MINIUPNPC_LIB_PATH} \
+    QRENCODE_INCLUDE_PATH=${QRENCODE_INCLUDE_PATH} \
+    QRENCODE_LIB_PATH=${QRENCODE_LIB_PATH} \
     QMAKE_LRELEASE=${QMAKE_LRELEASE} slimcoin-qt.pro
 
 # Go for it. If successful, Windows binary will be written out to ./release/slimcoin-qt.exe
