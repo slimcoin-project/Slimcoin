@@ -8,7 +8,7 @@ CONFIG += no_include_pwd
 CONFIG += thread
 CONFIG += release
 CONFIG += qt_framework
-QT += core gui network sql
+QT += core gui network
 CONFIG += link_pkgconfig
 CONFIG += moc
 
