@@ -459,7 +459,8 @@ FORMS += \
     src/qt/forms/rpcconsole.ui \
     src/qt/forms/sendcoinsdialog.ui \
     src/qt/forms/sendcoinsentry.ui \
-    src/qt/forms/signverifymessagedialog.ui
+    src/qt/forms/signverifymessagedialog.ui \
+    src/qt/forms/transactiondescdialog.ui
 
 contains(USE_QRCODE, 1) {
     HEADERS += src/qt/qrcodedialog.h
