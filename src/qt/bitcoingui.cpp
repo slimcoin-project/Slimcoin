@@ -27,7 +27,6 @@
 #include "miningpage.h"
 #include "reportview.h"
 #include "inscriptiondialog.h"
-#include "torrentpage.h"
 #include "bitcoinunits.h"
 #include "guiconstants.h"
 #include "askpassphrasedialog.h"
@@ -73,19 +72,6 @@
 
 #include <iostream>
 
-void createTable()
-{
-    QSqlQuery query;
-    query.exec("CREATE TABLE IF NOT EXISTS blockindex(blockindex INTEGER)");
-    query.exec("CREATE TABLE IF NOT EXISTS torrent(title TEXT, txid TEXT UNIQUE,blockindex INTEGER)");
-
-    query.exec(QString("select blockindex from blockindex"));
-    if (!query.next())
-    {
-        query.exec(QString("insert into  blockindex values (%1)").arg(1000));
-    }
-}
-
 BitcoinGUI::BitcoinGUI(QWidget *parent):
     QMainWindow(parent),
     clientModel(0),
@@ -107,12 +93,6 @@ BitcoinGUI::BitcoinGUI(QWidget *parent):
     setUnifiedTitleAndToolBarOnMac(true);
     QApplication::setAttribute(Qt::AA_DontShowIconsInMenus);
 #endif
-
-    db = QSqlDatabase::addDatabase("QSQLITE");
-    db.setDatabaseName(QString::fromStdString(GetDefaultDataDir().string()+"/torrent.dat"));
-    db.open();
-    createTable();
-
     // Accept D&D of URIs
     setAcceptDrops(true);
 
@@ -131,7 +111,6 @@ BitcoinGUI::BitcoinGUI(QWidget *parent):
     // Create tabs
     overviewPage = new OverviewPage();
 
-    chatPage = new ChatWindow(this);
     transactionsPage = new QWidget(this);
     QVBoxLayout *vbox = new QVBoxLayout();
     transactionView = new TransactionView(this);
@@ -160,7 +139,7 @@ BitcoinGUI::BitcoinGUI(QWidget *parent):
 
     messagePage = new SignVerifyMessageDialog(this);
 
-    torrentPage = new TorrentPage(this);
+    chatPage = new ChatWindow(this);
 
     centralWidget = new QStackedWidget(this);
     centralWidget->addWidget(overviewPage);
@@ -222,12 +201,13 @@ BitcoinGUI::BitcoinGUI(QWidget *parent):
     rpcConsole = new RPCConsole(this);
     connect(openRPCConsoleAction, SIGNAL(triggered()), rpcConsole, SLOT(show()));
 
+    connect(blockAction, SIGNAL(triggered()), this, SLOT(gotoBlockBrowser()));
+
     gotoOverviewPage();
 }
 
 BitcoinGUI::~BitcoinGUI()
 {
-    db.close();
     if(trayIcon) // Hide tray icon, as deleting will let it linger until quit (on Ubuntu)
         trayIcon->hide();
 #ifdef Q_OS_MAC
@@ -325,10 +305,6 @@ void BitcoinGUI::createActions()
     multisigAction->setStatusTip(tr("Sign/verify messages, prove you control an address"));
     multisigAction->setToolTip(multisigAction->statusTip());
 
-    torrentPageAction = new QAction(QIcon(":/icons/magnet"), tr("&Torrent"), this);
-    torrentPageAction->setToolTip(tr("View inscriptions"));
-    torrentPageAction->setToolTip(torrentPageAction->statusTip());
-
     chatPageAction = new QAction(QIcon(":/icons/chat"), tr("&Social"), this);
     chatPageAction->setToolTip(tr("View chat"));
     chatPageAction->setToolTip(chatPageAction->statusTip());
@@ -339,8 +315,6 @@ void BitcoinGUI::createActions()
     connect(messageAction, SIGNAL(triggered()), this, SLOT(gotoMessagePage()));
     connect(multisigAction, SIGNAL(triggered()), this, SLOT(showNormalIfMinimized()));
     connect(multisigAction, SIGNAL(triggered()), this, SLOT(gotoMultisigPage()));
-    connect(torrentPageAction, SIGNAL(triggered()), this, SLOT(showNormalIfMinimized()));
-    connect(torrentPageAction, SIGNAL(triggered()), this, SLOT(gotoTorrentPage()));
     connect(chatPageAction, SIGNAL(triggered()), this, SLOT(showNormalIfMinimized()));
     connect(chatPageAction, SIGNAL(triggered()), this, SLOT(gotoChatPage()));
 
@@ -420,7 +394,6 @@ void BitcoinGUI::createMenuBar()
     tools->addAction(inscribeAction);
     tools->addAction(messageAction);
     tools->addAction(multisigAction);
-    tools->addAction(torrentPageAction);
     tools->addAction(chatPageAction);
 
     QMenu *help = appMenuBar->addMenu(tr("&Help"));
@@ -492,7 +465,6 @@ void BitcoinGUI::setClientModel(ClientModel *clientModel)
         miningPage->setModel(clientModel);
         accountReportPage->setClientModel(clientModel);
         inscriptionPage->setClientModel(clientModel);
-        torrentPage->setClientModel(clientModel);
         chatPage->setModel(clientModel);
     }
 }
@@ -517,7 +489,6 @@ void BitcoinGUI::setWalletModel(WalletModel *walletModel)
         accountReportPage->setModel(walletModel);
         messagePage->setModel(walletModel);
         inscriptionPage->setWalletModel(walletModel);
-        torrentPage->setModel(walletModel->getTorrentTableModel());
         multisigPage->setModel(walletModel);
 
         setEncryptionStatus(walletModel->getEncryptionStatus());
@@ -564,7 +535,6 @@ void BitcoinGUI::createTrayIcon()
     trayIconMenu->addAction(multisigAction);
     trayIconMenu->addAction(inscribeAction);
     trayIconMenu->addAction(blockAction);
-    trayIconMenu->addAction(torrentPageAction);
     trayIconMenu->addAction(chatPageAction);
     trayIconMenu->addSeparator();
     trayIconMenu->addAction(optionsAction);
@@ -953,12 +923,6 @@ void BitcoinGUI::gotoMultisigPage()
 {
     multisigPage->show();
     multisigPage->setFocus();
-}
-
-void BitcoinGUI::gotoTorrentPage()
-{
-  torrentPage->show();
-  torrentPage->setFocus();
 }
 
 void BitcoinGUI::gotoChatPage()

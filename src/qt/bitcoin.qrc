@@ -46,7 +46,6 @@
     <file alias="tx_input">res/icons/tx_input.png</file>
     <file alias="tx_mined">res/icons/tx_mined.png</file>
     <file alias="tx_output">res/icons/tx_output.png</file>
-    <file alias="magnet">res/icons/magnet.png</file>
     <file alias="account-report">res/icons/account-report.png</file>
     <file alias="chat">res/icons/chat.png</file>
     <file alias="bitcointalk">res/icons/bitcointalk.png</file>

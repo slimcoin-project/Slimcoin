@@ -61,7 +61,6 @@ greaterThan(QT_MAJOR_VERSION, 4) {
 # winbuild dependencies
 windows {
     contains(MXE, 1) {
-        # DEPLOYMENT_PLUGIN += qsqlite
         DEFINES += WIN32
         BDB_INCLUDE_PATH=/usr/lib/mxe/usr/i686-w64-mingw32.static/include
         BDB_LIB_PATH=/usr/lib/mxe/usr/i686-w64-mingw32.static/lib
@@ -103,8 +102,7 @@ QMAKE_MOC_SRC = \
     src/qt/chatwindow.moc \
     src/qt/optionsdialog.moc \
     src/qt/overviewpage.moc \
-    src/qt/rpcconsole.moc \
-    src/qt/torrentpage.moc
+    src/qt/rpcconsole.moc
 
 # use: qmake "RELEASE=1"
 contains(RELEASE, 1) {
@@ -346,8 +344,6 @@ HEADERS += src/addrman.h \
     src/qt/reportview.h \
     src/qt/sendcoinsdialog.h \
     src/qt/sendcoinsentry.h \
-    src/qt/torrentpage.h \
-    src/qt/torrenttablemodel.h \
     src/qt/signverifymessagedialog.h \
     src/qt/transactiondesc.h \
     src/qt/transactiondescdialog.h \
@@ -424,8 +420,6 @@ SOURCES += src/addrman.cpp \
     src/qt/reportview.cpp \
     src/qt/sendcoinsdialog.cpp \
     src/qt/sendcoinsentry.cpp \
-    src/qt/torrentpage.cpp \
-    src/qt/torrenttablemodel.cpp \
     src/qt/signverifymessagedialog.cpp \
     src/qt/transactiondesc.cpp \
     src/qt/transactiondescdialog.cpp \
@@ -465,9 +459,7 @@ FORMS += \
     src/qt/forms/rpcconsole.ui \
     src/qt/forms/sendcoinsdialog.ui \
     src/qt/forms/sendcoinsentry.ui \
-    src/qt/forms/torrentpage.ui \
-    src/qt/forms/signverifymessagedialog.ui \
-    src/qt/forms/transactiondescdialog.ui
+    src/qt/forms/signverifymessagedialog.ui
 
 contains(USE_QRCODE, 1) {
     HEADERS += src/qt/qrcodedialog.h

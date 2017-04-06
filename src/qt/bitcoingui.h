@@ -3,9 +3,6 @@
 
 #include <QMainWindow>
 #include <QSystemTrayIcon>
-#include <QMap>
-#include <QtSql>
-
 #include "blockbrowser.h"
 #include "init.h"
 
@@ -23,7 +20,6 @@ class BurnCoinsDialog;
 class InscriptionDialog;
 class MultisigDialog;
 class SignVerifyMessageDialog;
-class TorrentPage;
 class ChatWindow;
 class Notificator;
 class RPCConsole;
@@ -68,8 +64,6 @@ protected:
     void dropEvent(QDropEvent *event);
 
 private:
-    QSqlDatabase db;
-
     ClientModel *clientModel;
     WalletModel *walletModel;
     QStackedWidget *centralWidget;
@@ -90,7 +84,6 @@ private:
     InscriptionDialog *inscriptionPage;
     MultisigDialog *multisigPage;
     SignVerifyMessageDialog *messagePage;
-    TorrentPage *torrentPage;
 	ChatWindow *chatPage;
     Notificator *notificator;
 
@@ -124,7 +117,6 @@ private:
     QAction *burnCoinsAction;
     QAction *inscribeAction;
     QAction *multisigAction;
-    QAction *torrentPageAction;
     QAction *chatPageAction;
     QAction *accountReportAction;
 
@@ -191,8 +183,6 @@ private slots:
     void gotoMultisigPage();
     /** switch to inscription page*/
     void gotoInscriptionPage();
-    /** Switch to torrent page */
-    void gotoTorrentPage();
     /** Switch to chat page */
     void gotoChatPage();
     /** Show configuration dialog */
