@@ -114,7 +114,7 @@ ReportView::ReportView(QWidget *parent) :
     
     QTableView *viewT = new QTableView(this);
     viewT->setFixedHeight(26);
-		vlayout->addWidget(viewT);
+    vlayout->addWidget(viewT);
     vlayout->setSpacing(0);
     int width = view->verticalScrollBar()->sizeHint().width();
      //Cover scroll bar width with spacing
@@ -168,7 +168,7 @@ void ReportView::setModel(WalletModel *model)
         reportView->sortByColumn(0, Qt::DescendingOrder);
         reportView->verticalHeader()->hide();
         reportView->setShowGrid(false);        
-        	
+          
         reportModelT = new QStandardItemModel(this);
         reportViewT->setModel(reportModelT);
         reportViewT->setAlternatingRowColors(true);
@@ -208,7 +208,7 @@ void ReportView::chooseDate(int idx)
                 TransactionFilterProxy::MAX_DATE);
         break;
     case Yesterday:{
-    	  QDate startOfDay = current.addDays(-1);
+        QDate startOfDay = current.addDays(-1);
         transactionProxyModel->setDateRange(
                 QDateTime(startOfDay),
                 QDateTime(current));
@@ -221,7 +221,7 @@ void ReportView::chooseDate(int idx)
                 TransactionFilterProxy::MAX_DATE);
         } break;
     case LastWeek: {
-    	  //from Monday to Sunday
+        //from Monday to Sunday
         QDate startOfWeek = current.addDays(-(current.dayOfWeek()+6));
         QDate endOfWeek = current.addDays(-(current.dayOfWeek()-1));
         transactionProxyModel->setDateRange(
@@ -315,70 +315,71 @@ void ReportView::exportClicked()
 
 void ReportView::showTotal()
 {
-	  float fTotal=0;
-	  float iTotal=0;
-	  int i=0;
-	  QString addressname = "";
-	  QVector<QString> addresslist;
-	  QVector<float> totallist;
-	  QVector<float> inlist;
-	  QVector<float> outlist;
-	  QVector<float> timelist;
-	  //accountReport from every address
-	  for (i=0;i<=transactionProxyModel->rowCount()-1;i++)
-	  {
-	  	fTotal+=transactionProxyModel->data(transactionProxyModel->index(i,4)).toFloat();	
-	  	iTotal=transactionProxyModel->data(transactionProxyModel->index(i,4)).toFloat();	
-	  	addressname=transactionProxyModel->data(transactionProxyModel->index(i,3)).toString();
-	  	
-	  	int t = addresslist.indexOf(addressname);
-	  	if (t != -1)
-	  		{
-	  			totallist[t]=totallist.at(t)+iTotal;
-	  			timelist[t]=timelist.at(t)+1;
-	  			if (iTotal>0){
-	  				inlist[t]=inlist.at(t)+iTotal;
-	  			}
-	  			else{
-	  				outlist[t]=outlist.at(t)+iTotal;
-	  			}
-	  		}
-	  	else
-	  		{
-						addresslist.append(addressname);
-						totallist.append(iTotal);
-						timelist.append(1);
-						if (iTotal>0){
-							inlist.append(iTotal);
-							outlist.append(0);
-						}
-						else{
-							outlist.append(iTotal);
-							inlist.append(0);
-						}	  		   
-	  		}	  		
-	  }
-	  int iTimes=i;
-	  
-	  reportModel->clear();
-	  reportModel->setRowCount(addresslist.size());
+    float fTotal=0;
+    float iTotal=0;
+    int i=0;
+    QString addressname = "";
+    QVector<QString> addresslist;
+    QVector<float> totallist;
+    QVector<float> inlist;
+    QVector<float> outlist;
+    QVector<float> timelist;
+    //accountReport from every address
+    for (i=0;i<=transactionProxyModel->rowCount()-1;i++)
+    {
+      fTotal+=transactionProxyModel->data(transactionProxyModel->index(i,4)).toFloat(); 
+      iTotal=transactionProxyModel->data(transactionProxyModel->index(i,4)).toFloat();  
+      addressname=transactionProxyModel->data(transactionProxyModel->index(i,3)).toString();
+      
+      int t = addresslist.indexOf(addressname);
+      if (t != -1)
+      {
+        totallist[t]=totallist.at(t)+iTotal;
+        timelist[t]=timelist.at(t)+1;
+        if (iTotal>0){
+          inlist[t]=inlist.at(t)+iTotal;
+        }
+        else{
+          outlist[t]=outlist.at(t)+iTotal;
+        }
+      }
+      else
+      {
+        addresslist.append(addressname);
+        totallist.append(iTotal);
+        timelist.append(1);
+        if (iTotal>0){
+          inlist.append(iTotal);
+          outlist.append(0);
+        }
+        else{
+          outlist.append(iTotal);
+          inlist.append(0);
+        }          
+      }       
+  }
+    int iTimes=i;
+    
+    reportModel->clear();
+    reportModel->setRowCount(addresslist.size());
     reportModel->setHorizontalHeaderItem(0, new QStandardItem(tr("AddressLabel")));
     reportModel->setHorizontalHeaderItem(1, new QStandardItem(tr("DateRange")));
-   	reportModel->setHorizontalHeaderItem(2, new QStandardItem(tr("Type")));
+    reportModel->setHorizontalHeaderItem(2, new QStandardItem(tr("Type")));
     reportModel->setHorizontalHeaderItem(3, new QStandardItem(tr("Payment amount")));
-    reportModel->setHorizontalHeaderItem(4, new QStandardItem(tr("Number of payments")));
-    reportView->horizontalHeader()->resizeSection(0, 410);
+    reportModel->setHorizontalHeaderItem(4, new QStandardItem(tr("Payments")));
+    reportView->horizontalHeader()->resizeSection(0, 350);
     reportView->horizontalHeader()->resizeSection(1, 120);
     reportView->horizontalHeader()->resizeSection(2, 120);
     reportView->horizontalHeader()->resizeSection(3, 140);
-    reportView->horizontalHeader()->resizeSection(4, 170);
-		QString account = "";
+    reportView->horizontalHeader()->resizeSection(4, 100);
+    QString account = "";
+
     for (i=0;i!=addresslist.size();++i)
     { 
-    	reportModel->setItem(i,0,new QStandardItem(addresslist.at(i)));
-    	reportModel->setItem(i,1,new QStandardItem(dateWidget->currentText()));
-    	reportModel->setItem(i,2,new QStandardItem(typeWidget->currentText()));
-    	reportModel->setItem(i,3,new QStandardItem(QObject::tr("%1").arg(totallist.at(i))));
+      reportModel->setItem(i,0,new QStandardItem(addresslist.at(i)));
+      reportModel->setItem(i,1,new QStandardItem(dateWidget->currentText()));
+      reportModel->setItem(i,2,new QStandardItem(typeWidget->currentText()));
+      reportModel->setItem(i,3,new QStandardItem(QObject::tr("%1").arg(totallist.at(i))));
       reportModel->setItem(i,4,new QStandardItem(QObject::tr("%1").arg(timelist.at(i))));
     }
     //Total Line
@@ -386,18 +387,18 @@ void ReportView::showTotal()
     reportModelT->setRowCount(1); 
     reportModelT->setHorizontalHeaderItem(0, new QStandardItem(tr("AddressLabel")));
     reportModelT->setHorizontalHeaderItem(1, new QStandardItem(tr("DateRange")));
-   	reportModelT->setHorizontalHeaderItem(2, new QStandardItem(tr("Type")));
+    reportModelT->setHorizontalHeaderItem(2, new QStandardItem(tr("Type")));
     reportModelT->setHorizontalHeaderItem(3, new QStandardItem(tr("Payment amount")));
-    reportModelT->setHorizontalHeaderItem(4, new QStandardItem(tr("Number of payments")));
-    reportViewT->horizontalHeader()->resizeSection(0, 410);
+    reportModelT->setHorizontalHeaderItem(4, new QStandardItem(tr("Payments")));
+    reportViewT->horizontalHeader()->resizeSection(0, 350);
     reportViewT->horizontalHeader()->resizeSection(1, 120);
     reportViewT->horizontalHeader()->resizeSection(2, 120);
     reportViewT->horizontalHeader()->resizeSection(3, 140);
-    reportViewT->horizontalHeader()->resizeSection(4, 150);
-  	reportModelT->setItem(0,0,new QStandardItem(tr("Total")));
-  	reportModelT->setItem(0,1,new QStandardItem(dateWidget->currentText()));
-  	reportModelT->setItem(0,2,new QStandardItem(typeWidget->currentText()));
-  	reportModelT->setItem(0,3,new QStandardItem(QObject::tr("%1").arg(QObject::tr("%1").arg(fTotal))));
+    reportViewT->horizontalHeader()->resizeSection(4, 100);
+    reportModelT->setItem(0,0,new QStandardItem(tr("Total")));
+    reportModelT->setItem(0,1,new QStandardItem(dateWidget->currentText()));
+    reportModelT->setItem(0,2,new QStandardItem(typeWidget->currentText()));
+    reportModelT->setItem(0,3,new QStandardItem(QObject::tr("%1").arg(QObject::tr("%1").arg(fTotal))));
     reportModelT->setItem(0,4,new QStandardItem(QObject::tr("%1").arg(iTimes)));
     reportModelT->item(0,0)->setTextAlignment(Qt::AlignCenter);
     reportModelT->item(0,1)->setTextAlignment(Qt::AlignCenter);
