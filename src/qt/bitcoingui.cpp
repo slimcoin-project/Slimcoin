@@ -83,7 +83,7 @@ BitcoinGUI::BitcoinGUI(QWidget *parent):
     changePassphraseAction(0),
     aboutQtAction(0)
 {
-    resize(980, 564);
+    resize(850, 564);
     setWindowTitle(tr("Slimcoin") + " - " + tr("Wallet"));
 #ifndef MAC_OSX
     QApplication::setWindowIcon(QIcon(":icons/slimcoin"));
