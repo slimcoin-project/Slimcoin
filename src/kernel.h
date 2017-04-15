@@ -23,8 +23,6 @@ extern unsigned int nProtocolV03TestSwitchTime;
 extern unsigned int nProtocolV04UpgradeTime;
 // TxDB Upgrade time for v0.5 protocol
 extern unsigned int nProtocolV05UpgradeTime;
-// MIX_TX_VALUE Upgrade time for v0.6 protocol
-extern unsigned int nProtocolV06UpgradeTime;
 
 // Whether a given coinstake is subject to new v0.3 protocol
 bool IsProtocolV03(unsigned int nTimeCoinStake);
@@ -32,8 +30,6 @@ bool IsProtocolV03(unsigned int nTimeCoinStake);
 bool IsProtocolV04(unsigned int nTimeBlock);
 // Whether a given transaction is subject to new v0.5 protocol
 bool IsProtocolV05(unsigned int nTimeTx);
-// Whether a given transaction is subject to new v0.6 protocol
-bool IsProtocolV06(unsigned int nTimeTx);
 
 // Compute the hash modifier for proof-of-stake
 bool ComputeNextStakeModifier(const CBlockIndex* pindexCurrent, uint64& nStakeModifier, bool& fGeneratedStakeModifier);

@@ -63,7 +63,7 @@ void InscriptionDialog::on_insertButton_clicked()
     // qDebug() << "Text message:" << txmsg << "Other value:" << i;
     qDebug() << "Text message:" << txmsg;
 
-    if ( std::string(txmsg.toStdString().c_str()).length() > 100 )
+    if ( std::string(txmsg.toStdString().c_str()).length() > 80 )
     {
         QMessageBox::question(this, tr("Message error"),
                               tr("Message length exceeds the limit (80 bytes)!"), // MAX_OP_RETURN_RELAY
@@ -77,10 +77,10 @@ void InscriptionDialog::on_insertButton_clicked()
     QString vchDefaultAddr = CBitcoinAddress(pwalletMain->vchDefaultKey.GetID()).ToString().c_str();
     rcpt.address = vchDefaultAddr;
     rcpt.label = "inscription";
-    rcpt.amount = 1*CENT;
+    rcpt.amount = 2*CENT;
     recipients.append(rcpt);
 
-    qDebug() << "Recipient created" << vchDefaultAddr << " amount" << 1*CENT;
+    qDebug() << "Recipient created" << vchDefaultAddr << " amount" << 2*CENT;
 
     // send the transaction
     WalletModel::SendCoinsReturn sendstatus = walletModel->sendCoins(recipients, txmsg, false);
