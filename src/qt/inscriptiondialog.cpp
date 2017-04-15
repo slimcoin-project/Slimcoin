@@ -66,7 +66,7 @@ void InscriptionDialog::on_insertButton_clicked()
     if ( std::string(txmsg.toStdString().c_str()).length() > 100 )
     {
         QMessageBox::question(this, tr("Message error"),
-                              tr("Message length exceeds the limit (100 bytes)!"),
+                              tr("Message length exceeds the limit (80 bytes)!"), // MAX_OP_RETURN_RELAY
               QMessageBox::Cancel,
               QMessageBox::Cancel);
         return;
