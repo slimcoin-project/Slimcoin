@@ -21,6 +21,9 @@ unsigned int nProtocolV04TestSwitchTime = 2395700000;
 // Protocol switch time of v0.5 kernel protocol
 unsigned int nProtocolV05SwitchTime     = 2461700000;
 unsigned int nProtocolV05TestSwitchTime = 2447700000;
+// Protocol switch time of v0.6 kernel protocol
+unsigned int nProtocolV06SwitchTime     = 2461700000;
+unsigned int nProtocolV06TestSwitchTime = 1492200000;
 
 // TxDB upgrade time for v0.4 protocol
 // Note: v0.4 upgrade does not require block chain re-download. However,
@@ -35,6 +38,10 @@ unsigned int nProtocolV04UpgradeTime    = 0;
 //       re-download of blockchain is required. The timestamp of upgrade
 //       is recorded in transaction database to alert user of the requirement.
 unsigned int nProtocolV05UpgradeTime    = 0;
+
+// MIN_TX_VALUE upgrade time for v0.6 protocol
+// Note: v0.6 upgrade does not require block chain re-download.
+unsigned int nProtocolV06UpgradeTime    = 0;
 
 // Modifier interval: time to elapse before new modifier is computed
 // Set to 6-hour for production network and 20-minute for test network
@@ -62,6 +69,12 @@ bool IsProtocolV04(unsigned int nTimeBlock)
 bool IsProtocolV05(unsigned int nTimeTx)
 {
     return (nTimeTx >= (fTestNet? nProtocolV05TestSwitchTime : nProtocolV05SwitchTime));
+}
+
+// Whether the given transaction is subject to new v0.6 protocol
+bool IsProtocolV06(unsigned int nTimeTx)
+{
+    return (nTimeTx >= (fTestNet? nProtocolV06TestSwitchTime : nProtocolV06SwitchTime));
 }
 
 // Get the last stake modifier and its generation time from a given block

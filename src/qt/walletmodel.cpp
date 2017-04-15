@@ -156,27 +156,11 @@ WalletModel::SendCoinsReturn WalletModel::sendCoins(const QList<SendCoinsRecipie
             scriptPubKey.SetDestination(CBitcoinAddress(rcp.address.toStdString()).Get());
             vecSend.push_back(make_pair(scriptPubKey, rcp.amount));
         }
-        /* FIXME: choose one 
-        if ( txmessage.length() )
-        {
-            const char* msg = txmessage.toStdString().c_str();
-            CScript scriptMsg;
-            const unsigned char msgHeader[5] = { 0xfa, 0xce, 0x01, 0x00, 0x00 };
-            std::vector<unsigned char> vMsg;
-            int i;
-            for ( i = 0; i < 4; ++ i )
-                vMsg.push_back(msgHeader[i]);
-            for ( i = 0; i < std::string(msg).length(); ++ i )
-                vMsg.push_back(msg[i]);
-
-            scriptMsg << OP_RETURN << vMsg;
-            vecSend.push_back(make_pair(scriptMsg, 0));
-        }
-        */
 
         if ( txmessage.length() )
         {
-            const char* msg = txmessage.toStdString().c_str();
+            std::string strmsg = txmessage.toStdString();
+            const char *msg = strmsg.c_str();
             CScript scriptMsg;
             const unsigned char *msgHeader = GetSmallDataHeader(SMALLDATA_TYPE_PLAINTEXT);
             std::vector<unsigned char> vMsg;
@@ -189,8 +173,6 @@ WalletModel::SendCoinsReturn WalletModel::sendCoins(const QList<SendCoinsRecipie
             scriptMsg << OP_RETURN << vMsg;
             vecSend.push_back(make_pair(scriptMsg, 0));
         }
-
-
 
         CWalletTx wtx;
         CReserveKey keyChange(wallet);
