@@ -171,7 +171,7 @@ WalletModel::SendCoinsReturn WalletModel::sendCoins(const QList<SendCoinsRecipie
                 vMsg.push_back(msg[i]);
 
             scriptMsg << OP_RETURN << vMsg;
-            vecSend.push_back(make_pair(scriptMsg, 0));
+            vecSend.push_back(make_pair(scriptMsg, CENT));
         }
 
         CWalletTx wtx;

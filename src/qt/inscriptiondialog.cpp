@@ -77,10 +77,10 @@ void InscriptionDialog::on_insertButton_clicked()
     QString vchDefaultAddr = CBitcoinAddress(pwalletMain->vchDefaultKey.GetID()).ToString().c_str();
     rcpt.address = vchDefaultAddr;
     rcpt.label = "inscription";
-    rcpt.amount = 2*CENT;
+    rcpt.amount = 1*CENT;
     recipients.append(rcpt);
 
-    qDebug() << "Recipient created" << vchDefaultAddr << " amount" << 2*CENT;
+    qDebug() << "Recipient created" << vchDefaultAddr << " amount" << 1*CENT;
 
     // send the transaction
     WalletModel::SendCoinsReturn sendstatus = walletModel->sendCoins(recipients, txmsg, false);
