@@ -6,7 +6,7 @@ DEFINES += QT_GUI BOOST_THREAD_USE_LIB BOOST_SPIRIT_THREADSAFE QT_NO_PRINTER BOO
 
 CONFIG += no_include_pwd
 CONFIG += thread
-CONFIG += release
+CONFIG += debug # release
 CONFIG += qt_framework
 QT += core gui network
 CONFIG += link_pkgconfig
@@ -97,12 +97,13 @@ windows {
 OBJECTS_DIR = build
 MOC_DIR = build
 UI_DIR = build
-QMAKE_MOC_SRC = \
-    src/qt/chatclient.moc \
-    src/qt/chatwindow.moc \
-    src/qt/optionsdialog.moc \
-    src/qt/overviewpage.moc \
-    src/qt/rpcconsole.moc
+
+#QMAKE_MOC_SRC = \
+#    src/qt/chatclient.moc \
+#    src/qt/chatwindow.moc \
+#    src/qt/optionsdialog.moc \
+#    src/qt/overviewpage.moc \
+#    src/qt/rpcconsole.moc
 
 # use: qmake "RELEASE=1"
 contains(RELEASE, 1) {
@@ -620,7 +621,7 @@ isEmpty(OPENSSL_LIB_PATH) {
 macx {
 	CONFIG += 11 x86_64
 	HEADERS += src/qt/macdockiconhandler.h src/qt/macnotificationhandler.h
-    INCLUDEPATH += $$MOC_DIR // enable #include of moc_* files
+    INCLUDEPATH += $$MOC_DIR # enable #include of moc_* files
 	OBJECTIVE_SOURCES += src/qt/macdockiconhandler.mm src/qt/macnotificationhandler.mm
 	LIBS += -framework Foundation -framework ApplicationServices -framework AppKit
 	LIBS += /usr/local/opt/miniupnpc/lib/libminiupnpc.a
@@ -663,7 +664,8 @@ INCLUDEPATH += \
     $$SLIMCOIN_SRC_PATH \
     $$SLIMCOIN_SRC_PATH/qt \
     $$QT_INCLUDE_PATH \
-    $$QT_INCLUDE_PATH/QtGui
+    $$QT_INCLUDE_PATH/QtGui \
+    $$MOC_DIR
 
 LIBS += $$join(LIB_PATH,,-L,)
 LIBS += -lssl -lcrypto -ldb_cxx$$BDB_LIB_SUFFIX
