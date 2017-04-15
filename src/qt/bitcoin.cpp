@@ -7,6 +7,7 @@
 #include "walletmodel.h"
 #include "optionsmodel.h"
 #include "guiutil.h"
+#include "util.h"
 
 #include "init.h"
 #include "ui_interface.h"
@@ -105,8 +106,10 @@ void InitMessage(const std::string &message)
   if(splashref)
   {
     //the addition of the newline is there to bump the text up so it fully fits in the coin's picture
-    splashref->showMessage(QString::fromStdString(message + "\n"), Qt::AlignBottom | Qt::AlignHCenter, QColor(55,55,55));
+    // splashref->showMessage(QString::fromStdString(message + "\n"), Qt::AlignBottom | Qt::AlignHCenter, QColor(55,55,55));
+    splashref->showMessage(QString::fromStdString(message+"\n\n") + QString::fromStdString(FormatFullVersion().c_str()), Qt::AlignBottom|Qt::AlignHCenter, QColor(55,55,55));
     QApplication::instance()->processEvents();
+
   }
 }
 
