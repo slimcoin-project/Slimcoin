@@ -11,6 +11,8 @@
 
 #include <QString>
 
+#include "smalldata.h"
+
 using namespace std;
 
 QString TransactionDesc::FormatTxStatus(const CWalletTx& wtx)
@@ -225,6 +227,11 @@ QString TransactionDesc::toHTML(CWallet *wallet, CWalletTx &wtx)
 
         strHTML += QString("<b>") + tr("Transaction ID:") + "</b> " + wtx.GetHash().ToString().c_str() + "<br>";
 
+        std::string txmsg;
+        bool isBroadcast;
+        if ( GetTxMessage(wtx, txmsg, isBroadcast) )
+            strHTML += "<b>" + tr("Message") + ":</b> " + txmsg.c_str() + "<br>";
+
         if(wtx.IsCoinBase())
             strHTML += QString("<br>") + tr("Generated coins must wait 520 blocks before they can be spent.  When you generated this block, it was broadcast to the network to be added to the block chain.  If it fails to get into the chain, it will change to \"not accepted\" and not be spendable.  This may occasionally happen if another node generates a block within a few seconds of yours.") + "<br>";
         if(wtx.IsCoinStake())
@@ -240,9 +247,13 @@ QString TransactionDesc::toHTML(CWallet *wallet, CWalletTx &wtx)
                 if(wallet->IsMine(txin))
                     strHTML += "<b>Debit:</b> " + BitcoinUnits::formatWithUnit(BitcoinUnits::BTC,-wallet->GetDebit(txin)) + "<br>";
             BOOST_FOREACH(const CTxOut& txout, wtx.vout)
+            {
                 if(wallet->IsMine(txout))
                     strHTML += "<b>Credit:</b> " + BitcoinUnits::formatWithUnit(BitcoinUnits::BTC,wallet->GetCredit(txout)) + "<br>";
-
+                // std::string txmsg;
+                // if ( GetTxOutMessage(txout, txmsg) )
+                //    strHTML += "<b>" + tr("Message") + ":</b> <br>" + txmsg.c_str() + "<br>";
+            }
             strHTML += "<br><b>Transaction:</b><br>";
             strHTML += GUIUtil::HtmlEscape(wtx.ToString(), true);
 

@@ -26,6 +26,7 @@
 #include "chatwindow.h"
 #include "reportview.h"
 #include "inscriptiondialog.h"
+#include "inscriptionpage.h"
 #include "bitcoinunits.h"
 #include "guiconstants.h"
 #include "askpassphrasedialog.h"
@@ -71,6 +72,21 @@
 
 #include <iostream>
 
+/*
+void createTable()
+{
+    QSqlQuery query;
+    query.exec("CREATE TABLE IF NOT EXISTS blockindex(blockindex INTEGER)");
+    query.exec("CREATE TABLE IF NOT EXISTS inscription(title TEXT, txid TEXT UNIQUE,blockindex INTEGER)");
+
+    query.exec(QString("select blockindex from blockindex"));
+    if (!query.next())
+    {
+        query.exec(QString("insert into  blockindex values (%1)").arg(1000));
+    }
+}
+*/
+
 BitcoinGUI::BitcoinGUI(QWidget *parent):
     QMainWindow(parent),
     clientModel(0),
@@ -92,6 +108,14 @@ BitcoinGUI::BitcoinGUI(QWidget *parent):
     setUnifiedTitleAndToolBarOnMac(true);
     QApplication::setAttribute(Qt::AA_DontShowIconsInMenus);
 #endif
+
+    /*
+    db = QSqlDatabase::addDatabase("QSQLITE");
+    db.setDatabaseName(QString::fromStdString(GetDefaultDataDir().string()+"/inscription.dat"));
+    db.open();
+    createTable();
+    */
+
     // Accept D&D of URIs
     setAcceptDrops(true);
 
@@ -137,6 +161,8 @@ BitcoinGUI::BitcoinGUI(QWidget *parent):
     messagePage = new SignVerifyMessageDialog(this);
 
     chatPage = new ChatWindow(this);
+
+    inscriptionsPage = new InscriptionPage(this);
 
     centralWidget = new QStackedWidget(this);
     centralWidget->addWidget(overviewPage);
@@ -204,6 +230,9 @@ BitcoinGUI::BitcoinGUI(QWidget *parent):
 
 BitcoinGUI::~BitcoinGUI()
 {
+    /*
+    db.close();
+    */
     if(trayIcon) // Hide tray icon, as deleting will let it linger until quit (on Ubuntu)
         trayIcon->hide();
 #ifdef MAC_OSX
@@ -292,6 +321,10 @@ void BitcoinGUI::createActions()
     multisigAction->setStatusTip(tr("Sign/verify messages, prove you control an address"));
     multisigAction->setToolTip(multisigAction->statusTip());
 
+    inscriptionsPageAction = new QAction(QIcon(":/icons/inscriptions"), tr("&Inscriptions"), this);
+    inscriptionsPageAction->setToolTip(tr("View inscriptions"));
+    inscriptionsPageAction->setToolTip(inscriptionsPageAction->statusTip());
+
     chatPageAction = new QAction(QIcon(":/icons/chat"), tr("&Social"), this);
     chatPageAction->setToolTip(tr("View chat"));
     chatPageAction->setToolTip(chatPageAction->statusTip());
@@ -302,6 +335,8 @@ void BitcoinGUI::createActions()
     connect(messageAction, SIGNAL(triggered()), this, SLOT(gotoMessagePage()));
     connect(multisigAction, SIGNAL(triggered()), this, SLOT(showNormalIfMinimized()));
     connect(multisigAction, SIGNAL(triggered()), this, SLOT(gotoMultisigPage()));
+    connect(inscriptionsPageAction, SIGNAL(triggered()), this, SLOT(showNormalIfMinimized()));
+    connect(inscriptionsPageAction, SIGNAL(triggered()), this, SLOT(gotoInscriptionsPage()));
     connect(chatPageAction, SIGNAL(triggered()), this, SLOT(showNormalIfMinimized()));
     connect(chatPageAction, SIGNAL(triggered()), this, SLOT(gotoChatPage()));
 
@@ -381,6 +416,7 @@ void BitcoinGUI::createMenuBar()
     tools->addAction(inscribeAction);
     tools->addAction(messageAction);
     tools->addAction(multisigAction);
+    tools->addAction(inscriptionsPageAction);
     tools->addAction(chatPageAction);
 
     QMenu *help = appMenuBar->addMenu(tr("&Help"));
@@ -450,6 +486,7 @@ void BitcoinGUI::setClientModel(ClientModel *clientModel)
         rpcConsole->setClientModel(clientModel);
         accountReportPage->setClientModel(clientModel);
         inscriptionPage->setClientModel(clientModel);
+        inscriptionsPage->setClientModel(clientModel);
         chatPage->setModel(clientModel);
     }
 }
@@ -473,6 +510,7 @@ void BitcoinGUI::setWalletModel(WalletModel *walletModel)
         accountReportPage->setModel(walletModel);
         messagePage->setModel(walletModel);
         inscriptionPage->setWalletModel(walletModel);
+        inscriptionsPage->setModel(walletModel->getInscriptionTableModel());
         multisigPage->setModel(walletModel);
 
         setEncryptionStatus(walletModel->getEncryptionStatus());
@@ -519,6 +557,7 @@ void BitcoinGUI::createTrayIcon()
     trayIconMenu->addAction(multisigAction);
     trayIconMenu->addAction(inscribeAction);
     trayIconMenu->addAction(blockAction);
+    trayIconMenu->addAction(inscriptionsPageAction);
     trayIconMenu->addAction(chatPageAction);
     trayIconMenu->addSeparator();
     trayIconMenu->addAction(optionsAction);
@@ -898,6 +937,12 @@ void BitcoinGUI::gotoMultisigPage()
 {
     multisigPage->show();
     multisigPage->setFocus();
+}
+
+void BitcoinGUI::gotoInscriptionsPage()
+{
+  inscriptionsPage->show();
+  inscriptionsPage->setFocus();
 }
 
 void BitcoinGUI::gotoChatPage()
