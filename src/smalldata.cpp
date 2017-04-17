@@ -40,8 +40,8 @@ bool GetTxMessage(CTransaction &tx, std::string &msg, bool &isBroadcast)
 {
     txnouttype whichType;
     BOOST_FOREACH(const CTxOut& txout, tx.vout) {
-        if ( 0 != txout.nValue )
-            continue;
+        // if ( 0 != txout.nValue )
+        //    continue;
 
         vector<valtype> vSolutions;
         txnouttype whichType;
