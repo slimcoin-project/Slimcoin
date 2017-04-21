@@ -465,8 +465,7 @@ FORMS += \
     src/qt/forms/sendcoinsentry.ui \
     src/qt/forms/signverifymessagedialog.ui \
     src/qt/forms/inscriptionpage.ui \
-    src/qt/forms/transactiondescdialog.ui \
-    src/qt/forms/inscriptionpage.ui
+    src/qt/forms/transactiondescdialog.ui
 
 contains(USE_QRCODE, 1) {
     HEADERS += src/qt/qrcodedialog.h

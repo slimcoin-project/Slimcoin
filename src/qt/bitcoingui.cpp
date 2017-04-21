@@ -220,6 +220,9 @@ BitcoinGUI::BitcoinGUI(QWidget *parent):
     // Doubleclicking on a transaction on the transaction history page shows details
     connect(transactionView, SIGNAL(doubleClicked(QModelIndex)), transactionView, SLOT(showDetails()));
 
+    // Inscribing a message causes the inscriptionTable to refresh its contents
+    connect(inscriptionPage, SIGNAL(inscribed()), inscriptionsPage, SLOT(refreshInscriptionTable()));
+
     rpcConsole = new RPCConsole(this);
     connect(openRPCConsoleAction, SIGNAL(triggered()), rpcConsole, SLOT(show()));
 

@@ -4,26 +4,24 @@
 #include "base58.h"
 #include "walletmodel.h"
 #include "util.h"
-
+#include "ui_interface.h"
 
 #include <QFont>
 #include <QColor>
+#include <QDateTime>
 
-
-
-
-#include "ui_interface.h"
+/*
 #include "json/json_spirit_reader_template.h"
 #include "json/json_spirit_writer_template.h"
 #include "json/json_spirit_utils.h"
+*/
 
 #include <boost/algorithm/string.hpp>
-
 
 #include <stdlib.h>
 
 using namespace boost;
-using namespace json_spirit;
+// using namespace json_spirit;
 
 struct InscriptionTableEntry
 {
@@ -53,13 +51,15 @@ public:
         std::vector<std::pair<std::string, int> > vTxResults;
         this->wallet->GetTxMessages(vTxResults);
 
-        std::string inscription = "<inscription>";
-        std::string date = "<date>";
+        QDateTime inscription_date = QDateTime::currentDateTime();
+
+        std::string inscription = vTxResults[0].first;
+        inscription_date.setSecsSinceEpoch((qint64)vTxResults[0].second);
 
         cachedInscriptionTable.append(
             InscriptionTableEntry(
                 QString::fromStdString(inscription),
-                QString::fromStdString(date)));
+                QString::fromStdString(inscription_date.toString().toStdString())));
 
         /*
         try {
@@ -108,15 +108,17 @@ public:
     {
         std::vector<std::pair<std::string, int> > vTxResults;
         this->wallet->GetTxMessages(vTxResults);
+        QDateTime inscription_date = QDateTime::currentDateTime();
 
-        std::string inscription = "<inscription>";
-        std::string date = "<date>";
-
-        cachedInscriptionTable.append(
-            InscriptionTableEntry(
-                QString::fromStdString(inscription),
-                QString::fromStdString(date)));
-
+        for(std::vector<std::pair<std::string, int> >::size_type i = 0; i != vTxResults.size(); i++) {
+            std::string inscription = vTxResults[i].first;
+            inscription_date.setSecsSinceEpoch((qint64)vTxResults[i].second);
+            std::string date = inscription_date.toString().toStdString();
+            cachedInscriptionTable.append(
+                InscriptionTableEntry(
+                    QString::fromStdString(inscription),
+                    QString::fromStdString(date)));
+        }
     }
 
     void refreshTable()

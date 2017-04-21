@@ -937,6 +937,7 @@ void CWallet::SearchOPRETURNTransactions(uint256 hash, std::vector<std::pair<std
     return;
 }
 
+// Replace with iterating over filtered txs from transactiontable
 void CWallet::GetTxMessages(std::vector<std::pair<std::string, int> >& vTxResults)
 {
     int blockstogoback = pindexBest->nHeight - 1200;
@@ -945,7 +946,7 @@ void CWallet::GetTxMessages(std::vector<std::pair<std::string, int> >& vTxResult
     for (int i = 0; pindexFirst && i < blockstogoback; i++) {
 
         CBlock block;
-        block.ReadFromDisk(pindexFirst, true);
+        block.ReadFromDisk(pindexFirst, true, false);
 
         BOOST_FOREACH (const CTransaction& tx, block.vtx)
         {
@@ -953,7 +954,7 @@ void CWallet::GetTxMessages(std::vector<std::pair<std::string, int> >& vTxResult
             bool isBroadcast;
             CTransaction ctx = tx;
             if ( GetTxMessage(ctx, txmsg, isBroadcast) ) {
-                vTxResults.push_back( std::make_pair(tx.GetHash().GetHex(), pindexFirst->nHeight) );
+                vTxResults.push_back( std::make_pair(txmsg, tx.nTime) );
             }
         }
 
