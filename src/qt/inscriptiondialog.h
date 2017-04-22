@@ -31,7 +31,6 @@ private:
     Ui::InscriptionDialog *ui;
     WalletModel *walletModel;
     ClientModel *clientModel;
-    // void processSendCoinsReturn(const WalletModel::SendCoinsReturn &sendCoinsReturn, const QString &msgArg = QString());
 
 private Q_SLOTS:
     void on_insertButton_clicked();
@@ -39,7 +38,7 @@ private Q_SLOTS:
     void resetMessage();
 
 Q_SIGNALS:
-    void message(const QString &title, const QString &message, unsigned int style);
+    void inscribed();
 };
 
 #endif // INSCRIPTIONDIALOG_H

@@ -12,6 +12,7 @@
 #include "base58.h"
 #include "kernel.h"
 #include "keystore.h"
+#include "smalldata.h"
 
 #include <boost/algorithm/string/replace.hpp>
 #include "base58.h"
@@ -906,8 +907,83 @@ void CWallet::ResendWalletTransactions()
     }
 }
 
+/* This is how CLAMs does it ... */
+
+void CWallet::SearchOPRETURNTransactions(uint256 hash, std::vector<std::pair<std::string, int> >& vTxResults)
+{
+    int blockstogoback = pindexBest->nHeight - 362500;
+    std::string matchingHash = "face " + hash.GetHex();
+
+    const CBlockIndex* pindexFirst = pindexBest;
+    for (int i = 0; pindexFirst && i < blockstogoback; i++) {
+
+        CBlock block;
+        block.ReadFromDisk(pindexFirst, true);
+
+        BOOST_FOREACH (const CTransaction& tx, block.vtx)
+        {
+            std::string txmsg;
+            bool isBroadcast;
+            CTransaction ctx = tx;
+            if ( GetTxMessage(ctx, txmsg, isBroadcast) ) {
+                if (txmsg == matchingHash) {
+                    vTxResults.push_back( std::make_pair(tx.GetHash().GetHex(), pindexFirst->nHeight) );
+                }
+            }
+        }
+
+        pindexFirst = pindexFirst->pprev;
+    }
+    return;
+}
+
+void CWallet::GetTxMessages(std::vector<std::pair<std::string, int> >& vTxResults)
+{
+    int blockstogoback = pindexBest->nHeight - 2500;
+
+    const CBlockIndex* pindexFirst = pindexBest;
+    for (int i = 0; pindexFirst && i < blockstogoback; i++) {
+
+        CBlock block;
+        block.ReadFromDisk(pindexFirst, true, false);
+
+        BOOST_FOREACH (const CTransaction& tx, block.vtx)
+        {
+            std::string txmsg;
+            bool isBroadcast;
+            CTransaction ctx = tx;
+            if ( GetTxMessage(ctx, txmsg, isBroadcast) ) {
+                vTxResults.push_back( std::make_pair(txmsg, tx.nTime) );
+            }
+        }
+
+        pindexFirst = pindexFirst->pprev;
+    }
+    return;
+}
 
 
+void CWallet::GetMyTxMessages(std::vector<std::pair<std::string, int> >& vTxResults)
+{
+    LOCK(cs_wallet);
+    for(std::map<uint256, CWalletTx>::iterator it = this->mapWallet.begin(); it != this->mapWallet.end(); ++it)
+    {
+        CWalletTx &tx = it->second;
+        if(!mapBlockIndex.count(tx.hashBlock))
+            continue;
+
+        CBlockIndex *pindex = mapBlockIndex[tx.hashBlock];
+        if(!pindex)
+            continue;
+
+        std::string txmsg;
+        bool isBroadcast;
+        CTransaction ctx = tx;
+        if ( GetTxMessage(ctx, txmsg, isBroadcast) ) {
+            vTxResults.push_back( std::make_pair(txmsg, tx.nTime) );
+        }
+    }
+}
 
 
 

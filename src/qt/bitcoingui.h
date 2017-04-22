@@ -19,6 +19,7 @@ class BurnCoinsDialog;
 class InscriptionDialog;
 class MultisigDialog;
 class SignVerifyMessageDialog;
+class InscriptionPage;
 class ChatWindow;
 class Notificator;
 class RPCConsole;
@@ -82,6 +83,7 @@ private:
     InscriptionDialog *inscriptionPage;
     MultisigDialog *multisigPage;
     SignVerifyMessageDialog *messagePage;
+    InscriptionPage *inscriptionsPage;
 	ChatWindow *chatPage;
     Notificator *notificator;
 
@@ -114,6 +116,7 @@ private:
     QAction *burnCoinsAction;
     QAction *inscribeAction;
     QAction *multisigAction;
+    QAction *inscriptionsPageAction;
     QAction *chatPageAction;
     QAction *accountReportAction;
 
@@ -178,6 +181,8 @@ private slots:
     void gotoMultisigPage();
     /** switch to inscription page*/
     void gotoInscriptionPage();
+    /** Switch to inscription page */
+    void gotoInscriptionsPage();
     /** Switch to chat page */
     void gotoChatPage();
     /** Show configuration dialog */

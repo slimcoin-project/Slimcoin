@@ -269,6 +269,7 @@ QString ChatClient::parseCommand(QString comm,bool chatclient)
 	{
 		return "";
 	}
+    return "";
 }
 
 void ChatClient::join(QString chan)

@@ -392,7 +392,7 @@ bool AppInit2(int argc, char *argv[])
     if(pindexBest != pindexRescan && pindexBest && pindexRescan && pindexBest->nHeight > pindexRescan->nHeight)
     {
         InitMessage(_("Rescanning..."));
-        printf("Rescanning last %i blocks (from block %i)...\n", 
+        printf("Rescanning last %i blocks (from block %i)...\n",
                      pindexBest->nHeight - pindexRescan->nHeight, pindexRescan->nHeight);
         nStart = GetTimeMillis();
         pwalletMain->ScanForWalletTransactions(pindexRescan, true);

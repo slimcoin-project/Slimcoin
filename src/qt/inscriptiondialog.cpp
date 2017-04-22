@@ -60,8 +60,7 @@ InscriptionDialog::~InscriptionDialog()
 void InscriptionDialog::on_insertButton_clicked()
 {
     QString txmsg = ui->lineEditMsg->text();
-    // qDebug() << "Text message:" << txmsg << "Other value:" << i;
-    qDebug() << "Text message:" << txmsg;
+    // qDebug() << "Text message:" << txmsg;
 
     if ( std::string(txmsg.toStdString().c_str()).length() > 80 )
     {
@@ -80,7 +79,7 @@ void InscriptionDialog::on_insertButton_clicked()
     rcpt.amount = 1*CENT;
     recipients.append(rcpt);
 
-    qDebug() << "Recipient created" << vchDefaultAddr << " amount" << 1*CENT;
+    // qDebug() << "Recipient created" << vchDefaultAddr << " amount" << 1*CENT;
 
     // send the transaction
     WalletModel::SendCoinsReturn sendstatus = walletModel->sendCoins(recipients, txmsg, false);
@@ -88,43 +87,43 @@ void InscriptionDialog::on_insertButton_clicked()
     switch(sendstatus.status)
     {
     case WalletModel::InvalidAddress:
-        QMessageBox::warning(this, tr("Send Coins"),
+        QMessageBox::warning(this, tr("Inscribe"),
                              tr("The recepient address is not valid, please recheck."),
                              QMessageBox::Ok, QMessageBox::Ok);
         break;
     case WalletModel::InvalidAmount:
-        QMessageBox::warning(this, tr("Send Coins"),
+        QMessageBox::warning(this, tr("Inscribe"),
                              tr("The amount to pay must be at least one cent (0.01)."),
                              QMessageBox::Ok, QMessageBox::Ok);
         break;
     case WalletModel::AmountExceedsBalance:
-        QMessageBox::warning(this, tr("Send Coins"),
+        QMessageBox::warning(this, tr("Inscribe"),
                              tr("Amount exceeds your balance"),
                              QMessageBox::Ok, QMessageBox::Ok);
         break;
     case WalletModel::AmountWithFeeExceedsBalance:
-        QMessageBox::warning(this, tr("Send Coins"),
+        QMessageBox::warning(this, tr("Inscribe"),
                              tr("Total exceeds your balance when the %1 transaction fee is included").
                              arg(BitcoinUnits::formatWithUnit(BitcoinUnits::BTC, sendstatus.fee)),
                              QMessageBox::Ok, QMessageBox::Ok);
         break;
     case WalletModel::DuplicateAddress:
-        QMessageBox::warning(this, tr("Send Coins"),
+        QMessageBox::warning(this, tr("Inscribe"),
                              tr("Duplicate address found, can only send to each address once in one send operation"),
                              QMessageBox::Ok, QMessageBox::Ok);
         break;
     case WalletModel::TransactionCreationFailed:
-        QMessageBox::warning(this, tr("Send Coins"),
+        QMessageBox::warning(this, tr("Inscribe"),
                              tr("Error: Transaction creation failed  "),
                              QMessageBox::Ok, QMessageBox::Ok);
         break;
     case WalletModel::TransactionCommitFailed:
-        QMessageBox::warning(this, tr("Send Coins"),
+        QMessageBox::warning(this, tr("Inscribe"),
                              tr("Error: The transaction was rejected.  This might happen if some of the coins in your wallet were already spent, such as if you used a copy of wallet.dat and coins were spent in the copy but not marked as spent here."),
                              QMessageBox::Ok, QMessageBox::Ok);
         break;
     case WalletModel::BadBurningCoins:
-        QMessageBox::warning(this, tr("Send Coins"),
+        QMessageBox::warning(this, tr("Inscribe"),
                              tr("You are sending coins to a burn address without using the dedicated \"" BURN_COINS_DIALOG_NAME "\" tab. If you want to burn coins, use the dedicated tab instead of this \"" SEND_COINS_DIALOG_NAME "\" tab. \n\nSending coins aborted."),
                              QMessageBox::Ok, QMessageBox::Ok);
         break;
@@ -132,17 +131,12 @@ void InscriptionDialog::on_insertButton_clicked()
         break;
     case WalletModel::OK:
         accept();
-        QMessageBox::information(NULL, tr("Inscription"), tr("Inscribe on blockchain, Yes"), QMessageBox::Yes , QMessageBox::Yes);
+        QString msgtxt = QString().fromStdString(std::string("Inscription \""  + txmsg.toStdString() + "\" made."));
+        QMessageBox::information(NULL, tr("Inscribe"), msgtxt, QMessageBox::Ok , QMessageBox::Ok);
         ui->lineEditMsg->setText("Message inscribed.");
         break;
     }
-
-    /*
-    {
-        QMessageBox::information(NULL, tr("Failed"), tr("Inscription failed"), QMessageBox::Yes , QMessageBox::Yes);
-        ui->lineEditMsg->setText(txmsg);
-    }
-    */
+    Q_EMIT inscribed();
 }
 
 

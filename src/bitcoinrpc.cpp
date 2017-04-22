@@ -15,6 +15,8 @@
 #include "ui_interface.h"
 #include "bitcoinrpc.h"
 #include "kernel.h"
+#include "smalldata.h"
+#include "util.h"
 
 #undef printf
 #include <boost/asio.hpp>
@@ -1944,13 +1946,6 @@ void ListTransactions(const CWalletTx& wtx, const string& strAccount, int nMinDe
             entry.push_back(Pair("category", wtx.GetDepthInMainChain() ? "immature" : "orphan"));
             entry.push_back(Pair("amount", ValueFromAmount(nGeneratedImmature)));
         }
-        /* FIXME: why is this not in SLIMcoin?
-        else if (wtx.IsCoinStake())
-        {
-            entry.push_back(Pair("category", "stake"));
-            entry.push_back(Pair("amount", ValueFromAmount(nGeneratedMature)));
-        }
-        */
         else
         {
             entry.push_back(Pair("category", "generate"));
@@ -3666,6 +3661,112 @@ Value sendrawtransaction(const Array& params, bool fHelp)
     return hashTx.GetHex();
 }
 
+Value getinscription(const Array& params, bool fHelp)
+{
+    if (fHelp || params.size() < 1 || params.size() > 1)
+        throw runtime_error("getinscription <txid> \n");
+    uint256 hash;
+    hash.SetHex(params[0].get_str());
+
+    CTransaction tx;
+    uint256 hashBlock = 0;
+    if (!GetTransaction(hash, tx, hashBlock))
+        return false;
+
+    try{
+        std::string inscriptionStr;
+        for (unsigned int i = 0; i < tx.vout.size(); i++)
+        {
+            const CTxOut& txout = tx.vout[i];
+            const CScript& scriptPubKey = txout.scriptPubKey;
+            txnouttype type;
+            vector<valtype> vSolutions;
+            if (Solver(scriptPubKey, type, vSolutions))
+            {
+                if (type == TX_NULL_DATA)
+                {
+                    char start = 2;
+                    if ( txout.scriptPubKey[1] == 0x4c )
+                        start = 3;
+
+                    if ( txout.scriptPubKey[start] != 0xfa || txout.scriptPubKey[start + 1] != 0xce )
+                        return false;
+                    std::string str(txout.scriptPubKey.begin() + start + 4, txout.scriptPubKey.end());
+                    Value valReply;
+                    if (read_string("{\"value\":\"" + str + "\"}\"", valReply))
+                    {
+                        return valReply;
+                    }
+                }
+            }
+        }
+    }catch(std::exception &e){
+       return false;
+    }
+    return false;
+}
+
+/*
+Value getinscription(const Array& params, bool fHelp)
+{
+    if (fHelp || params.size() < 1 || params.size() > 1)
+        throw runtime_error("getinscription <txid> \n");
+    uint256 hash;
+    hash.SetHex(params[0].get_str());
+
+    CTransaction tx;
+    uint256 hashBlock = 0;
+    if (!GetTransaction(hash, tx, hashBlock))
+        return false;
+    try{
+        std::string inscriptionStr;
+        for (unsigned int i = 0; i < tx.vout.size(); i++)
+        {
+            const CTxOut& txout = tx.vout[i];
+            const CScript& scriptPubKey = txout.scriptPubKey;
+            txnouttype type;
+            vector<vector<unsigned char> > vSolutions;
+            if (Solver(scriptPubKey, type, vSolutions))
+            {
+                if (type == TX_MULTISIG)
+                {
+                    std::string  asmStr  = scriptPubKey.ToString();
+                    std::vector<std::string> strs;
+                    boost::split(strs, asmStr, boost::is_any_of(" "));
+                    std::string t = strs[2];
+                    std::string s;
+                    s.assign(t,2,2);
+                    int x;
+                    sscanf(s.c_str(), "%x", &x); 
+                    t.assign(t,4,x*2); 
+                    inscriptionStr.append(t);
+                }
+            }
+        }
+
+        int len = inscriptionStr.length();
+        std::string strReply;
+        for(int i=0; i< len; i+=2)
+        {
+            std::string byte = inscriptionStr.substr(i,2);
+            char chr = (char) (int)strtol(byte.c_str(), NULL, 16);
+            strReply.push_back(chr);
+        }
+
+        strReply = DecodeBase64(strReply);
+        Value valReply;
+        if (read_string(strReply, valReply))
+        {
+            return valReply;
+        }
+    }catch(std::exception &e){
+       return false;
+    }
+    return false;
+}
+*/
+
+
 //
 // Call Table
 //
@@ -3743,6 +3844,7 @@ static const CRPCCommand vRPCCommands[] =
     { "getmemorypool",          &getmemorypool,          true },
     { "getrawmempool",          &getrawmempool,          true },
     { "getsubsidy",               &getsubsidy,             false  },
+    { "getinscription",               &getinscription,             true   },
 };
 
 CRPCTable::CRPCTable()

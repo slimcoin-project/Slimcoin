@@ -333,7 +333,8 @@ void AddressTableModel::update()
     endResetModel();
 }
 
-/*dressTableModel::updateEntry(const QString &address, const QString &label, bool isMine, int status)
+/*
+void AddressTableModel::updateEntry(const QString &address, const QString &label, bool isMine, int status)
 {
     // Update address book model from Bitcoin core
     priv->updateEntry(address, label, isMine, status);
