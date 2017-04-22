@@ -937,10 +937,9 @@ void CWallet::SearchOPRETURNTransactions(uint256 hash, std::vector<std::pair<std
     return;
 }
 
-// Replace with iterating over filtered txs from transactiontable
 void CWallet::GetTxMessages(std::vector<std::pair<std::string, int> >& vTxResults)
 {
-    int blockstogoback = pindexBest->nHeight - 1200;
+    int blockstogoback = pindexBest->nHeight - 2500;
 
     const CBlockIndex* pindexFirst = pindexBest;
     for (int i = 0; pindexFirst && i < blockstogoback; i++) {
@@ -963,8 +962,28 @@ void CWallet::GetTxMessages(std::vector<std::pair<std::string, int> >& vTxResult
     return;
 }
 
-/*
-*/
+
+void CWallet::GetMyTxMessages(std::vector<std::pair<std::string, int> >& vTxResults)
+{
+    LOCK(cs_wallet);
+    for(std::map<uint256, CWalletTx>::iterator it = this->mapWallet.begin(); it != this->mapWallet.end(); ++it)
+    {
+        CWalletTx &tx = it->second;
+        if(!mapBlockIndex.count(tx.hashBlock))
+            continue;
+
+        CBlockIndex *pindex = mapBlockIndex[tx.hashBlock];
+        if(!pindex)
+            continue;
+
+        std::string txmsg;
+        bool isBroadcast;
+        CTransaction ctx = tx;
+        if ( GetTxMessage(ctx, txmsg, isBroadcast) ) {
+            vTxResults.push_back( std::make_pair(txmsg, tx.nTime) );
+        }
+    }
+}
 
 
 

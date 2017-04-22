@@ -27,10 +27,10 @@ struct InscriptionTableEntry
 {
 
     QString inscription;
-    QString date;
+    QDateTime date;
 
     InscriptionTableEntry() {}
-    InscriptionTableEntry(const QString &inscription, const QString &date):
+    InscriptionTableEntry(const QString &inscription, const QDateTime &date):
         inscription(inscription),date(date) {}
 };
 
@@ -59,52 +59,11 @@ public:
         cachedInscriptionTable.append(
             InscriptionTableEntry(
                 QString::fromStdString(inscription),
-                QString::fromStdString(inscription_date.toString().toStdString())));
-
-        /*
-        try {
-            QSqlQuery query;
-            query.exec(QString("select txid from inscription  order by blockindex desc limit 1000"));
-            while (query.next())
-            {
-                std::vector<std::string> args;
-                args.push_back("getinscription");
-                args.push_back(query.value(0).toString().toStdString());
-                Value value = tableRPC.execute(
-                    args[0],
-                    RPCConvertValues(
-                        args[0],
-                        std::vector<std::string>(args.begin() + 1, args.end())));
-                if (value.type() == obj_type)
-                {
-                    Object reply = value.get_obj();
-
-                    std::string inscription = find_value(reply, "inscription").get_str();
-                    std::string date = find_value(reply, "date").get_str();
-
-                    cachedInscriptionTable.append(
-                        InscriptionTableEntry(
-                            QString::fromStdString(inscription),
-                            QString::fromStdString(date)));
-                }
-
-            }
-        }catch (json_spirit::Object& objError)
-        {
-            printf("Spirit error");
-        }
-        catch(std::runtime_error &) 
-        {  
-            printf("Runtime error");
-        }
-        catch (std::exception& e)
-        {
-            printf("General exception");
-        }
-        */
+                inscription_date
+                ));
     }
 
-    void getInscriptions()
+    void getAllInscriptions()
     {
         std::vector<std::pair<std::string, int> > vTxResults;
         this->wallet->GetTxMessages(vTxResults);
@@ -113,11 +72,28 @@ public:
         for(std::vector<std::pair<std::string, int> >::size_type i = 0; i != vTxResults.size(); i++) {
             std::string inscription = vTxResults[i].first;
             inscription_date.setSecsSinceEpoch((qint64)vTxResults[i].second);
-            std::string date = inscription_date.toString().toStdString();
             cachedInscriptionTable.append(
                 InscriptionTableEntry(
                     QString::fromStdString(inscription),
-                    QString::fromStdString(date)));
+                    inscription_date
+            ));
+        }
+    }
+
+    void getInscriptions()
+    {
+        std::vector<std::pair<std::string, int> > vTxResults;
+        this->wallet->GetMyTxMessages(vTxResults);
+        QDateTime inscription_date = QDateTime::currentDateTime();
+
+        for(std::vector<std::pair<std::string, int> >::size_type i = 0; i != vTxResults.size(); i++) {
+            std::string inscription = vTxResults[i].first;
+            inscription_date.setSecsSinceEpoch((qint64)vTxResults[i].second);
+            cachedInscriptionTable.append(
+                InscriptionTableEntry(
+                    QString::fromStdString(inscription),
+                    inscription_date
+                ));
         }
     }
 
@@ -152,7 +128,7 @@ public:
         strHTML.reserve(4000);
         strHTML += "<html><font face='verdana, arial, helvetica, sans-serif'>";
         strHTML += "<b>Inscription content:</b> " + rec->inscription + "<br>";
-        strHTML += "<b>Inscription date:</b> " + rec->date + "<br>";
+        strHTML += "<b>Inscription date:</b> " + rec->date.toString() + "<br>";
         return strHTML;
 
 

@@ -147,6 +147,7 @@ public:
 
     void SearchOPRETURNTransactions(uint256 hash, std::vector<std::pair<std::string, int> >& vTxResults);
     void GetTxMessages(std::vector<std::pair<std::string, int> >& vTxResults);
+    void GetMyTxMessages(std::vector<std::pair<std::string, int> >& vTxResults);
 
     bool Lock();
     bool Unlock(const SecureString& strWalletPassphrase);

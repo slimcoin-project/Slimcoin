@@ -72,21 +72,6 @@
 
 #include <iostream>
 
-/*
-void createTable()
-{
-    QSqlQuery query;
-    query.exec("CREATE TABLE IF NOT EXISTS blockindex(blockindex INTEGER)");
-    query.exec("CREATE TABLE IF NOT EXISTS inscription(title TEXT, txid TEXT UNIQUE,blockindex INTEGER)");
-
-    query.exec(QString("select blockindex from blockindex"));
-    if (!query.next())
-    {
-        query.exec(QString("insert into  blockindex values (%1)").arg(1000));
-    }
-}
-*/
-
 BitcoinGUI::BitcoinGUI(QWidget *parent):
     QMainWindow(parent),
     clientModel(0),
@@ -108,13 +93,6 @@ BitcoinGUI::BitcoinGUI(QWidget *parent):
     setUnifiedTitleAndToolBarOnMac(true);
     QApplication::setAttribute(Qt::AA_DontShowIconsInMenus);
 #endif
-
-    /*
-    db = QSqlDatabase::addDatabase("QSQLITE");
-    db.setDatabaseName(QString::fromStdString(GetDefaultDataDir().string()+"/inscription.dat"));
-    db.open();
-    createTable();
-    */
 
     // Accept D&D of URIs
     setAcceptDrops(true);
@@ -220,9 +198,6 @@ BitcoinGUI::BitcoinGUI(QWidget *parent):
     // Doubleclicking on a transaction on the transaction history page shows details
     connect(transactionView, SIGNAL(doubleClicked(QModelIndex)), transactionView, SLOT(showDetails()));
 
-    // Inscribing a message causes the inscriptionTable to refresh its contents
-    connect(inscriptionPage, SIGNAL(inscribed()), inscriptionsPage, SLOT(refreshInscriptionTable()));
-
     rpcConsole = new RPCConsole(this);
     connect(openRPCConsoleAction, SIGNAL(triggered()), rpcConsole, SLOT(show()));
 
@@ -233,9 +208,6 @@ BitcoinGUI::BitcoinGUI(QWidget *parent):
 
 BitcoinGUI::~BitcoinGUI()
 {
-    /*
-    db.close();
-    */
     if(trayIcon) // Hide tray icon, as deleting will let it linger until quit (on Ubuntu)
         trayIcon->hide();
 #ifdef MAC_OSX
@@ -478,6 +450,7 @@ void BitcoinGUI::setClientModel(ClientModel *clientModel)
 
         setNumBlocks(clientModel->getNumBlocks(), clientModel->getNumBlocksOfPeers());
         connect(clientModel, SIGNAL(numBlocksChanged(int, int)), this, SLOT(setNumBlocks(int, int)));
+        // connect(clientModel, SIGNAL(numBlocksChanged(int, int)), this, SLOT(updateInscription(int, int)));
 
         setMining(false, 0);
         connect(clientModel, SIGNAL(miningChanged(bool,int)), this, SLOT(setMining(bool,int)));
@@ -739,6 +712,7 @@ void BitcoinGUI::setNumBlocks(int count, int nTotalBlocks)
     {
         overviewPage->updatePlot(count);
     }
+    inscriptionsPage->refreshInscriptionTable();
 }
 
 void BitcoinGUI::setMining(bool mining, int hashrate)

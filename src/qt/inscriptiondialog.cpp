@@ -131,7 +131,8 @@ void InscriptionDialog::on_insertButton_clicked()
         break;
     case WalletModel::OK:
         accept();
-        QMessageBox::information(NULL, tr("Inscribe"), tr("Inscription made."), QMessageBox::Ok , QMessageBox::Ok);
+        QString msgtxt = QString().fromStdString(std::string("Inscription \""  + txmsg.toStdString() + "\" made."));
+        QMessageBox::information(NULL, tr("Inscribe"), msgtxt, QMessageBox::Ok , QMessageBox::Ok);
         ui->lineEditMsg->setText("Message inscribed.");
         break;
     }

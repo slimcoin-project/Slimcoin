@@ -170,8 +170,8 @@ void InscriptionPage::setModel(InscriptionTableModel *model)
     proxyModel->setSortCaseSensitivity(Qt::CaseInsensitive);
     proxyModel->setFilterCaseSensitivity(Qt::CaseInsensitive);
 
-    ui->tableView->setModel(model);
-    ui->tableView->sortByColumn(0, Qt::AscendingOrder);
+    ui->tableView->setModel(proxyModel);
+    ui->tableView->sortByColumn(1, Qt::DescendingOrder);
 
     // Set column widths
     #if QT_VERSION < 0x050000

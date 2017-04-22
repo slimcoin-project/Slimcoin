@@ -64,9 +64,6 @@ protected:
     void dropEvent(QDropEvent *event);
 
 private:
-    /*
-    QSqlDatabase db;
-    */
     ClientModel *clientModel;
     WalletModel *walletModel;
     QStackedWidget *centralWidget;

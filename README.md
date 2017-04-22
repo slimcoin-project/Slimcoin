@@ -306,7 +306,7 @@ Previously undocumented:
 
 -checkpointkey=<key>    Checkpoint master private key, triggers generation of a sync checkpoint
 -limitfreerelay=<n>     Limits relay rate, <n> is in units of thousand-bytes-per-minute
--fastindex              Skip certain time-consuming (presumably, optional) checks (default: 1)
+-fastindex              Skip certain time-consuming steps (default: 1)
 -loadblockindextest     Load the block index and print the block tree (default: 0)
 -printblockindex        Print the block tree (default: 0)
 -printtodebugger        WIN32-specific, print to (presumably) a Windows system debug app (default: 0)
