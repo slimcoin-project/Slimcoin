@@ -1,31 +1,40 @@
-#!/usr/bin/env python
+#!/usr/bin/env python3
 #
 # linearize-hashes.py:  List blocks in a linear, no-fork version of the chain.
 #
-# Copyright (c) 2013-2014 The Bitcoin Core developers
+# Copyright (c) 2013-2016 The Bitcoin Core developers
 # Distributed under the MIT software license, see the accompanying
 # file COPYING or http://www.opensource.org/licenses/mit-license.php.
 #
-
-from __future__ import print_function
+import unittest
+import os
+from datetime import datetime, timedelta, tzinfo
+import binascii
 import json
-import struct
+import subprocess
 import re
+import requests
+import time
+from rdflib import (
+    Namespace,
+    URIRef,
+    Graph,
+    Literal,
+)
+from rdflib.namespace import RDF, XSD, SKOS  # , RDFS
 import base64
-try:
-    import httplib
-except:
-    import http.client as httplib
 import sys
 
 settings = dict(
     rpcuser="slimcoinrpcuser",
     rpcpassword="cMEFwMQrbaR7hNqzj2nEBoQ5hGteA7HB5qJsuQdiFRs",
     host="127.0.0.1",
-    port=41683,
-
+    port=41682,
+    rpcport=41683,
     # bootstrap.dat hashlist settings (linearize-hashes)
-    max_height=851345,
+    # max_height=960000,
+    min_height=1,
+    max_height=1000,
 
     # bootstrap.dat input/output settings (linearize-data)
     netmagic=0x6e8b92a5,
@@ -40,99 +49,61 @@ settings = dict(
 )
 
 
-class BitcoinRPC:
-    def __init__(self, host, port, username, password):
-        authpair = bytes("{}:{}".format(username, password))
-        self.authhdr = bytes("Basic {}".format(base64.b64encode(authpair)))
-        self.conn = httplib.HTTPConnection(host, port, False, 30)
-
-    def execute(self, obj):
-        self.conn.request('POST', '/', json.dumps(obj),
-                          {'Authorization': self.authhdr,
-                          'Content-type': 'application/json'})
-
-        resp = self.conn.getresponse()
-        if resp is None:
-            print("JSON-RPC: no response", file=sys.stderr)
-            return None
-
-        body = resp.read()
-        resp_obj = json.loads(body)
-        return resp_obj
-
-    @staticmethod
-    def build_request(idx, method, params):
-        obj = {
-            'version': '1.1',
-            'method': method,
-            'id': idx}
-        if params is None:
-            obj['params'] = []
-        else:
-            obj['params'] = params
-        return obj
-
-    @staticmethod
-    def response_is_error(resp_obj):
-        return 'error' in resp_obj and resp_obj['error'] is not None
+# Switch endian-ness
+def hex_switchEndian(s):
+    """ Switches the endianness of a hex string (in pairs of hex chars) """
+    pairList = [s[i:i + 2].encode() for i in range(0, len(s), 2)]
+    return b''.join(pairList[::-1]).decode()
 
 
-def get_block_hashes(settings, max_blocks_per_call=10000):
-    rpc = BitcoinRPC(settings['host'], settings['port'],
-                     settings['rpcuser'], settings['rpcpassword'])
+class RPCHost(object):
+    def __init__(self, url):
+        self._session = requests.Session()
+        self._url = url
+        self._headers = {'content-type': 'application/json'}
 
-    height = settings['min_height']
-    while height < settings['max_height'] + 1:
-        num_blocks = min(settings['max_height'] + 1 - height, max_blocks_per_call)
-        batch = []
-        for x in range(num_blocks):
-            batch.append(rpc.build_request(x, 'getblockhash', [height + x]))
+    def call(self, rpcMethod, *params):
+        payload = json.dumps({"method": rpcMethod, "params": list(params), "jsonrpc": "2.0"})
+        tries = 10
+        hadConnectionFailures = False
+        while True:
+            # print("{url} {headers} {data}".format(url=self._url, headers=self._headers, data=payload))
+            try:
+                response = self._session.get(self._url, headers=self._headers, data=payload)
+            except requests.exceptions.ConnectionError:
+                tries -= 1
+                if tries == 0:
+                    raise Exception('Failed to connect for remote procedure call.')
+                hadConnectionFailures = True
+                print("Couldn't connect for remote procedure call, will sleep for ten seconds and then try again ({} more tries)".format(tries))
+                time.sleep(10)
+            else:
+                if hadConnectionFailures:
+                    print('Connected for remote procedure call after retry.')
+                break
+        if response.status_code not in (200, 500):
+            raise Exception('RPC connection failure: ' + str(response.status_code) + ' ' + response.reason)
+        responseJSON = response.json()
+        if 'error' in responseJSON and responseJSON['error'] is not None:
+            raise Exception('Error in RPC call: ' + str(responseJSON['error']))
+        return responseJSON['result']
 
-        reply = rpc.execute(batch)
-        print(reply)
-        for x, resp_obj in enumerate(reply):
-            if rpc.response_is_error(resp_obj):
-                print('JSON-RPC: error at height', height + x, ': ', resp_obj['error'], file=sys.stderr)
-                exit(1)
-            assert(resp_obj['id'] == x)  # assume replies are in-sequence
-            print(resp_obj['result'])
 
-        height += num_blocks
+class TestMyView(unittest.TestCase):
+    def setUp(self):
+        self.serverurl = 'http://{}:{}@localhost:{}/'.format(
+            settings.get('rpcuser'), settings.get('rpcpassword'), settings.get('rpcport'))
+        self.amerpc = RPCHost(self.serverurl)
 
-if __name__ == '__main__':
-    # if len(sys.argv) != 2:
-    #     print("Usage: linearize-hashes.py CONFIG-FILE")
-    #     sys.exit(1)
+    def test_get_block_hashes(self):
+        nheight = self.amerpc.call('getblockcount')
+        for start in range(0, nheight, 10000):
+            print(start)
+            with open('/www/mm/mm/data/slm/blockhash-{}-{}.txt'.format(start, start + 10000), 'w') as fp:
+                for height in range(start, 10000):
+                    res = hex_switchEndian(self.amerpc.call('getblockhash', height))
+                    fp.write("{}\n".format(res))
+                fp.close()
 
-    # f = open(sys.argv[1])
-    # for line in f:
-    #     # skip comment lines
-    #     m = re.search('^\s*#', line)
-    #     if m:
-    #         continue
-
-    #     # parse key=value lines
-    #     m = re.search('^(\w+)\s*=\s*(\S.*)$', line)
-    #     if m is None:
-    #         continue
-    #     settings[m.group(1)] = m.group(2)
-    # f.close()
-
-    if 'host' not in settings:
-        settings['host'] = '127.0.0.1'
-    if 'port' not in settings:
-        settings['port'] = 41683
-    if 'min_height' not in settings:
-        settings['min_height'] = 0
-    if 'max_height' not in settings:
-        settings['max_height'] = 851345
-    if 'rpcuser' not in settings or 'rpcpassword' not in settings:
-        print("Missing username and/or password in cfg file", file=stderr)
-        sys.exit(1)
-
-    settings['port'] = int(settings['port'])
-    settings['min_height'] = int(settings['min_height'])
-    settings['max_height'] = int(settings['max_height'])
-
-    get_block_hashes(settings)
-
+if __name__ == "__main__":
+    unittest.main()
