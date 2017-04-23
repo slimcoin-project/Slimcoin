@@ -54,7 +54,7 @@ public:
         QDateTime inscription_date = QDateTime::currentDateTime();
 
         std::string inscription = vTxResults[0].first;
-        inscription_date.setSecsSinceEpoch((qint64)vTxResults[0].second);
+        inscription_date.setMSecsSinceEpoch((qint64)vTxResults[0].second*1000);
 
         cachedInscriptionTable.append(
             InscriptionTableEntry(
@@ -71,7 +71,7 @@ public:
 
         for(std::vector<std::pair<std::string, int> >::size_type i = 0; i != vTxResults.size(); i++) {
             std::string inscription = vTxResults[i].first;
-            inscription_date.setSecsSinceEpoch((qint64)vTxResults[i].second);
+            inscription_date.setMSecsSinceEpoch((qint64)vTxResults[i].second*1000);
             cachedInscriptionTable.append(
                 InscriptionTableEntry(
                     QString::fromStdString(inscription),
@@ -88,7 +88,7 @@ public:
 
         for(std::vector<std::pair<std::string, int> >::size_type i = 0; i != vTxResults.size(); i++) {
             std::string inscription = vTxResults[i].first;
-            inscription_date.setSecsSinceEpoch((qint64)vTxResults[i].second);
+            inscription_date.setMSecsSinceEpoch((qint64)vTxResults[i].second*1000);
             cachedInscriptionTable.append(
                 InscriptionTableEntry(
                     QString::fromStdString(inscription),
@@ -189,7 +189,7 @@ QVariant InscriptionTableModel::data(const QModelIndex &index, int role) const
         case Inscription:
             return rec->inscription;
         case Date:
-            return rec->date;
+            return GUIUtil::dateTimeStr(rec->date);
         }
     }
     else if(role == InscriptionRole)
