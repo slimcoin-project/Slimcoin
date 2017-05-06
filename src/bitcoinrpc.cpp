@@ -590,7 +590,7 @@ Value getpeerinfo(const Array& params, bool fHelp)
         Object obj;
 
         obj.push_back(Pair("addr", stats.addrName));
-        obj.push_back(Pair("services", strprintf("%08x", stats.nServices)));
+        obj.push_back(Pair("services", strprintf("%08llx", stats.nServices)));
         obj.push_back(Pair("lastsend", (boost::int64_t)stats.nLastSend));
         obj.push_back(Pair("lastrecv", (boost::int64_t)stats.nLastRecv));
         obj.push_back(Pair("conntime", (boost::int64_t)stats.nTimeConnected));
@@ -1277,7 +1277,7 @@ Value calcburnhash(const Array& params, bool fHelp)
     output += "Smallest Hash is:   " + smallestHash.GetHex() + "\n";
     output += "By transaction id:  " + smallestWTx.GetHash().GetHex() + "\n";
     output += "Target:             " + CBigNum().SetCompact(pindexBest->nBurnBits).getuint256().GetHex() + "\n";
-    output += strprintf("nBurnBits=%08x, nEffectiveBurnCoins=%u (formatted %s)",
+    output += strprintf("nBurnBits=%08x, nEffectiveBurnCoins=%llu (formatted %s)",
                                             pindexBest->nBurnBits, pindexBest->nEffectiveBurnCoins, 
                                             FormatMoney(pindexBest->nEffectiveBurnCoins).c_str());
 

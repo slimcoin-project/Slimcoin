@@ -28,7 +28,7 @@ void OptionsModel::Init()
     int64 nreservebalance = 0;
     if (mapArgs.count("-reservebalance") && !ParseMoney(mapArgs["-reservebalance"], nreservebalance))
         nreservebalance = 1000000; // Failsafe
-    printf("nreservebalance read as: %" PRI64u, ".\n", nreservebalance);
+    printf("nreservebalance read as: %llu.\n", nreservebalance);
     // These are shared with core bitcoin; we want
     // command-line options to override the GUI settings:
     if(settings.contains("fUseUPnP"))
