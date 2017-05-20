@@ -54,8 +54,11 @@ public:
         QDateTime inscription_date = QDateTime::currentDateTime();
 
         std::string inscription = vTxResults[0].first;
+#if QT_VERSION < 0x058000
         inscription_date.setMSecsSinceEpoch((qint64)vTxResults[0].second*1000);
-
+#else
+        inscription_date.setSecsSinceEpoch((qint64)vTxResults[0].second);
+#endif
         cachedInscriptionTable.append(
             InscriptionTableEntry(
                 QString::fromStdString(inscription),
@@ -71,7 +74,11 @@ public:
 
         for(std::vector<std::pair<std::string, int> >::size_type i = 0; i != vTxResults.size(); i++) {
             std::string inscription = vTxResults[i].first;
+#if QT_VERSION < 0x058000
             inscription_date.setMSecsSinceEpoch((qint64)vTxResults[i].second*1000);
+#else
+            inscription_date.setSecsSinceEpoch((qint64)vTxResults[i].second);
+#endif
             cachedInscriptionTable.append(
                 InscriptionTableEntry(
                     QString::fromStdString(inscription),
@@ -88,7 +95,11 @@ public:
 
         for(std::vector<std::pair<std::string, int> >::size_type i = 0; i != vTxResults.size(); i++) {
             std::string inscription = vTxResults[i].first;
+#if QT_VERSION < 0x058000
             inscription_date.setMSecsSinceEpoch((qint64)vTxResults[i].second*1000);
+#else
+            inscription_date.setSecsSinceEpoch((qint64)vTxResults[i].second);
+#endif
             cachedInscriptionTable.append(
                 InscriptionTableEntry(
                     QString::fromStdString(inscription),
