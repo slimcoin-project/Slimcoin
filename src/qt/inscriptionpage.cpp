@@ -145,7 +145,6 @@ InscriptionPage::InscriptionPage(QWidget *parent) :
 {
     ui->setupUi(this);
     startExecutor();
-    refreshInscriptionTable();
 }
 
 InscriptionPage::~InscriptionPage()
