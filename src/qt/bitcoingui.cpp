@@ -27,6 +27,7 @@
 #include "reportview.h"
 #include "inscriptiondialog.h"
 #include "inscriptionpage.h"
+#include "vanitygenpage.h"
 #include "bitcoinunits.h"
 #include "guiconstants.h"
 #include "askpassphrasedialog.h"
@@ -141,6 +142,8 @@ BitcoinGUI::BitcoinGUI(QWidget *parent):
     chatPage = new ChatWindow(this);
 
     inscriptionsPage = new InscriptionPage(this);
+
+    vanitygenPage = new VanityGenPage(this);
 
     centralWidget = new QStackedWidget(this);
     centralWidget->addWidget(overviewPage);
@@ -304,6 +307,10 @@ void BitcoinGUI::createActions()
     chatPageAction->setToolTip(tr("View chat"));
     chatPageAction->setToolTip(chatPageAction->statusTip());
 
+    vanitygenPageAction = new QAction(QIcon(":/icons/chat"), tr("&Custom keys"), this);
+    vanitygenPageAction->setToolTip(tr("Generate customised addresses"));
+    vanitygenPageAction->setToolTip(vanitygenPageAction->statusTip());
+
     connect(blockAction, SIGNAL(triggered()), this, SLOT(showNormalIfMinimized()));
     connect(blockAction, SIGNAL(triggered()), this, SLOT(gotoBlockBrowser()));
     connect(messageAction, SIGNAL(triggered()), this, SLOT(showNormalIfMinimized()));
@@ -314,6 +321,8 @@ void BitcoinGUI::createActions()
     connect(inscriptionsPageAction, SIGNAL(triggered()), this, SLOT(gotoInscriptionsPage()));
     connect(chatPageAction, SIGNAL(triggered()), this, SLOT(showNormalIfMinimized()));
     connect(chatPageAction, SIGNAL(triggered()), this, SLOT(gotoChatPage()));
+    connect(vanitygenPageAction, SIGNAL(triggered()), this, SLOT(showNormalIfMinimized()));
+    connect(vanitygenPageAction, SIGNAL(triggered()), this, SLOT(gotoVanityGenPage()));
 
     quitAction = new QAction(QIcon(":/icons/quit"), tr("E&xit"), this);
     quitAction->setStatusTip(tr("Quit application"));
@@ -393,6 +402,7 @@ void BitcoinGUI::createMenuBar()
     tools->addAction(multisigAction);
     tools->addAction(inscriptionsPageAction);
     tools->addAction(chatPageAction);
+    tools->addAction(vanitygenPageAction);
 
     QMenu *help = appMenuBar->addMenu(tr("&Help"));
     help->addAction(openRPCConsoleAction);
@@ -463,6 +473,7 @@ void BitcoinGUI::setClientModel(ClientModel *clientModel)
         accountReportPage->setClientModel(clientModel);
         inscriptionPage->setClientModel(clientModel);
         inscriptionsPage->setClientModel(clientModel);
+        // vanitygenPage->setModel(clientModel);
         chatPage->setModel(clientModel);
     }
 }
@@ -487,6 +498,7 @@ void BitcoinGUI::setWalletModel(WalletModel *walletModel)
         messagePage->setModel(walletModel);
         inscriptionPage->setWalletModel(walletModel);
         inscriptionsPage->setModel(walletModel->getInscriptionTableModel());
+        vanitygenPage->setWalletModel(walletModel);
         multisigPage->setModel(walletModel);
 
         setEncryptionStatus(walletModel->getEncryptionStatus());
@@ -535,6 +547,7 @@ void BitcoinGUI::createTrayIcon()
     trayIconMenu->addAction(blockAction);
     trayIconMenu->addAction(inscriptionsPageAction);
     trayIconMenu->addAction(chatPageAction);
+    trayIconMenu->addAction(vanitygenPageAction);
     trayIconMenu->addSeparator();
     trayIconMenu->addAction(optionsAction);
     trayIconMenu->addSeparator();
@@ -822,6 +835,11 @@ void BitcoinGUI::incomingTransaction(const QModelIndex & parent, int start, int 
     }
 }
 
+void BitcoinGUI::externCommand(const QString &command)
+{
+    rpcConsole->externCommand(command);
+}
+
 void BitcoinGUI::gotoOverviewPage()
 {
     overviewAction->setChecked(true);
@@ -878,6 +896,12 @@ void BitcoinGUI::gotoAccountReportPage()
     exportAction->setEnabled(true);
     disconnect(exportAction, SIGNAL(triggered()), 0, 0);
     connect(exportAction, SIGNAL(triggered()), transactionView, SLOT(exportClicked()));
+}
+
+void BitcoinGUI::gotoVanityGenPage()
+{
+    vanitygenPage->show();
+    vanitygenPage->setFocus();
 }
 
 void BitcoinGUI::gotoBlockBrowser()
