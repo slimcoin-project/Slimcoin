@@ -3130,6 +3130,47 @@ Value makekeypair(const Array& params, bool fHelp)
     return result;
 }
 
+Value dumpbootstrap(const Array& params, bool fHelp)
+{
+    if (fHelp || params.size() < 1 || params.size() > 2)
+        throw runtime_error(
+            "dumpbootstrap <destination>\n"
+            "Creates a bootstrap format block dump of the blockchain in destination, which can be a directory or a path with filename.");
+
+    string strDest = params[0].get_str();
+    int nEndBlock = nBestHeight;
+    int nStartBlock = 0;
+
+    boost::filesystem::path pathDest(strDest);
+    if (boost::filesystem::is_directory(pathDest))
+        pathDest /= "bootstrap.dat";
+
+    try {
+        FILE* file = fopen(pathDest.string().c_str(), "wb");
+        if (!file)
+            throw JSONRPCError(-1, "Error: Could not open bootstrap file for writing.");
+
+        CAutoFile fileout = CAutoFile(file, SER_DISK, CLIENT_VERSION);
+        if (!fileout)
+            throw JSONRPCError(-1, "Error: Could not open bootstrap file for writing.");
+
+        unsigned char pchMessageStart[4];
+        GetMessageStart(pchMessageStart, true);
+
+        for (int nHeight = nStartBlock; nHeight <= nEndBlock; nHeight++)
+        {
+            CBlock block;
+            CBlockIndex* pblockindex = FindBlockByHeight(nHeight);
+            block.ReadFromDisk(pblockindex, true);
+            fileout << FLATDATA(pchMessageStart) << fileout.GetSerializeSize(block) << block;
+        }
+    } catch(const boost::filesystem::filesystem_error &e) {
+        throw JSONRPCError(-1, "Error: Bootstrap dump failed!");
+    }
+
+    return "bootstrap file created";
+}
+
 extern CCriticalSection cs_mapAlerts;
 extern map<uint256, CAlert> mapAlerts;
 
@@ -3833,6 +3874,7 @@ static const CRPCCommand vRPCCommands[] =
     { "reservebalance",           &reservebalance,         false  },
     { "checkwallet",              &checkwallet,            false  },
     { "repairwallet",             &repairwallet,           false  },
+    { "dumpbootstrap",            &dumpbootstrap,          false  },
     { "makekeypair",              &makekeypair,            false  },
     { "sendalert",                &sendalert,              false  },
     { "listunspent",              &listunspent,            false  },
