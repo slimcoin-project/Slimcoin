@@ -3099,13 +3099,14 @@ Value getsubsidy(const Array& params, bool fHelp)
     return (boost::int64_t)GetProofOfWorkReward(pblock->nBits);
 }
 
+/*
 // ppcoin: make a public-private key pair
 Value makekeypair(const Array& params, bool fHelp)
 {
     if (fHelp || params.size() > 1)
         throw runtime_error(
             "makekeypair [prefix]\n"
-            "Make a public/private key pair.\n"
+            "Make a public/private ECC key pair.\n"
             "[prefix] is optional preferred prefix for the public key.\n");
 
     string strPrefix = "";
@@ -3128,6 +3129,142 @@ Value makekeypair(const Array& params, bool fHelp)
     result.push_back(Pair("PrivateKey", HexStr<CPrivKey::iterator>(vchPrivKey.begin(), vchPrivKey.end())));
     result.push_back(Pair("PublicKey", HexStr(key.GetPubKey().Raw())));
     return result;
+}
+*/
+
+// ppcoin: make a public-private key pair
+Value makekeypair(const Array& params, bool fHelp)
+{
+    if (fHelp || params.size() > 2)
+        throw runtime_error(
+            "makekeypair [prefix] [rounds]\n"
+            "Make a public/private ECC key pair.\n"
+            "[prefix] is optional preferred prefix for the public key.\n"
+            "[rounds] is optional number of rounds of hashing, default 10000.\n");
+
+    string strPrefix = "";
+    int nRounds = 10000;
+
+    if (params.size() > 0)
+        strPrefix = params[0].get_str();
+ 
+    if (params.size() > 1) {
+        int rounds = params[1].get_int();
+        if (rounds > nRounds)
+            nRounds = rounds;
+    }
+
+    Object result;
+
+    CKey key;
+    int nCount = 0;
+    CPubKey vchPubKey;
+    CSecret secret;
+    CPrivKey privkey;
+    vector<unsigned char> sec;
+    do
+    {
+        CKey testkey = CKey();
+        testkey.MakeNewKey(true);
+        privkey = testkey.GetPrivKey();
+
+        secret.resize(32);
+        memcpy(&secret[0], &privkey, 32);
+
+        sec.resize(32);
+        memcpy(&sec[0], &secret[0], 32);
+
+        key.SetSecret(secret, true);
+        vchPubKey = key.GetPubKey();
+
+        nCount++;
+
+    } while (nCount < nRounds && strPrefix != CBitcoinAddress(vchPubKey.GetID()).ToString().substr(0, strPrefix.size()));
+
+    if (strPrefix != CBitcoinAddress(vchPubKey.GetID()).ToString().substr(0, strPrefix.size()))
+    {
+        vector<unsigned char> uxvchPubKey = vchPubKey.Raw();
+        result.push_back(Pair("result: ", "Failed"));
+        result.push_back(Pair("pubkey (hex): ", HexStr(uxvchPubKey.begin(), uxvchPubKey.end()).c_str()));
+        result.push_back(Pair("address (base58): ", CBitcoinAddress(vchPubKey.GetID()).ToString().c_str()));
+
+        result.push_back(Pair("private key: ", HexStr<CPrivKey::iterator>(privkey.begin(), privkey.end())));
+        result.push_back(Pair("secret (hex): ", HexStr(sec).c_str()));
+
+        CBitcoinSecret bsecret;
+        bsecret.SetSecret(secret, true);
+        result.push_back(Pair("compressed secret (base58): ", bsecret.ToString().c_str()));
+        return result;
+    }
+    else {
+        vector<unsigned char> uxvchPubKey = vchPubKey.Raw();
+        result.push_back(Pair("pubkey (hex): ", HexStr(uxvchPubKey.begin(), uxvchPubKey.end()).c_str()));
+        result.push_back(Pair("address (base58): ", CBitcoinAddress(vchPubKey.GetID()).ToString().c_str()));
+
+        result.push_back(Pair("private key: ", HexStr<CPrivKey::iterator>(privkey.begin(), privkey.end())));
+        result.push_back(Pair("secret (hex): ", HexStr(sec).c_str()));
+
+        CBitcoinSecret bsecret;
+        bsecret.SetSecret(secret, true);
+        result.push_back(Pair("compressed secret (base58): ", bsecret.ToString().c_str()));
+
+        key.SetSecret(secret, false);
+        vchPubKey = key.GetPubKey();
+
+        vector<unsigned char> cxvchPubKey = vchPubKey.Raw();
+        result.push_back(Pair("pubkey (hex): ", HexStr(cxvchPubKey.begin(), cxvchPubKey.end()).c_str()));
+        result.push_back(Pair("address (base58): ", CBitcoinAddress(vchPubKey.GetID()).ToString().c_str()));
+
+        result.push_back(Pair("private key: ", HexStr<CPrivKey::iterator>(privkey.begin(), privkey.end())));
+        result.push_back(Pair("secret (hex): ", HexStr(sec).c_str()));
+
+        bsecret.SetSecret(secret, false);
+        result.push_back(Pair("uncompressed secret (base58): ", bsecret.ToString().c_str()));
+
+        return result;
+    }
+    return Value::null;
+}
+
+Value dumpbootstrap(const Array& params, bool fHelp)
+{
+    if (fHelp || params.size() < 1 || params.size() > 2)
+        throw runtime_error(
+            "dumpbootstrap <destination>\n"
+            "Creates a bootstrap format block dump of the blockchain in destination, which can be a directory or a path with filename.");
+
+    string strDest = params[0].get_str();
+    int nEndBlock = nBestHeight;
+    int nStartBlock = 0;
+
+    boost::filesystem::path pathDest(strDest);
+    if (boost::filesystem::is_directory(pathDest))
+        pathDest /= "bootstrap.dat";
+
+    try {
+        FILE* file = fopen(pathDest.string().c_str(), "wb");
+        if (!file)
+            throw JSONRPCError(-1, "Error: Could not open bootstrap file for writing.");
+
+        CAutoFile fileout = CAutoFile(file, SER_DISK, CLIENT_VERSION);
+        if (!fileout)
+            throw JSONRPCError(-1, "Error: Could not open bootstrap file for writing.");
+
+        unsigned char pchMessageStart[4];
+        GetMessageStart(pchMessageStart, true);
+
+        for (int nHeight = nStartBlock; nHeight <= nEndBlock; nHeight++)
+        {
+            CBlock block;
+            CBlockIndex* pblockindex = FindBlockByHeight(nHeight);
+            block.ReadFromDisk(pblockindex, true);
+            fileout << FLATDATA(pchMessageStart) << fileout.GetSerializeSize(block) << block;
+        }
+    } catch(const boost::filesystem::filesystem_error &e) {
+        throw JSONRPCError(-1, "Error: Bootstrap dump failed!");
+    }
+
+    return "bootstrap file created";
 }
 
 Value dumpbootstrap(const Array& params, bool fHelp)
@@ -4490,6 +4627,7 @@ Array RPCConvertValues(const std::string &strMethod, const std::vector<std::stri
     // if (strMethod == "setgenerate"            && n > 1) ConvertTo<boost::int64_t>(params[1]);
     FORMAT_PARAM("setgenerate", 0, bool);
     FORMAT_PARAM("setgenerate", 1, boost::int64_t);
+    FORMAT_PARAM("makekeypair", 1, boost::int64_t);
     if (strMethod == "sendtoaddress"          && n > 1) ConvertTo<double>(params[1]);
     if (strMethod == "settxfee"               && n > 0) ConvertTo<double>(params[0]);
     if (strMethod == "getreceivedbyaddress"   && n > 1) ConvertTo<boost::int64_t>(params[1]);
