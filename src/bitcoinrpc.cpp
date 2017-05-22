@@ -3182,48 +3182,20 @@ Value makekeypair(const Array& params, bool fHelp)
     } while (nCount < nRounds && strPrefix != CBitcoinAddress(vchPubKey.GetID()).ToString().substr(0, strPrefix.size()));
 
     if (strPrefix != CBitcoinAddress(vchPubKey.GetID()).ToString().substr(0, strPrefix.size()))
-    {
-        vector<unsigned char> uxvchPubKey = vchPubKey.Raw();
-        result.push_back(Pair("result: ", "Failed"));
-        result.push_back(Pair("pubkey (hex): ", HexStr(uxvchPubKey.begin(), uxvchPubKey.end()).c_str()));
-        result.push_back(Pair("address (base58): ", CBitcoinAddress(vchPubKey.GetID()).ToString().c_str()));
+        return Value::null;
 
-        result.push_back(Pair("private key: ", HexStr<CPrivKey::iterator>(privkey.begin(), privkey.end())));
-        result.push_back(Pair("secret (hex): ", HexStr(sec).c_str()));
+    vector<unsigned char> xvchPubKey = vchPubKey.Raw();
+    result.push_back(Pair("private key: ", HexStr<CPrivKey::iterator>(privkey.begin(), privkey.end())));
+    result.push_back(Pair("secret (hex): ", HexStr(sec).c_str()));
 
-        CBitcoinSecret bsecret;
-        bsecret.SetSecret(secret, true);
-        result.push_back(Pair("compressed secret (base58): ", bsecret.ToString().c_str()));
-        return result;
-    }
-    else {
-        vector<unsigned char> uxvchPubKey = vchPubKey.Raw();
-        result.push_back(Pair("pubkey (hex): ", HexStr(uxvchPubKey.begin(), uxvchPubKey.end()).c_str()));
-        result.push_back(Pair("address (base58): ", CBitcoinAddress(vchPubKey.GetID()).ToString().c_str()));
+    CBitcoinSecret bsecret;
+    bsecret.SetSecret(secret, true);
+    result.push_back(Pair("secret (base58): ", bsecret.ToString().c_str()));
 
-        result.push_back(Pair("private key: ", HexStr<CPrivKey::iterator>(privkey.begin(), privkey.end())));
-        result.push_back(Pair("secret (hex): ", HexStr(sec).c_str()));
+    result.push_back(Pair("pubkey (hex): ", HexStr(xvchPubKey.begin(), xvchPubKey.end()).c_str()));
+    result.push_back(Pair("address (base58): ", CBitcoinAddress(vchPubKey.GetID()).ToString().c_str()));
 
-        CBitcoinSecret bsecret;
-        bsecret.SetSecret(secret, true);
-        result.push_back(Pair("compressed secret (base58): ", bsecret.ToString().c_str()));
-
-        key.SetSecret(secret, false);
-        vchPubKey = key.GetPubKey();
-
-        vector<unsigned char> cxvchPubKey = vchPubKey.Raw();
-        result.push_back(Pair("pubkey (hex): ", HexStr(cxvchPubKey.begin(), cxvchPubKey.end()).c_str()));
-        result.push_back(Pair("address (base58): ", CBitcoinAddress(vchPubKey.GetID()).ToString().c_str()));
-
-        result.push_back(Pair("private key: ", HexStr<CPrivKey::iterator>(privkey.begin(), privkey.end())));
-        result.push_back(Pair("secret (hex): ", HexStr(sec).c_str()));
-
-        bsecret.SetSecret(secret, false);
-        result.push_back(Pair("uncompressed secret (base58): ", bsecret.ToString().c_str()));
-
-        return result;
-    }
-    return Value::null;
+    return result;
 }
 
 Value dumpbootstrap(const Array& params, bool fHelp)
