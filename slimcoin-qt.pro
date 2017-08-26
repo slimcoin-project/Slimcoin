@@ -11,7 +11,7 @@ CONFIG += thread
 CONFIG += static
 }
 
-QT += network webkit widgets
+QT += network webkit widgets printsupport
 DEFINES += QT_GUI BOOST_THREAD_USE_LIB BOOST_SPIRIT_THREADSAFE
 greaterThan(QT_MAJOR_VERSION, 4) {
     QT += webkitwidgets
