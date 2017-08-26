@@ -149,3 +149,9 @@ disable screen reader functionality for Qt apps:
     sudo apt-get remove qt-at-spi
 
 .. _`launchpad bug 857790`: https://bugs.launchpad.net/ubuntu/+source/qt-at-spi/+bug/857790
+
+Qt5 compilation / missing modules
+=====================================
+
+When compiling with **Qt5** you'll might run into this error: **unknown module webkitwidgets*
+To fix it install the package via: `sudo apt-get install libqt5webkit5-dev`
