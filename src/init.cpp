@@ -32,6 +32,7 @@ using namespace std;
 using namespace boost;
 
 CWallet* pwalletMain;
+set<CBitcoinAddress> setStakeAddresses;
 
 //////////////////////////////////////////////////////////////////////////////
 //
@@ -549,6 +550,12 @@ bool AppInit2(int argc, char *argv[])
             printf("Signed checkpoint sucessfully, private key accepted\n");
     }
 
+    if (mapArgs.count("-stake")) // we only want to stake outputs at these addresses
+    { 
+        BOOST_FOREACH(std::string strAddr, mapMultiArgs["-stake"])
+            setStakeAddresses.insert(CBitcoinAddress(strAddr));
+    }
+
     //
     // Start the node
     //
@@ -646,6 +653,7 @@ std::string HelpMessage()
             "  -upgradewallet   \t  "   + _("Upgrade wallet to latest format") + "\n" +
             "  -keypool=<n>     \t  "   + _("Set key pool size to <n> (default: 100)") + "\n" +
             "  -rescan          \t  "   + _("Rescan the block chain for missing wallet transactions") + "\n" +
+            "  -stake=<addr> \t  "      + _("Stake only outputs at the specified address(es)") + "\n" +
             "  -checkblocks=<n> \t\t  " + _("How many blocks to check at startup (default: 2500, 0 = all)") + "\n" +
             "  -checklevel=<n>  \t\t  " + _("How thorough the block verification is (0-6, default: 1)") + "\n";
 

@@ -19,7 +19,8 @@
 
 using namespace std;
 
-
+extern set<CBitcoinAddress> setStakeAddresses;
+  
 //////////////////////////////////////////////////////////////////////////////
 //
 // mapWallet
@@ -1081,12 +1082,14 @@ void CWallet::AvailableCoins(unsigned int nSpendTime, vector<COutput>& vCoins, b
             if ((pcoin->IsCoinBase() || pcoin->IsCoinStake()) && pcoin->GetBlocksToMaturity() > 0)
                 continue;
 
-            for (int i = 0; i < pcoin->vout.size(); i++)
+            CTxDestination address;
+            for (unsigned int i = 0; i < pcoin->vout.size(); i++)
             {
                 if (pcoin->nTime > nSpendTime)
                     continue;  // ppcoin: timestamp must not exceed spend time
 
-                if (!(pcoin->IsSpent(i)) && IsMine(pcoin->vout[i]) && pcoin->vout[i].nValue > 0)
+                if (!(pcoin->IsSpent(i)) && IsMine(pcoin->vout[i]) && pcoin->vout[i].nValue > 0 &&
+                   (!setStakeAddresses.size() || (ExtractDestination(pcoin->vout[i].scriptPubKey, address) && setStakeAddresses.count(address))))
                     vCoins.push_back(COutput(pcoin, i, pcoin->GetDepthInMainChain()));
             }
         }
