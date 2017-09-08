@@ -354,25 +354,53 @@ void TxToJSON(const CTransaction& tx, Object& txdata)
     txdata.push_back(Pair("vout", vouts));
 }
 
+/*
+  {
+    "@id": "http://purl.org/net/bel-epa/ccy#C12ab2d1d006d48f33d4a424b716b2d7680f71235de83307d0fe56a718257c457",
+    "@type": [ "http://purl.org/net/bel-epa/ccy#Block" ],
+    "http://purl.org/net/bel-epa/ccy#difficulty": [{"@type": "http://www.w3.org/2001/XMLSchema#decimal", "@value": "0.03124954"}],
+    "http://purl.org/net/bel-epa/ccy#flags": [{"@value": "proof-of-stake"}],
+    "http://purl.org/net/bel-epa/ccy#height": [{"@value": 556100}],
+    "http://purl.org/net/bel-epa/ccy#merkleroot": [{"@type": "http://www.w3.org/2001/XMLSchema#hexBinary", "@value": "1887d6e254448fea88ed77b84e9336910f2b1baef5a8e182cc265625f6175379"}],
+    "http://purl.org/net/bel-epa/ccy#mint": [{"@type": "http://www.w3.org/2001/XMLSchema#decimal", "@value": "0.775923"}],
+    "http://purl.org/net/bel-epa/ccy#nextblockhash": [{"@id": "http://purl.org/net/bel-epa/ccy#C0000001ead83577b254c3812c8072806d549e1572b435fc6a5be021839cf5082"}],
+    "http://purl.org/net/bel-epa/ccy#previousblockhash": [{"@id": "http://purl.org/net/bel-epa/ccy#C0000004770bd40c11d827ea5d437298be84e4ea2fece9495ff96a899479dd4b4"}],
+    "http://purl.org/net/bel-epa/ccy#size": [{"@value": 544}],
+    "http://purl.org/net/bel-epa/ccy#time": [{"@value": 1452318302}]
+  }
+*/
 Object blockToJSON(const CBlock& block, const CBlockIndex* blockindex, bool fTxInfo, bool fTxDetails)
 {
     Object result;
     result.push_back(Pair("hash", block.GetHash().GetHex()));
     result.push_back(Pair("size", (int)::GetSerializeSize(block, SER_NETWORK, PROTOCOL_VERSION)));
+    // "http://purl.org/net/bel-epa/ccy#size": [{"@value": "{}"}],
     result.push_back(Pair("height", blockindex->nHeight));
+    // "http://purl.org/net/bel-epa/ccy#height": [{"@value": "{blockindex->nHeight}"}],
     result.push_back(Pair("version", block.nVersion));
+    // "http://purl.org/net/bel-epa/ccy#version": [{"@value": "{block.nVersion}"}],
     result.push_back(Pair("merkleroot", block.hashMerkleRoot.GetHex()));
+    // "http://purl.org/net/bel-epa/ccy#merkelroot": [{"@type": "http://www.w3.org/2001/XMLSchema#hexBinary", "@value": "{block.hashMerkleRoot.GetHex()}"}],
     result.push_back(Pair("time", DateTimeStrFormat(block.GetBlockTime())));
+    // "http://purl.org/net/bel-epa/ccy#time": [{"@value": "{DateTimeStrFormat(block.GetBlockTime())}"}],
     result.push_back(Pair("nonce", (boost::uint64_t)block.nNonce));
+    // "http://purl.org/net/bel-epa/ccy#nonce": [{"@value": "{(boost::uint64_t)block.nNonce)}"}],
     result.push_back(Pair("bits", HexBits(block.nBits)));
+    // "http://purl.org/net/bel-epa/ccy#bits": [{"@type": "http://www.w3.org/2001/XMLSchema#hexBinary", "@value": "{HexBits(block.nBits)}"}],
     result.push_back(Pair("difficulty", GetDifficulty(blockindex)));
+    // "http://purl.org/net/bel-epa/ccy#difficulty": [{"@type": "http://www.w3.org/2001/XMLSchema#decimal", "@value": "{GetDifficulty(blockindex)}"}],
     result.push_back(Pair("mint", ValueFromAmount(blockindex->nMint)));
+    // "http://purl.org/net/bel-epa/ccy#mint": [{"@type": "http://www.w3.org/2001/XMLSchema#decimal", "@value": "{ValueFromAmount(blockindex->nMint)}"}],
+    result.push_back(Pair("burnt", ValueFromAmount(blockindex->burnt)));
+    // "http://purl.org/net/bel-epa/ccy#burnt": [{"@type": "http://www.w3.org/2001/XMLSchema#decimal", "@value": "{ValueFromAmount(blockindex->nMint)}"}],
 
     if (blockindex->pprev)
         result.push_back(Pair("previousblockhash", blockindex->pprev->GetBlockHash().GetHex()));
+        // "http://purl.org/net/bel-epa/ccy#previousblockhash": [{"@id": "http://purl.org/net/bel-epa/ccy#C{blockindex->pnext->GetBlockHash().GetHex()}"}],
 
     if (blockindex->pnext)
         result.push_back(Pair("nextblockhash", blockindex->pnext->GetBlockHash().GetHex()));
+        // "http://purl.org/net/bel-epa/ccy#nextblockhash": [{"@id": "http://purl.org/net/bel-epa/ccy#C{blockindex->pnext->GetBlockHash().GetHex()}"}],
 
     {
         string flags, proofhash;
@@ -400,24 +428,34 @@ Object blockToJSON(const CBlock& block, const CBlockIndex* blockindex, bool fTxI
         }
   
         result.push_back(Pair("flags", flags));
+        // "http://purl.org/net/bel-epa/ccy#flags": [{"@value": "{flags}"}],
         result.push_back(Pair("proofhash", proofhash));
+        // "http://purl.org/net/bel-epa/ccy#proofhash": [{"@value": "{proofhash}"}],
     }
 
     result.push_back(Pair("entropybit", (int)blockindex->GetStakeEntropyBit()));
+        // "http://purl.org/net/bel-epa/ccy#entropybit": [{"@value": "{blockindex->GetStakeEntropyBit()}"}],
     result.push_back(Pair("modifier", strprintf("%016x", blockindex->nStakeModifier)));
+        // "http://purl.org/net/bel-epa/ccy#modifier": [{"@value": "{blockindex->nStakeModifier}"}],
     result.push_back(Pair("modifierchecksum", strprintf("%08x", blockindex->nStakeModifierChecksum)));
+        // "http://purl.org/net/bel-epa/ccy#modifierchecksum": [{"@value": "{blockindex->nStakeModifierChecksum}"}],
 
     //PoB details
     if (blockindex->IsProofOfBurn())
     {
         result.push_back(Pair("burnBlkHeight", blockindex->burnBlkHeight));
+        // "http://purl.org/net/bel-epa/ccy#burnblkheight": [{"@value": "{blockindex->burnBlkHeight}"}],
         result.push_back(Pair("burnCTx", blockindex->burnCTx));
+        // "http://purl.org/net/bel-epa/ccy#burnctx": [{"@value": "{blockindex->burnCTx}"}],
         result.push_back(Pair("burnCTxOut", blockindex->burnCTxOut));
+        // "http://purl.org/net/bel-epa/ccy#burnctxout": [{"@value": "{blockindex->burnCTxOut}"}],
     }
 
     result.push_back(Pair("nEffectiveBurnCoins", strprintf("%d", blockindex->nEffectiveBurnCoins)));
+        // "http://purl.org/net/bel-epa/ccy#neffectiveburncoins": [{"@value": "{blockindex->nEffectiveBurnCoins}"}],
     result.push_back(Pair("Formatted nEffectiveBurnCoins", FormatMoney(blockindex->nEffectiveBurnCoins)));
     result.push_back(Pair("nBurnBits", HexBits(blockindex->nBurnBits)));
+        // "http://purl.org/net/bel-epa/ccy#nburnbits": [{"@value": "{HexBits(blockindex->nBurnBits}"}],
 
     Array txinfo;
     BOOST_FOREACH (const CTransaction& tx, block.vtx)
@@ -441,6 +479,7 @@ Object blockToJSON(const CBlock& block, const CBlockIndex* blockindex, bool fTxI
             txinfo.push_back(tx.GetHash().GetHex());
     }
     result.push_back(Pair("tx", txinfo));
+    // "http://purl.org/net/bel-epa/ccy#tx": [{"@id": "http://purl.org/net/bel-epa/ccy#C{txinfo}"],
     return result;
 }
 
@@ -3184,16 +3223,27 @@ Value makekeypair(const Array& params, bool fHelp)
     if (strPrefix != CBitcoinAddress(vchPubKey.GetID()).ToString().substr(0, strPrefix.size()))
         return Value::null;
 
-    vector<unsigned char> xvchPubKey = vchPubKey.Raw();
-    result.push_back(Pair("private key: ", HexStr<CPrivKey::iterator>(privkey.begin(), privkey.end())));
-    result.push_back(Pair("secret (hex): ", HexStr(sec).c_str()));
-
-    CBitcoinSecret bsecret;
-    bsecret.SetSecret(secret, true);
-    result.push_back(Pair("secret (base58): ", bsecret.ToString().c_str()));
-
-    result.push_back(Pair("pubkey (hex): ", HexStr(xvchPubKey.begin(), xvchPubKey.end()).c_str()));
-    result.push_back(Pair("address (base58): ", CBitcoinAddress(vchPubKey.GetID()).ToString().c_str()));
+    string fcompressed;
+    for(int nCompressed=0; nCompressed<2; nCompressed++)
+    {
+      bool fCompressed = nCompressed == 1;
+      if (fCompressed) {
+        fcompressed = "compressed";
+      }
+      else {
+        fcompressed = "uncompressed";
+      }
+      result.push_back(Pair("  * : ", fcompressed.c_str()));
+      CBitcoinSecret bsecret;
+      bsecret.SetSecret(secret, fCompressed);
+      result.push_back(Pair("    * secret (base58): ", bsecret.ToString().c_str()));
+      CKey key;
+      key.SetSecret(secret, fCompressed);
+      CPubKey vchPubKey = key.GetPubKey();
+      vector<unsigned char> xvchPubKey = vchPubKey.Raw();
+      result.push_back(Pair("    * pubkey (hex): ", HexStr(xvchPubKey.begin(), xvchPubKey.end()).c_str()));
+      result.push_back(Pair("    * address (base58): ", CBitcoinAddress(vchPubKey.GetID()).ToString().c_str()));
+    }
 
     return result;
 }
@@ -3237,6 +3287,45 @@ Value dumpbootstrap(const Array& params, bool fHelp)
     }
 
     return "bootstrap file created";
+}
+
+Value linearizehashes(const Array& params, bool fHelp)
+{
+    if (fHelp || params.size() > 1 || params.size() > 2)
+        throw runtime_error(
+            "linearizehashes <destination>\n"
+            "Creates a dump of linearized block hashes in destination, which can be a directory or a path with filename.");
+
+    string strDest = params[0].get_str();
+    int nEndBlock = nBestHeight;
+    int nStartBlock = 0;
+
+    boost::filesystem::path pathDest(strDest);
+    if (boost::filesystem::is_directory(pathDest))
+        pathDest /= "hashlist.txt";
+
+    try {
+        FILE* file = fopen(pathDest.string().c_str(), "w");
+        if (!file)
+            throw JSONRPCError(-1, "Error: Could not open output file for writing.");
+
+        CAutoFile fileout = CAutoFile(file, SER_DISK, CLIENT_VERSION);
+        if (!fileout)
+            throw JSONRPCError(-1, "Error: Could not open output file for writing.");
+
+        for (int nHeight = nStartBlock; nHeight <= nEndBlock; nHeight++)
+        {
+            CBlock block;
+            CBlockIndex* pblockindex = FindBlockByHeight(nHeight);
+            block.ReadFromDisk(pblockindex, true);
+            std::string blockhash = block.GetHash().ToString().c_str();
+            fileout << blockhash.append("\n");
+        }
+    } catch(const boost::filesystem::filesystem_error &e) {
+        throw JSONRPCError(-1, "Error: Linearized hash dump failed!");
+    }
+
+    return "file of linearized hashes created";
 }
 
 extern CCriticalSection cs_mapAlerts;
@@ -3943,6 +4032,7 @@ static const CRPCCommand vRPCCommands[] =
     { "checkwallet",              &checkwallet,            false  },
     { "repairwallet",             &repairwallet,           false  },
     { "dumpbootstrap",            &dumpbootstrap,          false  },
+    { "linearizehashes",          &linearizehashes,        false  },
     { "makekeypair",              &makekeypair,            false  },
     { "sendalert",                &sendalert,              false  },
     { "listunspent",              &listunspent,            false  },
