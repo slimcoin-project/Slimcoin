@@ -112,22 +112,22 @@ OverviewPage::OverviewPage(QWidget *parent) :
     ui->setupUi(this);
 
     // Balance: <balance>
-    ui->labelBalance->setFont(QFont("Monospace", -1, QFont::Bold));
-    ui->labelBalance->setToolTip(tr("Your current balance"));
-    ui->labelBalance->setTextInteractionFlags(Qt::TextSelectableByMouse|Qt::TextSelectableByKeyboard);
+    ui->labelBalanceText->setFont(QFont("Monospace", -1, QFont::Bold));
+    ui->labelBalanceText->setToolTip(tr("Your current balance"));
+    ui->labelBalanceText->setTextInteractionFlags(Qt::TextSelectableByMouse|Qt::TextSelectableByKeyboard);
 
     // slimcoin: stake: <stake>
-    ui->labelStake->setFont(QFont("Monospace", -1, QFont::Bold));
-    ui->labelStake->setToolTip(tr("Your current stake"));
-    ui->labelStake->setTextInteractionFlags(Qt::TextSelectableByMouse|Qt::TextSelectableByKeyboard);
+    ui->labelStakeText->setFont(QFont("Monospace", -1, QFont::Bold));
+    ui->labelStakeText->setToolTip(tr("Your current stake"));
+    ui->labelStakeText->setTextInteractionFlags(Qt::TextSelectableByMouse|Qt::TextSelectableByKeyboard);
 
     // Unconfirmed balance: <balance>
-    ui->labelUnconfirmed->setFont(QFont("Monospace", -1, QFont::Bold));
-    ui->labelUnconfirmed->setToolTip(tr("Total of transactions that have yet to be confirmed, and do not yet count toward the current balance"));
-    ui->labelUnconfirmed->setTextInteractionFlags(Qt::TextSelectableByMouse|Qt::TextSelectableByKeyboard);
+    ui->labelUnconfirmedText->setFont(QFont("Monospace", -1, QFont::Bold));
+    ui->labelUnconfirmedText->setToolTip(tr("Total of transactions that have yet to be confirmed, and do not yet count toward the current balance"));
+    ui->labelUnconfirmedText->setTextInteractionFlags(Qt::TextSelectableByMouse|Qt::TextSelectableByKeyboard);
 
-    ui->labelNumTransactions->setToolTip(tr("Total number of transactions in wallet"));
-    ui->labelReserveBalance->setToolTip(tr("Reserve balance of coins, excluded from staking."));
+    ui->labelNumTransactionsText->setToolTip(tr("Total number of transactions in wallet"));
+    ui->labelReserveBalanceText->setToolTip(tr("Reserve balance of coins, excluded from staking."));
 
     // Recent transactions
     ui->listTransactions->setStyleSheet("QListView { background:transparent }");
@@ -138,24 +138,24 @@ OverviewPage::OverviewPage(QWidget *parent) :
     ui->listTransactions->setAttribute(Qt::WA_MacShowFocusRect, false);
 
     // Net Burnt Coins: <total burnt coins>
-    ui->labelNetBurnCoins->setFont(QFont("Monospace", -1, QFont::Bold));
-    ui->labelNetBurnCoins->setToolTip(tr("The total amount of coins burned"));
-    ui->labelNetBurnCoins->setTextInteractionFlags(Qt::TextSelectableByMouse|Qt::TextSelectableByKeyboard);
+    ui->labelNetBurnCoinsText->setFont(QFont("Monospace", -1, QFont::Bold));
+    ui->labelNetBurnCoinsText->setToolTip(tr("The total amount of coins burned"));
+    ui->labelNetBurnCoinsText->setTextInteractionFlags(Qt::TextSelectableByMouse|Qt::TextSelectableByKeyboard);
 
     // Effective Burnt Coins: <active burnt coins>
-    ui->labelEffBurnCoins->setFont(QFont("Monospace", -1, QFont::Bold));
-    ui->labelEffBurnCoins->setToolTip(tr("Burnt coins that are currently active"));
-    ui->labelEffBurnCoins->setTextInteractionFlags(Qt::TextSelectableByMouse|Qt::TextSelectableByKeyboard);
+    ui->labelEffBurnCoinsText->setFont(QFont("Monospace", -1, QFont::Bold));
+    ui->labelEffBurnCoinsText->setToolTip(tr("Burnt coins that are currently active"));
+    ui->labelEffBurnCoinsText->setTextInteractionFlags(Qt::TextSelectableByMouse|Qt::TextSelectableByKeyboard);
 
     // Immature Burnt Coins: <immature burnt coins>
-    ui->labelImmBurnCoins->setFont(QFont("Monospace", -1, QFont::Bold));
-    ui->labelImmBurnCoins->setToolTip(tr("Burnt coins that are immature (not yet active)"));
-    ui->labelImmBurnCoins->setTextInteractionFlags(Qt::TextSelectableByMouse|Qt::TextSelectableByKeyboard);
+    ui->labelImmBurnCoinsText->setFont(QFont("Monospace", -1, QFont::Bold));
+    ui->labelImmBurnCoinsText->setToolTip(tr("Burnt coins that are immature (not yet active)"));
+    ui->labelImmBurnCoinsText->setTextInteractionFlags(Qt::TextSelectableByMouse|Qt::TextSelectableByKeyboard);
 
     // Immature Burnt Coins: <immature burnt coins>
-    ui->labelDecayBurnCoins->setFont(QFont("Monospace", -1, QFont::Bold));
-    ui->labelDecayBurnCoins->setToolTip(tr("Burnt coins are no longer active"));
-    ui->labelDecayBurnCoins->setTextInteractionFlags(Qt::TextSelectableByMouse|Qt::TextSelectableByKeyboard);
+    ui->labelDecayBurnCoinsText->setFont(QFont("Monospace", -1, QFont::Bold));
+    ui->labelDecayBurnCoinsText->setToolTip(tr("Burnt coins are no longer active"));
+    ui->labelDecayBurnCoinsText->setTextInteractionFlags(Qt::TextSelectableByMouse|Qt::TextSelectableByKeyboard);
 
     connect(ui->listTransactions, SIGNAL(clicked(QModelIndex)), this, SIGNAL(transactionClicked(QModelIndex)));
 
@@ -202,10 +202,10 @@ void OverviewPage::setBalance(qint64 balance, qint64 stake, qint64 unconfirmedBa
     currentStake = stake;
     currentUnconfirmedBalance = unconfirmedBalance;
     currentReserveBalance = reserveBalance;
-    ui->labelBalance->setText(BitcoinUnits::formatWithUnit(unit, balance));
-    ui->labelStake->setText(BitcoinUnits::formatWithUnit(unit, stake));
-    ui->labelUnconfirmed->setText(BitcoinUnits::formatWithUnit(unit, unconfirmedBalance));
-    ui->labelReserveBalance->setText(BitcoinUnits::formatWithUnit(unit, reserveBalance));
+    ui->labelBalanceText->setText(BitcoinUnits::formatWithUnit(unit, balance));
+    ui->labelStakeText->setText(BitcoinUnits::formatWithUnit(unit, stake));
+    ui->labelUnconfirmedText->setText(BitcoinUnits::formatWithUnit(unit, unconfirmedBalance));
+    ui->labelReserveBalanceText->setText(BitcoinUnits::formatWithUnit(unit, reserveBalance));
 
     //burn information
     currentNetBurnCoins = burnBalances.netBurnCoins;
@@ -213,10 +213,10 @@ void OverviewPage::setBalance(qint64 balance, qint64 stake, qint64 unconfirmedBa
     currentImmatureBurnCoins = burnBalances.nImmatureBurnCoins;
     currentDecayedBurnCoins = burnBalances.nDecayedBurnCoins;
 
-    ui->labelNetBurnCoins->setText(BitcoinUnits::formatWithUnit(unit, burnBalances.netBurnCoins));
-    ui->labelEffBurnCoins->setText(BitcoinUnits::formatWithUnit(unit, burnBalances.nEffectiveBurnCoins));
-    ui->labelImmBurnCoins->setText(BitcoinUnits::formatWithUnit(unit, burnBalances.nImmatureBurnCoins));
-    ui->labelDecayBurnCoins->setText(BitcoinUnits::formatWithUnit(unit, burnBalances.nDecayedBurnCoins));
+    ui->labelNetBurnCoinsText->setText(BitcoinUnits::formatWithUnit(unit, burnBalances.netBurnCoins));
+    ui->labelEffBurnCoinsText->setText(BitcoinUnits::formatWithUnit(unit, burnBalances.nEffectiveBurnCoins));
+    ui->labelImmBurnCoinsText->setText(BitcoinUnits::formatWithUnit(unit, burnBalances.nImmatureBurnCoins));
+    ui->labelDecayBurnCoinsText->setText(BitcoinUnits::formatWithUnit(unit, burnBalances.nDecayedBurnCoins));
 }
 
 void OverviewPage::setNumTransactions(int count)
@@ -227,7 +227,7 @@ void OverviewPage::setNumTransactions(int count)
 void OverviewPage::setReserveBalance(qint64 nreserveBalance)
 {
     int unit = model->getOptionsModel()->getDisplayUnit();
-    ui->labelReserveBalance->setText(BitcoinUnits::formatWithUnit(unit, nreserveBalance));
+    ui->labelReserveBalanceText->setText(BitcoinUnits::formatWithUnit(unit, nreserveBalance));
 }
 
 void OverviewPage::setClientModel(ClientModel *model)
