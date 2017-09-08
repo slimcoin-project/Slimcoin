@@ -391,8 +391,6 @@ Object blockToJSON(const CBlock& block, const CBlockIndex* blockindex, bool fTxI
     // "http://purl.org/net/bel-epa/ccy#difficulty": [{"@type": "http://www.w3.org/2001/XMLSchema#decimal", "@value": "{GetDifficulty(blockindex)}"}],
     result.push_back(Pair("mint", ValueFromAmount(blockindex->nMint)));
     // "http://purl.org/net/bel-epa/ccy#mint": [{"@type": "http://www.w3.org/2001/XMLSchema#decimal", "@value": "{ValueFromAmount(blockindex->nMint)}"}],
-    result.push_back(Pair("burnt", ValueFromAmount(blockindex->burnt)));
-    // "http://purl.org/net/bel-epa/ccy#burnt": [{"@type": "http://www.w3.org/2001/XMLSchema#decimal", "@value": "{ValueFromAmount(blockindex->nMint)}"}],
 
     if (blockindex->pprev)
         result.push_back(Pair("previousblockhash", blockindex->pprev->GetBlockHash().GetHex()));
