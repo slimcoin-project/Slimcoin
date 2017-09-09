@@ -54,7 +54,7 @@ private:
     bool fMinimizeOnClose;
 signals:
     void displayUnitChanged(int unit);
-    // void reserveBalanceChanged(qint64 resbal);
+    void reserveBalanceChanged(qint64 resbal);
 
 public slots:
 
