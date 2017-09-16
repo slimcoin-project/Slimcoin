@@ -123,6 +123,9 @@ TransactionRecord(uint256 hash, int64 time,
   /** Status: can change with block chain update */
   TransactionStatus status;
 
+  /** Whether the transaction was sent/received with a watch-only address */
+  bool involvesWatchAddress;
+
   /** Return the unique identifier for this transaction (part) */
   std::string getTxID();
 

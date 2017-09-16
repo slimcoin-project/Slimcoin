@@ -84,23 +84,49 @@ QString TransactionDesc::toHTML(CWallet *wallet, CWalletTx &wtx)
             if(nNet > 0)
             {
                 // Credit
-                BOOST_FOREACH(const CTxOut& txout, wtx.vout)
+                if (CBitcoinAddress(address).IsValid())
                 {
-                    if(wallet->IsMine(txout))
+
+                    CTxDestination address = CBitcoinAddress(address).Get();
+                    if (wallet->mapAddressBook.count(address))
+
                     {
                         CTxDestination address;
                         if (ExtractDestination(txout.scriptPubKey, address) && IsMine(*wallet, address))
                         {
                             if(wallet->mapAddressBook.count(address))
                             {
-                                strHTML += tr("<b>From:</b> ") + tr("unknown") + "<br>";
-                                strHTML += tr("<b>To:</b> ");
-                                strHTML += GUIUtil::HtmlEscape(CBitcoinAddress(address).ToString());
-                                if (!wallet->mapAddressBook[address].empty())
-                                    strHTML += tr(" (yours, label: ") + GUIUtil::HtmlEscape(wallet->mapAddressBook[address]) + ")";
+                                // strHTML += tr("<b>From:</b> ") + tr("unknown") + "<br>";
+                                // strHTML += tr("<b>To:</b> ");
+                                // strHTML += GUIUtil::HtmlEscape(CBitcoinAddress(address).ToString());
+                                // if (!wallet->mapAddressBook[address].empty())
+                                //     strHTML += tr(" (yours, label: ") + GUIUtil::HtmlEscape(wallet->mapAddressBook[address]) + ")";
+                                // else
+                                //     strHTML += tr(" (yours)");
+                                // strHTML += "<br>";
+
+
+                                // strHTML += "<b>" + tr("From") + ":</b> " + tr("unknown") + "<br>";
+                                // strHTML += "<b>" + tr("To") + ":</b> ";
+                                // strHTML += GUIUtil::HtmlEscape(CBitcoinAddress(address).ToString());
+                                // QString addressOwned = wallet->IsMine(txout) == MINE_SPENDABLE ? tr("own address") : tr("watch-only");
+                                // if (!wallet->mapAddressBook[address].name.empty())
+                                //     strHTML += " (" + addressOwned + ", " + tr("label") + ": " + GUIUtil::HtmlEscape(wallet->mapAddressBook[address].name) + ")";
+                                // else
+                                //     strHTML += " (" + addressOwned + ")";
+                                // strHTML += "<br>";
+
+
+                                strHTML += "<b>" + tr("From") + ":</b> " + tr("unknown") + "<br>";
+                                strHTML += "<b>" + tr("To") + ":</b> ";
+                                strHTML += GUIUtil::HtmlEscape(address);
+                                QString addressOwned = (::IsMine(*wallet, address) == MINE_SPENDABLE) ? tr("own address") : tr("watch-only");
+                                if (!wallet->mapAddressBook[address].name.empty())
+                                    strHTML += " (" + addressOwned + ", " + tr("label") + ": " + GUIUtil::HtmlEscape(wallet->mapAddressBook[address].name) + ")";
                                 else
-                                    strHTML += tr(" (yours)");
+                                    strHTML += " (" + addressOwned + ")";
                                 strHTML += "<br>";
+
                             }
                         }
                         break;
@@ -153,13 +179,26 @@ QString TransactionDesc::toHTML(CWallet *wallet, CWalletTx &wtx)
         }
         else
         {
-            bool fAllFromMe = true;
+            // bool fAllFromMe = true;
+            isminetype fAllFromMe = MINE_SPENDABLE;
             BOOST_FOREACH(const CTxIn& txin, wtx.vin)
-                fAllFromMe = fAllFromMe && wallet->IsMine(txin);
+                // fAllFromMe = fAllFromMe && wallet->IsMine(txin);
+            {
+                isminetype mine = wallet->IsMine(txin);
+                if(fAllFromMe > mine) fAllFromMe = mine;
+            }
 
-            bool fAllToMe = true;
+            // bool fAllToMe = true;
+            isminetype fAllToMe = MINE_SPENDABLE;
             BOOST_FOREACH(const CTxOut& txout, wtx.vout)
-                fAllToMe = fAllToMe && wallet->IsMine(txout);
+                // fAllToMe = fAllToMe && wallet->IsMine(txout);
+            {
+                if(fAllFromMe == MINE_WATCH_ONLY)
+                    strHTML += "<b>" + tr("From") + ":</b> " + tr("watch-only") + "<br>";
+       
+                isminetype mine = wallet->IsMine(txout);
+                if(fAllToMe > mine) fAllToMe = mine;
+            }
 
             if(fAllFromMe)
             {
@@ -169,6 +208,9 @@ QString TransactionDesc::toHTML(CWallet *wallet, CWalletTx &wtx)
                 BOOST_FOREACH(const CTxOut& txout, wtx.vout)
                 {
                     if(wallet->IsMine(txout))
+                    // Ignore change
+                    isminetype toSelf = wallet->IsMine(txout);
+                    if ((toSelf == MINE_SPENDABLE) && (fAllFromMe == MINE_SPENDABLE))
                         continue;
 
                     if(wtx.mapValue["to"].empty())
@@ -181,11 +223,18 @@ QString TransactionDesc::toHTML(CWallet *wallet, CWalletTx &wtx)
                             if(wallet->mapAddressBook.count(address) && !wallet->mapAddressBook[address].empty())
                                 strHTML += GUIUtil::HtmlEscape(wallet->mapAddressBook[address]) + " ";
                             strHTML += GUIUtil::HtmlEscape(CBitcoinAddress(address).ToString());
+                            if(toSelf == MINE_SPENDABLE)
+                                strHTML += " (own address)";
+                            else if(toSelf == MINE_WATCH_ONLY)
+                                strHTML += " (watch-only)";
                             strHTML += "<br>";
                         }
                     }
 
                     strHTML += tr("<b>Debit:</b> ") + BitcoinUnits::formatWithUnit(BitcoinUnits::BTC, -txout.nValue) + "<br>";
+                    if(toSelf)
+                        strHTML += "<b>" + tr("Credit") + ":</b> " + BitcoinUnits::formatWithUnit(unit, txout.nValue) + "<br>";
+
                 }
 
                 if(fAllToMe)
@@ -193,8 +242,10 @@ QString TransactionDesc::toHTML(CWallet *wallet, CWalletTx &wtx)
                     // Payment to self
                     int64 nChange = wtx.GetChange();
                     int64 nValue = nCredit - nChange;
-                    strHTML += tr("<b>Debit:</b> ") + BitcoinUnits::formatWithUnit(BitcoinUnits::BTC, -nValue) + "<br>";
-                    strHTML += tr("<b>Credit:</b> ") + BitcoinUnits::formatWithUnit(BitcoinUnits::BTC, nValue) + "<br>";
+                    strHTML += "<b>" + tr("Total debit") + ":</b> " + BitcoinUnits::formatWithUnit(BitcoinUnits::BTC, -nValue) + "<br>";
+                    strHTML += "<b>" + tr("Total credit") + ":</b> " + BitcoinUnits::formatWithUnit(BitcoinUnits::BTC, nValue) + "<br>";
+
+
                 }
 
                 int64 nTxFee = nDebit - wtx.GetValueOut();
@@ -208,10 +259,10 @@ QString TransactionDesc::toHTML(CWallet *wallet, CWalletTx &wtx)
                 //
                 BOOST_FOREACH(const CTxIn& txin, wtx.vin)
                     if(wallet->IsMine(txin))
-                        strHTML += tr("<b>Debit:</b> ") + BitcoinUnits::formatWithUnit(BitcoinUnits::BTC,-wallet->GetDebit(txin)) + "<br>";
+                        strHTML += tr("<b>Debit:</b> ") + BitcoinUnits::formatWithUnit(BitcoinUnits::BTC,-wallet->GetDebit(txin, MINE_SPENDABLE|MINE_WATCH_ONLY)) + "<br>";
                 BOOST_FOREACH(const CTxOut& txout, wtx.vout)
                     if(wallet->IsMine(txout))
-                        strHTML += tr("<b>Credit:</b> ") + BitcoinUnits::formatWithUnit(BitcoinUnits::BTC,wallet->GetCredit(txout)) + "<br>";
+                        strHTML += tr("<b>Credit:</b> ") + BitcoinUnits::formatWithUnit(BitcoinUnits::BTC,wallet->GetCredit(txout, MINE_SPENDABLE|MINE_WATCH_ONLY)) + "<br>";
             }
         }
 
@@ -245,11 +296,11 @@ QString TransactionDesc::toHTML(CWallet *wallet, CWalletTx &wtx)
             strHTML += "<hr><br>Debug information<br><br>";
             BOOST_FOREACH(const CTxIn& txin, wtx.vin)
                 if(wallet->IsMine(txin))
-                    strHTML += "<b>Debit:</b> " + BitcoinUnits::formatWithUnit(BitcoinUnits::BTC,-wallet->GetDebit(txin)) + "<br>";
+                    strHTML += "<b>Debit:</b> " + BitcoinUnits::formatWithUnit(BitcoinUnits::BTC,-wallet->GetDebit(txin, MINE_SPENDABLE|MINE_WATCH_ONLY)) + "<br>";
             BOOST_FOREACH(const CTxOut& txout, wtx.vout)
             {
                 if(wallet->IsMine(txout))
-                    strHTML += "<b>Credit:</b> " + BitcoinUnits::formatWithUnit(BitcoinUnits::BTC,wallet->GetCredit(txout)) + "<br>";
+                    strHTML += "<b>Credit:</b> " + BitcoinUnits::formatWithUnit(BitcoinUnits::BTC,wallet->GetCredit(txout, MINE_SPENDABLE|MINE_WATCH_ONLY)) + "<br>";
                 // std::string txmsg;
                 // if ( GetTxOutMessage(txout, txmsg) )
                 //    strHTML += "<b>" + tr("Message") + ":</b> <br>" + txmsg.c_str() + "<br>";
@@ -283,7 +334,8 @@ QString TransactionDesc::toHTML(CWallet *wallet, CWalletTx &wtx)
                                 strHTML += QString::fromStdString(CBitcoinAddress(address).ToString());
                             }
                             strHTML = strHTML + " Amount=" + BitcoinUnits::formatWithUnit(BitcoinUnits::BTC,vout.nValue);
-                            strHTML = strHTML + " IsMine=" + (wallet->IsMine(vout) ? "true" : "false") + "</li>";
+                            strHTML = strHTML + " IsMine=" + (wallet->IsMine(vout) & MINE_SPENDABLE ? tr("true") : tr("false")) + "</li>";
+                            strHTML = strHTML + " IsWatchOnly=" + (wallet->IsMine(vout) & MINE_WATCH_ONLY ? tr("true") : tr("false")) + "</li>";
                         }
                     }
                 }

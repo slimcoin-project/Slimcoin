@@ -49,8 +49,8 @@ void SendCoinsDialog::setModel(WalletModel *model)
   }
   if(model)
   {
-    setBalance(model->getBalance(), model->getStake(), model->getUnconfirmedBalance(), model->getReserveBalance());
-    connect(model, SIGNAL(balanceChanged(qint64, qint64, qint64, qint64, BurnCoinsBalances)), this, SLOT(setBalance(qint64, qint64, qint64, qint64)));
+    setBalance(model->getBalance(), model->getStake(), model->getUnconfirmedBalance(), model->getReserveBalance(), model->getWatchBalance(), model->getWatchUnconfirmedBalance(), model->getWatchImmatureBalance());
+    connect(model, SIGNAL(balanceChanged(qint64, qint64, qint64, qint64, BurnCoinsBalances, qint64, qint64, qint64)), this, SLOT(setBalance(qint64, qint64, qint64, qint64, qint64, qint64, qint64)));
     // connect(model->getOptionsModel(), SIGNAL(displayUnitChanged(int)), this, SLOT(updateDisplayUnit()));
   }
 }
@@ -291,11 +291,14 @@ void SendCoinsDialog::handleURI(const QString &uri)
   pasteEntry(rv);
 }
 
-void SendCoinsDialog::setBalance(qint64 balance, qint64 stake, qint64 unconfirmedBalance, qint64 reserveBalance)
+void SendCoinsDialog::setBalance(qint64 balance, qint64 stake, qint64 unconfirmedBalance, qint64 reserveBalance, qint64 watchBalance, qint64 watchUnconfirmedBalance, qint64 watchImmatureBalance)
 {
   Q_UNUSED(stake);
   Q_UNUSED(unconfirmedBalance);
   Q_UNUSED(reserveBalance);
+  Q_UNUSED(watchBalance);
+  Q_UNUSED(watchUnconfirmedBalance);
+  Q_UNUSED(watchImmatureBalance);
   if(!model || !model->getOptionsModel())
     return;
 

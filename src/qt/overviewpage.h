@@ -29,7 +29,8 @@ public:
     void updatePlot(int count);
     
     public slots:
-        void setBalance(qint64 balance, qint64 stake, qint64 unconfirmedBalance, qint64 reserveBalance, BurnCoinsBalances burnBalances);
+        void setBalance(qint64 balance, qint64 stake, qint64 unconfirmedBalance, qint64 reserveBalance, BurnCoinsBalances burnBalances,
+                        qint64 watchOnlyBalance, qint64 watchUnconfBalance, qint64 watchImmatureBalance); 
         void setNumTransactions(int count);
         void setReserveBalance(qint64 nreserveBalance);
 
@@ -49,6 +50,11 @@ private:
     qint64 currentEffectiveBurnCoins;
     qint64 currentImmatureBurnCoins;
     qint64 currentDecayedBurnCoins;
+
+    qint64 currentWatchOnlyBalance;
+    qint64 currentWatchUnconfBalance;
+    qint64 currentWatchImmatureBalance;
+
     QVector<double> vX;
     QVector<double> vY;
 

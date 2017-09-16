@@ -43,6 +43,9 @@ enum isminetype
     MINE_SPENDABLE = 2,
 };
 
+/** used for bitflags of isminetype */
+typedef uint8_t isminefilter;
+
 enum txnouttype
 {
     TX_NONSTANDARD,
@@ -627,7 +630,7 @@ bool EvalScript(std::vector<std::vector<unsigned char> >& stack, const CScript& 
 int ScriptSigArgsExpected(txnouttype t, const std::vector<std::vector<unsigned char> >& vSolutions);
 bool IsStandard(const CScript& scriptPubKey, txnouttype& whichType);
 isminetype IsMine(const CKeyStore& keystore, const CScript& scriptPubKey);
-isminetype IsMine(const CKeyStore& keystore, const CTxDestination &dest);
+isminetype IsMine(const CKeyStore& keystore, const CTxDestination& dest);
 bool ExtractDestinations(const CScript& scriptPubKey, txnouttype& typeRet, std::vector<CTxDestination>& addressRet, int& nRequiredRet);
 bool SignSignature(const CKeyStore& keystore, const CScript& fromPubKey, CTransaction& txTo, unsigned int nIn, int nHashType=SIGHASH_ALL);
 bool SignSignature(const CKeyStore& keystore, const CTransaction& txFrom, CTransaction& txTo, unsigned int nIn, int nHashType=SIGHASH_ALL);

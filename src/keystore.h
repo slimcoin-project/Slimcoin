@@ -54,8 +54,8 @@ public:
     virtual bool GetCScript(const CScriptID &hash, CScript& redeemScriptOut) const =0;
 
     // Support for Watch-only addresses
-    virtual bool AddWatchOnly(const CTxDestination &dest) =0;
-    virtual bool HaveWatchOnly(const CTxDestination &dest) const =0;
+    virtual bool AddWatchOnly(const CScript &dest) =0;
+    virtual bool HaveWatchOnly(const CScript &dest) const =0;
 
     virtual bool GetSecret(const CKeyID &address, CSecret& vchSecret, bool &fCompressed) const
     {
@@ -69,7 +69,7 @@ public:
 
 typedef std::map<CKeyID, std::pair<CSecret, bool> > KeyMap;
 typedef std::map<CScriptID, CScript > ScriptMap;
-typedef std::set<CTxDestination> WatchOnlySet;
+typedef std::set<CScript> WatchOnlySet;
 
 /** Basic key store, that keeps keys in an address->secret map */
 class CBasicKeyStore : public CKeyStore
@@ -135,8 +135,8 @@ public:
     virtual bool HaveCScript(const CScriptID &hash) const;
     virtual bool GetCScript(const CScriptID &hash, CScript& redeemScriptOut) const;
 
-    virtual bool AddWatchOnly(const CTxDestination &dest);
-    virtual bool HaveWatchOnly(const CTxDestination &dest) const;
+    virtual bool AddWatchOnly(const CScript &dest);
+    virtual bool HaveWatchOnly(const CScript) const;
 };
 
 typedef std::map<CKeyID, std::pair<CPubKey, std::vector<unsigned char> > > CryptedKeyMap;
