@@ -4701,10 +4701,6 @@ bool GetBurnHash(uint256 hashPrevBlock, s32int burnBlkHeight, s32int burnCTx,
     if (!(address == burnAddress.Get()))
         return error("GetBurnHash(): TxOut's address is not a valid burn address");
 #endif
-    /* FIXME: although the above test sort of obviates the below, this is crypto, so refactor anyway
-    if (!address.IsValid())
-        return error("GetBurnHash(): TxOut's address is invalid");
-    */
     if (!burnTxOut.nValue)
         return error("GetBurnHash(): Burn transaction's value is 0");
 
