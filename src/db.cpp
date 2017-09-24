@@ -604,6 +604,7 @@ bool CTxDB::LoadBlockIndex()
             pindexNew->burnCTxOut     = diskindex.burnCTxOut;
             pindexNew->nEffectiveBurnCoins = diskindex.nEffectiveBurnCoins;
             pindexNew->nBurnBits      = diskindex.nBurnBits;
+            pindexNew->burnt          = diskindex.burnt;
 
             // Watch for genesis block
             if (pindexGenesisBlock == NULL && blockHash == hashGenesisBlock)

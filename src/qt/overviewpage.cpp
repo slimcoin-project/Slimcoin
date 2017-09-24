@@ -184,8 +184,12 @@ OverviewPage::OverviewPage(QWidget *parent) :
 
         // set axes label fonts:
         QFont label = font();
-        ui->diffplot->xAxis->setLabelFont(label);
+        ui->diffplot->xAxis->setTickLabels(false);
+        // ui->diffplot->xAxis->setLabelFont(label);
+        // ui->diffplot->xAxis->setTickLabelFont(label);
+        // ui->diffplot->xAxis->setTickLabelRotation(15);
         ui->diffplot->yAxis->setLabelFont(label);
+        ui->diffplot->yAxis->setTickLabelFont(label);
     }
     else
     {

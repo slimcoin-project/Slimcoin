@@ -2220,7 +2220,7 @@ bool CBlock::GetCoinAge(uint64& nCoinAge) const
 //Also, do not forget to change timestamps for new update!!
 //
 
-bool CBlock::AddToBlockIndex(unsigned int nFile, unsigned int nBlockPos)
+bool CBlock::AddToBlockIndex(unsigned int nFile, unsigned int nBlockPos, int64 burnt)
 {
     // Check for duplicate
     uint256 hash = GetHash();
@@ -2272,6 +2272,7 @@ bool CBlock::AddToBlockIndex(unsigned int nFile, unsigned int nBlockPos)
     else if (pindexNew->IsProofOfBurn())
         setBurnSeen.insert(pindexNew->GetProofOfBurn());
     pindexNew->phashBlock = &((*mi).first);
+    pindexNew->burnt = burnt;
 
     // Write to disk block index
     CTxDB txdb;
@@ -2419,7 +2420,8 @@ bool CBlock::AcceptBlock()
 
     // The effective burn coins have to match, regardless of what block type it is
     int64 calcEffCoins = 0;
-    if (!CheckBurnEffectiveCoins(&calcEffCoins))
+    int64 calcNetCoins = 0;
+    if (!CheckBurnEffectiveCoins(&calcEffCoins, &calcNetCoins))
         return DoS(50, error("AcceptBlock() : Effective burn coins calculation failed: blk %d != calc %d",
                                                  nEffectiveBurnCoins, calcEffCoins));
 
@@ -2459,7 +2461,8 @@ bool CBlock::AcceptBlock()
     if (!WriteToDisk(nFile, nBlockPos))
         return error("AcceptBlock() : WriteToDisk failed");
 
-    if (!AddToBlockIndex(nFile, nBlockPos))
+    calcNetCoins += pindexPrev->burnt;
+    if (!AddToBlockIndex(nFile, nBlockPos, calcNetCoins))
         return error("AcceptBlock() : AddToBlockIndex failed");
 
     // Relay inventory, but don't relay old inventory during initial block download
@@ -2815,7 +2818,7 @@ bool CBlock::CheckBlockSignature() const
     return false;
 }
 
-bool CBlock::CheckBurnEffectiveCoins(int64 *calcEffCoinsRet) const
+bool CBlock::CheckBurnEffectiveCoins(int64 *calcEffCoinsRet, int64 *calcNetCoinsRet) const
 {
     //Genesis Block
     if (!hashPrevBlock)
@@ -2838,6 +2841,9 @@ bool CBlock::CheckBurnEffectiveCoins(int64 *calcEffCoinsRet) const
         if (burnOutTxIndex != -1) //this is a burn transaction
             nBurnedCoins += tx.vout[burnOutTxIndex].nValue;
     }
+
+    // Also make nBurnedCoins available
+    *calcNetCoinsRet = nBurnedCoins;
 
     int64 calcEffCoins;
 
@@ -2999,6 +3005,8 @@ bool LoadBlockIndex(bool fAllowNew)
         printf("hashGenesisBlock = %s\n", hashGenesisBlock.ToString().c_str());
         printf("block.hashMerkleRoot = %s\n", block.hashMerkleRoot.ToString().c_str());
 
+        block.print();
+
         if (fTestNet)
             assert(block.hashMerkleRoot == uint256("0xce86aa96a71e5c74ea535ed5f23d5b1b6ca279ad16cac3cb95e123d80027f014"));
         else
@@ -3065,7 +3073,7 @@ bool LoadBlockIndex(bool fAllowNew)
         unsigned int nBlockPos;
         if (!block.WriteToDisk(nFile, nBlockPos))
             return error("LoadBlockIndex() : writing genesis block to disk failed");
-        if (!block.AddToBlockIndex(nFile, nBlockPos))
+        if (!block.AddToBlockIndex(nFile, nBlockPos, 0))
             return error("LoadBlockIndex() : genesis block not accepted");
 
         // ppcoin: initialize synchronized checkpoint
@@ -3226,7 +3234,66 @@ void PrintBlockTree()
 }
 
 
+bool LoadExternalBlockFile(FILE* fileIn)
+{
+    int64_t nStart = GetTimeMillis();
+    static unsigned char pchMessageStart[4] = { 0x6e, 0x8b, 0x92, 0xa5 };
 
+    int nLoaded = 0;
+    {
+        LOCK(cs_main);
+        try {
+            CAutoFile blkdat(fileIn, SER_DISK, CLIENT_VERSION);
+            unsigned int nPos = 0;
+            while (nPos != (unsigned int)-1 && blkdat.good() && !fRequestShutdown)
+            {
+                unsigned char pchData[65536];
+                do {
+                    fseek(blkdat, nPos, SEEK_SET);
+                    int nRead = fread(pchData, 1, sizeof(pchData), blkdat);
+                    if (nRead <= 8)
+                    {
+                        nPos = (unsigned int)-1;
+                        break;
+                    }
+                    void* nFind = memchr(pchData, pchMessageStart[0], nRead+1-sizeof(pchMessageStart));
+                    if (nFind)
+                    {
+                        if (memcmp(nFind, pchMessageStart, sizeof(pchMessageStart))==0)
+                        {
+                            nPos += ((unsigned char*)nFind - pchData) + sizeof(pchMessageStart);
+                            break;
+                        }
+                        nPos += ((unsigned char*)nFind - pchData) + 1;
+                    }
+                    else
+                        nPos += sizeof(pchData) - sizeof(pchMessageStart) + 1;
+                } while(!fRequestShutdown);
+                if (nPos == (unsigned int)-1)
+                    break;
+                fseek(blkdat, nPos, SEEK_SET);
+                unsigned int nSize;
+                blkdat >> nSize;
+                if (nSize > 0 && nSize <= MAX_BLOCK_SIZE)
+                {
+                    CBlock block;
+                    blkdat >> block;
+                    if (ProcessBlock(NULL,&block))
+                    {
+                        nLoaded++;
+                        nPos += 4 + nSize;
+                    }
+                }
+            }
+        }
+        catch (std::exception &e) {
+            printf("%s() : Deserialize or I/O error caught during load\n",
+                   __PRETTY_FUNCTION__);
+        }
+    }
+    printf("Loaded %i blocks from external file in %lld ms\n", nLoaded, GetTimeMillis() - nStart);
+    return nLoaded > 0;
+}
 
 
 
@@ -4634,10 +4701,6 @@ bool GetBurnHash(uint256 hashPrevBlock, s32int burnBlkHeight, s32int burnCTx,
     if (!(address == burnAddress.Get()))
         return error("GetBurnHash(): TxOut's address is not a valid burn address");
 #endif
-    /* FIXME: although the above test sort of obviates the below, this is crypto, so refactor anyway
-    if (!address.IsValid())
-        return error("GetBurnHash(): TxOut's address is invalid");
-    */
     if (!burnTxOut.nValue)
         return error("GetBurnHash(): Burn transaction's value is 0");
 
