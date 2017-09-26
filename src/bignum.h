@@ -53,7 +53,7 @@ public:
 class CBigNum
 {
 private:
-    BIGNUM *self = nullptr;
+    BIGNUM *self = NULL;
 
     void init()
     {
