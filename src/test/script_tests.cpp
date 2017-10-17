@@ -122,6 +122,7 @@ BOOST_AUTO_TEST_CASE(script_valid)
     // ... where scriptSig and scriptPubKey are stringified
     // scripts.
     Array tests = read_json("script_valid.json");
+    unsigned int xflags = SCRIPT_VERIFY_P2SH | SCRIPT_VERIFY_STRICTENC | SCRIPT_VERIFY_CHECKLOCKTIMEVERIFY;
 
     BOOST_FOREACH(Value& tv, tests)
     {
@@ -137,8 +138,9 @@ BOOST_AUTO_TEST_CASE(script_valid)
         string scriptPubKeyString = test[1].get_str();
         CScript scriptPubKey = ParseScript(scriptPubKeyString);
 
+        printf("Test: %s", strTest.c_str());
         CTransaction tx;
-        BOOST_CHECK_MESSAGE(VerifyScript(scriptSig, scriptPubKey, tx, 0, true, SIGHASH_NONE), strTest);
+        BOOST_CHECK_MESSAGE(VerifyScript(scriptSig, scriptPubKey, tx, 0, true, xflags, SIGHASH_NONE), strTest);
     }
 }
 
@@ -146,6 +148,7 @@ BOOST_AUTO_TEST_CASE(script_invalid)
 {
     // Scripts that should evaluate as invalid
     Array tests = read_json("script_invalid.json");
+    unsigned int xflags = SCRIPT_VERIFY_P2SH | SCRIPT_VERIFY_STRICTENC | SCRIPT_VERIFY_CHECKLOCKTIMEVERIFY;
 
     BOOST_FOREACH(Value& tv, tests)
     {
@@ -162,7 +165,7 @@ BOOST_AUTO_TEST_CASE(script_invalid)
         CScript scriptPubKey = ParseScript(scriptPubKeyString);
 
         CTransaction tx;
-        BOOST_CHECK_MESSAGE(!VerifyScript(scriptSig, scriptPubKey, tx, 0, true, SIGHASH_NONE), strTest);
+        BOOST_CHECK_MESSAGE(!VerifyScript(scriptSig, scriptPubKey, tx, 0, true, xflags, SIGHASH_NONE), strTest);
     }
 }
 
@@ -174,20 +177,21 @@ BOOST_AUTO_TEST_CASE(script_PushData)
     static const unsigned char pushdata1[] = { OP_PUSHDATA1, 1, 0x5a };
     static const unsigned char pushdata2[] = { OP_PUSHDATA2, 1, 0, 0x5a };
     static const unsigned char pushdata4[] = { OP_PUSHDATA4, 1, 0, 0, 0, 0x5a };
+    unsigned int xflags = SCRIPT_VERIFY_P2SH | SCRIPT_VERIFY_STRICTENC | SCRIPT_VERIFY_CHECKLOCKTIMEVERIFY;
 
     vector<vector<unsigned char> > directStack;
-    BOOST_CHECK(EvalScript(directStack, CScript(&direct[0], &direct[sizeof(direct)]), CTransaction(), 0, 0));
+    BOOST_CHECK(EvalScript(directStack, CScript(&direct[0], &direct[sizeof(direct)]), CTransaction(),  0, true, 0));
 
     vector<vector<unsigned char> > pushdata1Stack;
-    BOOST_CHECK(EvalScript(pushdata1Stack, CScript(&pushdata1[0], &pushdata1[sizeof(pushdata1)]), CTransaction(), 0, 0));
+    BOOST_CHECK(EvalScript(pushdata1Stack, CScript(&pushdata1[0], &pushdata1[sizeof(pushdata1)]), CTransaction(),  0, true, 0));
     BOOST_CHECK(pushdata1Stack == directStack);
 
     vector<vector<unsigned char> > pushdata2Stack;
-    BOOST_CHECK(EvalScript(pushdata2Stack, CScript(&pushdata2[0], &pushdata2[sizeof(pushdata2)]), CTransaction(), 0, 0));
+    BOOST_CHECK(EvalScript(pushdata2Stack, CScript(&pushdata2[0], &pushdata2[sizeof(pushdata2)]), CTransaction(),  0, true, 0));
     BOOST_CHECK(pushdata2Stack == directStack);
 
     vector<vector<unsigned char> > pushdata4Stack;
-    BOOST_CHECK(EvalScript(pushdata4Stack, CScript(&pushdata4[0], &pushdata4[sizeof(pushdata4)]), CTransaction(), 0, 0));
+    BOOST_CHECK(EvalScript(pushdata4Stack, CScript(&pushdata4[0], &pushdata4[sizeof(pushdata4)]), CTransaction(),  0, true, 0));
     BOOST_CHECK(pushdata4Stack == directStack);
 }
 
@@ -225,6 +229,7 @@ sign_multisig(CScript scriptPubKey, CKey key, CTransaction transaction)
 
 BOOST_AUTO_TEST_CASE(script_CHECKMULTISIG12)
 {
+    unsigned int xflags = SCRIPT_VERIFY_P2SH | SCRIPT_VERIFY_STRICTENC | SCRIPT_VERIFY_CHECKLOCKTIMEVERIFY;
     CKey key1, key2, key3;
     key1.MakeNewKey(true);
     key2.MakeNewKey(false);
@@ -245,19 +250,21 @@ BOOST_AUTO_TEST_CASE(script_CHECKMULTISIG12)
     txTo12.vout[0].nValue = 1;
 
     CScript goodsig1 = sign_multisig(scriptPubKey12, key1, txTo12);
-    BOOST_CHECK(VerifyScript(goodsig1, scriptPubKey12, txTo12, 0, true, 0));
+    BOOST_CHECK(VerifyScript(goodsig1, scriptPubKey12, txTo12,  0, true, xflags, 0));
     txTo12.vout[0].nValue = 2;
-    BOOST_CHECK(!VerifyScript(goodsig1, scriptPubKey12, txTo12, 0, true, 0));
+    BOOST_CHECK(!VerifyScript(goodsig1, scriptPubKey12, txTo12,  0, true, xflags, 0));
 
     CScript goodsig2 = sign_multisig(scriptPubKey12, key2, txTo12);
-    BOOST_CHECK(VerifyScript(goodsig2, scriptPubKey12, txTo12, 0, true, 0));
+    BOOST_CHECK(VerifyScript(goodsig2, scriptPubKey12, txTo12,  0, true, xflags, 0));
 
     CScript badsig1 = sign_multisig(scriptPubKey12, key3, txTo12);
-    BOOST_CHECK(!VerifyScript(badsig1, scriptPubKey12, txTo12, 0, true, 0));
+    BOOST_CHECK(!VerifyScript(badsig1, scriptPubKey12, txTo12,  0, true, xflags, 0));
 }
 
 BOOST_AUTO_TEST_CASE(script_CHECKMULTISIG23)
 {
+    unsigned int xflags = SCRIPT_VERIFY_P2SH | SCRIPT_VERIFY_STRICTENC | SCRIPT_VERIFY_CHECKLOCKTIMEVERIFY;
+
     CKey key1, key2, key3, key4;
     key1.MakeNewKey(true);
     key2.MakeNewKey(false);
@@ -281,47 +288,94 @@ BOOST_AUTO_TEST_CASE(script_CHECKMULTISIG23)
     std::vector<CKey> keys;
     keys.push_back(key1); keys.push_back(key2);
     CScript goodsig1 = sign_multisig(scriptPubKey23, keys, txTo23);
-    BOOST_CHECK(VerifyScript(goodsig1, scriptPubKey23, txTo23, 0, true, 0));
+    BOOST_CHECK(VerifyScript(goodsig1, scriptPubKey23, txTo23,  0, true, xflags, 0));
 
     keys.clear();
     keys.push_back(key1); keys.push_back(key3);
     CScript goodsig2 = sign_multisig(scriptPubKey23, keys, txTo23);
-    BOOST_CHECK(VerifyScript(goodsig2, scriptPubKey23, txTo23, 0, true, 0));
+    BOOST_CHECK(VerifyScript(goodsig2, scriptPubKey23, txTo23,  0, true, xflags, 0));
 
     keys.clear();
     keys.push_back(key2); keys.push_back(key3);
     CScript goodsig3 = sign_multisig(scriptPubKey23, keys, txTo23);
-    BOOST_CHECK(VerifyScript(goodsig3, scriptPubKey23, txTo23, 0, true, 0));
+    BOOST_CHECK(VerifyScript(goodsig3, scriptPubKey23, txTo23,  0, true, xflags, 0));
 
     keys.clear();
     keys.push_back(key2); keys.push_back(key2); // Can't re-use sig
     CScript badsig1 = sign_multisig(scriptPubKey23, keys, txTo23);
-    BOOST_CHECK(!VerifyScript(badsig1, scriptPubKey23, txTo23, 0, true, 0));
+    BOOST_CHECK(!VerifyScript(badsig1, scriptPubKey23, txTo23,  0, true, xflags, 0));
 
     keys.clear();
     keys.push_back(key2); keys.push_back(key1); // sigs must be in correct order
     CScript badsig2 = sign_multisig(scriptPubKey23, keys, txTo23);
-    BOOST_CHECK(!VerifyScript(badsig2, scriptPubKey23, txTo23, 0, true, 0));
+    BOOST_CHECK(!VerifyScript(badsig2, scriptPubKey23, txTo23,  0, true, xflags, 0));
 
     keys.clear();
     keys.push_back(key3); keys.push_back(key2); // sigs must be in correct order
     CScript badsig3 = sign_multisig(scriptPubKey23, keys, txTo23);
-    BOOST_CHECK(!VerifyScript(badsig3, scriptPubKey23, txTo23, 0, true, 0));
+    BOOST_CHECK(!VerifyScript(badsig3, scriptPubKey23, txTo23,  0, true, xflags, 0));
 
     keys.clear();
     keys.push_back(key4); keys.push_back(key2); // sigs must match pubkeys
     CScript badsig4 = sign_multisig(scriptPubKey23, keys, txTo23);
-    BOOST_CHECK(!VerifyScript(badsig4, scriptPubKey23, txTo23, 0, true, 0));
+    BOOST_CHECK(!VerifyScript(badsig4, scriptPubKey23, txTo23,  0, true, xflags, 0));
 
     keys.clear();
     keys.push_back(key1); keys.push_back(key4); // sigs must match pubkeys
     CScript badsig5 = sign_multisig(scriptPubKey23, keys, txTo23);
-    BOOST_CHECK(!VerifyScript(badsig5, scriptPubKey23, txTo23, 0, true, 0));
+    BOOST_CHECK(!VerifyScript(badsig5, scriptPubKey23, txTo23,  0, true, xflags, 0));
 
     keys.clear(); // Must have signatures
     CScript badsig6 = sign_multisig(scriptPubKey23, keys, txTo23);
-    BOOST_CHECK(!VerifyScript(badsig6, scriptPubKey23, txTo23, 0, true, 0));
+    BOOST_CHECK(!VerifyScript(badsig6, scriptPubKey23, txTo23,  0, true, xflags, 0));
 }    
 
+
+BOOST_AUTO_TEST_CASE(script_CHECKLOCKTIMEVERIFY)
+{
+    //
+    // Simple locktime script
+    //
+
+    unsigned int xflags = SCRIPT_VERIFY_P2SH | SCRIPT_VERIFY_STRICTENC | SCRIPT_VERIFY_CHECKLOCKTIMEVERIFY;
+
+    CScript scriptSimpleLock = CScript() << OP_16 << OP_CHECKLOCKTIMEVERIFY;
+
+    CTransaction tx;
+    tx.vin.push_back(CTxIn());
+    // Fails since tx.nLockTime < 16
+    BOOST_CHECK(!VerifyScript(CScript(), scriptSimpleLock, tx, 0, true, SCRIPT_VERIFY_CHECKLOCKTIMEVERIFY, 0));
+
+    tx.nLockTime = 16;
+    // Fails since tx.vin[0].nSequence = CTxIn::SEQUENCE_FINAL by default, which disables nLockTime.
+    BOOST_CHECK(!VerifyScript(CScript(), scriptSimpleLock, tx, 0, true, SCRIPT_VERIFY_CHECKLOCKTIMEVERIFY, 0));
+
+    tx.vin[0].nSequence = CTxIn::SEQUENCE_FINAL-1;
+    BOOST_CHECK(VerifyScript(CScript(), scriptSimpleLock, tx, 0, true, SCRIPT_VERIFY_CHECKLOCKTIMEVERIFY, 0));
+
+    // Verify larger locktime succeeds
+    tx.nLockTime = 17;
+    BOOST_CHECK(VerifyScript(CScript(), scriptSimpleLock, tx, 0, true, SCRIPT_VERIFY_CHECKLOCKTIMEVERIFY, 0));
+
+    // Verify smaller locktime fails
+    tx.nLockTime = 15;
+    BOOST_CHECK(!VerifyScript(CScript(), scriptSimpleLock, tx, 0, true, SCRIPT_VERIFY_CHECKLOCKTIMEVERIFY, 0));
+
+    // Compare timestamps
+    int64 nNow = GetTime();
+    CScript scriptSimpleTimeLock = CScript() << nNow << OP_CHECKLOCKTIMEVERIFY;
+    tx.nLockTime = nNow;
+    BOOST_CHECK(VerifyScript(CScript(), scriptSimpleTimeLock, tx, 0, true, SCRIPT_VERIFY_CHECKLOCKTIMEVERIFY, 0));
+    tx.nLockTime = nNow+1;
+    BOOST_CHECK(VerifyScript(CScript(), scriptSimpleTimeLock, tx, 0, true, SCRIPT_VERIFY_CHECKLOCKTIMEVERIFY, 0));
+    tx.nLockTime = nNow-1;
+    BOOST_CHECK(!VerifyScript(CScript(), scriptSimpleTimeLock, tx, 0, true, SCRIPT_VERIFY_CHECKLOCKTIMEVERIFY, 0));
+
+    // Verify comparing timestamps with block heights fails
+    tx.nLockTime = nNow;
+    BOOST_CHECK(!VerifyScript(CScript(), scriptSimpleLock, tx, 0, true, SCRIPT_VERIFY_CHECKLOCKTIMEVERIFY, 0));
+    tx.nLockTime = 300000000; // very large block height
+    BOOST_CHECK(!VerifyScript(CScript(), scriptSimpleTimeLock, tx, 0, true, SCRIPT_VERIFY_CHECKLOCKTIMEVERIFY, 0));
+}
 
 BOOST_AUTO_TEST_SUITE_END()
