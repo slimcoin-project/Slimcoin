@@ -629,7 +629,7 @@ isEmpty(OPENSSL_LIB_PATH) {
 macx {
 	CONFIG += 11 x86_64
 	HEADERS += src/qt/macdockiconhandler.h src/qt/macnotificationhandler.h
-    INCLUDEPATH += $$MOC_DIR # enable #include of moc_* files
+	INCLUDEPATH += $$MOC_DIR # enable #include of moc_* files
 	OBJECTIVE_SOURCES += src/qt/macdockiconhandler.mm src/qt/macnotificationhandler.mm
 	LIBS += -framework Foundation -framework ApplicationServices -framework AppKit
 	LIBS += /usr/local/opt/miniupnpc/lib/libminiupnpc.a
