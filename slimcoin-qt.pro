@@ -8,7 +8,7 @@ CONFIG += no_include_pwd
 CONFIG += thread
 CONFIG += debug # release
 CONFIG += qt_framework
-QT += core gui network
+QT += core gui network testlib
 CONFIG += link_pkgconfig
 CONFIG += moc
 
@@ -20,6 +20,7 @@ contains(QT_MAJOR_VERSION, 5):lessThan(QT_MINOR_VERSION, 4) {
     QMAKE_CXXFLAGS_CXX11 = $$replace(QMAKE_CXXFLAGS_CXX11, "std=c\+\+0x", "std=c++1y")
 } else {
      CONFIG += c++14
+     QT_WARNING_DISABLE_DEPRECATED=1
 }
 
 # Qt 4 doesn't even know about C++11.
@@ -367,98 +368,7 @@ HEADERS += src/addrman.h \
     src/util.h \
     src/wallet.h \
     src/walletdb.h \
-    src/version.h \
-    src/json/json_spirit.h \
-    src/json/json_spirit_error_position.h \
-    src/json/json_spirit_reader.h \
-    src/json/json_spirit_reader_template.h \
-    src/json/json_spirit_stream_reader.h \
-    src/json/json_spirit_utils.h \
-    src/json/json_spirit_value.h \
-    src/json/json_spirit_writer.h \
-    src/json/json_spirit_writer_template.h \
-    src/obj/build.h \
-    src/qt/test/uritests.h \
-    src/qt/aboutdialog.h \
-    src/qt/addressbookpage.h \
-    src/qt/addresstablemodel.h \
-    src/qt/askpassphrasedialog.h \
-    src/qt/bitcoinaddressvalidator.h \
-    src/qt/bitcoinamountfield.h \
-    src/qt/bitcoingui.h \
-    src/qt/bitcoinunits.h \
-    src/qt/blockbrowser.h \
-    src/qt/burncoinsdialog.h \
-    src/qt/burncoinsentry.h \
-    src/qt/chatclient.h \
-    src/qt/chatwindow.h \
-    src/qt/clientmodel.h \
-    src/qt/csvmodelwriter.h \
-    src/qt/editaddressdialog.h \
-    src/qt/guiconstants.h \
-    src/qt/guiutil.h \
-    src/qt/inscriptiondialog.h \
-    src/qt/inscriptionpage.h \
-    src/qt/inscriptiontablemodel.h \
-    src/qt/macdockiconhandler.h \
-    src/qt/macnotificationhandler.h \
-    src/qt/messagepage.h \
-    src/qt/monitoreddatamapper.h \
-    src/qt/multisigaddressentry.h \
-    src/qt/multisigdialog.h \
-    src/qt/multisiginputentry.h \
-    src/qt/notificator.h \
-    src/qt/optionsdialog.h \
-    src/qt/optionsmodel.h \
-    src/qt/overviewpage.h \
-    src/qt/qcustomplot.h \
-    src/qt/qrcodedialog.h \
-    src/qt/qtipcserver.h \
-    src/qt/qvalidatedlineedit.h \
-    src/qt/qvaluecombobox.h \
-    src/qt/reportview.h \
-    src/qt/rpcconsole.h \
-    src/qt/sendcoinsdialog.h \
-    src/qt/sendcoinsentry.h \
-    src/qt/signverifymessagedialog.h \
-    src/qt/transactiondesc.h \
-    src/qt/transactiondescdialog.h \
-    src/qt/transactionfilterproxy.h \
-    src/qt/transactionrecord.h \
-    src/qt/transactiontablemodel.h \
-    src/qt/transactionview.h \
-    src/qt/walletmodel.h \
-    src/addrman.h \
-    src/allocators.h \
-    src/base58.h \
-    src/bignum.h \
-    src/bitcoinrpc.h \
-    src/checkpoints.h \
-    src/compat.h \
-    src/crypter.h \
-    src/db.h \
-    src/dcrypt.h \
-    src/init.h \
-    src/irc.h \
-    src/kernel.h \
-    src/key.h \
-    src/keystore.h \
-    src/main.h \
-    src/mruset.h \
-    src/net.h \
-    src/netbase.h \
-    src/protocol.h \
-    src/script.h \
-    src/serialize.h \
-    src/sha256.h \
-    src/smalldata.h \
-    src/strlcpy.h \
-    src/ui_interface.h \
-    src/uint256.h \
-    src/util.h \
-    src/version.h \
-    src/wallet.h \
-    src/walletdb.h
+    src/version.h
 
 SOURCES += src/addrman.cpp \
     src/bitcoinrpc.cpp \
@@ -525,104 +435,6 @@ SOURCES += src/addrman.cpp \
     src/qt/transactiontablemodel.cpp \
     src/qt/transactionview.cpp \
     src/qt/walletmodel.cpp \
-    src/rpcdump.cpp \
-    src/script.cpp \
-    src/sha256.cpp \
-    src/smalldata.cpp \
-    src/util.cpp \
-    src/version.cpp \
-    src/wallet.cpp \
-    src/walletdb.cpp \
-    src/json/json_spirit_reader.cpp \
-    src/json/json_spirit_value.cpp \
-    src/json/json_spirit_writer.cpp \
-    src/qt/test/test_main.cpp \
-    src/qt/test/uritests.cpp \
-    src/qt/aboutdialog.cpp \
-    src/qt/addressbookpage.cpp \
-    src/qt/addresstablemodel.cpp \
-    src/qt/askpassphrasedialog.cpp \
-    src/qt/bitcoin.cpp \
-    src/qt/bitcoinaddressvalidator.cpp \
-    src/qt/bitcoinamountfield.cpp \
-    src/qt/bitcoingui.cpp \
-    src/qt/bitcoinstrings.cpp \
-    src/qt/bitcoinunits.cpp \
-    src/qt/blockbrowser.cpp \
-    src/qt/burncoinsdialog.cpp \
-    src/qt/burncoinsentry.cpp \
-    src/qt/chatclient.cpp \
-    src/qt/chatwindow.cpp \
-    src/qt/clientmodel.cpp \
-    src/qt/csvmodelwriter.cpp \
-    src/qt/editaddressdialog.cpp \
-    src/qt/guiutil.cpp \
-    src/qt/inscriptiondialog.cpp \
-    src/qt/inscriptionpage.cpp \
-    src/qt/inscriptiontablemodel.cpp \
-    src/qt/messagepage.cpp \
-    src/qt/monitoreddatamapper.cpp \
-    src/qt/multisigaddressentry.cpp \
-    src/qt/multisigdialog.cpp \
-    src/qt/multisiginputentry.cpp \
-    src/qt/notificator.cpp \
-    src/qt/optionsdialog.cpp \
-    src/qt/optionsmodel.cpp \
-    src/qt/overviewpage.cpp \
-    src/qt/qcustomplot.cpp \
-    src/qt/qrcodedialog.cpp \
-    src/qt/qtipcserver.cpp \
-    src/qt/qvalidatedlineedit.cpp \
-    src/qt/qvaluecombobox.cpp \
-    src/qt/reportview.cpp \
-    src/qt/rpcconsole.cpp \
-    src/qt/sendcoinsdialog.cpp \
-    src/qt/sendcoinsentry.cpp \
-    src/qt/signverifymessagedialog.cpp \
-    src/qt/transactiondesc.cpp \
-    src/qt/transactiondescdialog.cpp \
-    src/qt/transactionfilterproxy.cpp \
-    src/qt/transactionrecord.cpp \
-    src/qt/transactiontablemodel.cpp \
-    src/qt/transactionview.cpp \
-    src/qt/walletmodel.cpp \
-    src/test/base58_tests.cpp \
-    src/test/base64_tests.cpp \
-    src/test/bignum_tests.cpp \
-    src/test/canonical_tests.cpp \
-    src/test/Checkpoints_tests.cpp \
-    src/test/DoS_tests.cpp \
-    src/test/getarg_tests.cpp \
-    src/test/key_tests.cpp \
-    src/test/miner_tests.cpp \
-    src/test/mruset_tests.cpp \
-    src/test/multisig_tests.cpp \
-    src/test/rpc_tests.cpp \
-    src/test/script_P2SH_tests.cpp \
-    src/test/script_tests.cpp \
-    src/test/sigopcount_tests.cpp \
-    src/test/test_bitcoin.cpp \
-    src/test/transaction_tests.cpp \
-    src/test/uint160_tests.cpp \
-    src/test/uint256_tests.cpp \
-    src/test/util_tests.cpp \
-    src/test/wallet_tests.cpp \
-    src/addrman.cpp \
-    src/bitcoinrpc.cpp \
-    src/checkpoints.cpp \
-    src/crypter.cpp \
-    src/db.cpp \
-    src/dcrypt.cpp \
-    src/init.cpp \
-    src/irc.cpp \
-    src/kernel.cpp \
-    src/key.cpp \
-    src/keystore.cpp \
-    src/main.cpp \
-    src/net.cpp \
-    src/netbase.cpp \
-    src/noui.cpp \
-    src/protocol.cpp \
     src/rpcdump.cpp \
     src/script.cpp \
     src/sha256.cpp \
