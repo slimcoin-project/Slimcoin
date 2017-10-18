@@ -377,9 +377,18 @@ bool CKey::SetCompactSignature(uint256 hash, const std::vector<unsigned char>& v
   if(nV<27 || nV>=35)
     return false;
   ECDSA_SIG *sig = ECDSA_SIG_new();
+  if (!sig) return false;
+  #if OPENSSL_VERSION_NUMBER > 0x1000ffffL
+  // sig_r and sig_s are deallocated by ECDSA_SIG_free(sig);
+  BIGNUM *sig_r = BN_bin2bn(&vchSig[1],32,BN_new());
+  BIGNUM *sig_s = BN_bin2bn(&vchSig[33],32,BN_new());
+  if (!sig_r || !sig_s) return false;
+  // copy and transfer ownership to sig
+  ECDSA_SIG_set0(sig, sig_r, sig_s);
+  #else
   BN_bin2bn(&vchSig[1],32,sig->r);
   BN_bin2bn(&vchSig[33],32,sig->s);
-
+  #endif
   EC_KEY_free(pkey);
   pkey = EC_KEY_new_by_curve_name(NID_secp256k1);
   if(nV >= 31)
