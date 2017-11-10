@@ -1094,7 +1094,7 @@ int64 GetProofOfStakeReward(int64 nCoinAge, u32int nTime)
 {
     // NOTE: static int64 nRewardCoinYear = CENT;  // creation amount per coin-year
     int64 nRewardCoinYear = nTime > POB_POS_TARGET_SWITCH_TIME ? (10 * CENT) : CENT;  // creation amount per coin-year
-    int64 nSubsidy = nCoinAge * nRewardCoinYear * 33 / (365 * 33 + 8);
+    int64 nSubsidy = nCoinAge * nRewardCoinYear * 1033 / (365 * 33 + 8);
 
     if (fDebug && GetBoolArg("-printcreation"))
         printf("GetProofOfStakeReward(): create = %s nCoinAge = %d\n", FormatMoney(nSubsidy).c_str(), nCoinAge);
@@ -5498,8 +5498,8 @@ void SlimCoinAfterBurner(CWallet *pwallet)
             printf("\twith Block height %d, transaction depth %d, vout depth %d\n", 
                          mapBlockIndex.at(smallestWTx.hashBlock)->nHeight, 
                          smallestWTx.nIndex, smallestWTx.GetBurnOutTxIndex());
-            printf("\tPoB Tartget is %s\n", hashTarget.ToString().c_str());
-            printf("\tnBurnBits=%08x, nEffectiveBurnCoins=%u (formatted %s)\n",
+            printf("\tPoB Target is %s\n", hashTarget.ToString().c_str());
+            printf("\tnBurnBits=%08x, nEffectiveBurnCoins=%llu (formatted %s)\n",
                                             pblock->nBurnBits, pblock->nEffectiveBurnCoins, 
                                             FormatMoney(pblock->nEffectiveBurnCoins).c_str());
 
