@@ -1072,7 +1072,7 @@ int64 GetProofOfWorkReward(u32int nBits, bool fProofOfBurn)
     {
         CBigNum bnMidValue = (bnLowerBound + bnUpperBound) / 2;
         if (fDebug && GetBoolArg("-printcreation"))
-            printf("GetProofOfWorkReward() : lower = %d, upper = %d, mid = %d\n", bnLowerBound.getuint64(), bnUpperBound.getuint64(), bnMidValue.getuint64());
+            printf("GetProofOfWorkReward() : lower = %lld, upper = %lld, mid = %lld\n", bnLowerBound.getuint64(), bnUpperBound.getuint64(), bnMidValue.getuint64());
 
         if (bnMidValue * bnMidValue * bnMidValue * bnMidValue * bnTargetLimit > bnSubsidyLimit * bnSubsidyLimit * bnSubsidyLimit * bnSubsidyLimit * bnTarget)
             bnUpperBound = bnMidValue;
@@ -1084,7 +1084,7 @@ int64 GetProofOfWorkReward(u32int nBits, bool fProofOfBurn)
     nSubsidy = (nSubsidy / CENT) * CENT;
 
     if (fDebug && GetBoolArg("-printcreation"))
-        printf("GetProofOfWorkReward() : create = %s nBits = 0x%08x nSubsidy = %d return = %d\n", FormatMoney(nSubsidy).c_str(), nBits, nSubsidy, min(nSubsidy, maxSubsidy));
+        printf("GetProofOfWorkReward() : create = %s nBits = 0x%08x nSubsidy = %lld return = %lld\n", FormatMoney(nSubsidy).c_str(), nBits, nSubsidy, min(nSubsidy, maxSubsidy));
 
     return min(nSubsidy, maxSubsidy);
 }
@@ -1097,7 +1097,7 @@ int64 GetProofOfStakeReward(int64 nCoinAge, u32int nTime)
     int64 nSubsidy = nCoinAge * nRewardCoinYear * 1033 / (365 * 33 + 8);
 
     if (fDebug && GetBoolArg("-printcreation"))
-        printf("GetProofOfStakeReward(): create = %s nCoinAge = %d\n", FormatMoney(nSubsidy).c_str(), nCoinAge);
+        printf("GetProofOfStakeReward(): create = %s nCoinAge = %lld\n", FormatMoney(nSubsidy).c_str(), nCoinAge);
     return nSubsidy;
 }
 
@@ -2208,7 +2208,7 @@ bool CBlock::GetCoinAge(uint64& nCoinAge) const
         nCoinAge = 1;
 
     if (fDebug && GetBoolArg("-printcoinage"))
-        printf("block coin age total nCoinDays=%d\n", nCoinAge);
+        printf("block coin age total nCoinDays=%lld\n", nCoinAge);
 
     return true;
 }
@@ -2422,7 +2422,7 @@ bool CBlock::AcceptBlock()
     int64 calcEffCoins = 0;
     int64 calcNetCoins = 0;
     if (!CheckBurnEffectiveCoins(&calcEffCoins, &calcNetCoins))
-        return DoS(50, error("AcceptBlock() : Effective burn coins calculation failed: blk %d != calc %d",
+        return DoS(50, error("AcceptBlock() : Effective burn coins calculation failed: blk %lld != calc %lld",
                                                  nEffectiveBurnCoins, calcEffCoins));
 
     CBlockIndex* pindexPrev = (*mi).second;
@@ -4130,7 +4130,7 @@ bool ProcessMessages(CNode* pfrom)
     {
         string strMessageStart((const char *)pchMessageStart, sizeof(pchMessageStart));
         vector<unsigned char> vchMessageStart(strMessageStart.begin(), strMessageStart.end());
-        printf("ProcessMessages : AdjustedTime=%d MessageStart=%s\n", GetAdjustedTime(), HexStr(vchMessageStart).c_str());
+        printf("ProcessMessages : AdjustedTime=%lld MessageStart=%s\n", GetAdjustedTime(), HexStr(vchMessageStart).c_str());
         nTimeLastPrintMessageStart = GetAdjustedTime();
     }
 
@@ -4981,7 +4981,7 @@ CBlock *CreateNewBlock(CWallet* pwallet, bool fProofOfStake, const CWalletTx *bu
                 dPriority += (double)nValueIn * nConf;
 
                 if (fDebug && GetBoolArg("-printpriority"))
-                    printf("priority     nValueIn=%-12d nConf=%-5d dPriority=%-20.1f\n", nValueIn, nConf, dPriority);
+                    printf("priority     nValueIn=%-12lld nConf=%-5d dPriority=%-20.1f\n", nValueIn, nConf, dPriority);
             }
 
             // Priority is sum(valuein * age) / txsize

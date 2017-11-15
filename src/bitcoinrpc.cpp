@@ -462,7 +462,7 @@ Object blockToJSON(const CBlock& block, const CBlockIndex* blockindex, bool fTxI
 
     result.push_back(Pair("entropybit", (int)blockindex->GetStakeEntropyBit()));
         // "http://purl.org/net/bel-epa/ccy#entropybit": [{"@value": "{blockindex->GetStakeEntropyBit()}"}],
-    result.push_back(Pair("modifier", strprintf("%016x", blockindex->nStakeModifier)));
+    result.push_back(Pair("modifier", strprintf("%016llx", blockindex->nStakeModifier)));
         // "http://purl.org/net/bel-epa/ccy#modifier": [{"@value": "{blockindex->nStakeModifier}"}],
     result.push_back(Pair("modifierchecksum", strprintf("%08x", blockindex->nStakeModifierChecksum)));
         // "http://purl.org/net/bel-epa/ccy#modifierchecksum": [{"@value": "{blockindex->nStakeModifierChecksum}"}],
@@ -478,7 +478,7 @@ Object blockToJSON(const CBlock& block, const CBlockIndex* blockindex, bool fTxI
         // "http://purl.org/net/bel-epa/ccy#burnctxout": [{"@value": "{blockindex->burnCTxOut}"}],
     }
 
-    result.push_back(Pair("nEffectiveBurnCoins", strprintf("%d", blockindex->nEffectiveBurnCoins)));
+    result.push_back(Pair("nEffectiveBurnCoins", strprintf("%lld", blockindex->nEffectiveBurnCoins)));
         // "http://purl.org/net/bel-epa/ccy#neffectiveburncoins": [{"@value": "{blockindex->nEffectiveBurnCoins}"}],
     result.push_back(Pair("Formatted nEffectiveBurnCoins", FormatMoney(blockindex->nEffectiveBurnCoins)));
     result.push_back(Pair("nBurnBits", HexBits(blockindex->nBurnBits)));
@@ -1461,8 +1461,8 @@ Value getburndata(const Array& params, bool fHelp)
 
     Object info;
     info.push_back(Pair("General Info", ""));
-    info.push_back(Pair("nBurnBits", strprintf("%08x", pindexBest->nBurnBits)));
-    info.push_back(Pair("nEffectiveBurnCoins", strprintf("%d", pindexBest->nEffectiveBurnCoins)));
+    info.push_back(Pair("nBurnBits", strprintf("%08llx", pindexBest->nBurnBits)));
+    info.push_back(Pair("nEffectiveBurnCoins", strprintf("%lld", pindexBest->nEffectiveBurnCoins)));
     info.push_back(Pair("Formatted nEffectiveBurnCoins", FormatMoney(pindexBest->nEffectiveBurnCoins)));
                                  
     ret.push_back(info);

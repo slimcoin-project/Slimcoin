@@ -2079,8 +2079,8 @@ public:
         return strprintf(
                 "CAlert(\n"
                 "    nVersion     = %d\n"
-                "    nRelayUntil  = %d\n"
-                "    nExpiration  = %d\n"
+                "    nRelayUntil  = %lld\n"
+                "    nExpiration  = %lld\n"
                 "    nID          = %d\n"
                 "    nCancel      = %d\n"
                 "    setCancel    = %s\n"
