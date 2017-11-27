@@ -1,25 +1,52 @@
-Slimcoin-qt: Qt4 GUI for Slimcoin
-===============================
+Slimcoin-qt: Qt5 GUI for Slimcoin
+==================================
 
 Build instructions
 ===================
 
-Debian
--------
+Linux
+======
 
-First, make sure that the required packages for Qt4 development of your
-distribution are installed, for Debian and Ubuntu these are:
+First, make sure that the required dependencies for compilation are installed:
+
+Debian and Ubuntu
+------------------
 
 ::
 
-    apt-get install qt4-qmake libqt4-dev build-essential libboost-dev libboost-system-dev \
+    apt-get install git build-essential qttools5-dev-tools qt5-default libboost-dev libboost-system-dev \
         libboost-filesystem-dev libboost-program-options-dev libboost-thread-dev \
-        libssl-dev libdb4.8++-dev
+        libssl-dev libdb5.3++-dev libminiupnpc-dev
 
-then execute the following:
+If you want QR code capability:
 
 ::
 
+    apt-get install qrencode
+
+Arch Linux
+-----------
+
+First, make sure that the required packages compilation are installed, for Arch Linux these are:
+
+::
+
+    pacman -S git base-devel qt5 boost miniupnpc
+
+If you want QR code capability:
+
+::
+
+    pacman -S qrencode
+
+
+Then for any linux system execute the following commands:
+
+::
+
+    git clone https://github.com/slimcoin-project/Slimcoin.git
+    cd Slimcoin
+    git checkout master
     qmake
     make
 
@@ -133,19 +160,3 @@ and 4.X cannot open the new format. This means that you cannot go back to the ol
 significant hassle!
 
 .. _`this Debian issue`: http://bugs.debian.org/cgi-bin/bugreport.cgi?bug=621425
-
-Ubuntu 11.10 warning
-====================
-
-Ubuntu 11.10 has a package called 'qt-at-spi' installed by default.  At the time of writing, having that package
-installed causes slimcoin-qt to crash intermittently.  The issue has been reported as `launchpad bug 857790`_, but
-isn't yet fixed.
-
-Until the bug is fixed, you can remove the qt-at-spi package to work around the problem, though this will presumably
-disable screen reader functionality for Qt apps:
-
-::
-
-    sudo apt-get remove qt-at-spi
-
-.. _`launchpad bug 857790`: https://bugs.launchpad.net/ubuntu/+source/qt-at-spi/+bug/857790
