@@ -1094,7 +1094,7 @@ int64 GetProofOfStakeReward(int64 nCoinAge, u32int nTime)
 {
     // NOTE: static int64 nRewardCoinYear = CENT;  // creation amount per coin-year
     int64 nRewardCoinYear = nTime > POB_POS_TARGET_SWITCH_TIME ? (10 * CENT) : CENT;  // creation amount per coin-year
-    int64 nSubsidy = nCoinAge * nRewardCoinYear * 1033 / (365 * 33 + 8);
+    int64 nSubsidy = nCoinAge * nRewardCoinYear * 33 / (365 * 33 + 8);
 
     if (fDebug && GetBoolArg("-printcreation"))
         printf("GetProofOfStakeReward(): create = %s nCoinAge = %lld\n", FormatMoney(nSubsidy).c_str(), nCoinAge);
