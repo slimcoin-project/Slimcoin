@@ -4470,7 +4470,17 @@ void ThreadRPCServer2(void* parg)
         return;
     }
 
+#if BOOST_VERSION < 104800
     ssl::context context(io_service, ssl::context::sslv23);
+#else
+    /* GJH: ('cause it's crypto)
+        Deprecated in 1.48
+    http://www.boost.org/doc/libs/1_48_0/doc/html/boost_asio/reference/ssl__context.html
+    context: Deprecated constructor taking a reference to an io_service object.
+    */
+    ssl::context context(ssl::context::sslv23);
+#endif
+
     if (fUseSSL)
     {
         context.set_options(ssl::context::no_sslv2);
@@ -4486,7 +4496,19 @@ void ThreadRPCServer2(void* parg)
         else printf("ThreadRPCServer ERROR: missing server private key file %s\n", pathPKFile.string().c_str());
 
         string strCiphers = GetArg("-rpcsslciphers", "TLSv1+HIGH:!SSLv2:!aNULL:!eNULL:!AH:!3DES:@STRENGTH");
+
+#if BOOST_VERSION < 104800
         SSL_CTX_set_cipher_list(context.impl(), strCiphers.c_str());
+#else
+        /* GJH: ('cause it's crypto)
+        Deprecated in 1.48
+        http://www.boost.org/doc/libs/1_48_0/doc/html/boost_asio/reference/ssl__context.html
+        context.impl: (Deprecated: Use native_handle().) Get the underlying implementation in the native type.
+        */
+        SSL_CTX_set_cipher_list(context.native_handle(), strCiphers.c_str());
+#endif
+
+
     }
 
     while (true)
