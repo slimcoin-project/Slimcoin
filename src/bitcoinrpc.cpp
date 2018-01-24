@@ -4662,7 +4662,16 @@ Object CallRPC(const string& strMethod, const Array& params)
     // Connect to localhost
     bool fUseSSL = GetBoolArg("-rpcssl");
     asio::io_service io_service;
-    ssl::context context(io_service, ssl::context::sslv23);
+#if BOOST_VERSION < 104800
+      ssl::context context(io_service, ssl::context::sslv23);
+#else
+    /* GJH: ('cause it's crypto)
+        Deprecated in 1.48
+    http://www.boost.org/doc/libs/1_48_0/doc/html/boost_asio/reference/ssl__context.html
+    context: Deprecated constructor taking a reference to an io_service object.
+    */
+    ssl::context context(ssl::context::sslv23);
+#endif
     context.set_options(ssl::context::no_sslv2);
     SSLStream sslStream(io_service, context);
     SSLIOStreamDevice d(sslStream, fUseSSL);
