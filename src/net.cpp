@@ -1004,7 +1004,8 @@ void MapPort(bool /* unused fMapPort */)
 // testnet dns seed begins with 't', all else are dns seeds.
 // FIXME: strDNSSeed required
 static const char *strDNSSeed[][2] = {
-  {"seed", "seed.slimcoin.bit"}
+    {"seed", "minkiz.co"},
+    {"seed", "seed.slimcoin.bit"}
 };
 
 void ThreadDNSAddressSeed(void* parg)
@@ -1073,7 +1074,8 @@ void ThreadDNSAddressSeed2(void* parg)
 // Physical IP seeds: 32-bit IPv4 addresses: e.g. 178.33.22.32 = 0x201621b2
 unsigned int pnSeed[] =
 {
-  0x231621b2, 0x4a54c854, 0x13cca445, 0x4b64bb25, 0x09510905, 0x471503c0, 0xd8fab56b, 0xd9fab56b,
+  // 0x231621b2, 0x4a54c854, 0x13cca445, 0x4b64bb25, 0x09510905, 0x471503c0, 0xd8fab56b, 0xd9fab56b,
+  0x921979b9, 0x254344b9, 0x43129b9, 0xdb8abd5, 0x92795, 0xd1252e4e, 0x942f994f, 0x47d0a55
 };
 
 void DumpAddresses()
