@@ -56,7 +56,7 @@ public:
         functionality.
     */
     void setWalletModel(WalletModel *walletModel);
-    
+
 protected:
     void changeEvent(QEvent *e);
     void closeEvent(QCloseEvent *event);

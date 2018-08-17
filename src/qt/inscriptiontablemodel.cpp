@@ -74,11 +74,7 @@ public:
 
         for(std::vector<std::pair<std::string, int> >::size_type i = 0; i != vTxResults.size(); i++) {
             std::string inscription = vTxResults[i].first;
-#if QT_VERSION < 0x058000
-            inscription_date.setMSecsSinceEpoch((qint64)vTxResults[i].second*1000);
-#else
             inscription_date.setSecsSinceEpoch((qint64)vTxResults[i].second);
-#endif
             cachedInscriptionTable.append(
                 InscriptionTableEntry(
                     QString::fromStdString(inscription),
@@ -95,11 +91,7 @@ public:
 
         for(std::vector<std::pair<std::string, int> >::size_type i = 0; i != vTxResults.size(); i++) {
             std::string inscription = vTxResults[i].first;
-#if QT_VERSION < 0x058000
-            inscription_date.setMSecsSinceEpoch((qint64)vTxResults[i].second*1000);
-#else
             inscription_date.setSecsSinceEpoch((qint64)vTxResults[i].second);
-#endif
             cachedInscriptionTable.append(
                 InscriptionTableEntry(
                     QString::fromStdString(inscription),
@@ -152,8 +144,8 @@ InscriptionTableModel::InscriptionTableModel(CWallet *wallet, WalletModel *paren
     wallet(wallet),
     priv(0)
 {
-    columns << tr("Inscription content") ;
-    columns << tr("Inscription date") ;
+    columns << tr("Inscription content      ") ;
+    columns << tr("Inscription date         ") ;
     priv = new InscriptionTablePriv(wallet, this);
     priv->refreshTable();
 }

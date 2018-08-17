@@ -34,6 +34,8 @@
 #include "guiutil.h"
 #include "rpcconsole.h"
 #include "wallet.h"
+#include "bitcoinrpc.h"
+#include "version.h"
 
 #ifdef MAC_OSX
 #include "macdockiconhandler.h"
@@ -658,6 +660,8 @@ void BitcoinGUI::setNumBlocks(int count, int nTotalBlocks)
         progressBar->setVisible(false);
         tooltip = tr("Downloaded %1 blocks of transaction history.").arg(count);
     }
+
+    tooltip = tr("Current difficulty is %1.").arg(clientModel->GetDifficulty()) + QString("<br>") + tooltip;
 
     QDateTime now = QDateTime::currentDateTime();
     QDateTime lastBlockDate = clientModel->getLastBlockDate();

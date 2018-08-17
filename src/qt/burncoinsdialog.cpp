@@ -49,7 +49,7 @@ void BurnCoinsDialog::setModel(WalletModel *model)
   if(model)
   {
     setBalance(model->getBalance(), model->getStake(), model->getUnconfirmedBalance(), model->getReserveBalance());
-    connect(model, SIGNAL(balanceChanged(qint64, qint64, qint64, qint64, BurnCoinsBalances)),
+    connect(model, SIGNAL(balanceChanged(qint64, qint64, qint64, qint64, qint64, BurnCoinsBalances)),
             this, SLOT(setBalance(qint64, qint64, qint64, qint64)));
   }
 }
@@ -115,7 +115,7 @@ void BurnCoinsDialog::on_sendButton_clicked()
   //sendCoins will automatically detect that this Tx is a burn Tx
   // Null inscription
   QString txtmsg = "";
-  WalletModel::SendCoinsReturn sendstatus = model->sendCoins(recipients, txtmsg, true);
+  WalletModel::SendCoinsReturn sendstatus = model->sendCoins(recipients, NULL, txtmsg, true);
   switch(sendstatus.status)
   {
   case WalletModel::InvalidAddress:
