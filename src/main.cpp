@@ -3204,7 +3204,7 @@ void PrintBlockTree()
         // print item
         CBlock block;
         block.ReadFromDisk(pindex, true, false);
-        printf("%d (%u,%u) %s  %08lx  %s  mint %7s  tx %d",
+        printf("%d (%u,%u) %s  %08lx  %s  mint %7s  tx %d\n",
             pindex->nHeight,
             pindex->nFile,
             pindex->nBlockPos,
