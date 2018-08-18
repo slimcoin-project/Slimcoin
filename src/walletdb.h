@@ -193,7 +193,9 @@ public:
   int64 GetAccountCreditDebit(const std::string& strAccount);
   void ListAccountCreditDebit(const std::string& strAccount, std::list<CAccountingEntry>& acentries);
 
-  int LoadWallet(CWallet* pwallet);
+  DBErrors LoadWallet(CWallet* pwallet);
+  DBErrors FindWalletTx(CWallet* pwallet, std::vector<uint256>& vTxHash, std::vector<CWalletTx>& vWtx);
+  DBErrors ZapWalletTx(CWallet* pwallet, std::vector<CWalletTx>& vWtx);
 };
 
 #endif // BITCOIN_WALLETDB_H
