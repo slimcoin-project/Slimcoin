@@ -3235,6 +3235,7 @@ bool LoadBlockIndex(bool fAllowNew)
 }
 
 
+static const char* strFormat = "%Y-%m-%dT%H:%M:%SZ";
 
 void PrintBlockTree()
 {
@@ -3281,15 +3282,16 @@ void PrintBlockTree()
         // print item
         CBlock block;
         block.ReadFromDisk(pindex, true, false);
-        printf("%d (%u,%u) %s  %08lx  %s  mint %7s  tx %d\n",
+        printf("%d,(%u,%u),%s,%08lx,%s,%s,%d,%d\n",
             pindex->nHeight,
             pindex->nFile,
             pindex->nBlockPos,
             block.GetHash().ToString().c_str(),
             block.nBits,
-            DateTimeStrFormat(block.GetBlockTime()).c_str(),
+            DateTimeStrFormat(strFormat, block.GetBlockTime()).c_str(),
             FormatMoney(pindex->nMint).c_str(),
-            block.vtx.size());
+            block.vtx.size(),
+            nCol);
 
         PrintWallets(block);
 
