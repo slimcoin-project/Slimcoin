@@ -24,7 +24,8 @@ extern bool fWalletUnlockMintOnly;
 
 class CWalletTx;
 class CReserveKey;
-class CWalletDB;
+class CAccountingEntry;
+// class CWalletDB;
 class COutput;
 class CCoinControl;
 
@@ -306,7 +307,8 @@ public:
     }
     void SetBestChain(const CBlockLocator& loc);
 
-    int LoadWallet(bool& fFirstRunRet);
+    DBErrors LoadWallet(bool& fFirstRunRet);
+    DBErrors ZapWalletTx(std::vector<CWalletTx>& vWtx);
 
     bool SetAddressBookName(const CTxDestination& address, const std::string& strName);
 
@@ -350,6 +352,8 @@ public:
     // get the current wallet format (the oldest client version guaranteed to understand this wallet)
     int GetVersion() { return nWalletVersion; }
 
+    // wallet check/repair
+    void Fix_SpentCoins(int& nMismatchSpent, int64& nBalanceInQuestion, int& nOrphansFound, bool fCheckOnly = false);
     void FixSpentCoins(int& nMismatchSpent, int64& nBalanceInQuestion, bool fCheckOnly = false);
     void DisableTransaction(const CTransaction &tx);
 
