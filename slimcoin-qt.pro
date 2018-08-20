@@ -134,7 +134,7 @@ contains(USE_QRCODE, 1) {
     message(Building with QRCode support)
     DEFINES += USE_QRCODE
     isEmpty(QRENCODE_LIB_PATH) {
-        # !macx:unix:QRENCODE_LIB_PATH = /usr/lib
+        !macx:unix:QRENCODE_LIB_PATH = /usr/lib
         contains(CONFIG, brew) {
             macx:QRENCODE_LIB_PATH = /usr/local/lib
         }else{
@@ -325,6 +325,8 @@ HEADERS += src/addrman.h \
     src/qt/chatclient.h \
     src/qt/chatwindow.h \
     src/qt/clientmodel.h \
+    src/qt/coincontroldialog.h \
+    src/qt/coincontroltreewidget.h \
     src/qt/csvmodelwriter.h \
     src/qt/editaddressdialog.h \
     src/qt/guiconstants.h \
@@ -403,6 +405,8 @@ SOURCES += src/addrman.cpp \
     src/qt/chatclient.cpp \
     src/qt/chatwindow.cpp \
     src/qt/clientmodel.cpp \
+    src/qt/coincontroldialog.cpp \
+    src/qt/coincontroltreewidget.cpp \
     src/qt/csvmodelwriter.cpp \
     src/qt/editaddressdialog.cpp \
     src/qt/guiutil.cpp \
@@ -454,6 +458,7 @@ FORMS += \
     src/qt/forms/burncoinsdialog.ui \
     src/qt/forms/burncoinsentry.ui \
     src/qt/forms/chatwindow.ui \
+    src/qt/forms/coincontroldialog.ui \
     src/qt/forms/editaddressdialog.ui \
     src/qt/forms/inscriptiondialog.ui \
     src/qt/forms/messagepage.ui \
@@ -682,7 +687,7 @@ LIBS += -lssl -lcrypto -ldb_cxx$$BDB_LIB_SUFFIX
 # windows:DEFINES += WIN32
 # windows:RC_FILE = src/qt/res/bitcoin-qt.rc
 windows:LIBS += -lole32 -luuid -lgdi32 -lwsock32
-LIBS += -lboost_system$$BOOST_LIB_SUFFIX -lboost_filesystem$$BOOST_LIB_SUFFIX -lboost_program_options$$BOOST_LIB_SUFFIX -lboost_thread$$BOOST_THREAD_LIB_SUFFIX
+LIBS += -lboost_system$$BOOST_LIB_SUFFIX -lboost_filesystem$$BOOST_LIB_SUFFIX -lboost_program_options$$BOOST_LIB_SUFFIX -lboost_thread$$BOOST_THREAD_LIB_SUFFIX -lboost_chrono$$BOOST_THREAD_LIB_SUFFIX
 
 
 # for extra security against potential buffer overflows: enable GCCs Stack Smashing Protection

@@ -23,7 +23,7 @@ void OptionsModel::Init()
     fMinimizeOnClose = settings.value("fMinimizeOnClose", false).toBool();
     nTransactionFee = settings.value("nTransactionFee").toLongLong();
     nReserveBalance = settings.value("nReserveBalance").toLongLong();
-
+    fCoinControlFeatures = settings.value("fCoinControlFeatures").toBool();
 
     int64 nreservebalance = 0;
     if (mapArgs.count("-reservebalance") && !ParseMoney(mapArgs["-reservebalance"], nreservebalance))
@@ -149,6 +149,8 @@ QVariant OptionsModel::data(const QModelIndex & index, int role) const
             return QVariant(bDisplayAddresses);
         case DetachDatabases:
             return QVariant(fDetachDB);
+          case CoinControlFeatures:
+            return QVariant(fCoinControlFeatures);
         default:
             return QVariant();
         }
@@ -203,11 +205,8 @@ bool OptionsModel::setData(const QModelIndex & index, const QVariant & value, in
             break;
         case ProxyPort:
             {
-#if QT_VERSION < 0x050000
-                int nPort = atoi(value.toString().toAscii().data());
-#else
                 int nPort = atoi(value.toString().toLatin1().data());
-#endif
+
                 if(nPort > 0 && nPort < std::numeric_limits<unsigned short>::max())
                 {
                     addrProxy.SetPort(nPort);
@@ -222,12 +221,13 @@ bool OptionsModel::setData(const QModelIndex & index, const QVariant & value, in
         case Fee: {
             nTransactionFee = value.toLongLong();
             settings.setValue("nTransactionFee", nTransactionFee);
+            emit transactionFeeChanged(nTransactionFee);
             }
             break;
         case ReserveBalance: {
             nReserveBalance = value.toLongLong();
             settings.setValue("nReserveBalance", nReserveBalance);
-            // emit reserveBalanceChanged(nReserveBalance);
+            emit reserveBalanceChanged(nReserveBalance);
             }
             break;
         case DisplayUnit: {
@@ -247,6 +247,13 @@ bool OptionsModel::setData(const QModelIndex & index, const QVariant & value, in
             settings.setValue("detachDB", fDetachDB);
             }
             break;
+        case CoinControlFeatures:
+            {
+              fCoinControlFeatures = value.toBool();
+              settings.setValue("fCoinControlFeatures", fCoinControlFeatures);
+              emit coinControlFeaturesChanged(fCoinControlFeatures);
+            }
+            break;
         default:
             break;
         }
@@ -264,6 +271,11 @@ qint64 OptionsModel::getTransactionFee()
 qint64 OptionsModel::getReserveBalance()
 {
     return nReserveBalance;
+}
+
+bool OptionsModel::getCoinControlFeatures()
+{
+        return fCoinControlFeatures;
 }
 
 bool OptionsModel::getMinimizeToTray()
