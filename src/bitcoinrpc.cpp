@@ -102,180 +102,6 @@ void RPCTypeCheck(const Object& o,
     }
 }
 
-/*
-// ppcoin: make a public-private key pair
-Value makekeypair(const Array& params, bool fHelp)
-{
-    if (fHelp || params.size() > 1)
-        throw runtime_error(
-            "makekeypair [prefix]\n"
-            "Make a public/private key pair.\n"
-            "[prefix] is optional preferred prefix for the public key.\n");
-
-    string strPrefix = "";
-    if (params.size() > 0)
-        strPrefix = params[0].get_str();
- 
-    CKey key;
-    key.MakeNewKey(false);
-
-    CPrivKey vchPrivKey = key.GetPrivKey();
-    Object result;
-    result.push_back(Pair("PrivateKey", HexStr<CPrivKey::iterator>(vchPrivKey.begin(), vchPrivKey.end())));
-    result.push_back(Pair("PublicKey", HexStr(key.GetPubKey().Raw())));
-    return result;
-}
-*/
-
-// ppcoin: check wallet integrity
-Value checkwallet(const Array& params, bool fHelp)
-{
-    if (fHelp || params.size() > 0)
-        throw runtime_error(
-            "checkwallet\n"
-            "Check wallet for integrity.\n");
-
-    int nMismatchSpent;
-    int64 nBalanceInQuestion;
-    pwalletMain->FixSpentCoins(nMismatchSpent, nBalanceInQuestion, true);
-    Object result;
-    if (nMismatchSpent == 0)
-        result.push_back(Pair("wallet check passed", true));
-    else
-    {
-        result.push_back(Pair("mismatched spent coins", nMismatchSpent));
-        result.push_back(Pair("amount in question", ValueFromAmount(nBalanceInQuestion)));
-    }
-    return result;
-}
-
-
-// ppcoin: repair wallet
-Value repairwallet(const Array& params, bool fHelp)
-{
-    if (fHelp || params.size() > 0)
-        throw runtime_error(
-            "repairwallet\n"
-            "Repair wallet if checkwallet reports any problem.\n");
-
-    int nMismatchSpent;
-    int64 nBalanceInQuestion;
-    pwalletMain->FixSpentCoins(nMismatchSpent, nBalanceInQuestion);
-    Object result;
-    if (nMismatchSpent == 0)
-        result.push_back(Pair("wallet check passed", true));
-    else
-    {
-        result.push_back(Pair("mismatched spent coins", nMismatchSpent));
-        result.push_back(Pair("amount affected by repair", ValueFromAmount(nBalanceInQuestion)));
-    }
-    return result;
-}
-
-// zapwallettxes
-Value zapwallettxes(const Array& params, bool fHelp)
-{
-  if (fHelp || params.size() > 0)
-    throw runtime_error("-zapwallettxes\n"
-          "Delete all wallet transactions and only recover those parts of the blockchain through -rescan on startup\n");
-
-  std::vector<CWalletTx> vWtx;
-  Object result;
-
-  const char *mess="Zapping all transactions from wallet ...\n";
-  printf("%s",mess); // to debug.log
-
-  pwalletMain = new CWallet("wallet.dat");
-  DBErrors nZapWalletRet = pwalletMain->ZapWalletTx(vWtx);
-  if (nZapWalletRet != DB_LOAD_OK)
-  {
-    mess="Error loading wallet.dat: Wallet corrupted\n";
-    printf("%s",mess);
-    return(mess);
-  }
-
-  delete pwalletMain;
-  pwalletMain = NULL;
-
-  mess="Loading wallet...\n";
-  printf("%s",mess);
-
-  bool fFirstRun = true;
-  pwalletMain = new CWallet("wallet.dat");
-
-
-  DBErrors nLoadWalletRet = pwalletMain->LoadWallet(fFirstRun);
-  if (nLoadWalletRet != DB_LOAD_OK)
-  {
-    if (nLoadWalletRet == DB_CORRUPT)
-    {
-      mess="Error loading wallet.dat: Wallet corrupted\n";
-      printf("%s",mess);
-      return(mess);
-    }
-    else if (nLoadWalletRet == DB_NONCRITICAL_ERROR)
-    {
-      mess="Warning: error reading wallet.dat! All keys read correctly, but transaction data or address book entries might be missing or incorrect.\n";
-      printf("%s",mess);
-    }
-    else if (nLoadWalletRet == DB_TOO_NEW)
-    {
-      mess="Error loading wallet.dat: Wallet requires newer version of Bitcoin-scrypt\n";
-      printf("%s",mess);
-      return(mess);
-    }
-    else if (nLoadWalletRet == DB_NEED_REWRITE)
-    {
-      mess="Wallet needed to be rewritten: restart LitecoinPlus to complete\n";
-      printf("%s",mess);
-      return(mess);
-    }
-    else
-    {
-      mess="Unknown error loading wallet.dat\n";
-      printf("%s",mess);
-      return(mess);
-    } 
-  }
-  
-  mess="Wallet loaded...\n";
-  printf("%s",mess);
-
-  mess="Loaded lables...\n";
-  printf("%s",mess);
-
-  // Restore wallet transaction metadata
-  BOOST_FOREACH(const CWalletTx& wtxOld, vWtx)
-  {
-    uint256 hash = wtxOld.GetHash();
-    std::map<uint256, CWalletTx>::iterator mi = pwalletMain->mapWallet.find(hash);
-    if (mi != pwalletMain->mapWallet.end())
-    {
-      const CWalletTx* copyFrom = &wtxOld;
-      CWalletTx* copyTo = &mi->second;
-      copyTo->mapValue = copyFrom->mapValue;
-      copyTo->vOrderForm = copyFrom->vOrderForm;
-      copyTo->nTimeReceived = copyFrom->nTimeReceived;
-      copyTo->nTimeSmart = copyFrom->nTimeSmart;
-      copyTo->fFromMe = copyFrom->fFromMe;
-      copyTo->strFromAccount = copyFrom->strFromAccount;
-      copyTo->nOrderPos = copyFrom->nOrderPos;
-      copyTo->WriteToDisk();
-    }
-  }
-  mess="scanning for transactions...\n";
-  printf("%s",mess);
-
-  pwalletMain->ScanForWalletTransactions(pindexGenesisBlock, true);
-  pwalletMain->ReacceptWalletTransactions();
-  mess="Please restart your wallet.\n";
-  printf("%s",mess);
-
-  mess="Zap Wallet Finished.\nPlease restart your wallet for changes to take effect.\n";
-
-  return (mess);
-}
-
 double GetDifficulty(const CBlockIndex* blockindex = NULL)
 {
     // Floating point number that is a multiple of the minimum difficulty,
@@ -1929,7 +1755,7 @@ Value addmultisigaddress(const Array& params, bool fHelp)
     {
         string msg = "addmultisigaddress <nrequired> <'[\"key\",\"key\"]'> [account]\n"
             "Add a nrequired-to-sign multisignature address to the wallet\n"
-            "each key is a peercoin address or hex-encoded public key\n"
+            "each key is a Slimcoin address or hex-encoded public key\n"
             "If [account] is specified, assign address to [account].";
         throw runtime_error(msg);
     }
@@ -1959,7 +1785,7 @@ Value createmultisig(const Array& params, bool fHelp)
             "1. nrequired (numeric, required) The number of required signatures out of the n keys or addresses.\n"
             "2. \"keys\" (string, required) A json array of keys which are peercoin addresses or hex-encoded public keys\n"
             " [\n"
-            " \"key\" (string) peercoin address or hex-encoded public key\n"
+            " \"key\" (string) Slimcoin address or hex-encoded public key\n"
             " ,...\n"
             " ]\n"
 
@@ -1971,7 +1797,7 @@ Value createmultisig(const Array& params, bool fHelp)
 
             "\nExamples:\n"
             "\nCreate a multisig address from 2 addresses\n"
-            "peerunityd createmultisig 2 \"[\\\"PCHAhUGKiFKDHKW8Pgw3qrp2vMfhwWjuCo\\\",\\\"PJrhyo8CUvFZQT8j67Expre2PYLhavnHXb\\\"]\""
+            "slimcoind createmultisig 2 \"[\\\"PCHAhUGKiFKDHKW8Pgw3qrp2vMfhwWjuCo\\\",\\\"PJrhyo8CUvFZQT8j67Expre2PYLhavnHXb\\\"]\""
             "\nAs a json rpc call\n"
             "curl --user myusername --data-binary '{\"jsonrpc\": \"1.0\", \"id\": \"curltest\", \"method\": \"icreatemultisig\", \"params\": [2, \"[\\\"PCHAhUGKiFKDHKW8Pgw3qrp2vMfhwWjuCo\\\",\\\"PJrhyo8CUvFZQT8j67Expre2PYLhavnHXb\\\"]\"]} -H 'content-type: text/plain;' http://127.0.0.1:9902"
         ;
@@ -3325,6 +3151,7 @@ Value reservebalance(const Array& params, bool fHelp)
     return result;
 }
 
+
 // ppcoin: check wallet integrity
 Value checkwallet(const Array& params, bool fHelp)
 {
@@ -3369,45 +3196,116 @@ Value repairwallet(const Array& params, bool fHelp)
     return result;
 }
 
+// zapwallettxes
+Value zapwallettxes(const Array& params, bool fHelp)
+{
+  if (fHelp || params.size() > 0)
+    throw runtime_error("-zapwallettxes\n"
+          "Delete all wallet transactions and only recover those parts of the blockchain through -rescan on startup\n");
+
+  std::vector<CWalletTx> vWtx;
+  Object result;
+
+  const char *mess="Zapping all transactions from wallet ...\n";
+  printf("%s",mess); // to debug.log
+
+  pwalletMain = new CWallet("wallet.dat");
+  int nZapWalletRet = pwalletMain->ZapWalletTx(vWtx);
+  if (nZapWalletRet != 0)
+  {
+    mess="Error loading wallet.dat: Wallet corrupted\n";
+    printf("%s",mess);
+    return(mess);
+  }
+
+  delete pwalletMain;
+  pwalletMain = NULL;
+
+  mess="Loading wallet...\n";
+  printf("%s",mess);
+
+  bool fFirstRun = true;
+  pwalletMain = new CWallet("wallet.dat");
+
+
+  int nLoadWalletRet = pwalletMain->LoadWallet(fFirstRun);
+  if (nLoadWalletRet != 0)
+  {
+    if (nLoadWalletRet == 1)
+    {
+      mess="Error loading wallet.dat: Wallet corrupted\n";
+      printf("%s",mess);
+      return(mess);
+    }
+    else if (nLoadWalletRet == 2)
+    {
+      mess="Warning: error reading wallet.dat! All keys read correctly, but transaction data or address book entries might be missing or incorrect.\n";
+      printf("%s",mess);
+    }
+    else if (nLoadWalletRet == 3)
+    {
+      mess="Error loading wallet.dat: Wallet requires newer version of Bitcoin-scrypt\n";
+      printf("%s",mess);
+      return(mess);
+    }
+    else if (nLoadWalletRet == 4)
+    {
+      mess="Wallet needed to be rewritten: restart LitecoinPlus to complete\n";
+      printf("%s",mess);
+      return(mess);
+    }
+    else
+    {
+      mess="Unknown error loading wallet.dat\n";
+      printf("%s",mess);
+      return(mess);
+    } 
+  }
+  
+  mess="Wallet loaded...\n";
+  printf("%s",mess);
+
+  mess="Loaded lables...\n";
+  printf("%s",mess);
+
+  // Restore wallet transaction metadata
+  BOOST_FOREACH(const CWalletTx& wtxOld, vWtx)
+  {
+    uint256 hash = wtxOld.GetHash();
+    std::map<uint256, CWalletTx>::iterator mi = pwalletMain->mapWallet.find(hash);
+    if (mi != pwalletMain->mapWallet.end())
+    {
+      const CWalletTx* copyFrom = &wtxOld;
+      CWalletTx* copyTo = &mi->second;
+      copyTo->mapValue = copyFrom->mapValue;
+      copyTo->vOrderForm = copyFrom->vOrderForm;
+      copyTo->nTimeReceived = copyFrom->nTimeReceived;
+      copyTo->nTimeSmart = copyFrom->nTimeSmart;
+      copyTo->fFromMe = copyFrom->fFromMe;
+      copyTo->strFromAccount = copyFrom->strFromAccount;
+      copyTo->nOrderPos = copyFrom->nOrderPos;
+      copyTo->WriteToDisk();
+    }
+  }
+  mess="scanning for transactions...\n";
+  printf("%s",mess);
+
+  pwalletMain->ScanForWalletTransactions(pindexGenesisBlock, true);
+  pwalletMain->ReacceptWalletTransactions();
+  mess="Please restart your wallet.\n";
+  printf("%s",mess);
+
+  mess="Zap Wallet Finished.\nPlease restart your wallet for changes to take effect.\n";
+
+  return (mess);
+}
+
 Value getsubsidy(const Array& params, bool fHelp)
 {
     static CBlock* pblock;
     pblock = CreateNewBlock(pwalletMain, false);
     return (boost::int64_t)GetProofOfWorkReward(pblock->nBits);
 }
-
-/*
-// ppcoin: make a public-private key pair
-Value makekeypair(const Array& params, bool fHelp)
-{
-    if (fHelp || params.size() > 1)
-        throw runtime_error(
-            "makekeypair [prefix]\n"
-            "Make a public/private ECC key pair.\n"
-            "[prefix] is optional preferred prefix for the public key.\n");
-
-    string strPrefix = "";
-    if (params.size() > 0)
-        strPrefix = params[0].get_str();
- 
-    CKey key;
-    int nCount = 0;
-    do
-    {
-        key.MakeNewKey(false);
-        nCount++;
-    } while (nCount < 10000 && strPrefix != HexStr(key.GetPubKey().Raw()).substr(0, strPrefix.size()));
-
-    if (strPrefix != HexStr(key.GetPubKey().Raw()).substr(0, strPrefix.size()))
-        return Value::null;
-
-    CPrivKey vchPrivKey = key.GetPrivKey();
-    Object result;
-    result.push_back(Pair("PrivateKey", HexStr<CPrivKey::iterator>(vchPrivKey.begin(), vchPrivKey.end())));
-    result.push_back(Pair("PublicKey", HexStr(key.GetPubKey().Raw())));
-    return result;
-}
-*/
 
 // ppcoin: make a public-private key pair
 Value makekeypair(const Array& params, bool fHelp)
@@ -4142,47 +4040,6 @@ Value getinscription(const Array& params, bool fHelp)
     return false;
 }
 
-Value getmoneysupply(const Array& params, bool fHelp)
-{
-    if (fHelp || params.size() < 1 || params.size() > 1)
-        throw runtime_error("getmoneysupply <blockhash> \n");
-
-    std::string strHash = params[0].get_str();
-    uint256 hash(strHash);
-
-    if (mapBlockIndex.count(hash) == 0)
-        throw JSONRPCError(RPC_INVALID_ADDRESS_OR_KEY, "Block not found");
-
-    CBlock block;
-    CBlockIndex* pblockindex = mapBlockIndex[hash];
-    block.ReadFromDisk(pblockindex, true, false);
-
-    Object result;
-    result.push_back(Pair("moneysupply", ValueFromAmount(pblockindex->nMoneySupply)));
-    return result;
-}
-
-Value getburnedcoins(const Array& params, bool fHelp)
-{
-    if (fHelp || params.size() < 1 || params.size() > 1)
-        throw runtime_error("getburnedcoins <blockhash> \n");
-
-    std::string strHash = params[0].get_str();
-    uint256 hash(strHash);
-
-    if (mapBlockIndex.count(hash) == 0)
-        throw JSONRPCError(RPC_INVALID_ADDRESS_OR_KEY, "Block not found");
-
-    CBlock block;
-    CBlockIndex* pblockindex = mapBlockIndex[hash];
-    block.ReadFromDisk(pblockindex, true, false);
-
-    Object result;
-    result.push_back(Pair("burnedcoins", ValueFromAmount(pblockindex->burnt)));
-    return result;
-}
-
-
 /*
 Value getinscription(const Array& params, bool fHelp)
 {
@@ -4242,6 +4099,47 @@ Value getinscription(const Array& params, bool fHelp)
     return false;
 }
 */
+
+Value getmoneysupply(const Array& params, bool fHelp)
+{
+    if (fHelp || params.size() < 1 || params.size() > 1)
+        throw runtime_error("getmoneysupply <blockhash> \n");
+
+    std::string strHash = params[0].get_str();
+    uint256 hash(strHash);
+
+    if (mapBlockIndex.count(hash) == 0)
+        throw JSONRPCError(RPC_INVALID_ADDRESS_OR_KEY, "Block not found");
+
+    CBlock block;
+    CBlockIndex* pblockindex = mapBlockIndex[hash];
+    block.ReadFromDisk(pblockindex, true, false);
+
+    Object result;
+    result.push_back(Pair("moneysupply", ValueFromAmount(pblockindex->nMoneySupply)));
+    return result;
+}
+
+Value getburnedcoins(const Array& params, bool fHelp)
+{
+    if (fHelp || params.size() < 1 || params.size() > 1)
+        throw runtime_error("getburnedcoins <blockhash> \n");
+
+    std::string strHash = params[0].get_str();
+    uint256 hash(strHash);
+
+    if (mapBlockIndex.count(hash) == 0)
+        throw JSONRPCError(RPC_INVALID_ADDRESS_OR_KEY, "Block not found");
+
+    CBlock block;
+    CBlockIndex* pblockindex = mapBlockIndex[hash];
+    block.ReadFromDisk(pblockindex, true, false);
+
+    Object result;
+    result.push_back(Pair("burnedcoins", ValueFromAmount(pblockindex->burnt)));
+    return result;
+}
+
 
 
 //
@@ -4308,8 +4206,6 @@ static const CRPCCommand vRPCCommands[] =
     { "importpassphrase",         &importpassphrase,       false  },
     { "getcheckpoint",            &getcheckpoint,          true   },
     { "reservebalance",           &reservebalance,         false  },
-    { "checkwallet",              &checkwallet,            false  },
-    { "repairwallet",             &repairwallet,           false  },
     { "dumpbootstrap",            &dumpbootstrap,          false  },
     { "linearizehashes",          &linearizehashes,        false  },
     { "makekeypair",              &makekeypair,            false  },

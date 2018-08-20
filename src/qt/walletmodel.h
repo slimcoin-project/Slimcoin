@@ -132,9 +132,9 @@ public:
   bool changePassphrase(const SecureString &oldPass, const SecureString &newPass);
   // Wallet backup
   bool backupWallet(const QString &filename);
-    // Wallet Repair
-    void checkWallet(int& nMismatchSpent, qint64& nBalanceInQuestion, int& nOrphansFound);
-    void repairWallet(int& nMismatchSpent, qint64& nBalanceInQuestion, int& nOrphansFound);
+  // Wallet Repair
+  void checkWallet(int& nMismatchSpent, qint64& nBalanceInQuestion, int& nOrphansFound);
+  void repairWallet(int& nMismatchSpent, qint64& nBalanceInQuestion, int& nOrphansFound);
 
   // RAI object for unlocking wallet, returned by requestUnlock()
   class UnlockContext
