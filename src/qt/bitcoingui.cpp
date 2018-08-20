@@ -27,6 +27,7 @@
 #include "reportview.h"
 #include "inscriptiondialog.h"
 #include "inscriptionpage.h"
+#include "intficwindow.h"
 #include "bitcoinunits.h"
 #include "guiconstants.h"
 #include "askpassphrasedialog.h"
@@ -144,6 +145,8 @@ BitcoinGUI::BitcoinGUI(QWidget *parent):
     messagePage = new SignVerifyMessageDialog(this);
 
     chatPage = new ChatWindow(this);
+
+    intficPage = new IntficWindow(this);
 
     inscriptionsPage = new InscriptionPage(this);
 
@@ -318,6 +321,10 @@ void BitcoinGUI::createActions()
     zapWalletAction = new QAction(QIcon(":/icons/repair"), tr("&Zap Wallet..."), this);
     zapWalletAction->setStatusTip(tr("Zaps txes from wallet then rescans (this is slow)..."));
 
+    intficPageAction = new QAction(QIcon(":/icons/debugwindow"), tr("&IntFic"), this);
+    intficPageAction->setToolTip(tr("View intfic"));
+    intficPageAction->setToolTip(intficPageAction->statusTip());
+
     connect(blockAction, SIGNAL(triggered()), this, SLOT(showNormalIfMinimized()));
     connect(blockAction, SIGNAL(triggered()), this, SLOT(gotoBlockBrowser()));
     connect(messageAction, SIGNAL(triggered()), this, SLOT(showNormalIfMinimized()));
@@ -328,6 +335,8 @@ void BitcoinGUI::createActions()
     connect(inscriptionsPageAction, SIGNAL(triggered()), this, SLOT(gotoInscriptionsPage()));
     connect(chatPageAction, SIGNAL(triggered()), this, SLOT(showNormalIfMinimized()));
     connect(chatPageAction, SIGNAL(triggered()), this, SLOT(gotoChatPage()));
+    connect(intficPageAction, SIGNAL(triggered()), this, SLOT(showNormalIfMinimized()));
+    connect(intficPageAction, SIGNAL(triggered()), this, SLOT(gotoIntficPage()));
 
     quitAction = new QAction(QIcon(":/icons/quit"), tr("E&xit"), this);
     quitAction->setStatusTip(tr("Quit application"));
@@ -416,6 +425,7 @@ void BitcoinGUI::createMenuBar()
     tools->addAction(checkWalletAction);
     tools->addAction(repairWalletAction);
     tools->addAction(zapWalletAction);
+    tools->addAction(intficPageAction);
 
     QMenu *help = appMenuBar->addMenu(tr("&Help"));
     help->addAction(openRPCConsoleAction);
@@ -487,6 +497,7 @@ void BitcoinGUI::setClientModel(ClientModel *clientModel)
         inscriptionPage->setClientModel(clientModel);
         inscriptionsPage->setClientModel(clientModel);
         chatPage->setModel(clientModel);
+        intficPage->setModel(clientModel);
     }
 }
 
@@ -558,6 +569,7 @@ void BitcoinGUI::createTrayIcon()
     trayIconMenu->addAction(blockAction);
     trayIconMenu->addAction(inscriptionsPageAction);
     trayIconMenu->addAction(chatPageAction);
+    trayIconMenu->addAction(intficPageAction);
     trayIconMenu->addSeparator();
     trayIconMenu->addAction(optionsAction);
     trayIconMenu->addSeparator();
@@ -951,6 +963,12 @@ void BitcoinGUI::gotoChatPage()
 {
   chatPage->show();
   chatPage->setFocus();
+}
+
+void BitcoinGUI::gotoIntficPage()
+{
+  intficPage->show();
+  intficPage->setFocus();
 }
 
 void BitcoinGUI::dragEnterEvent(QDragEnterEvent *event)

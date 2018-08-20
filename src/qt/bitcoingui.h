@@ -21,6 +21,7 @@ class MultisigDialog;
 class SignVerifyMessageDialog;
 class InscriptionPage;
 class ChatWindow;
+class IntficWindow;
 class Notificator;
 class RPCConsole;
 
@@ -85,6 +86,7 @@ private:
     SignVerifyMessageDialog *messagePage;
     InscriptionPage *inscriptionsPage;
 	ChatWindow *chatPage;
+    IntficWindow *intficPage;
     Notificator *notificator;
 
     QLabel *labelEncryptionIcon;
@@ -121,6 +123,7 @@ private:
     QAction *multisigAction;
     QAction *inscriptionsPageAction;
     QAction *chatPageAction;
+    QAction *intficPageAction;
     QAction *accountReportAction;
 
     QMovie *syncIconMovie;
@@ -190,6 +193,8 @@ private slots:
     void gotoInscriptionsPage();
     /** Switch to chat page */
     void gotoChatPage();
+    /** Show intfic page */
+    void gotoIntficPage();
     /** Show configuration dialog */
     void optionsClicked();
     /** Show about dialog */
