@@ -292,15 +292,15 @@ void BitcoinGUI::createActions()
     burnCoinsAction->setStatusTip(tr("Burn coins from a Slimcoin address"));
     burnCoinsAction->setToolTip(burnCoinsAction->statusTip());
  
-    inscribeAction = new QAction(QIcon(":/icons/inscribe"), tr("&Inscribe"), this);
+    inscribeAction = new QAction(QIcon(":/icons/inscribe"), tr("&Inscribe blockchain"), this);
     inscribeAction->setStatusTip(tr("Inscribe a record"));
     inscribeAction->setToolTip(inscribeAction->statusTip());
 
-    messageAction = new QAction(QIcon(":/icons/edit"), tr("&Messages"), this);
+    messageAction = new QAction(QIcon(":/icons/edit"), tr("&Sign/Verify Messages"), this);
     messageAction->setStatusTip(tr("Sign/verify messages, prove you control an address"));
     messageAction->setToolTip(messageAction->statusTip());
 
-    multisigAction = new QAction(QIcon(":/icons/send"), tr("Multisig"), this);
+    multisigAction = new QAction(QIcon(":/icons/send"), tr("Multisig utils"), this);
     multisigAction->setStatusTip(tr("Sign/verify messages, prove you control an address"));
     multisigAction->setToolTip(multisigAction->statusTip());
 
@@ -308,22 +308,25 @@ void BitcoinGUI::createActions()
     inscriptionsPageAction->setToolTip(tr("View inscriptions"));
     inscriptionsPageAction->setToolTip(inscriptionsPageAction->statusTip());
 
-    chatPageAction = new QAction(QIcon(":/icons/chat"), tr("&Social"), this);
+    chatPageAction = new QAction(QIcon(":/icons/chat"), tr("&Social chat"), this);
     chatPageAction->setToolTip(tr("View chat"));
     chatPageAction->setToolTip(chatPageAction->statusTip());
 
+    intficPageAction = new QAction(QIcon(":/icons/debugwindow"), tr("&IntFic"), this);
+    intficPageAction->setStatusTip(tr("Intfic"));
+    intficPageAction->setToolTip(intficPageAction->statusTip());
+
     checkWalletAction = new QAction(QIcon(":/icons/inspect"), tr("&Check Wallet..."), this);
     checkWalletAction->setStatusTip(tr("Check wallet integrity and report findings"));
+    checkWalletAction->setToolTip(checkWalletAction->statusTip());
 
     repairWalletAction = new QAction(QIcon(":/icons/repair"), tr("&Repair Wallet..."), this);
     repairWalletAction->setStatusTip(tr("Fix wallet integrity and remove orphans"));
+    repairWalletAction->setToolTip(repairWalletAction->statusTip());
 
     zapWalletAction = new QAction(QIcon(":/icons/repair"), tr("&Zap Wallet..."), this);
     zapWalletAction->setStatusTip(tr("Zaps txes from wallet then rescans (this is slow)..."));
-
-    intficPageAction = new QAction(QIcon(":/icons/debugwindow"), tr("&IntFic"), this);
-    intficPageAction->setToolTip(tr("View intfic"));
-    intficPageAction->setToolTip(intficPageAction->statusTip());
+    zapWalletAction->setToolTip(zapWalletAction->statusTip());
 
     connect(blockAction, SIGNAL(triggered()), this, SLOT(showNormalIfMinimized()));
     connect(blockAction, SIGNAL(triggered()), this, SLOT(gotoBlockBrowser()));
@@ -413,19 +416,23 @@ void BitcoinGUI::createMenuBar()
     settings->addSeparator();
     settings->addAction(optionsAction);
 
+    QMenu *utils = appMenuBar->addMenu(tr("&Utilities"));
+    utils->addAction(burnCoinsAction);
+    utils->addAction(messageAction);
+    utils->addAction(multisigAction);
+    utils->addAction(inscribeAction);
+    utils->addSeparator();
+    utils->addAction(blockAction);
+    utils->addAction(inscriptionsPageAction);
+    utils->addSeparator();
+    utils->addAction(chatPageAction);
+    utils->addAction(intficPageAction);
+
     QMenu *tools = appMenuBar->addMenu(tr("&Tools"));
-    tools->addAction(blockAction);
-    tools->addAction(burnCoinsAction);
-    tools->addAction(inscribeAction);
-    tools->addAction(messageAction);
-    tools->addAction(multisigAction);
-    tools->addAction(inscriptionsPageAction);
-    tools->addAction(chatPageAction);
-    tools->addSeparator();
     tools->addAction(checkWalletAction);
     tools->addAction(repairWalletAction);
     tools->addAction(zapWalletAction);
-    tools->addAction(intficPageAction);
+    tools->addSeparator();
 
     QMenu *help = appMenuBar->addMenu(tr("&Help"));
     help->addAction(openRPCConsoleAction);
@@ -967,7 +974,7 @@ void BitcoinGUI::gotoChatPage()
 
 void BitcoinGUI::gotoIntficPage()
 {
-  intficPage->show();
+  intficPage->render();
   intficPage->setFocus();
 }
 

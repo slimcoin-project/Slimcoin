@@ -1,4 +1,5 @@
 /*Copyright (C) 2009 Cleriot Simon
+* Copyright (C) 2018 Graham Higgins <gjh@bel-epa.com>
 *
 * This program is free software; you can redistribute it and/or
 * modify it under the terms of the GNU Lesser General Public
@@ -19,10 +20,15 @@
 
 #include <QtGui>
 #include <QProcess>
-#include <QtNetwork>
+// #include <QtNetwork>
+#include <QDebug>
 #include "clientmodel.h"
-
+#include "ui_intficwindow.h"
 #include <QMainWindow>
+#include <QStringList>
+
+class QProcess;
+
 namespace Ui
 {
     class IntficWindow;
@@ -33,23 +39,40 @@ class IntficWindow : public QMainWindow
     Q_OBJECT
 
 public:
-    explicit IntficWindow(QWidget *parent = 0);
+    explicit IntficWindow(QWidget *parent = nullptr);
     ~IntficWindow();
     void setModel(ClientModel *model);
+    void render();
 
     Q_SIGNALS:
 		void changeText();
+        // void moveChanged(QString move);
 
     public Q_SLOTS:
-        void printProcessStatus();
-        void printProcessError();
-        void printProcessOutput();
-        void textChanged(int index);
+        // void render();
 
 private:
 	Ui::IntficWindow *ui;
     ClientModel *model;
     QProcess *process;
+    QString response;
+
+    private slots:
+        void finish(int i, QProcess::ExitStatus e);
+        void sendCommand();
+        void sendCommand(const QString &command);
+        void demo();
+        void restart();
+        void quit();
+        void boat();
+        void thief();
+        void mine();
+        void balloon();
+        void runMoves(QStringList moves);
+        // void moved();
+        void updateText();
+        void printProcessError();
 };
+
 
 #endif // INTFICWINDOW_H
