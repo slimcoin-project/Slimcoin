@@ -1534,6 +1534,8 @@ isminetype IsMine(const CKeyStore &keystore, const CTxDestination& dest)
 {
     CScript script;
     script.SetDestination(dest);
+    if (keystore.HaveWatchOnly(dest))
+        return MINE_WATCH_ONLY;
     return IsMine(keystore, script);
 }
 
@@ -1557,11 +1559,15 @@ isminetype IsMine(const CKeyStore &keystore, const CScript& scriptPubKey)
         keyID = CPubKey(vSolutions[0]).GetID();
         if (keystore.HaveKey(keyID))
             return MINE_SPENDABLE;
+        if (keystore.HaveWatchOnly(keyID))
+            return MINE_WATCH_ONLY;
         break;
     case TX_PUBKEYHASH:
         keyID = CKeyID(uint160(vSolutions[0]));
         if (keystore.HaveKey(keyID))
             return MINE_SPENDABLE;
+        if (keystore.HaveWatchOnly(keyID))
+            return MINE_WATCH_ONLY;
         break;
     case TX_SCRIPTHASH:
     {
@@ -1572,6 +1578,8 @@ isminetype IsMine(const CKeyStore &keystore, const CScript& scriptPubKey)
             if (ret == MINE_SPENDABLE)
                 return ret;
         }
+        if (keystore.HaveWatchOnly(scriptID))
+            return MINE_WATCH_ONLY;
         break;
     }
     case TX_MULTISIG:
