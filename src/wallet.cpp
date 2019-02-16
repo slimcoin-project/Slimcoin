@@ -1246,9 +1246,10 @@ bool CWallet::SelectCoins(int64 nTargetValue, unsigned int nSpendTime, set<pair<
     // coin control -> return all selected outputs (we want all selected to go into the transaction for sure)
     if (coinControl && coinControl->HasSelected())
     {
-        BOOST_FOREACH(const PAIRTYPE(const CWalletTx*,unsigned int)& c, vCoinsRet)
+        BOOST_FOREACH(const COutput& out, vCoins)
         {
-            setCoinsRet.insert(c);
+            nValueRet += out.tx->vout[out.i].nValue;
+            setCoinsRet.insert(make_pair(out.tx, out.i));
         }
         return (nValueRet >= nTargetValue);
     }
