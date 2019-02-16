@@ -3436,14 +3436,17 @@ Value dumpbootstrap(const Array& params, bool fHelp)
 
 Value linearizehashes(const Array& params, bool fHelp)
 {
-    if (fHelp || params.size() > 1 || params.size() > 3)
+    if (fHelp || params.size() < 1 || params.size() > 3)
         throw runtime_error(
             "linearizehashes <destination> <endblock>  [startblock=0]\n"
             "Creates a dump of linearized block hashes in destination, which can be a directory or a path with filename, up to the given endblock number.\n"
             "Optional <startblock> is the first block number to dump.");
 
     string strDest = params[0].get_str();
-    int nEndBlock = params[1].get_int();
+
+    int nEndBlock = 1646900; // 3rd Feb 2019
+    if (params.size() > 1)
+        nEndBlock = params[1].get_int();
     if (nEndBlock < 0 || nEndBlock > nBestHeight)
         throw runtime_error("End block number out of range.");
 
