@@ -4911,6 +4911,8 @@ CBlock *CreateNewBlock(CWallet* pwallet, bool fProofOfStake, const CWalletTx *bu
 
     // ppcoin: if coinstake available add coinstake tx
     static int64 nLastCoinStakeSearchTime = GetAdjustedTime();  // only initialized at startup
+    static int64 nLastCoinStakeCandiateUpdateTime = 0;  // only initialized at startup
+    static int64 nLastCoinStakePrecomputeTime = 0;  // only initialized at startup
     CBlockIndex* pindexPrev = pindexBest;
 
     if (fProofOfStake)  // attemp to find a coinstake
@@ -4918,7 +4920,57 @@ CBlock *CreateNewBlock(CWallet* pwallet, bool fProofOfStake, const CWalletTx *bu
         pblock->nBits = GetNextTargetRequired(pindexPrev, true);
         CTransaction txCoinStake;
         int64 nSearchTime = txCoinStake.nTime; // search to current time
-        if (nSearchTime > nLastCoinStakeSearchTime)
+
+        // Update list of coins for PoS every 5 minutes
+        if(nSearchTime - nLastCoinStakeCandiateUpdateTime >= 300)
+        {
+            boost::chrono::time_point<boost::chrono::steady_clock> timeStart = boost::chrono::steady_clock::now();
+            pwallet->UpdateCoinStakeCandidatesFromWallet();
+            nLastCoinStakeCandiateUpdateTime = nSearchTime;           
+
+            boost::chrono::time_point<boost::chrono::steady_clock> timeEnd = boost::chrono::steady_clock::now();
+            printf("[Stakeperf] Updating stake candidates from wallet took %0.2lf seconds.\n", boost::chrono::duration<float>(timeEnd-timeStart).count());
+        }
+
+        // Try to find a PoS block every second
+        if(nSearchTime > nLastCoinStakeSearchTime)
+        {
+            boost::chrono::time_point<boost::chrono::steady_clock> timeStart = boost::chrono::steady_clock::now();
+
+            if(pwallet->CreateCoinStakeWithSchedule(*pwallet, pblock->nBits, txCoinStake))
+            {
+                if (txCoinStake.nTime >= max(pindexPrev->GetMedianTimePast()+1, pindexPrev->GetBlockTime() - nMaxClockDrift))
+                {   // make sure coinstake would meet timestamp protocol
+                    // as it would be the same as the block timestamp
+                    pblock->vtx[0].vout[0].SetEmpty();
+                    pblock->vtx[0].nTime = txCoinStake.nTime;
+                    pblock->vtx.push_back(txCoinStake);
+                }
+            }
+            nLastCoinStakeSearchInterval = nSearchTime - nLastCoinStakeSearchTime;
+            nLastCoinStakeSearchTime = nSearchTime;
+
+            boost::chrono::time_point<boost::chrono::steady_clock> timeEnd = boost::chrono::steady_clock::now();
+            printf("[Stakeperf] CreateCoinStakeWithSchedule took %0.4lf seconds.\n", boost::chrono::duration<float>(timeEnd-timeStart).count());
+        }
+
+        // Update precomputed coinstake schedule every few seconds
+        if(nSearchTime - nLastCoinStakePrecomputeTime >= 12)
+        {
+            boost::chrono::time_point<boost::chrono::steady_clock> timeStart = boost::chrono::steady_clock::now();
+
+            // Precompute future coinstakes for the next few seconds.
+            pwallet->PrecomputeCoinStakeCandidates(pblock->nBits, 15);
+            nLastCoinStakePrecomputeTime = nSearchTime;
+
+            boost::chrono::time_point<boost::chrono::steady_clock> timeEnd = boost::chrono::steady_clock::now();
+            printf("[Stakeperf] Coin stake precomputation took %0.2lf seconds.\n", boost::chrono::duration<float>(timeEnd-timeStart).count());
+        }
+
+
+
+
+        /*if (nSearchTime > nLastCoinStakeSearchTime)
         {
             if (pwallet->CreateCoinStake(*pwallet, pblock->nBits, nSearchTime-nLastCoinStakeSearchTime, txCoinStake))
             {
@@ -4932,7 +4984,7 @@ CBlock *CreateNewBlock(CWallet* pwallet, bool fProofOfStake, const CWalletTx *bu
             }
             nLastCoinStakeSearchInterval = nSearchTime - nLastCoinStakeSearchTime;
             nLastCoinStakeSearchTime = nSearchTime;
-        }
+        }*/
     }
 
     pblock->nBits = GetNextTargetRequired(pindexPrev, pblock->IsProofOfStake());
