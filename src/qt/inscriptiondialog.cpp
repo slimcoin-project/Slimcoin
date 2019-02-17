@@ -82,7 +82,7 @@ void InscriptionDialog::on_insertButton_clicked()
     // qDebug() << "Recipient created" << vchDefaultAddr << " amount" << 1*CENT;
 
     // send the transaction
-    WalletModel::SendCoinsReturn sendstatus = walletModel->sendCoins(recipients, NULL, txmsg, false);
+    WalletModel::SendCoinsReturn sendstatus = walletModel->sendCoins(recipients, txmsg, false);
 
     switch(sendstatus.status)
     {
