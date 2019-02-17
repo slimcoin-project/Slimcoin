@@ -152,8 +152,8 @@ InscriptionTableModel::InscriptionTableModel(CWallet *wallet, WalletModel *paren
     wallet(wallet),
     priv(0)
 {
-    columns << tr("Inscription content") ;
-    columns << tr("Inscription date") ;
+    columns << tr("Inscription content      ") ;
+    columns << tr("Inscription date         ") ;
     priv = new InscriptionTablePriv(wallet, this);
     priv->refreshTable();
 }
