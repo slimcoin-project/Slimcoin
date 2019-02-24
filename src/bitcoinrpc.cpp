@@ -3200,7 +3200,7 @@ Value repairwallet(const Array& params, bool fHelp)
 Value zapwallettxes(const Array& params, bool fHelp)
 {
   if (fHelp || params.size() > 0)
-    throw runtime_error("-zapwallettxes\n"
+    throw runtime_error("zapwallettxes\n"
           "Delete all wallet transactions and only recover those parts of the blockchain through -rescan on startup\n");
 
   std::vector<CWalletTx> vWtx;
@@ -3250,7 +3250,7 @@ Value zapwallettxes(const Array& params, bool fHelp)
     }
     else if (nLoadWalletRet == 4)
     {
-      mess="Wallet needed to be rewritten: restart LitecoinPlus to complete\n";
+      mess="Wallet needed to be rewritten: restart Slimcoin to complete\n";
       printf("%s",mess);
       return(mess);
     }
@@ -3386,14 +3386,22 @@ Value makekeypair(const Array& params, bool fHelp)
 
 Value dumpbootstrap(const Array& params, bool fHelp)
 {
-    if (fHelp || params.size() < 1 || params.size() > 2)
+    if (fHelp || params.size() < 1 || params.size() > 3)
         throw runtime_error(
-            "dumpbootstrap <destination>\n"
-            "Creates a bootstrap format block dump of the blockchain in destination, which can be a directory or a path with filename.");
+            "dumpbootstrap <destination> <endblock> [startblock=0]\n"
+            "Creates a bootstrap format block dump of the blockchain in destination, which can be a directory or a path with filename, up to the given endblock number.\n"
+            "Optional <startblock> is the first block number to dump.");
 
     string strDest = params[0].get_str();
-    int nEndBlock = nBestHeight;
+    int nEndBlock = params[1].get_int();
+    if (nEndBlock < 0 || nEndBlock > nBestHeight)
+        throw runtime_error("End block number out of range.");
+
     int nStartBlock = 0;
+    if (params.size() > 2)
+        nStartBlock = params[2].get_int();
+    if (nStartBlock < 0 || nStartBlock > nEndBlock)
+        throw runtime_error("Start block number out of range.");
 
     boost::filesystem::path pathDest(strDest);
     if (boost::filesystem::is_directory(pathDest))
@@ -3418,6 +3426,7 @@ Value dumpbootstrap(const Array& params, bool fHelp)
             block.ReadFromDisk(pblockindex, true);
             fileout << FLATDATA(pchMessageStart) << fileout.GetSerializeSize(block) << block;
         }
+
     } catch(const boost::filesystem::filesystem_error &e) {
         throw JSONRPCError(-1, "Error: Bootstrap dump failed!");
     }
@@ -3427,14 +3436,22 @@ Value dumpbootstrap(const Array& params, bool fHelp)
 
 Value linearizehashes(const Array& params, bool fHelp)
 {
-    if (fHelp || params.size() > 1 || params.size() > 2)
+    if (fHelp || params.size() > 1 || params.size() > 3)
         throw runtime_error(
-            "linearizehashes <destination>\n"
-            "Creates a dump of linearized block hashes in destination, which can be a directory or a path with filename.");
+            "linearizehashes <destination> <endblock>  [startblock=0]\n"
+            "Creates a dump of linearized block hashes in destination, which can be a directory or a path with filename, up to the given endblock number.\n"
+            "Optional <startblock> is the first block number to dump.");
 
     string strDest = params[0].get_str();
-    int nEndBlock = nBestHeight;
+    int nEndBlock = params[1].get_int();
+    if (nEndBlock < 0 || nEndBlock > nBestHeight)
+        throw runtime_error("End block number out of range.");
+
     int nStartBlock = 0;
+    if (params.size() > 2)
+        nStartBlock = params[2].get_int();
+    if (nStartBlock < 0 || nStartBlock > nEndBlock)
+        throw runtime_error("Start block number out of range.");
 
     boost::filesystem::path pathDest(strDest);
     if (boost::filesystem::is_directory(pathDest))
@@ -3454,7 +3471,7 @@ Value linearizehashes(const Array& params, bool fHelp)
             CBlock block;
             CBlockIndex* pblockindex = FindBlockByHeight(nHeight);
             block.ReadFromDisk(pblockindex, true);
-            std::string blockhash = block.GetHash().ToString().c_str();
+            std::string blockhash = block.GetHash().ToString();
             fileout << blockhash.append("\n");
         }
     } catch(const boost::filesystem::filesystem_error &e) {

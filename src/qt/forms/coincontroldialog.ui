@@ -471,6 +471,19 @@
      </column>
      <column>
       <property name="text">
+       <string>Confirmations</string>
+      </property>
+      <property name="toolTip">
+       <string>Confirmed</string>
+      </property>
+     </column>
+     <column>
+      <property name="text">
+       <string>Weight (n/a)</string>
+      </property>
+     </column>
+     <column>
+      <property name="text">
        <string>Label</string>
       </property>
      </column>
@@ -486,17 +499,10 @@
      </column>
      <column>
       <property name="text">
-       <string>Confirmations</string>
-      </property>
-      <property name="toolTip">
-       <string>Confirmed</string>
-      </property>
-     </column>
-     <column>
-      <property name="text">
        <string>Priority</string>
       </property>
      </column>
+     <!--
      <column>
       <property name="text">
        <string/>
@@ -517,6 +523,7 @@
        <string/>
       </property>
      </column>
+   -->
     </widget>
    </item>
    <item>
