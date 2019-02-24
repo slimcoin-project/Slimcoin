@@ -403,8 +403,8 @@ bool AppInit2(int argc, char *argv[])
     {
         BOOST_FOREACH(string strFile, mapMultiArgs["-loadblock"])
         {
-            FILE *file = fopen(strFile.c_str(), "rb");
-            if (file)
+            FILE *file = fopen(strFile.c_str()  , "rb");
+            if (file != NULL)
                 LoadExternalBlockFile(file);
         }
     }
@@ -414,7 +414,7 @@ bool AppInit2(int argc, char *argv[])
         InitMessage(_("Importing bootstrap blockchain data file."));
 
         FILE *file = fopen(pathBootstrap.string().c_str(), "rb");
-        if (file) {
+        if (file != NULL) {
             filesystem::path pathBootstrapOld = GetDataDir() / "bootstrap.dat.old";
             LoadExternalBlockFile(file);
             RenameOver(pathBootstrap, pathBootstrapOld);
