@@ -325,7 +325,7 @@ QString ClientModel::formatClientStartupTime() const
   return QDateTime::fromTime_t(nClientStartupTime).toString();
 }
 
-/*
+/* FIXME: suspended for excessive noise
 // Handlers for core signals
 static void NotifyBlocksChanged(ClientModel *clientmodel)
 {

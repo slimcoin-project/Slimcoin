@@ -49,18 +49,11 @@ public:
         bool confirmed = index.data(TransactionTableModel::ConfirmedRole).toBool();
         QVariant value = index.data(Qt::ForegroundRole);
         QColor foreground = option.palette.color(QPalette::Text);
-#if QT_VERSION < 0x050000
-        if(qVariantCanConvert<QColor>(value))
-        {
-            foreground = qvariant_cast<QColor>(value);
-        }
-#else
         if(value.canConvert<QBrush>())
         {
             QBrush brush = qvariant_cast<QBrush>(value);
             foreground = brush.color();
         }
-#endif
         painter->setPen(foreground);
         painter->drawText(addressRect, Qt::AlignLeft|Qt::AlignVCenter, address);
 
@@ -107,6 +100,7 @@ OverviewPage::OverviewPage(QWidget *parent) :
     currentStake(0),
     currentReserveBalance(0),
     currentUnconfirmedBalance(-1),
+    currentImmatureBalance(-1),
     txdelegate(new TxViewDelegate())
 {
     ui->setupUi(this);
@@ -125,6 +119,11 @@ OverviewPage::OverviewPage(QWidget *parent) :
     ui->labelUnconfirmed->setFont(QFont("Monospace", -1, QFont::Bold));
     ui->labelUnconfirmed->setToolTip(tr("Total of transactions that have yet to be confirmed, and do not yet count toward the current balance"));
     ui->labelUnconfirmed->setTextInteractionFlags(Qt::TextSelectableByMouse|Qt::TextSelectableByKeyboard);
+
+    // Immature balance: <balance>
+    ui->labelImmature->setFont(QFont("Monospace", -1, QFont::Bold));
+    ui->labelImmature->setToolTip(tr("Total of transactions that have yet to be confirmed, and do not yet count toward the current balance"));
+    ui->labelImmature->setTextInteractionFlags(Qt::TextSelectableByMouse|Qt::TextSelectableByKeyboard);
 
     ui->labelNumTransactions->setToolTip(tr("Total number of transactions in wallet"));
     ui->labelReserveBalance->setToolTip(tr("Reserve balance of coins, excluded from staking."));
@@ -181,8 +180,12 @@ OverviewPage::OverviewPage(QWidget *parent) :
 
         // set axes label fonts:
         QFont label = font();
-        ui->diffplot->xAxis->setLabelFont(label);
+        ui->diffplot->xAxis->setTickLabels(false);
+        // ui->diffplot->xAxis->setLabelFont(label);
+        // ui->diffplot->xAxis->setTickLabelFont(label);
+        // ui->diffplot->xAxis->setTickLabelRotation(15);
         ui->diffplot->yAxis->setLabelFont(label);
+        ui->diffplot->yAxis->setTickLabelFont(label);
     }
     else
     {
@@ -195,17 +198,19 @@ OverviewPage::~OverviewPage()
     delete ui;
 }
 
-void OverviewPage::setBalance(qint64 balance, qint64 stake, qint64 unconfirmedBalance, qint64 reserveBalance, BurnCoinsBalances burnBalances)
+void OverviewPage::setBalance(qint64 balance, qint64 stake, qint64 unconfirmedBalance, qint64 immatureBalance, qint64 reserveBalance, BurnCoinsBalances burnBalances)
 {
     int unit = model->getOptionsModel()->getDisplayUnit();
     currentBalance = balance;
     currentStake = stake;
     currentUnconfirmedBalance = unconfirmedBalance;
+    currentImmatureBalance = immatureBalance;
     currentReserveBalance = reserveBalance;
     ui->labelBalance->setText(BitcoinUnits::formatWithUnit(unit, balance));
     ui->labelStake->setText(BitcoinUnits::formatWithUnit(unit, stake));
     ui->labelUnconfirmed->setText(BitcoinUnits::formatWithUnit(unit, unconfirmedBalance));
     ui->labelReserveBalance->setText(BitcoinUnits::formatWithUnit(unit, reserveBalance));
+    ui->labelImmature->setText(BitcoinUnits::formatWithUnit(unit, immatureBalance));
 
     //burn information
     currentNetBurnCoins = burnBalances.netBurnCoins;
@@ -217,6 +222,12 @@ void OverviewPage::setBalance(qint64 balance, qint64 stake, qint64 unconfirmedBa
     ui->labelEffBurnCoins->setText(BitcoinUnits::formatWithUnit(unit, burnBalances.nEffectiveBurnCoins));
     ui->labelImmBurnCoins->setText(BitcoinUnits::formatWithUnit(unit, burnBalances.nImmatureBurnCoins));
     ui->labelDecayBurnCoins->setText(BitcoinUnits::formatWithUnit(unit, burnBalances.nDecayedBurnCoins));
+
+    // only show immature (newly mined) balance if it's non-zero, so as not to complicate things
+    // for the non-mining users
+    bool showImmature = immatureBalance != 0;
+    ui->labelImmature->setVisible(showImmature);
+    ui->labelImmatureText->setVisible(showImmature);
 }
 
 void OverviewPage::setNumTransactions(int count)
@@ -255,8 +266,8 @@ void OverviewPage::setModel(WalletModel *model)
         ui->listTransactions->setModelColumn(TransactionTableModel::ToAddress);
 
         // Keep up to date with wallet
-        setBalance(model->getBalance(), model->getStake(), model->getUnconfirmedBalance(), model->getReserveBalance(), model->getBurnCoinBalances());
-        connect(model, SIGNAL(balanceChanged(qint64, qint64, qint64, qint64, BurnCoinsBalances)), this, SLOT(setBalance(qint64, qint64, qint64, qint64, BurnCoinsBalances)));
+        setBalance(model->getBalance(), model->getStake(), model->getUnconfirmedBalance(), model->getImmatureBalance(), model->getReserveBalance(), model->getBurnCoinBalances());
+        connect(model, SIGNAL(balanceChanged(qint64, qint64, qint64, qint64, qint64, BurnCoinsBalances)), this, SLOT(setBalance(qint64, qint64, qint64, qint64, qint64, BurnCoinsBalances)));
 
         setNumTransactions(model->getNumTransactions());
         connect(model, SIGNAL(numTransactionsChanged(int)), this, SLOT(setNumTransactions(int)));
@@ -273,7 +284,7 @@ void OverviewPage::displayUnitChanged()
     if(!model || !model->getOptionsModel())
         return;
     if(currentBalance != -1)
-        setBalance(currentBalance, currentStake, currentUnconfirmedBalance, currentReserveBalance, BurnCoinsBalances(currentNetBurnCoins, currentEffectiveBurnCoins, currentImmatureBurnCoins));
+        setBalance(currentBalance, currentStake, currentUnconfirmedBalance, currentImmatureBalance, currentReserveBalance, BurnCoinsBalances(currentNetBurnCoins, currentEffectiveBurnCoins, currentImmatureBurnCoins));
 
     txdelegate->unit = model->getOptionsModel()->getDisplayUnit();
     ui->listTransactions->update();
@@ -284,7 +295,7 @@ void OverviewPage::reserveBalanceChanged()
     if(!model || !model->getOptionsModel())
         return;
     if(currentBalance != -1)
-        setBalance(currentBalance, currentStake, currentUnconfirmedBalance, currentReserveBalance, BurnCoinsBalances(currentNetBurnCoins, currentEffectiveBurnCoins, currentImmatureBurnCoins));
+        setBalance(currentBalance, currentStake, currentUnconfirmedBalance, currentImmatureBalance, currentReserveBalance, BurnCoinsBalances(currentNetBurnCoins, currentEffectiveBurnCoins, currentImmatureBurnCoins));
 
     /*
     int unit = model->getOptionsModel()->getDisplayUnit();

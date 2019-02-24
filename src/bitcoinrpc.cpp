@@ -58,13 +58,48 @@ static CCriticalSection cs_nWalletUnlockTime;
 extern Value dumpprivkey(const Array& params, bool fHelp);
 extern Value importprivkey(const Array& params, bool fHelp);
 extern Value importpassphrase(const Array& params, bool fHelp);
-
+extern int64 GetBurnTxTotal();
 Object JSONRPCError(int code, const string& message)
 {
     Object error;
     error.push_back(Pair("code", code));
     error.push_back(Pair("message", message));
     return error;
+}
+void RPCTypeCheck(const Array& params,
+                  const list<Value_type>& typesExpected)
+{
+    unsigned int i = 0;
+    BOOST_FOREACH(Value_type t, typesExpected)
+    {
+        if (params.size() <= i)
+            break;
+
+       const Value& v = params[i];
+        if (v.type() != t)
+        {
+            string err = strprintf("Expected type %s, got %s",
+                                   Value_type_name[t], Value_type_name[v.type()]);
+            throw JSONRPCError(-3, err);
+        }
+        i++;
+    }
+}
+void RPCTypeCheck(const Object& o,
+                  const map<string, Value_type>& typesExpected)
+{
+    BOOST_FOREACH(const PAIRTYPE(string, Value_type)& t, typesExpected)
+    {
+        const Value& v = find_value(o, t.first);
+        if (v.type() == null_type)
+            throw JSONRPCError(-3, strprintf("Missing %s", t.first.c_str()));
+        if (v.type() != t.second)
+        {
+            string err = strprintf("Expected type %s for %s, got %s",
+                                   Value_type_name[t.second], t.first.c_str(), Value_type_name[v.type()]);
+            throw JSONRPCError(-3, err);
+        }
+    }
 }
 
 double GetDifficulty(const CBlockIndex* blockindex = NULL)
@@ -97,6 +132,33 @@ double GetDifficulty(const CBlockIndex* blockindex = NULL)
 
     return dDiff;
 }
+
+int64 GetBurnTxTotal()
+{
+    int blockstogoback = pindexBest->nHeight;
+    int64 totalburnedcoins = 0;
+
+    const CBlockIndex* pindexFirst = pindexBest;
+    for (int i = 0; pindexFirst && i < blockstogoback; i++) {
+
+        CBlock block;
+        block.ReadFromDisk(pindexFirst, true, false);
+
+        BOOST_FOREACH (const CTransaction& tx, block.vtx)
+        {
+            std::string txmsg;
+            bool isBroadcast;
+            CTransaction ctx = tx;
+            if ( tx.IsBurnTx() ) {
+                totalburnedcoins += tx.GetBurnOutTx().nValue;
+            }
+        }
+
+        pindexFirst = pindexFirst->pprev;
+    }
+    return totalburnedcoins;
+}
+
 
 void RPCTypeCheck(const Array& params, const list<Value_type>& typesExpected, bool fAllowNull)
 {
@@ -354,25 +416,53 @@ void TxToJSON(const CTransaction& tx, Object& txdata)
     txdata.push_back(Pair("vout", vouts));
 }
 
+/*
+  {
+    "@id": "http://purl.org/net/bel-epa/ccy#C12ab2d1d006d48f33d4a424b716b2d7680f71235de83307d0fe56a718257c457",
+    "@type": [ "http://purl.org/net/bel-epa/ccy#Block" ],
+    "http://purl.org/net/bel-epa/ccy#difficulty": [{"@type": "http://www.w3.org/2001/XMLSchema#decimal", "@value": "0.03124954"}],
+    "http://purl.org/net/bel-epa/ccy#flags": [{"@value": "proof-of-stake"}],
+    "http://purl.org/net/bel-epa/ccy#height": [{"@value": 556100}],
+    "http://purl.org/net/bel-epa/ccy#merkleroot": [{"@type": "http://www.w3.org/2001/XMLSchema#hexBinary", "@value": "1887d6e254448fea88ed77b84e9336910f2b1baef5a8e182cc265625f6175379"}],
+    "http://purl.org/net/bel-epa/ccy#mint": [{"@type": "http://www.w3.org/2001/XMLSchema#decimal", "@value": "0.775923"}],
+    "http://purl.org/net/bel-epa/ccy#nextblockhash": [{"@id": "http://purl.org/net/bel-epa/ccy#C0000001ead83577b254c3812c8072806d549e1572b435fc6a5be021839cf5082"}],
+    "http://purl.org/net/bel-epa/ccy#previousblockhash": [{"@id": "http://purl.org/net/bel-epa/ccy#C0000004770bd40c11d827ea5d437298be84e4ea2fece9495ff96a899479dd4b4"}],
+    "http://purl.org/net/bel-epa/ccy#size": [{"@value": 544}],
+    "http://purl.org/net/bel-epa/ccy#time": [{"@value": 1452318302}]
+  }
+*/
 Object blockToJSON(const CBlock& block, const CBlockIndex* blockindex, bool fTxInfo, bool fTxDetails)
 {
     Object result;
     result.push_back(Pair("hash", block.GetHash().GetHex()));
     result.push_back(Pair("size", (int)::GetSerializeSize(block, SER_NETWORK, PROTOCOL_VERSION)));
+    // "http://purl.org/net/bel-epa/ccy#size": [{"@value": "{}"}],
     result.push_back(Pair("height", blockindex->nHeight));
+    // "http://purl.org/net/bel-epa/ccy#height": [{"@value": "{blockindex->nHeight}"}],
     result.push_back(Pair("version", block.nVersion));
+    // "http://purl.org/net/bel-epa/ccy#version": [{"@value": "{block.nVersion}"}],
     result.push_back(Pair("merkleroot", block.hashMerkleRoot.GetHex()));
+    // "http://purl.org/net/bel-epa/ccy#merkelroot": [{"@type": "http://www.w3.org/2001/XMLSchema#hexBinary", "@value": "{block.hashMerkleRoot.GetHex()}"}],
     result.push_back(Pair("time", DateTimeStrFormat(block.GetBlockTime())));
+    // "http://purl.org/net/bel-epa/ccy#time": [{"@value": "{DateTimeStrFormat(block.GetBlockTime())}"}],
     result.push_back(Pair("nonce", (boost::uint64_t)block.nNonce));
+    // "http://purl.org/net/bel-epa/ccy#nonce": [{"@value": "{(boost::uint64_t)block.nNonce)}"}],
     result.push_back(Pair("bits", HexBits(block.nBits)));
+    // "http://purl.org/net/bel-epa/ccy#bits": [{"@type": "http://www.w3.org/2001/XMLSchema#hexBinary", "@value": "{HexBits(block.nBits)}"}],
     result.push_back(Pair("difficulty", GetDifficulty(blockindex)));
+    // "http://purl.org/net/bel-epa/ccy#difficulty": [{"@type": "http://www.w3.org/2001/XMLSchema#decimal", "@value": "{GetDifficulty(blockindex)}"}],
     result.push_back(Pair("mint", ValueFromAmount(blockindex->nMint)));
+    // "http://purl.org/net/bel-epa/ccy#mint": [{"@type": "http://www.w3.org/2001/XMLSchema#decimal", "@value": "{ValueFromAmount(blockindex->nMint)}"}],
+    result.push_back(Pair("burnt", ValueFromAmount(blockindex->burnt)));
+    // "http://purl.org/net/bel-epa/ccy#burnt": [{"@type": "http://www.w3.org/2001/XMLSchema#decimal", "@value": "{ValueFromAmount(blockindex->nMint)}"}],
 
     if (blockindex->pprev)
         result.push_back(Pair("previousblockhash", blockindex->pprev->GetBlockHash().GetHex()));
+        // "http://purl.org/net/bel-epa/ccy#previousblockhash": [{"@id": "http://purl.org/net/bel-epa/ccy#C{blockindex->pnext->GetBlockHash().GetHex()}"}],
 
     if (blockindex->pnext)
         result.push_back(Pair("nextblockhash", blockindex->pnext->GetBlockHash().GetHex()));
+        // "http://purl.org/net/bel-epa/ccy#nextblockhash": [{"@id": "http://purl.org/net/bel-epa/ccy#C{blockindex->pnext->GetBlockHash().GetHex()}"}],
 
     {
         string flags, proofhash;
@@ -400,24 +490,34 @@ Object blockToJSON(const CBlock& block, const CBlockIndex* blockindex, bool fTxI
         }
   
         result.push_back(Pair("flags", flags));
+        // "http://purl.org/net/bel-epa/ccy#flags": [{"@value": "{flags}"}],
         result.push_back(Pair("proofhash", proofhash));
+        // "http://purl.org/net/bel-epa/ccy#proofhash": [{"@value": "{proofhash}"}],
     }
 
     result.push_back(Pair("entropybit", (int)blockindex->GetStakeEntropyBit()));
-    result.push_back(Pair("modifier", strprintf("%016x", blockindex->nStakeModifier)));
+        // "http://purl.org/net/bel-epa/ccy#entropybit": [{"@value": "{blockindex->GetStakeEntropyBit()}"}],
+    result.push_back(Pair("modifier", strprintf("%016llx", blockindex->nStakeModifier)));
+        // "http://purl.org/net/bel-epa/ccy#modifier": [{"@value": "{blockindex->nStakeModifier}"}],
     result.push_back(Pair("modifierchecksum", strprintf("%08x", blockindex->nStakeModifierChecksum)));
+        // "http://purl.org/net/bel-epa/ccy#modifierchecksum": [{"@value": "{blockindex->nStakeModifierChecksum}"}],
 
     //PoB details
     if (blockindex->IsProofOfBurn())
     {
         result.push_back(Pair("burnBlkHeight", blockindex->burnBlkHeight));
+        // "http://purl.org/net/bel-epa/ccy#burnblkheight": [{"@value": "{blockindex->burnBlkHeight}"}],
         result.push_back(Pair("burnCTx", blockindex->burnCTx));
+        // "http://purl.org/net/bel-epa/ccy#burnctx": [{"@value": "{blockindex->burnCTx}"}],
         result.push_back(Pair("burnCTxOut", blockindex->burnCTxOut));
+        // "http://purl.org/net/bel-epa/ccy#burnctxout": [{"@value": "{blockindex->burnCTxOut}"}],
     }
 
-    result.push_back(Pair("nEffectiveBurnCoins", strprintf("%d", blockindex->nEffectiveBurnCoins)));
+    result.push_back(Pair("nEffectiveBurnCoins", strprintf("%lld", blockindex->nEffectiveBurnCoins)));
+        // "http://purl.org/net/bel-epa/ccy#neffectiveburncoins": [{"@value": "{blockindex->nEffectiveBurnCoins}"}],
     result.push_back(Pair("Formatted nEffectiveBurnCoins", FormatMoney(blockindex->nEffectiveBurnCoins)));
     result.push_back(Pair("nBurnBits", HexBits(blockindex->nBurnBits)));
+        // "http://purl.org/net/bel-epa/ccy#nburnbits": [{"@value": "{HexBits(blockindex->nBurnBits}"}],
 
     Array txinfo;
     BOOST_FOREACH (const CTransaction& tx, block.vtx)
@@ -441,6 +541,7 @@ Object blockToJSON(const CBlock& block, const CBlockIndex* blockindex, bool fTxI
             txinfo.push_back(tx.GetHash().GetHex());
     }
     result.push_back(Pair("tx", txinfo));
+    // "http://purl.org/net/bel-epa/ccy#tx": [{"@id": "http://purl.org/net/bel-epa/ccy#C{txinfo}"],
     return result;
 }
 
@@ -714,6 +815,8 @@ Value getinfo(const Array& params, bool fHelp)
     obj.push_back(Pair("stake",         ValueFromAmount(pwalletMain->GetStake())));
     obj.push_back(Pair("blocks",        (int)nBestHeight));
     obj.push_back(Pair("moneysupply",   ValueFromAmount(pindexBest->nMoneySupply)));
+    obj.push_back(Pair("burnt",         ValueFromAmount(pindexBest->burnt)));
+    //obj.push_back(Pair("burnt",         FormatMoney(GetBurnTxTotal())));
     obj.push_back(Pair("connections",   (int)vNodes.size()));
     obj.push_back(Pair("proxy",         (fUseProxy ? addrProxy.ToStringIPPort() : string())));
     obj.push_back(Pair("ip",            addrSeenByPeer.ToStringIP()));
@@ -1393,8 +1496,8 @@ Value getburndata(const Array& params, bool fHelp)
 
     Object info;
     info.push_back(Pair("General Info", ""));
-    info.push_back(Pair("nBurnBits", strprintf("%08x", pindexBest->nBurnBits)));
-    info.push_back(Pair("nEffectiveBurnCoins", strprintf("%d", pindexBest->nEffectiveBurnCoins)));
+    info.push_back(Pair("nBurnBits", strprintf("%08llx", pindexBest->nBurnBits)));
+    info.push_back(Pair("nEffectiveBurnCoins", strprintf("%lld", pindexBest->nEffectiveBurnCoins)));
     info.push_back(Pair("Formatted nEffectiveBurnCoins", FormatMoney(pindexBest->nEffectiveBurnCoins)));
                                  
     ret.push_back(info);
@@ -1652,7 +1755,7 @@ Value addmultisigaddress(const Array& params, bool fHelp)
     {
         string msg = "addmultisigaddress <nrequired> <'[\"key\",\"key\"]'> [account]\n"
             "Add a nrequired-to-sign multisignature address to the wallet\n"
-            "each key is a peercoin address or hex-encoded public key\n"
+            "each key is a Slimcoin address or hex-encoded public key\n"
             "If [account] is specified, assign address to [account].";
         throw runtime_error(msg);
     }
@@ -1682,7 +1785,7 @@ Value createmultisig(const Array& params, bool fHelp)
             "1. nrequired (numeric, required) The number of required signatures out of the n keys or addresses.\n"
             "2. \"keys\" (string, required) A json array of keys which are peercoin addresses or hex-encoded public keys\n"
             " [\n"
-            " \"key\" (string) peercoin address or hex-encoded public key\n"
+            " \"key\" (string) Slimcoin address or hex-encoded public key\n"
             " ,...\n"
             " ]\n"
 
@@ -1694,7 +1797,7 @@ Value createmultisig(const Array& params, bool fHelp)
 
             "\nExamples:\n"
             "\nCreate a multisig address from 2 addresses\n"
-            "peerunityd createmultisig 2 \"[\\\"PCHAhUGKiFKDHKW8Pgw3qrp2vMfhwWjuCo\\\",\\\"PJrhyo8CUvFZQT8j67Expre2PYLhavnHXb\\\"]\""
+            "slimcoind createmultisig 2 \"[\\\"PCHAhUGKiFKDHKW8Pgw3qrp2vMfhwWjuCo\\\",\\\"PJrhyo8CUvFZQT8j67Expre2PYLhavnHXb\\\"]\""
             "\nAs a json rpc call\n"
             "curl --user myusername --data-binary '{\"jsonrpc\": \"1.0\", \"id\": \"curltest\", \"method\": \"icreatemultisig\", \"params\": [2, \"[\\\"PCHAhUGKiFKDHKW8Pgw3qrp2vMfhwWjuCo\\\",\\\"PJrhyo8CUvFZQT8j67Expre2PYLhavnHXb\\\"]\"]} -H 'content-type: text/plain;' http://127.0.0.1:9902"
         ;
@@ -3048,6 +3151,7 @@ Value reservebalance(const Array& params, bool fHelp)
     return result;
 }
 
+
 // ppcoin: check wallet integrity
 Value checkwallet(const Array& params, bool fHelp)
 {
@@ -3092,45 +3196,116 @@ Value repairwallet(const Array& params, bool fHelp)
     return result;
 }
 
+// zapwallettxes
+Value zapwallettxes(const Array& params, bool fHelp)
+{
+  if (fHelp || params.size() > 0)
+    throw runtime_error("zapwallettxes\n"
+          "Delete all wallet transactions and only recover those parts of the blockchain through -rescan on startup\n");
+
+  std::vector<CWalletTx> vWtx;
+  Object result;
+
+  const char *mess="Zapping all transactions from wallet ...\n";
+  printf("%s",mess); // to debug.log
+
+  pwalletMain = new CWallet("wallet.dat");
+  int nZapWalletRet = pwalletMain->ZapWalletTx(vWtx);
+  if (nZapWalletRet != 0)
+  {
+    mess="Error loading wallet.dat: Wallet corrupted\n";
+    printf("%s",mess);
+    return(mess);
+  }
+
+  delete pwalletMain;
+  pwalletMain = NULL;
+
+  mess="Loading wallet...\n";
+  printf("%s",mess);
+
+  bool fFirstRun = true;
+  pwalletMain = new CWallet("wallet.dat");
+
+
+  int nLoadWalletRet = pwalletMain->LoadWallet(fFirstRun);
+  if (nLoadWalletRet != 0)
+  {
+    if (nLoadWalletRet == 1)
+    {
+      mess="Error loading wallet.dat: Wallet corrupted\n";
+      printf("%s",mess);
+      return(mess);
+    }
+    else if (nLoadWalletRet == 2)
+    {
+      mess="Warning: error reading wallet.dat! All keys read correctly, but transaction data or address book entries might be missing or incorrect.\n";
+      printf("%s",mess);
+    }
+    else if (nLoadWalletRet == 3)
+    {
+      mess="Error loading wallet.dat: Wallet requires newer version of Bitcoin-scrypt\n";
+      printf("%s",mess);
+      return(mess);
+    }
+    else if (nLoadWalletRet == 4)
+    {
+      mess="Wallet needed to be rewritten: restart Slimcoin to complete\n";
+      printf("%s",mess);
+      return(mess);
+    }
+    else
+    {
+      mess="Unknown error loading wallet.dat\n";
+      printf("%s",mess);
+      return(mess);
+    } 
+  }
+  
+  mess="Wallet loaded...\n";
+  printf("%s",mess);
+
+  mess="Loaded lables...\n";
+  printf("%s",mess);
+
+  // Restore wallet transaction metadata
+  BOOST_FOREACH(const CWalletTx& wtxOld, vWtx)
+  {
+    uint256 hash = wtxOld.GetHash();
+    std::map<uint256, CWalletTx>::iterator mi = pwalletMain->mapWallet.find(hash);
+    if (mi != pwalletMain->mapWallet.end())
+    {
+      const CWalletTx* copyFrom = &wtxOld;
+      CWalletTx* copyTo = &mi->second;
+      copyTo->mapValue = copyFrom->mapValue;
+      copyTo->vOrderForm = copyFrom->vOrderForm;
+      copyTo->nTimeReceived = copyFrom->nTimeReceived;
+      copyTo->nTimeSmart = copyFrom->nTimeSmart;
+      copyTo->fFromMe = copyFrom->fFromMe;
+      copyTo->strFromAccount = copyFrom->strFromAccount;
+      copyTo->nOrderPos = copyFrom->nOrderPos;
+      copyTo->WriteToDisk();
+    }
+  }
+  mess="scanning for transactions...\n";
+  printf("%s",mess);
+
+  pwalletMain->ScanForWalletTransactions(pindexGenesisBlock, true);
+  pwalletMain->ReacceptWalletTransactions();
+  mess="Please restart your wallet.\n";
+  printf("%s",mess);
+
+  mess="Zap Wallet Finished.\nPlease restart your wallet for changes to take effect.\n";
+
+  return (mess);
+}
+
 Value getsubsidy(const Array& params, bool fHelp)
 {
     static CBlock* pblock;
     pblock = CreateNewBlock(pwalletMain, false);
     return (boost::int64_t)GetProofOfWorkReward(pblock->nBits);
 }
-
-/*
-// ppcoin: make a public-private key pair
-Value makekeypair(const Array& params, bool fHelp)
-{
-    if (fHelp || params.size() > 1)
-        throw runtime_error(
-            "makekeypair [prefix]\n"
-            "Make a public/private ECC key pair.\n"
-            "[prefix] is optional preferred prefix for the public key.\n");
-
-    string strPrefix = "";
-    if (params.size() > 0)
-        strPrefix = params[0].get_str();
- 
-    CKey key;
-    int nCount = 0;
-    do
-    {
-        key.MakeNewKey(false);
-        nCount++;
-    } while (nCount < 10000 && strPrefix != HexStr(key.GetPubKey().Raw()).substr(0, strPrefix.size()));
-
-    if (strPrefix != HexStr(key.GetPubKey().Raw()).substr(0, strPrefix.size()))
-        return Value::null;
-
-    CPrivKey vchPrivKey = key.GetPrivKey();
-    Object result;
-    result.push_back(Pair("PrivateKey", HexStr<CPrivKey::iterator>(vchPrivKey.begin(), vchPrivKey.end())));
-    result.push_back(Pair("PublicKey", HexStr(key.GetPubKey().Raw())));
-    return result;
-}
-*/
 
 // ppcoin: make a public-private key pair
 Value makekeypair(const Array& params, bool fHelp)
@@ -3184,30 +3359,49 @@ Value makekeypair(const Array& params, bool fHelp)
     if (strPrefix != CBitcoinAddress(vchPubKey.GetID()).ToString().substr(0, strPrefix.size()))
         return Value::null;
 
-    vector<unsigned char> xvchPubKey = vchPubKey.Raw();
-    result.push_back(Pair("private key: ", HexStr<CPrivKey::iterator>(privkey.begin(), privkey.end())));
-    result.push_back(Pair("secret (hex): ", HexStr(sec).c_str()));
-
-    CBitcoinSecret bsecret;
-    bsecret.SetSecret(secret, true);
-    result.push_back(Pair("secret (base58): ", bsecret.ToString().c_str()));
-
-    result.push_back(Pair("pubkey (hex): ", HexStr(xvchPubKey.begin(), xvchPubKey.end()).c_str()));
-    result.push_back(Pair("address (base58): ", CBitcoinAddress(vchPubKey.GetID()).ToString().c_str()));
+    string fcompressed;
+    for(int nCompressed=0; nCompressed<2; nCompressed++)
+    {
+      bool fCompressed = nCompressed == 1;
+      if (fCompressed) {
+        fcompressed = "compressed";
+      }
+      else {
+        fcompressed = "uncompressed";
+      }
+      result.push_back(Pair("  * : ", fcompressed.c_str()));
+      CBitcoinSecret bsecret;
+      bsecret.SetSecret(secret, fCompressed);
+      result.push_back(Pair("    * secret (base58): ", bsecret.ToString().c_str()));
+      CKey key;
+      key.SetSecret(secret, fCompressed);
+      CPubKey vchPubKey = key.GetPubKey();
+      vector<unsigned char> xvchPubKey = vchPubKey.Raw();
+      result.push_back(Pair("    * pubkey (hex): ", HexStr(xvchPubKey.begin(), xvchPubKey.end()).c_str()));
+      result.push_back(Pair("    * address (base58): ", CBitcoinAddress(vchPubKey.GetID()).ToString().c_str()));
+    }
 
     return result;
 }
 
 Value dumpbootstrap(const Array& params, bool fHelp)
 {
-    if (fHelp || params.size() < 1 || params.size() > 2)
+    if (fHelp || params.size() < 1 || params.size() > 3)
         throw runtime_error(
-            "dumpbootstrap <destination>\n"
-            "Creates a bootstrap format block dump of the blockchain in destination, which can be a directory or a path with filename.");
+            "dumpbootstrap <destination> <endblock> [startblock=0]\n"
+            "Creates a bootstrap format block dump of the blockchain in destination, which can be a directory or a path with filename, up to the given endblock number.\n"
+            "Optional <startblock> is the first block number to dump.");
 
     string strDest = params[0].get_str();
-    int nEndBlock = nBestHeight;
+    int nEndBlock = params[1].get_int();
+    if (nEndBlock < 0 || nEndBlock > nBestHeight)
+        throw runtime_error("End block number out of range.");
+
     int nStartBlock = 0;
+    if (params.size() > 2)
+        nStartBlock = params[2].get_int();
+    if (nStartBlock < 0 || nStartBlock > nEndBlock)
+        throw runtime_error("Start block number out of range.");
 
     boost::filesystem::path pathDest(strDest);
     if (boost::filesystem::is_directory(pathDest))
@@ -3232,11 +3426,62 @@ Value dumpbootstrap(const Array& params, bool fHelp)
             block.ReadFromDisk(pblockindex, true);
             fileout << FLATDATA(pchMessageStart) << fileout.GetSerializeSize(block) << block;
         }
+
     } catch(const boost::filesystem::filesystem_error &e) {
         throw JSONRPCError(-1, "Error: Bootstrap dump failed!");
     }
 
     return "bootstrap file created";
+}
+
+Value linearizehashes(const Array& params, bool fHelp)
+{
+    if (fHelp || params.size() < 1 || params.size() > 3)
+        throw runtime_error(
+            "linearizehashes <destination> <endblock>  [startblock=0]\n"
+            "Creates a dump of linearized block hashes in destination, which can be a directory or a path with filename, up to the given endblock number.\n"
+            "Optional <startblock> is the first block number to dump.");
+
+    string strDest = params[0].get_str();
+
+    int nEndBlock = 1646900; // 3rd Feb 2019
+    if (params.size() > 1)
+        nEndBlock = params[1].get_int();
+    if (nEndBlock < 0 || nEndBlock > nBestHeight)
+        throw runtime_error("End block number out of range.");
+
+    int nStartBlock = 0;
+    if (params.size() > 2)
+        nStartBlock = params[2].get_int();
+    if (nStartBlock < 0 || nStartBlock > nEndBlock)
+        throw runtime_error("Start block number out of range.");
+
+    boost::filesystem::path pathDest(strDest);
+    if (boost::filesystem::is_directory(pathDest))
+        pathDest /= "hashlist.txt";
+
+    try {
+        FILE* file = fopen(pathDest.string().c_str(), "w");
+        if (!file)
+            throw JSONRPCError(-1, "Error: Could not open output file for writing.");
+
+        CAutoFile fileout = CAutoFile(file, SER_DISK, CLIENT_VERSION);
+        if (!fileout)
+            throw JSONRPCError(-1, "Error: Could not open output file for writing.");
+
+        for (int nHeight = nStartBlock; nHeight <= nEndBlock; nHeight++)
+        {
+            CBlock block;
+            CBlockIndex* pblockindex = FindBlockByHeight(nHeight);
+            block.ReadFromDisk(pblockindex, true);
+            std::string blockhash = block.GetHash().ToString();
+            fileout << blockhash.append("\n");
+        }
+    } catch(const boost::filesystem::filesystem_error &e) {
+        throw JSONRPCError(-1, "Error: Linearized hash dump failed!");
+    }
+
+    return "file of linearized hashes created";
 }
 
 extern CCriticalSection cs_mapAlerts;
@@ -3875,6 +4120,47 @@ Value getinscription(const Array& params, bool fHelp)
 }
 */
 
+Value getmoneysupply(const Array& params, bool fHelp)
+{
+    if (fHelp || params.size() < 1 || params.size() > 1)
+        throw runtime_error("getmoneysupply <blockhash> \n");
+
+    std::string strHash = params[0].get_str();
+    uint256 hash(strHash);
+
+    if (mapBlockIndex.count(hash) == 0)
+        throw JSONRPCError(RPC_INVALID_ADDRESS_OR_KEY, "Block not found");
+
+    CBlock block;
+    CBlockIndex* pblockindex = mapBlockIndex[hash];
+    block.ReadFromDisk(pblockindex, true, false);
+
+    Object result;
+    result.push_back(Pair("moneysupply", ValueFromAmount(pblockindex->nMoneySupply)));
+    return result;
+}
+
+Value getburnedcoins(const Array& params, bool fHelp)
+{
+    if (fHelp || params.size() < 1 || params.size() > 1)
+        throw runtime_error("getburnedcoins <blockhash> \n");
+
+    std::string strHash = params[0].get_str();
+    uint256 hash(strHash);
+
+    if (mapBlockIndex.count(hash) == 0)
+        throw JSONRPCError(RPC_INVALID_ADDRESS_OR_KEY, "Block not found");
+
+    CBlock block;
+    CBlockIndex* pblockindex = mapBlockIndex[hash];
+    block.ReadFromDisk(pblockindex, true, false);
+
+    Object result;
+    result.push_back(Pair("burnedcoins", ValueFromAmount(pblockindex->burnt)));
+    return result;
+}
+
+
 
 //
 // Call Table
@@ -3940,9 +4226,8 @@ static const CRPCCommand vRPCCommands[] =
     { "importpassphrase",         &importpassphrase,       false  },
     { "getcheckpoint",            &getcheckpoint,          true   },
     { "reservebalance",           &reservebalance,         false  },
-    { "checkwallet",              &checkwallet,            false  },
-    { "repairwallet",             &repairwallet,           false  },
     { "dumpbootstrap",            &dumpbootstrap,          false  },
+    { "linearizehashes",          &linearizehashes,        false  },
     { "makekeypair",              &makekeypair,            false  },
     { "sendalert",                &sendalert,              false  },
     { "listunspent",              &listunspent,            false  },
@@ -3955,7 +4240,11 @@ static const CRPCCommand vRPCCommands[] =
     { "getrawmempool",            &getrawmempool,          true   },
     { "getsubsidy",               &getsubsidy,             false  },
     { "getinscription",           &getinscription,         true   },
-};
+    { "getmoneysupply",           &getmoneysupply,         true   },
+    { "getburnedcoins",           &getburnedcoins,         true   },
+    { "checkwallet",              &checkwallet,            false  },
+    { "repairwallet",             &repairwallet,           false  },
+    { "zapwallettxes",            &zapwallettxes,          false  }};
 
 CRPCTable::CRPCTable()
 {
@@ -4146,7 +4435,7 @@ string JSONRPCRequest(const string& strMethod, const Array& params, const Value&
     return write_string(Value(request), false) + "\n";
 }
 
-string JSONRPCReply(const Value& result, const Value& error, const Value& id)
+Object JSONRPCReplyObj(const Value& result, const Value& error, const Value& id)
 {
     Object reply;
     if (error.type() != null_type)
@@ -4155,6 +4444,12 @@ string JSONRPCReply(const Value& result, const Value& error, const Value& id)
         reply.push_back(Pair("result", result));
     reply.push_back(Pair("error", error));
     reply.push_back(Pair("id", id));
+    return reply;
+}
+
+string JSONRPCReply(const Value& result, const Value& error, const Value& id)
+{
+    Object reply = JSONRPCReplyObj(result, error, id);
     return write_string(Value(reply), false) + "\n";
 }
 
@@ -4258,6 +4553,59 @@ void ThreadRPCServer(void* parg)
     printf("ThreadRPCServer exiting\n");
 }
 
+static Object JSONRPCExecOne(const Value& request)
+{
+    Object rpc_result;
+    Object req = request.get_obj();
+    Value id = Value::null;
+
+    try {
+        id = find_value(req, "id");
+
+        // Parse method
+        Value valMethod = find_value(req, "method");
+        if (valMethod.type() == null_type)
+            throw JSONRPCError(-32600, "Missing method");
+        if (valMethod.type() != str_type)
+            throw JSONRPCError(-32600, "Method must be a string");
+        string strMethod = valMethod.get_str();
+        if (strMethod != "getwork" && strMethod != "getblocktemplate")
+            printf("ThreadRPCServer method=%s\n", strMethod.c_str());
+
+        // Parse params
+        Value valParams = find_value(req, "params");
+        Array params;
+        if (valParams.type() == array_type)
+            params = valParams.get_array();
+        else if (valParams.type() == null_type)
+            params = Array();
+        else
+            throw JSONRPCError(-32600, "Params must be an array");
+
+        Value result = tableRPC.execute(strMethod, params);
+        rpc_result = JSONRPCReplyObj(result, Value::null, id);
+    }
+    catch (Object& objError)
+    {
+        rpc_result = JSONRPCReplyObj(Value::null, objError, id);
+    }
+    catch (std::exception& e)
+    {
+        rpc_result = JSONRPCReplyObj(Value::null, JSONRPCError(-32700, e.what()), id);
+    }
+
+    return rpc_result;
+}
+
+static string JSONRPCExecBatch(const Array& vReq)
+{
+    Array ret;
+    for (unsigned int reqIdx = 0; reqIdx < vReq.size(); reqIdx++)
+        ret.push_back(JSONRPCExecOne(vReq[reqIdx]));
+
+    return write_string(Value(ret), false) + "\n";
+}
+
 void ThreadRPCServer2(void* parg)
 {
     printf("ThreadRPCServer started\n");
@@ -4308,7 +4656,17 @@ void ThreadRPCServer2(void* parg)
         return;
     }
 
+#if BOOST_VERSION < 104800
     ssl::context context(io_service, ssl::context::sslv23);
+#else
+    /* GJH: ('cause it's crypto)
+        Deprecated in 1.48
+    http://www.boost.org/doc/libs/1_48_0/doc/html/boost_asio/reference/ssl__context.html
+    context: Deprecated constructor taking a reference to an io_service object.
+    */
+    ssl::context context(ssl::context::sslv23);
+#endif
+
     if (fUseSSL)
     {
         context.set_options(ssl::context::no_sslv2);
@@ -4324,7 +4682,19 @@ void ThreadRPCServer2(void* parg)
         else printf("ThreadRPCServer ERROR: missing server private key file %s\n", pathPKFile.string().c_str());
 
         string strCiphers = GetArg("-rpcsslciphers", "TLSv1+HIGH:!SSLv2:!aNULL:!eNULL:!AH:!3DES:@STRENGTH");
+
+#if BOOST_VERSION < 104800
         SSL_CTX_set_cipher_list(context.impl(), strCiphers.c_str());
+#else
+        /* GJH: ('cause it's crypto)
+        Deprecated in 1.48
+        http://www.boost.org/doc/libs/1_48_0/doc/html/boost_asio/reference/ssl__context.html
+        context.impl: (Deprecated: Use native_handle().) Get the underlying implementation in the native type.
+        */
+        SSL_CTX_set_cipher_list(context.native_handle(), strCiphers.c_str());
+#endif
+
+
     }
 
     while (true)
@@ -4385,46 +4755,22 @@ void ThreadRPCServer2(void* parg)
         {
             // Parse request
             Value valRequest;
-            if (!read_string(strRequest, valRequest) || valRequest.type() != obj_type)
+            if (!read_string(strRequest, valRequest))
                 throw JSONRPCError(RPC_PARSE_ERROR, "Parse error");
-            const Object& request = valRequest.get_obj();
-
-            // Parse id now so errors from here on will have the id
-            id = find_value(request, "id");
-
-            // Parse method
-            Value valMethod = find_value(request, "method");
-            if (valMethod.type() == null_type)
-                throw JSONRPCError(RPC_INVALID_REQUEST, "Missing method");
-            if (valMethod.type() != str_type)
-                throw JSONRPCError(RPC_INVALID_REQUEST, "Method must be a string");
-            string strMethod = valMethod.get_str();
-            if (strMethod != "getwork" && strMethod != "getmemorypool" && strMethod != "getblocktemplate")
-                printf("ThreadRPCServer method=%s\n", strMethod.c_str());
-
-            // Parse params
-            Value valParams = find_value(request, "params");
-            Array params;
-            if (valParams.type() == array_type)
-                params = valParams.get_array();
-            else if (valParams.type() == null_type)
-                params = Array();
-            else
-                throw JSONRPCError(RPC_INVALID_REQUEST, "Params must be an array");
-
-            try
-            {
-                // Execute
-                Value result = tableRPC.execute(strMethod, params);
+            string strReply;
+            if (valRequest.type() == obj_type) {
+              // singleton request
+              Object result;
+              result = JSONRPCExecOne(valRequest);
+              strReply = write_string(Value(result), false) + "\n";
+            } else if (valRequest.type() == array_type) {
+              // array of requests
+              strReply = JSONRPCExecBatch(valRequest.get_array());
+            } else
+              throw JSONRPCError(-32600, "Top-level object parse error");
 
                 // Send reply
-                string strReply = JSONRPCReply(result, Value::null, id);
-                stream << HTTPReply(HTTP_OK, strReply) << std::flush;
-            }
-            catch(std::exception& e)
-            {
-                ErrorReply(stream, JSONRPCError(RPC_MISC_ERROR, e.what()), id);
-            }
+              stream << HTTPReply(200, strReply) << std::flush;
         }
         catch (Object& objError)
         {
@@ -4478,7 +4824,16 @@ Object CallRPC(const string& strMethod, const Array& params)
     // Connect to localhost
     bool fUseSSL = GetBoolArg("-rpcssl");
     asio::io_service io_service;
-    ssl::context context(io_service, ssl::context::sslv23);
+#if BOOST_VERSION < 104800
+      ssl::context context(io_service, ssl::context::sslv23);
+#else
+    /* GJH: ('cause it's crypto)
+        Deprecated in 1.48
+    http://www.boost.org/doc/libs/1_48_0/doc/html/boost_asio/reference/ssl__context.html
+    context: Deprecated constructor taking a reference to an io_service object.
+    */
+    ssl::context context(ssl::context::sslv23);
+#endif
     context.set_options(ssl::context::no_sslv2);
     SSLStream sslStream(io_service, context);
     SSLIOStreamDevice d(sslStream, fUseSSL);

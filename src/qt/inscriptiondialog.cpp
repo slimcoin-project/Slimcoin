@@ -62,10 +62,10 @@ void InscriptionDialog::on_insertButton_clicked()
     QString txmsg = ui->lineEditMsg->text();
     // qDebug() << "Text message:" << txmsg;
 
-    if ( std::string(txmsg.toStdString().c_str()).length() > 80 )
+    if ( std::string(txmsg.toStdString().c_str()).length() > 100 )
     {
         QMessageBox::question(this, tr("Message error"),
-                              tr("Message length exceeds the limit (80 bytes)!"), // MAX_OP_RETURN_RELAY
+                              tr("Message length exceeds the limit (100 characters)"), // MAX_OP_RETURN_RELAY
               QMessageBox::Cancel,
               QMessageBox::Cancel);
         return;
@@ -82,7 +82,7 @@ void InscriptionDialog::on_insertButton_clicked()
     // qDebug() << "Recipient created" << vchDefaultAddr << " amount" << 1*CENT;
 
     // send the transaction
-    WalletModel::SendCoinsReturn sendstatus = walletModel->sendCoins(recipients, txmsg, false);
+    WalletModel::SendCoinsReturn sendstatus = walletModel->sendCoins(recipients, NULL, txmsg, false);
 
     switch(sendstatus.status)
     {

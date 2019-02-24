@@ -660,6 +660,83 @@ bool CTransaction::CheckTransaction() const
     return true;
 }
 
+/*
+int64 CTransaction::GetMinFee(unsigned int nBlockSize, bool fAllowFree,
+                              enum GetMinFee_mode mode, unsigned int nBytes) const
+{
+    // Base fee is either MIN_TX_FEE or MIN_RELAY_TX_FEE
+    int64 nBaseFee = (mode == GMF_RELAY) ? MIN_RELAY_TX_FEE : MIN_TX_FEE;
+    unsigned int nNewBlockSize = nBlockSize + nBytes;
+    int64 nMinFee = (1 + (int64)nBytes / 1000) * nBaseFee;
+    // To limit dust spam, require MIN_TX_FEE/MIN_RELAY_TX_FEE if any output is less than 0.01
+    if (nMinFee < nBaseFee)
+    {
+        BOOST_FOREACH(const CTxOut& txout, vout)
+            if (txout.nValue < CENT)
+                nMinFee = nBaseFee;
+    }
+    // Raise the price as the block approaches full
+    if (nBlockSize != 1 && nNewBlockSize >= MAX_BLOCK_SIZE_GEN/2)
+    {
+        if (nNewBlockSize >= MAX_BLOCK_SIZE_GEN)
+            return MAX_MONEY;
+        nMinFee *= MAX_BLOCK_SIZE_GEN / (MAX_BLOCK_SIZE_GEN - nNewBlockSize);
+    }
+    if (!MoneyRange(nMinFee))
+        nMinFee = MAX_MONEY;
+    return nMinFee;
+}
+*/
+int64 CTransaction::GetMinFee(unsigned int nBlockSize, bool fAllowFree,
+                              enum GetMinFee_mode mode, unsigned int nBytes) const
+{
+    // Base fee is either MIN_TX_FEE or MIN_RELAY_TX_FEE
+    int64 nBaseFee = (mode == GMF_RELAY) ? MIN_RELAY_TX_FEE : MIN_TX_FEE;
+    /* Obsoleted by integration of coincontrol, now passed in as arg
+    unsigned int nBytes = ::GetSerializeSize(*this, SER_NETWORK, PROTOCOL_VERSION);
+    */
+    unsigned int nNewBlockSize = nBlockSize + nBytes;
+    int64 nMinFee = (1 + (int64)nBytes / 1000) * nBaseFee;
+
+    if (fAllowFree)
+    {
+        if (nBlockSize == 1)
+        {
+            // Transactions under 10K are free
+            // (about 4500bc if made of 50bc inputs)
+            if (nBytes < 10000)
+                nMinFee = 0;
+        }
+        else
+        {
+            // Free transaction area
+            if (nNewBlockSize < 27000)
+                nMinFee = 0;
+        }
+    }
+
+    // To limit dust spam, require MIN_TX_FEE/MIN_RELAY_TX_FEE if any output is less than 0.01
+    if (nMinFee < nBaseFee)
+    {
+        BOOST_FOREACH(const CTxOut& txout, vout)
+            if (txout.nValue < CENT)
+                nMinFee = nBaseFee;
+    }
+
+    // Raise the price as the block approaches full
+    if (nBlockSize != 1 && nNewBlockSize >= MAX_BLOCK_SIZE_GEN/2)
+    {
+        if (nNewBlockSize >= MAX_BLOCK_SIZE_GEN)
+            return MAX_MONEY;
+        nMinFee *= MAX_BLOCK_SIZE_GEN / (MAX_BLOCK_SIZE_GEN - nNewBlockSize);
+    }
+
+    if (!MoneyRange(nMinFee))
+        nMinFee = MAX_MONEY;
+    return nMinFee;
+}
+
+
 bool CTxMemPool::accept(CTxDB& txdb, CTransaction &tx, bool fCheckInputs,
                         bool* pfMissingInputs)
 {
@@ -1072,7 +1149,7 @@ int64 GetProofOfWorkReward(u32int nBits, bool fProofOfBurn)
     {
         CBigNum bnMidValue = (bnLowerBound + bnUpperBound) / 2;
         if (fDebug && GetBoolArg("-printcreation"))
-            printf("GetProofOfWorkReward() : lower = %d, upper = %d, mid = %d\n", bnLowerBound.getuint64(), bnUpperBound.getuint64(), bnMidValue.getuint64());
+            printf("GetProofOfWorkReward() : lower = %lld, upper = %lld, mid = %lld\n", bnLowerBound.getuint64(), bnUpperBound.getuint64(), bnMidValue.getuint64());
 
         if (bnMidValue * bnMidValue * bnMidValue * bnMidValue * bnTargetLimit > bnSubsidyLimit * bnSubsidyLimit * bnSubsidyLimit * bnSubsidyLimit * bnTarget)
             bnUpperBound = bnMidValue;
@@ -1084,7 +1161,7 @@ int64 GetProofOfWorkReward(u32int nBits, bool fProofOfBurn)
     nSubsidy = (nSubsidy / CENT) * CENT;
 
     if (fDebug && GetBoolArg("-printcreation"))
-        printf("GetProofOfWorkReward() : create = %s nBits = 0x%08x nSubsidy = %d return = %d\n", FormatMoney(nSubsidy).c_str(), nBits, nSubsidy, min(nSubsidy, maxSubsidy));
+        printf("GetProofOfWorkReward() : create = %s nBits = 0x%08x nSubsidy = %lld return = %lld\n", FormatMoney(nSubsidy).c_str(), nBits, nSubsidy, min(nSubsidy, maxSubsidy));
 
     return min(nSubsidy, maxSubsidy);
 }
@@ -1097,7 +1174,7 @@ int64 GetProofOfStakeReward(int64 nCoinAge, u32int nTime)
     int64 nSubsidy = nCoinAge * nRewardCoinYear * 33 / (365 * 33 + 8);
 
     if (fDebug && GetBoolArg("-printcreation"))
-        printf("GetProofOfStakeReward(): create = %s nCoinAge = %d\n", FormatMoney(nSubsidy).c_str(), nCoinAge);
+        printf("GetProofOfStakeReward(): create = %s nCoinAge = %lld\n", FormatMoney(nSubsidy).c_str(), nCoinAge);
     return nSubsidy;
 }
 
@@ -2208,7 +2285,7 @@ bool CBlock::GetCoinAge(uint64& nCoinAge) const
         nCoinAge = 1;
 
     if (fDebug && GetBoolArg("-printcoinage"))
-        printf("block coin age total nCoinDays=%d\n", nCoinAge);
+        printf("block coin age total nCoinDays=%lld\n", nCoinAge);
 
     return true;
 }
@@ -2220,7 +2297,7 @@ bool CBlock::GetCoinAge(uint64& nCoinAge) const
 //Also, do not forget to change timestamps for new update!!
 //
 
-bool CBlock::AddToBlockIndex(unsigned int nFile, unsigned int nBlockPos)
+bool CBlock::AddToBlockIndex(unsigned int nFile, unsigned int nBlockPos, int64 burnt)
 {
     // Check for duplicate
     uint256 hash = GetHash();
@@ -2272,6 +2349,7 @@ bool CBlock::AddToBlockIndex(unsigned int nFile, unsigned int nBlockPos)
     else if (pindexNew->IsProofOfBurn())
         setBurnSeen.insert(pindexNew->GetProofOfBurn());
     pindexNew->phashBlock = &((*mi).first);
+    pindexNew->burnt = burnt;
 
     // Write to disk block index
     CTxDB txdb;
@@ -2419,8 +2497,9 @@ bool CBlock::AcceptBlock()
 
     // The effective burn coins have to match, regardless of what block type it is
     int64 calcEffCoins = 0;
-    if (!CheckBurnEffectiveCoins(&calcEffCoins))
-        return DoS(50, error("AcceptBlock() : Effective burn coins calculation failed: blk %d != calc %d",
+    int64 calcNetCoins = 0;
+    if (!CheckBurnEffectiveCoins(&calcEffCoins, &calcNetCoins))
+        return DoS(50, error("AcceptBlock() : Effective burn coins calculation failed: blk %lld != calc %lld",
                                                  nEffectiveBurnCoins, calcEffCoins));
 
     CBlockIndex* pindexPrev = (*mi).second;
@@ -2459,7 +2538,8 @@ bool CBlock::AcceptBlock()
     if (!WriteToDisk(nFile, nBlockPos))
         return error("AcceptBlock() : WriteToDisk failed");
 
-    if (!AddToBlockIndex(nFile, nBlockPos))
+    calcNetCoins += pindexPrev->burnt;
+    if (!AddToBlockIndex(nFile, nBlockPos, calcNetCoins))
         return error("AcceptBlock() : AddToBlockIndex failed");
 
     // Relay inventory, but don't relay old inventory during initial block download
@@ -2815,7 +2895,7 @@ bool CBlock::CheckBlockSignature() const
     return false;
 }
 
-bool CBlock::CheckBurnEffectiveCoins(int64 *calcEffCoinsRet) const
+bool CBlock::CheckBurnEffectiveCoins(int64 *calcEffCoinsRet, int64 *calcNetCoinsRet) const
 {
     //Genesis Block
     if (!hashPrevBlock)
@@ -2838,6 +2918,9 @@ bool CBlock::CheckBurnEffectiveCoins(int64 *calcEffCoinsRet) const
         if (burnOutTxIndex != -1) //this is a burn transaction
             nBurnedCoins += tx.vout[burnOutTxIndex].nValue;
     }
+
+    // Also make nBurnedCoins available
+    *calcNetCoinsRet = nBurnedCoins;
 
     int64 calcEffCoins;
 
@@ -2999,6 +3082,8 @@ bool LoadBlockIndex(bool fAllowNew)
         printf("hashGenesisBlock = %s\n", hashGenesisBlock.ToString().c_str());
         printf("block.hashMerkleRoot = %s\n", block.hashMerkleRoot.ToString().c_str());
 
+        block.print();
+
         if (fTestNet)
             assert(block.hashMerkleRoot == uint256("0xce86aa96a71e5c74ea535ed5f23d5b1b6ca279ad16cac3cb95e123d80027f014"));
         else
@@ -3065,7 +3150,7 @@ bool LoadBlockIndex(bool fAllowNew)
         unsigned int nBlockPos;
         if (!block.WriteToDisk(nFile, nBlockPos))
             return error("LoadBlockIndex() : writing genesis block to disk failed");
-        if (!block.AddToBlockIndex(nFile, nBlockPos))
+        if (!block.AddToBlockIndex(nFile, nBlockPos, 0))
             return error("LoadBlockIndex() : genesis block not accepted");
 
         // ppcoin: initialize synchronized checkpoint
@@ -3150,6 +3235,7 @@ bool LoadBlockIndex(bool fAllowNew)
 }
 
 
+static const char* strFormat = "%Y-%m-%dT%H:%M:%SZ";
 
 void PrintBlockTree()
 {
@@ -3196,15 +3282,16 @@ void PrintBlockTree()
         // print item
         CBlock block;
         block.ReadFromDisk(pindex, true, false);
-        printf("%d (%u,%u) %s  %08lx  %s  mint %7s  tx %d",
+        printf("%d,(%u,%u),%s,%08lx,%s,%s,%d,%d\n",
             pindex->nHeight,
             pindex->nFile,
             pindex->nBlockPos,
             block.GetHash().ToString().c_str(),
             block.nBits,
-            DateTimeStrFormat(block.GetBlockTime()).c_str(),
+            DateTimeStrFormat(strFormat, block.GetBlockTime()).c_str(),
             FormatMoney(pindex->nMint).c_str(),
-            block.vtx.size());
+            block.vtx.size(),
+            nCol);
 
         PrintWallets(block);
 
@@ -3225,14 +3312,84 @@ void PrintBlockTree()
     }
 }
 
+bool LoadExternalBlockFile(FILE* fileIn)
+{
+    unsigned int tempcount=0;
+    unsigned int steptemp=0;
+    char pString[256];
+    string tempmess;
+    int64_t nStart = GetTimeMillis();
+    static unsigned char pchMessageStart[4] = { 0x6e, 0x8b, 0x92, 0xa5 };
 
+    int nLoaded = 0;
+    {
+        LOCK(cs_main);
+        try {
+            CAutoFile blkdat(fileIn, SER_DISK, CLIENT_VERSION);
+            unsigned int nPos = 0;
+            while (nPos != (unsigned int)-1 && blkdat.good() && !fRequestShutdown)
+            {
+                unsigned char pchData[65536];
+                do {
+                    fseek(blkdat, nPos, SEEK_SET);
+                    int nRead = fread(pchData, 1, sizeof(pchData), blkdat);
+                    if (nRead <= 8)
+                    {
+                        nPos = (unsigned int)-1;
+                        break;
+                    }
+                    void* nFind = memchr(pchData, pchMessageStart[0], nRead+1-sizeof(pchMessageStart));
+                    if (nFind)
+                    {
+                        if (memcmp(nFind, pchMessageStart, sizeof(pchMessageStart))==0)
+                        {
+                            nPos += ((unsigned char*)nFind - pchData) + sizeof(pchMessageStart);
+                            break;
+                        }
+                        nPos += ((unsigned char*)nFind - pchData) + 1;
+                    }
+                    else
+                        nPos += sizeof(pchData) - sizeof(pchMessageStart) + 1;
+		            tempcount ++;
+		            if(tempcount>=1000)
+		            {
+		              steptemp ++;
+		              // tempmess=mess+ boost::to_string(steptemp * 1000);
+		              sprintf(pString, _("bootstrap loading %d").c_str(), steptemp * 1000);
+		              InitMessage(pString);
+		              tempcount=0;
+		            }
+                } while(!fRequestShutdown);
+                if (nPos == (unsigned int)-1)
+                    break;
+                fseek(blkdat, nPos, SEEK_SET);
+                unsigned int nSize;
+                blkdat >> nSize;
+                if (nSize > 0 && nSize <= MAX_BLOCK_SIZE)
+                {
+                    CBlock block;
+                    blkdat >> block;
+                    if (ProcessBlock(NULL,&block))
+                    {
+                        nLoaded++;
+                        nPos += 4 + nSize;
+                    }
+                }
+            }
+        }
+        catch (std::exception &e) {
+            printf("%s() : Deserialize or I/O error caught during load\n",
+                   __PRETTY_FUNCTION__);
+        }
+    }
+    steptemp=steptemp*1000 +tempcount;
+    // tempmess=mess+ boost::to_string(steptemp);
+    sprintf(pString, _("%d").c_str(), steptemp);
+    InitMessage(pString);
 
-
-
-
-
-
-
+    printf("Loaded %i blocks from external file in %lld ms\n", nLoaded, GetTimeMillis() - nStart);
+    return nLoaded > 0;
+}
 
 //////////////////////////////////////////////////////////////////////////////
 //
@@ -4063,7 +4220,7 @@ bool ProcessMessages(CNode* pfrom)
     {
         string strMessageStart((const char *)pchMessageStart, sizeof(pchMessageStart));
         vector<unsigned char> vchMessageStart(strMessageStart.begin(), strMessageStart.end());
-        printf("ProcessMessages : AdjustedTime=%d MessageStart=%s\n", GetAdjustedTime(), HexStr(vchMessageStart).c_str());
+        printf("ProcessMessages : AdjustedTime=%lld MessageStart=%s\n", GetAdjustedTime(), HexStr(vchMessageStart).c_str());
         nTimeLastPrintMessageStart = GetAdjustedTime();
     }
 
@@ -4634,10 +4791,6 @@ bool GetBurnHash(uint256 hashPrevBlock, s32int burnBlkHeight, s32int burnCTx,
     if (!(address == burnAddress.Get()))
         return error("GetBurnHash(): TxOut's address is not a valid burn address");
 #endif
-    /* FIXME: although the above test sort of obviates the below, this is crypto, so refactor anyway
-    if (!address.IsValid())
-        return error("GetBurnHash(): TxOut's address is invalid");
-    */
     if (!burnTxOut.nValue)
         return error("GetBurnHash(): Burn transaction's value is 0");
 
@@ -4848,6 +5001,8 @@ CBlock *CreateNewBlock(CWallet* pwallet, bool fProofOfStake, const CWalletTx *bu
 
     // ppcoin: if coinstake available add coinstake tx
     static int64 nLastCoinStakeSearchTime = GetAdjustedTime();  // only initialized at startup
+    static int64 nLastCoinStakeCandiateUpdateTime = 0;  // only initialized at startup
+    static int64 nLastCoinStakePrecomputeTime = 0;  // only initialized at startup
     CBlockIndex* pindexPrev = pindexBest;
 
     if (fProofOfStake)  // attemp to find a coinstake
@@ -4855,7 +5010,57 @@ CBlock *CreateNewBlock(CWallet* pwallet, bool fProofOfStake, const CWalletTx *bu
         pblock->nBits = GetNextTargetRequired(pindexPrev, true);
         CTransaction txCoinStake;
         int64 nSearchTime = txCoinStake.nTime; // search to current time
-        if (nSearchTime > nLastCoinStakeSearchTime)
+
+        // Update list of coins for PoS every 5 minutes
+        if(nSearchTime - nLastCoinStakeCandiateUpdateTime >= 300)
+        {
+            boost::chrono::time_point<boost::chrono::steady_clock> timeStart = boost::chrono::steady_clock::now();
+            pwallet->UpdateCoinStakeCandidatesFromWallet();
+            nLastCoinStakeCandiateUpdateTime = nSearchTime;           
+
+            boost::chrono::time_point<boost::chrono::steady_clock> timeEnd = boost::chrono::steady_clock::now();
+            printf("[Stakeperf] Updating stake candidates from wallet took %0.2lf seconds.\n", boost::chrono::duration<float>(timeEnd-timeStart).count());
+        }
+
+        // Try to find a PoS block every second
+        if(nSearchTime > nLastCoinStakeSearchTime)
+        {
+            boost::chrono::time_point<boost::chrono::steady_clock> timeStart = boost::chrono::steady_clock::now();
+
+            if(pwallet->CreateCoinStakeWithSchedule(*pwallet, pblock->nBits, txCoinStake))
+            {
+                if (txCoinStake.nTime >= max(pindexPrev->GetMedianTimePast()+1, pindexPrev->GetBlockTime() - nMaxClockDrift))
+                {   // make sure coinstake would meet timestamp protocol
+                    // as it would be the same as the block timestamp
+                    pblock->vtx[0].vout[0].SetEmpty();
+                    pblock->vtx[0].nTime = txCoinStake.nTime;
+                    pblock->vtx.push_back(txCoinStake);
+                }
+            }
+            nLastCoinStakeSearchInterval = nSearchTime - nLastCoinStakeSearchTime;
+            nLastCoinStakeSearchTime = nSearchTime;
+
+            boost::chrono::time_point<boost::chrono::steady_clock> timeEnd = boost::chrono::steady_clock::now();
+            printf("[Stakeperf] CreateCoinStakeWithSchedule took %0.4lf seconds.\n", boost::chrono::duration<float>(timeEnd-timeStart).count());
+        }
+
+        // Update precomputed coinstake schedule every few seconds
+        if(nSearchTime - nLastCoinStakePrecomputeTime >= 12)
+        {
+            boost::chrono::time_point<boost::chrono::steady_clock> timeStart = boost::chrono::steady_clock::now();
+
+            // Precompute future coinstakes for the next few seconds.
+            pwallet->PrecomputeCoinStakeCandidates(pblock->nBits, 15);
+            nLastCoinStakePrecomputeTime = nSearchTime;
+
+            boost::chrono::time_point<boost::chrono::steady_clock> timeEnd = boost::chrono::steady_clock::now();
+            printf("[Stakeperf] Coin stake precomputation took %0.2lf seconds.\n", boost::chrono::duration<float>(timeEnd-timeStart).count());
+        }
+
+
+
+
+        /*if (nSearchTime > nLastCoinStakeSearchTime)
         {
             if (pwallet->CreateCoinStake(*pwallet, pblock->nBits, nSearchTime-nLastCoinStakeSearchTime, txCoinStake))
             {
@@ -4869,7 +5074,7 @@ CBlock *CreateNewBlock(CWallet* pwallet, bool fProofOfStake, const CWalletTx *bu
             }
             nLastCoinStakeSearchInterval = nSearchTime - nLastCoinStakeSearchTime;
             nLastCoinStakeSearchTime = nSearchTime;
-        }
+        }*/
     }
 
     pblock->nBits = GetNextTargetRequired(pindexPrev, pblock->IsProofOfStake());
@@ -4918,7 +5123,7 @@ CBlock *CreateNewBlock(CWallet* pwallet, bool fProofOfStake, const CWalletTx *bu
                 dPriority += (double)nValueIn * nConf;
 
                 if (fDebug && GetBoolArg("-printpriority"))
-                    printf("priority     nValueIn=%-12d nConf=%-5d dPriority=%-20.1f\n", nValueIn, nConf, dPriority);
+                    printf("priority     nValueIn=%-12lld nConf=%-5d dPriority=%-20.1f\n", nValueIn, nConf, dPriority);
             }
 
             // Priority is sum(valuein * age) / txsize
@@ -5210,7 +5415,7 @@ void SlimCoinMiner(CWallet *pwallet, bool fProofOfStake)
         if (fShutdown)
             return;
 
-        while (vNodes.empty() || IsInitialBlockDownload())
+        while (vNodes.empty() /*|| vNodes.size() < 3 */ /* (undocumented change) */ || IsInitialBlockDownload())
         {
             Sleep(1000);
             if (fShutdown)
@@ -5435,8 +5640,8 @@ void SlimCoinAfterBurner(CWallet *pwallet)
             printf("\twith Block height %d, transaction depth %d, vout depth %d\n", 
                          mapBlockIndex.at(smallestWTx.hashBlock)->nHeight, 
                          smallestWTx.nIndex, smallestWTx.GetBurnOutTxIndex());
-            printf("\tPoB Tartget is %s\n", hashTarget.ToString().c_str());
-            printf("\tnBurnBits=%08x, nEffectiveBurnCoins=%u (formatted %s)\n",
+            printf("\tPoB Target is %s\n", hashTarget.ToString().c_str());
+            printf("\tnBurnBits=%08x, nEffectiveBurnCoins=%llu (formatted %s)\n",
                                             pblock->nBurnBits, pblock->nEffectiveBurnCoins, 
                                             FormatMoney(pblock->nEffectiveBurnCoins).c_str());
 

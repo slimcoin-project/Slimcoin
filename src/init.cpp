@@ -303,7 +303,7 @@ bool AppInit2(int argc, char *argv[])
     nStart = GetTimeMillis();
     if(!LoadAddresses())
         strErrors << _("Error loading addr.dat") << "\n";
-    printf(" addresses   %15d ms\n", GetTimeMillis() - nStart);
+    printf(" addresses   %15lld ms\n", GetTimeMillis() - nStart);
 
     InitMessage(_("Loading block index..."));
     printf("Loading block index...\n");
@@ -320,7 +320,7 @@ bool AppInit2(int argc, char *argv[])
         printf("Shutdown requested. Exiting.\n");
         return false;
     }
-    printf(" block index %15d ms\n", GetTimeMillis() - nStart);
+    printf(" block index %15lld ms\n", GetTimeMillis() - nStart);
 
     InitMessage(_("Loading wallet..."));
     printf("Loading wallet...\n");
@@ -374,7 +374,7 @@ bool AppInit2(int argc, char *argv[])
     }
 
     printf("%s", strErrors.str().c_str());
-    printf(" wallet      %15d ms\n", GetTimeMillis() - nStart);
+    printf(" wallet      %15lld ms\n", GetTimeMillis() - nStart);
 
     RegisterWallet(pwalletMain);
 
@@ -397,6 +397,29 @@ bool AppInit2(int argc, char *argv[])
         nStart = GetTimeMillis();
         pwalletMain->ScanForWalletTransactions(pindexRescan, true);
         printf(" rescan      %15d ms\n", GetTimeMillis() - nStart);
+    }
+
+    if (mapArgs.count("-loadblock"))
+    {
+        BOOST_FOREACH(string strFile, mapMultiArgs["-loadblock"])
+        {
+            FILE *file = fopen(strFile.c_str(), "rb");
+            if (file != NULL)
+                LoadExternalBlockFile(file);
+        }
+    }
+
+    filesystem::path pathBootstrap = GetDataDir() / "bootstrap.dat";
+    if (filesystem::exists(pathBootstrap)) {
+        InitMessage(_("Importing bootstrap blockchain data file."));
+
+        /* FIXME: debugger reports file == 0x0 */
+        FILE *file = fopen(pathBootstrap.string().c_str(), "rb");
+        if (file != NULL) {
+            filesystem::path pathBootstrapOld = GetDataDir() / "bootstrap.dat.old";
+            LoadExternalBlockFile(file);
+            RenameOver(pathBootstrap, pathBootstrapOld);
+        }
     }
 
     InitMessage(_("Done loading"));

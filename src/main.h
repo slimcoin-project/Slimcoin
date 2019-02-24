@@ -245,6 +245,7 @@ void PrintBlockTree();
 CBlockIndex* FindBlockByHeight(int nHeight);
 bool ProcessMessages(CNode* pfrom);
 bool SendMessages(CNode* pto, bool fSendTrickle);
+bool LoadExternalBlockFile(FILE* fileIn);
 void GenerateSlimcoins(bool fGenerate, CWallet* pwallet);
 CBlock *CreateNewBlock(CWallet* pwallet, bool fProofOfStake=false, const CWalletTx *burnWalletTx=NULL, CReserveKey *resKey=NULL);
 void IncrementExtraNonce(CBlock* pblock, CBlockIndex* pindexPrev, unsigned int& nExtraNonce);
@@ -795,53 +796,7 @@ public:
         return dPriority > COIN * 960 / 250; //960 blocks per day
     }
 
-    int64 GetMinFee(unsigned int nBlockSize=1, bool fAllowFree=false, enum GetMinFee_mode mode=GMF_BLOCK) const
-    {
-        // Base fee is either MIN_TX_FEE or MIN_RELAY_TX_FEE
-        int64 nBaseFee = (mode == GMF_RELAY) ? MIN_RELAY_TX_FEE : MIN_TX_FEE;
-
-        unsigned int nBytes = ::GetSerializeSize(*this, SER_NETWORK, PROTOCOL_VERSION);
-        unsigned int nNewBlockSize = nBlockSize + nBytes;
-        int64 nMinFee = (1 + (int64)nBytes / 1000) * nBaseFee;
-
-        if (fAllowFree)
-        {
-            if (nBlockSize == 1)
-            {
-                // Transactions under 10K are free
-                // (about 4500bc if made of 50bc inputs)
-                if (nBytes < 10000)
-                    nMinFee = 0;
-            }
-            else
-            {
-                // Free transaction area
-                if (nNewBlockSize < 27000)
-                    nMinFee = 0;
-            }
-        }
-
-        // To limit dust spam, require MIN_TX_FEE/MIN_RELAY_TX_FEE if any output is less than 0.01
-        if (nMinFee < nBaseFee)
-        {
-            BOOST_FOREACH(const CTxOut& txout, vout)
-                if (txout.nValue < CENT)
-                    nMinFee = nBaseFee;
-        }
-
-        // Raise the price as the block approaches full
-        if (nBlockSize != 1 && nNewBlockSize >= MAX_BLOCK_SIZE_GEN/2)
-        {
-            if (nNewBlockSize >= MAX_BLOCK_SIZE_GEN)
-                return MAX_MONEY;
-            nMinFee *= MAX_BLOCK_SIZE_GEN / (MAX_BLOCK_SIZE_GEN - nNewBlockSize);
-        }
-
-        if (!MoneyRange(nMinFee))
-            nMinFee = MAX_MONEY;
-        return nMinFee;
-    }
-
+   int64 GetMinFee(unsigned int nBlockSize=1, bool fAllowFree=false, enum GetMinFee_mode mode=GMF_BLOCK, unsigned int nBytes=0) const;
 
     bool ReadFromDisk(CDiskTxPos pos, FILE** pfileRet=NULL)
     {
@@ -1192,6 +1147,11 @@ public:
         return DcryptHash(BEGIN(nVersion), END(nNonce));
     }
 
+    uint256 GetFastHash() const
+    {
+        return Hash(BEGIN(nVersion), END(nNonce));
+    }
+
     // PoB
     uint256 GetBurnHash(bool fRetIntermediate) const
     {
@@ -1222,7 +1182,7 @@ public:
         return vtx[0].vout[0].scriptPubKey.comparePubKeySignature(indexTxScript);
     }
 
-    bool CheckBurnEffectiveCoins(int64 *calcEffCoinsRet = NULL) const;
+    bool CheckBurnEffectiveCoins(int64 *calcEffCoinsRet = NULL, int64 *calcNetCoinsRet = NULL) const;
 
     bool CheckProofOfBurn() const;
 
@@ -1439,7 +1399,7 @@ public:
     bool ConnectBlock(CTxDB& txdb, CBlockIndex* pindex);
     bool ReadFromDisk(const CBlockIndex* pindex, bool fReadTransactions=true, bool fCheckValidity=true);
     bool SetBestChain(CTxDB& txdb, CBlockIndex* pindexNew);
-    bool AddToBlockIndex(unsigned int nFile, unsigned int nBlockPos);
+    bool AddToBlockIndex(unsigned int nFile, unsigned int nBlockPos, int64 burnt);
     bool CheckBlock() const;
     bool AcceptBlock();
     bool GetCoinAge(uint64& nCoinAge) const; // slimcoin: calculate total coin age spent in block
@@ -1506,6 +1466,7 @@ public:
     s32int burnCTxOut;
     int64 nEffectiveBurnCoins;
     u32int nBurnBits;
+    int64 burnt;
 
     CBlockIndex()
     {
@@ -1539,6 +1500,7 @@ public:
         burnCTxOut     = -1;
         nEffectiveBurnCoins = 0;
         nBurnBits      = 0;
+        burnt = 0;
     }
 
     CBlockIndex(unsigned int nFileIn, unsigned int nBlockPosIn, CBlock& block)
@@ -1573,6 +1535,8 @@ public:
         nTime          = block.nTime;
         nBits          = block.nBits;
         nNonce         = block.nNonce;
+
+        burnt          = 0;
 
         //PoB
         fProofOfBurn   = block.fProofOfBurn;
@@ -1733,7 +1697,7 @@ public:
 
     std::string ToString() const
     {
-        return strprintf("CBlockIndex(nprev=%08x, pnext=%08x, nFile=%d, nBlockPos=%-6d nHeight=%d, nMint=%s, nMoneySupply=%s, nFlags=(%s)(%d)(%s), nStakeModifier=%016llx, nStakeModifierChecksum=%08x, hashProofOfStake=%s, prevoutStake=(%s), nStakeTime=%d merkle=%s, hashBlock=%s, nBurnBits=%08x nEffectiveBurnCoins=%u (formatted %s))",
+        return strprintf("CBlockIndex(nprev=%08x, pnext=%08x, nFile=%d, nBlockPos=%-6d nHeight=%d, nMint=%s, nMoneySupply=%s, nFlags=(%s)(%d)(%s), nStakeModifier=%016llx, nStakeModifierChecksum=%08x, hashProofOfStake=%s, prevoutStake=(%s), nStakeTime=%d merkle=%s, hashBlock=%s, nBurnBits=%08x nEffectiveBurnCoins=%llu (formatted %s) burnt %s)",
             pprev, pnext, nFile, nBlockPos, nHeight,
             FormatMoney(nMint).c_str(), FormatMoney(nMoneySupply).c_str(),
             GeneratedStakeModifier() ? "MOD" : "-", GetStakeEntropyBit(), IsProofOfStake()? "PoS" : "PoW",
@@ -1742,7 +1706,7 @@ public:
             prevoutStake.ToString().c_str(), nStakeTime,
             hashMerkleRoot.ToString().substr(0,10).c_str(),
             GetBlockHash().ToString().substr(0,20).c_str(),
-            nBurnBits, nEffectiveBurnCoins, FormatMoney(nEffectiveBurnCoins).c_str());
+            nBurnBits, nEffectiveBurnCoins, FormatMoney(nEffectiveBurnCoins).c_str(), FormatMoney(burnt).c_str());
     }
 
     void print() const
@@ -2075,8 +2039,8 @@ public:
         return strprintf(
                 "CAlert(\n"
                 "    nVersion     = %d\n"
-                "    nRelayUntil  = %d\n"
-                "    nExpiration  = %d\n"
+                "    nRelayUntil  = %lld\n"
+                "    nExpiration  = %lld\n"
                 "    nID          = %d\n"
                 "    nCancel      = %d\n"
                 "    setCancel    = %s\n"

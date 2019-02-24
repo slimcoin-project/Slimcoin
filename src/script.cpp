@@ -790,8 +790,10 @@ bool EvalScript(vector<vector<unsigned char> >& stack, const CScript& script, co
                 //
                 case OP_1ADD:
                 case OP_1SUB:
+                /* Inherited from prehistory, absent from peercoin 0.6
                 case OP_2MUL:
                 case OP_2DIV:
+                */
                 case OP_NEGATE:
                 case OP_ABS:
                 case OP_NOT:
@@ -805,8 +807,10 @@ bool EvalScript(vector<vector<unsigned char> >& stack, const CScript& script, co
                     {
                     case OP_1ADD:       bn += bnOne; break;
                     case OP_1SUB:       bn -= bnOne; break;
+                    /* Inherited from prehistory, absent from peercoin 0.6
                     case OP_2MUL:       bn <<= 1; break;
                     case OP_2DIV:       bn >>= 1; break;
+                    */
                     case OP_NEGATE:     bn = -bn; break;
                     case OP_ABS:        if (bn < bnZero) bn = -bn; break;
                     case OP_NOT:        bn = (bn == bnZero); break;
@@ -820,11 +824,13 @@ bool EvalScript(vector<vector<unsigned char> >& stack, const CScript& script, co
 
                 case OP_ADD:
                 case OP_SUB:
+                /* Inherited from prehistory, absent from peercoin 0.6
                 case OP_MUL:
                 case OP_DIV:
                 case OP_MOD:
                 case OP_LSHIFT:
                 case OP_RSHIFT:
+                */
                 case OP_BOOLAND:
                 case OP_BOOLOR:
                 case OP_NUMEQUAL:
@@ -852,7 +858,7 @@ bool EvalScript(vector<vector<unsigned char> >& stack, const CScript& script, co
                     case OP_SUB:
                         bn = bn1 - bn2;
                         break;
-
+                    /* Inherited from prehistory, absent from peercoin 0.6
                     case OP_MUL:
                         if (!BN_mul(&bn, &bn1, &bn2, pctx))
                             return false;
@@ -879,7 +885,7 @@ bool EvalScript(vector<vector<unsigned char> >& stack, const CScript& script, co
                             return false;
                         bn = bn1 >> bn2.getulong();
                         break;
-
+                    */
                     case OP_BOOLAND:             bn = (bn1 != bnZero && bn2 != bnZero); break;
                     case OP_BOOLOR:              bn = (bn1 != bnZero || bn2 != bnZero); break;
                     case OP_NUMEQUAL:            bn = (bn1 == bn2); break;

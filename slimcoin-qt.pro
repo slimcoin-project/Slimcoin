@@ -3,7 +3,6 @@ TARGET = slimcoin-qt
 VERSION = 0.6.4.0
 INCLUDEPATH += src src/json src/qt
 DEFINES += QT_GUI BOOST_THREAD_USE_LIB BOOST_SPIRIT_THREADSAFE QT_NO_PRINTER BOOST_NO_CXX11_SCOPED_ENUMS ENABLE_PRECOMPILED_HEADERS=OFF
-
 CONFIG += no_include_pwd
 CONFIG += thread
 CONFIG += debug # release
@@ -30,8 +29,8 @@ contains(QT_MAJOR_VERSION, 4) {
 static:DEFINES += STATIC_QT
 
 isEmpty(BDB_LIB_SUFFIX) {
-	# !macx:unix:BDB_LIB_SUFFIX = -5.3
-	windows:macx:BDB_LIB_SUFFIX = -4.8
+    # !macx:unix:BDB_LIB_SUFFIX = -5.3
+    windows:macx:BDB_LIB_SUFFIX = -4.8
 }
 
 exists( /usr/local/Cellar/* ) {
@@ -81,18 +80,18 @@ windows {
         QTDIR=/usr/lib/mxe/usr/i686-w64-mingw32.static/qt5
     }else{
         lessThan(QT_VERSION, 5.4) {
-    		BOOST_LIB_SUFFIX=-mgw48-mt-s-1_55
-    	} else {
-    		BOOST_LIB_SUFFIX=-mgw49-mt-s-1_55
-    	}
-    	BOOST_INCLUDE_PATH=C:/deps/boost_1_55_0
-    	BOOST_LIB_PATH=C:/deps/boost_1_55_0/stage/lib
-    	BDB_INCLUDE_PATH=C:/deps/db-4.8.30.NC/build_unix
-    	BDB_LIB_PATH=C:/deps/db-4.8.30.NC/build_unix
-    	OPENSSL_INCLUDE_PATH=C:/deps/openssl-1.0.1i/include
-    	OPENSSL_LIB_PATH=C:/deps/openssl-1.0.1i
-    	MINIUPNPC_INCLUDE_PATH=C:/deps
-    	MINIUPNPC_LIB_PATH=C:/deps/miniupnpc
+            BOOST_LIB_SUFFIX=-mgw48-mt-s-1_55
+        } else {
+            BOOST_LIB_SUFFIX=-mgw49-mt-s-1_55
+        }
+        BOOST_INCLUDE_PATH=C:/deps/boost_1_55_0
+        BOOST_LIB_PATH=C:/deps/boost_1_55_0/stage/lib
+        BDB_INCLUDE_PATH=C:/deps/db-4.8.30.NC/build_unix
+        BDB_LIB_PATH=C:/deps/db-4.8.30.NC/build_unix
+        OPENSSL_INCLUDE_PATH=C:/deps/openssl-1.0.1i/include
+        OPENSSL_LIB_PATH=C:/deps/openssl-1.0.1i
+        MINIUPNPC_INCLUDE_PATH=C:/deps
+        MINIUPNPC_LIB_PATH=C:/deps/miniupnpc
     }
 }
 
@@ -134,7 +133,7 @@ contains(USE_QRCODE, 1) {
     message(Building with QRCode support)
     DEFINES += USE_QRCODE
     isEmpty(QRENCODE_LIB_PATH) {
-        # !macx:unix:QRENCODE_LIB_PATH = /usr/lib
+        !macx:unix:QRENCODE_LIB_PATH = /usr/lib
         contains(CONFIG, brew) {
             macx:QRENCODE_LIB_PATH = /usr/local/lib
         }else{
@@ -325,6 +324,8 @@ HEADERS += src/addrman.h \
     src/qt/chatclient.h \
     src/qt/chatwindow.h \
     src/qt/clientmodel.h \
+    src/qt/coincontroldialog.h \
+    src/qt/coincontroltreewidget.h \
     src/qt/csvmodelwriter.h \
     src/qt/editaddressdialog.h \
     src/qt/guiconstants.h \
@@ -408,6 +409,8 @@ SOURCES += src/addrman.cpp \
     src/qt/chatclient.cpp \
     src/qt/chatwindow.cpp \
     src/qt/clientmodel.cpp \
+    src/qt/coincontroldialog.cpp \
+    src/qt/coincontroltreewidget.cpp \
     src/qt/csvmodelwriter.cpp \
     src/qt/editaddressdialog.cpp \
     src/qt/guiutil.cpp \
@@ -463,6 +466,7 @@ FORMS += \
     src/qt/forms/burncoinsdialog.ui \
     src/qt/forms/burncoinsentry.ui \
     src/qt/forms/chatwindow.ui \
+    src/qt/forms/coincontroldialog.ui \
     src/qt/forms/editaddressdialog.ui \
     src/qt/forms/inscriptiondialog.ui \
     src/qt/forms/messagepage.ui \
@@ -637,28 +641,28 @@ isEmpty(OPENSSL_LIB_PATH) {
 
 # Force OS X Sierra specifics
 macx {
-	CONFIG += 11 x86_64
-	HEADERS += src/qt/macdockiconhandler.h src/qt/macnotificationhandler.h
+    CONFIG += 11 x86_64
+    HEADERS += src/qt/macdockiconhandler.h src/qt/macnotificationhandler.h
     INCLUDEPATH += $$MOC_DIR # enable #include of moc_* files
-	OBJECTIVE_SOURCES += src/qt/macdockiconhandler.mm src/qt/macnotificationhandler.mm
-	LIBS += -framework Foundation -framework ApplicationServices -framework AppKit
-	LIBS += /usr/local/opt/miniupnpc/lib/libminiupnpc.a
-	LIBS += /usr/local/opt/berkeley-db/lib/libdb_cxx.a
-	LIBS += /usr/local/opt/openssl/lib/libcrypto.a
-	LIBS += /usr/local/opt/openssl/lib/libssl.a
-	LIBS += /usr/local/opt/boost/lib/libboost_system-mt.a
-	LIBS += /usr/local/opt/boost/lib/libboost_filesystem-mt.a
-	LIBS += /usr/local/opt/boost/lib/libboost_program_options-mt.a
-	LIBS += /usr/local/opt/boost/lib/libboost_thread-mt.a
-	DEFINES += MAC_OSX MSG_NOSIGNAL=0
-	ICON = src/qt/res/icons/slimcoin.icns
-	TARGET = "SLIMCoin-Qt"
-	QMAKE_CFLAGS += -std=c++11 -stdlib=libc++ -mmacosx-version-min=10.12
-	QMAKE_CXXFLAGS += -std=c++11 -stdlib=libc++ -mmacosx-version-min=10.12
-	QMAKE_MAC_SDK = macosx10.12
-	CXXFLAGS += -std=c++11 -march=i686
-	QMAKE_INFO_PLIST = share/qt/Info.plist
-        CONFIG -= brew
+    OBJECTIVE_SOURCES += src/qt/macdockiconhandler.mm src/qt/macnotificationhandler.mm
+    LIBS += -framework Foundation -framework ApplicationServices -framework AppKit
+    LIBS += /usr/local/opt/miniupnpc/lib/libminiupnpc.a
+    LIBS += /usr/local/opt/berkeley-db/lib/libdb_cxx.a
+    LIBS += /usr/local/opt/openssl/lib/libcrypto.a
+    LIBS += /usr/local/opt/openssl/lib/libssl.a
+    LIBS += /usr/local/opt/boost/lib/libboost_system-mt.a
+    LIBS += /usr/local/opt/boost/lib/libboost_filesystem-mt.a
+    LIBS += /usr/local/opt/boost/lib/libboost_program_options-mt.a
+    LIBS += /usr/local/opt/boost/lib/libboost_thread-mt.a
+    DEFINES += MAC_OSX MSG_NOSIGNAL=0
+    ICON = src/qt/res/icons/slimcoin.icns
+    TARGET = "SLIMCoin-Qt"
+    QMAKE_CFLAGS += -std=c++11 -stdlib=libc++ -mmacosx-version-min=10.12
+    QMAKE_CXXFLAGS += -std=c++11 -stdlib=libc++ -mmacosx-version-min=10.12
+    QMAKE_MAC_SDK = macosx10.12
+    CXXFLAGS += -std=c++11 -march=i686
+    QMAKE_INFO_PLIST = share/qt/Info.plist
+    CONFIG -= brew
 }
 
 windows:!contains(MINGW_THREAD_BUGFIX, 0) {
@@ -692,7 +696,7 @@ LIBS += -lssl -lcrypto -ldb_cxx$$BDB_LIB_SUFFIX
 # windows:DEFINES += WIN32
 # windows:RC_FILE = src/qt/res/bitcoin-qt.rc
 windows:LIBS += -lole32 -luuid -lgdi32 -lwsock32
-LIBS += -lboost_system$$BOOST_LIB_SUFFIX -lboost_filesystem$$BOOST_LIB_SUFFIX -lboost_program_options$$BOOST_LIB_SUFFIX -lboost_thread$$BOOST_THREAD_LIB_SUFFIX
+LIBS += -lboost_system$$BOOST_LIB_SUFFIX -lboost_filesystem$$BOOST_LIB_SUFFIX -lboost_program_options$$BOOST_LIB_SUFFIX -lboost_thread$$BOOST_THREAD_LIB_SUFFIX -lboost_chrono$$BOOST_THREAD_LIB_SUFFIX
 
 
 # for extra security against potential buffer overflows: enable GCCs Stack Smashing Protection

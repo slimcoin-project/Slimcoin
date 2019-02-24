@@ -10,6 +10,7 @@
 
 #include <string>
 #include <map>
+#include "wallet.h"
 
 class CReserveKey;
 class CBlockIndex;
@@ -70,6 +71,11 @@ enum RPCErrorCode
 
 };
 
+extern json_spirit::Value ValueFromAmount(int64 amount);
+extern json_spirit::Value checkwallet(const json_spirit::Array& params, bool fHelp);
+extern json_spirit::Value repairwallet(const json_spirit::Array& params, bool fHelp);
+extern json_spirit::Value zapwallettxes(const json_spirit::Array& params, bool fHelp);
+
 void ThreadRPCServer(void* parg);
 int CommandLineRPC(int argc, char *argv[]);
 
@@ -128,6 +134,7 @@ extern const CRPCTable tableRPC;
 extern CReserveKey* pMiningKey;
 */
 extern double GetDifficulty(const CBlockIndex* blockindex);
+extern int64 GetBurnTxTotal();
 
 //Gets the balance of the total amount of burned coins, the effective amount of burned coins
 // and the immature amount of burned coins and packages every burn transaction into an Array

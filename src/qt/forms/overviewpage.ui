@@ -6,8 +6,8 @@
    <rect>
     <x>0</x>
     <y>0</y>
-    <width>722</width>
-    <height>493</height>
+    <width>955</width>
+    <height>595</height>
    </rect>
   </property>
   <property name="windowTitle">
@@ -76,7 +76,7 @@
          </widget>
         </item>
         <item row="4" column="0">
-         <widget class="QLabel" name="label_3">
+         <widget class="QLabel" name="label_3a">
           <property name="text">
            <string>Unconfirmed:</string>
           </property>
@@ -90,51 +90,60 @@
          </widget>
         </item>
         <item row="5" column="0">
+         <widget class="QLabel" name="labelImmatureText">
+          <property name="text">
+           <string>Immature:</string>
+          </property>
+         </widget>
+        </item>
+        <item row="5" column="1">
+         <widget class="QLabel" name="labelImmature">
+          <property name="font">
+           <font>
+            <weight>75</weight>
+            <bold>true</bold>
+           </font>
+          </property>
+          <property name="toolTip">
+           <string>Mined balance that has not yet matured</string>
+          </property>
+          <property name="text">
+           <string notr="true">0 SLM</string>
+          </property>
+          <property name="textInteractionFlags">
+           <set>Qt::LinksAccessibleByMouse|Qt::TextSelectableByKeyboard|Qt::TextSelectableByMouse</set>
+          </property>
+         </widget>
+        </item>
+        <item row="6" column="0">
          <widget class="QLabel" name="label_2">
           <property name="text">
            <string>Number of transactions:</string>
           </property>
          </widget>
         </item>
-        <item row="5" column="1">
+        <item row="6" column="1">
          <widget class="QLabel" name="labelNumTransactions">
           <property name="text">
-           <string>0</string>
+           <string notr="true">0</string>
           </property>
          </widget>
         </item>
-        <item row="6" column="0">
+        <item row="7" column="0">
          <widget class="QLabel" name="label_2a">
           <property name="text">
            <string>Reserve Balance:</string>
           </property>
          </widget>
         </item>
-        <item row="6" column="1">
+        <item row="7" column="1">
          <widget class="QLabel" name="labelReserveBalance">
           <property name="text">
-           <string>0</string>
+           <string notr="true">0</string>
           </property>
          </widget>
         </item>
         <item row="8" column="0">
-         <widget class="QLabel" name="label_7">
-          <property name="toolTip">
-           <string/>
-          </property>
-          <property name="text">
-           <string>Net Burnt Coins:</string>
-          </property>
-         </widget>
-        </item>
-        <item row="8" column="1">
-         <widget class="QLabel" name="labelNetBurnCoins">
-          <property name="text">
-           <string>0 SLM</string>
-          </property>
-         </widget>
-        </item>
-        <item row="7" column="1">
          <spacer name="verticalSpacer_3">
           <property name="orientation">
            <enum>Qt::Vertical</enum>
@@ -145,12 +154,45 @@
           <property name="sizeHint" stdset="0">
            <size>
             <width>20</width>
-            <height>40</height>
+            <height>10</height>
+           </size>
+          </property>
+         </spacer>
+        </item>
+        <item row="8" column="1">
+         <spacer name="verticalSpacer_3">
+          <property name="orientation">
+           <enum>Qt::Vertical</enum>
+          </property>
+          <property name="sizeType">
+           <enum>QSizePolicy::Expanding</enum>
+          </property>
+          <property name="sizeHint" stdset="0">
+           <size>
+            <width>20</width>
+            <height>10</height>
            </size>
           </property>
          </spacer>
         </item>
         <item row="9" column="0">
+         <widget class="QLabel" name="label_7">
+          <property name="toolTip">
+           <string/>
+          </property>
+          <property name="text">
+           <string>Net Burnt Coins:</string>
+          </property>
+         </widget>
+        </item>
+        <item row="9" column="1">
+         <widget class="QLabel" name="labelNetBurnCoins">
+          <property name="text">
+           <string>0 SLM</string>
+          </property>
+         </widget>
+        </item>
+        <item row="10" column="0">
          <widget class="QLabel" name="label_8">
           <property name="toolTip">
            <string/>
@@ -160,14 +202,14 @@
           </property>
          </widget>
         </item>
-        <item row="9" column="1">
+        <item row="10" column="1">
          <widget class="QLabel" name="labelEffBurnCoins">
           <property name="text">
            <string>0 SLM</string>
           </property>
          </widget>
         </item>
-        <item row="10" column="0">
+        <item row="11" column="0">
          <widget class="QLabel" name="label_10">
           <property name="toolTip">
            <string/>
@@ -177,14 +219,14 @@
           </property>
          </widget>
         </item>
-        <item row="10" column="1">
+        <item row="11" column="1">
          <widget class="QLabel" name="labelImmBurnCoins">
           <property name="text">
            <string>0 SLM</string>
           </property>
          </widget>
         </item>
-        <item row="11" column="0">
+        <item row="12" column="0">
          <widget class="QLabel" name="label_12">
           <property name="toolTip">
            <string/>
@@ -194,7 +236,7 @@
           </property>
          </widget>
         </item>
-        <item row="11" column="1">
+        <item row="12" column="1">
          <widget class="QLabel" name="labelDecayBurnCoins">
           <property name="text">
            <string>0 SLM</string>
