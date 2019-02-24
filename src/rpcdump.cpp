@@ -105,15 +105,18 @@ Value importpassphrase(const Array& params, bool fHelp)
 
 Value importprivkey(const Array& params, bool fHelp)
 {
-    if (fHelp || params.size() < 1 || params.size() > 2)
+    if (fHelp || params.size() < 1 || params.size() > 3)
         throw runtime_error(
-            "importprivkey <slimcoinprivkey> [label]\n"
+            "importprivkey <slimcoinprivkey> [label] [compressed=true]\n"
             "Adds a private key (as returned by dumpprivkey) to your wallet.");
 
     string strSecret = params[0].get_str();
     string strLabel = "";
+    bool fCompressed = true;
     if (params.size() > 1)
         strLabel = params[1].get_str();
+    if (params.size() > 2)
+        fCompressed = params[2].get_bool();
     CBitcoinSecret vchSecret;
     bool fGood = vchSecret.SetString(strSecret);
 
@@ -124,7 +127,6 @@ Value importprivkey(const Array& params, bool fHelp)
         throw JSONRPCError(-102, "Wallet is unlocked for minting only.");
 
     CKey key;
-    bool fCompressed;
     CSecret secret = vchSecret.GetSecret(fCompressed);
     key.SetSecret(secret, fCompressed);
     CKeyID vchAddress = key.GetPubKey().GetID();

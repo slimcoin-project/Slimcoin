@@ -325,6 +325,7 @@ QString ClientModel::formatClientStartupTime() const
   return QDateTime::fromTime_t(nClientStartupTime).toString();
 }
 
+/*
 // Handlers for core signals
 static void NotifyBlocksChanged(ClientModel *clientmodel)
 {
@@ -346,6 +347,7 @@ static void NotifyAlertChanged(ClientModel *clientmodel, const uint256 &hash, Ch
                               Q_ARG(QString, QString::fromStdString(hash.GetHex())),
                               Q_ARG(int, status));
 }
+*/
 
 void ClientModel::subscribeToCoreSignals()
 {

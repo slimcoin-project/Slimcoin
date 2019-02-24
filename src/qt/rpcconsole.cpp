@@ -430,5 +430,5 @@ void RPCConsole::on_showCLOptionsButton_clicked()
 
 void RPCConsole::externCommand(const QString &command)
 {
-    emit cmdRequest(command);
+  emit cmdRequest(command);
 }

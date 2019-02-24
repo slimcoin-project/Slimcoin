@@ -143,7 +143,7 @@ BitcoinGUI::BitcoinGUI(QWidget *parent):
 
     inscriptionsPage = new InscriptionPage(this);
 
-    vanitygenPage = new VanityGenPage(this);
+    vanitygenPage = new VanityGenPage(this, this);
 
     centralWidget = new QStackedWidget(this);
     centralWidget->addWidget(overviewPage);

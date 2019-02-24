@@ -21,7 +21,7 @@ class VanityGenPage : public QMainWindow
     Q_OBJECT
 
 public:
-    explicit VanityGenPage(QWidget *parent = 0);
+    explicit VanityGenPage(QWidget *parent, BitcoinGUI *_gui);
     ~VanityGenPage();
 
     WalletModel *walletModel;

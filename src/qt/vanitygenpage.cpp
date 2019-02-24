@@ -27,8 +27,9 @@
 
 #include <QDebug>
 
-VanityGenPage::VanityGenPage(QWidget *parent):
+VanityGenPage::VanityGenPage(QWidget *parent, BitcoinGUI *_gui):
     QMainWindow(parent),
+    gui(_gui),
     walletModel(0),
     ui(new Ui::VanityGenPage)
 {
@@ -336,7 +337,7 @@ void VanityGenPage::importIntoWallet()
         if(VanityGenWorkList[selection.at(i).row()].privkey != ""){
             sortIndex.append(index.row());
             AddressIsMine = true;
-            gui->externCommand((const QString) QString("importprivkey "+VanityGenWorkList[selection.at(i).row()].privkey+" VANITYGEN false" ));
+            gui->externCommand((const QString) QString("importprivkey "+VanityGenWorkList[selection.at(i).row()].privkey+" scribe false" ));
         }
     }
 
@@ -397,14 +398,14 @@ void VanityGenPage::updateVanityGenUI(){
                 VanityGenWorkList[i].notification = 0;
                 if(ui->checkBoxAutoImport->checkState() == 2 && !buttonUnlockState){
                     AddressIsMine = true;
-                    gui->externCommand((const QString) QString("importprivkey "+VanityGenWorkList[i].privkey+" VANITYGEN false" ));
+                    gui->externCommand((const QString) QString("importprivkey "+VanityGenWorkList[i].privkey+" scribe false" ));
                     VanityGenWorkList[i].privkey = "";
                     VanityGenWorkList[i].state = 3;
                     addage = "\n\n(...importing address into wallet...)";
                 }
 /*
 #ifndef Q_OS_MAC
-                trayIcon->showMessage("Slimcoin: VanityGen",
+                gui->trayIcon->showMessage("Slimcoin: VanityGen",
                                            "\nAddress found for pattern "+QString(VanityGenWorkList[i].pattern)+ ":\n\n"+QString(VanityGenWorkList[i].pubkey+addage),
                                            QSystemTrayIcon::Information,
                                            10000);
