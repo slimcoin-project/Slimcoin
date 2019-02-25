@@ -682,7 +682,7 @@ void BitcoinGUI::setNumBlocks(int count, int nTotalBlocks)
         tooltip = tr("Downloaded %1 blocks of transaction history.").arg(count);
     }
 
-    tooltip = tr("Current difficulty is %1.").arg(clientModel->GetDifficulty()) + QString("<br>") + tooltip;
+    tooltip = tr("Current difficulty is %1.").arg(clientModel->GetDifficulty()) + QString("\n") + tooltip;
 
     QDateTime now = QDateTime::currentDateTime();
     QDateTime lastBlockDate = clientModel->getLastBlockDate();
