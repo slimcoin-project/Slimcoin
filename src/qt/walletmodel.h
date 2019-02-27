@@ -150,6 +150,7 @@ public:
 
   bool getPubKey(const CKeyID &address, CPubKey& vchPubKeyOut) const;
   CWallet * getWallet();
+  void clearOrphans();
 
 private:
   CWallet *wallet;

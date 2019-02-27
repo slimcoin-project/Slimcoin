@@ -359,3 +359,8 @@ CWallet * WalletModel::getWallet()
 {
     return wallet;
 }
+
+void WalletModel::clearOrphans()
+{
+    wallet->ClearOrphans();
+}

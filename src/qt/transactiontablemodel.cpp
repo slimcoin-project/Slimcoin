@@ -271,6 +271,12 @@ void TransactionTableModel::update()
   }
 }
 
+void TransactionTableModel::refresh()
+{
+    priv->refreshWallet();
+    emit dataChanged(index(0, 0), index(priv->size() - 1, Amount));
+}
+
 int TransactionTableModel::rowCount(const QModelIndex &parent) const
 {
   Q_UNUSED(parent);

@@ -2066,3 +2066,24 @@ void CWallet::GetAllReserveKeys(set<CKeyID>& setAddress)
         setAddress.insert(keyID);
     }
 }
+
+void CWallet::ClearOrphans()
+{
+    list<uint256> orphans;
+
+    LOCK(cs_wallet);
+    for(map<uint256, CWalletTx>::const_iterator it = mapWallet.begin(); it != mapWallet.end(); ++it)
+    {
+        const CWalletTx *wtx = &(*it).second;
+        if((wtx->IsCoinBase() || wtx->IsCoinStake()) && !wtx->IsInMainChain())
+        {
+          orphans.push_back(wtx->GetHash());
+        }
+    }
+
+    for(list<uint256>::const_iterator it = orphans.begin(); it != orphans.end(); ++it)
+    {
+        EraseFromWallet(*it);
+        UpdatedTransaction(*it);
+    }
+}
