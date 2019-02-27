@@ -47,6 +47,21 @@ qint64 WalletModel::getUnconfirmedBalance() const
     return wallet->GetUnconfirmedBalance();
 }
 
+qint64 WalletModel::getWatchBalance() const
+{
+    return wallet->GetWatchOnlyBalance();
+}
+
+qint64 WalletModel::getWatchUnconfirmedBalance() const
+{
+    return wallet->GetUnconfirmedWatchOnlyBalance();
+}
+
+qint64 WalletModel::getWatchImmatureBalance() const
+{
+    return wallet->GetImmatureWatchOnlyBalance();
+}
+
 BurnCoinsBalances WalletModel::getBurnCoinBalances() const
 {
     int64 netBurnCoins, nEffBurnCoins, immatureCoins;
@@ -54,6 +69,7 @@ BurnCoinsBalances WalletModel::getBurnCoinBalances() const
 
     return BurnCoinsBalances(netBurnCoins, nEffBurnCoins, immatureCoins);
 }
+
 
 int WalletModel::getNumTransactions() const
 {
@@ -75,9 +91,13 @@ void WalletModel::update()
 
     BurnCoinsBalances newBurnBalances = getBurnCoinBalances();
 
-    if(cachedBalance != newBalance || cachedUnconfirmedBalance != newUnconfirmedBalance || cachedBurnCoinsBalances != newBurnBalances)
-        emit balanceChanged(newBalance, getStake(), newUnconfirmedBalance, newReserveBalance, newBurnBalances);
+    qint64 newWatchOnlyBalance = getWatchBalance();
+    qint64 newWatchUnconfBalance = getWatchUnconfirmedBalance();
+    qint64 newWatchImmatureBalance = getWatchImmatureBalance();
 
+    if(cachedBalance != newBalance || cachedUnconfirmedBalance != newUnconfirmedBalance || cachedBurnCoinsBalances != newBurnBalances || cachedWatchOnlyBalance != newWatchOnlyBalance || cachedWatchUnconfBalance != newWatchUnconfBalance || cachedWatchImmatureBalance != newWatchImmatureBalance)
+        emit balanceChanged(newBalance, newUnconfirmedBalance, newImmatureBalance,
+                            newWatchOnlyBalance, newWatchUnconfBalance, newWatchImmatureBalance);
     if(cachedReserveBalance != newReserveBalance)
         emit reserveBalanceChanged(newReserveBalance);
 
@@ -91,6 +111,9 @@ void WalletModel::update()
     cachedUnconfirmedBalance = newUnconfirmedBalance;
     cachedNumTransactions = newNumTransactions;
     cachedBurnCoinsBalances = newBurnBalances;
+    cachedWatchOnlyBalance = newWatchOnlyBalance;
+    cachedWatchUnconfBalance = newWatchUnconfBalance;
+    cachedWatchImmatureBalance = newWatchImmatureBalance;
 }
 
 void WalletModel::updateAddressList()
