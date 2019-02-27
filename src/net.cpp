@@ -1004,7 +1004,6 @@ void MapPort(bool /* unused fMapPort */)
 // testnet dns seed begins with 't', all else are dns seeds.
 // FIXME: strDNSSeed required
 static const char *strDNSSeed[][2] = {
-    {"seed", "minkiz.co"},
     {"seed", "seed.slimcoin.bit"}
 };
 

@@ -3320,7 +3320,7 @@ Value dumpbootstrap(const Array& params, bool fHelp)
 
 Value linearizehashes(const Array& params, bool fHelp)
 {
-    if (fHelp || params.size() > 1 || params.size() > 2)
+    if (fHelp || params.size() < 1 || params.size() > 2)
         throw runtime_error(
             "linearizehashes <destination>\n"
             "Creates a dump of linearized block hashes in destination, which can be a directory or a path with filename.");
