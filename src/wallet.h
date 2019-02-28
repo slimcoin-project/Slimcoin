@@ -257,8 +257,8 @@ public:
     }
     void SetBestChain(const CBlockLocator& loc);
 
-    DBErrors LoadWallet(bool& fFirstRunRet);
-    DBErrors ZapWalletTx(std::vector<CWalletTx>& vWtx);
+    int LoadWallet(bool& fFirstRunRet);
+    int ZapWalletTx(std::vector<CWalletTx>& vWtx);
 
     bool SetAddressBookName(const CTxDestination& address, const std::string& strName);
 

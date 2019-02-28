@@ -172,9 +172,14 @@ void InscriptionPage::setModel(InscriptionTableModel *model)
     ui->tableView->setModel(proxyModel);
     ui->tableView->sortByColumn(1, Qt::DescendingOrder);
 
+    // Set column widths
+    #if QT_VERSION < 0x050000
+    ui->tableView->horizontalHeader()->setResizeMode(InscriptionTableModel::Inscription, QHeaderView::Stretch);
+    ui->tableView->horizontalHeader()->setResizeMode(InscriptionTableModel::Date, QHeaderView::ResizeToContents);
+    #else
     ui->tableView->horizontalHeader()->setSectionResizeMode(InscriptionTableModel::Inscription, QHeaderView::Stretch);
     ui->tableView->horizontalHeader()->setSectionResizeMode(InscriptionTableModel::Date, QHeaderView::ResizeToContents);
-
+    #endif
     connect(ui->tableView->selectionModel(), SIGNAL(selectionChanged(QItemSelection,QItemSelection)), this, SLOT(selectionChanged()));
     connect(ui->tableView, SIGNAL(doubleClicked(QModelIndex)), this, SIGNAL(doubleClicked(QModelIndex)));
     connect(ui->searchButton, SIGNAL(clicked()), this, SLOT(searchButtonClicked()));

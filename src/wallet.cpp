@@ -91,14 +91,14 @@ bool CWallet::Lock()
 {
     if (IsLocked())
         return true;
-    
+
     if (fDebug)
         printf("Locking wallet.\n");
-    
+
     {
         LOCK(cs_wallet);
         CWalletDB wdb(strWalletFile);
-        
+
     }
     return LockKeyStore();
 };
@@ -736,7 +736,7 @@ bool CWalletTx::WriteToDisk(bool fBurnTx)
     if (!fBurnTx)
         return CWalletDB(pwallet->strWalletFile).WriteTx(GetHash(), *this);
     else //if it is a burn transaction
-        return CWalletDB(pwallet->strWalletFile).WriteTx(GetHash(), *this) && 
+        return CWalletDB(pwallet->strWalletFile).WriteTx(GetHash(), *this) &&
             CWalletDB(pwallet->strWalletFile).WriteBurnTx(GetHash(), *this);
 }
 
@@ -1246,8 +1246,8 @@ bool CWallet::SelectCoins(int64 nTargetValue, unsigned int nSpendTime, set<pair<
     {
         BOOST_FOREACH(const COutput& out, vCoins)
         {
-                nValueRet += out.tx->vout[out.i].nValue;
-                setCoinsRet.insert(make_pair(out.tx, out.i));
+            nValueRet += out.tx->vout[out.i].nValue;
+            setCoinsRet.insert(make_pair(out.tx, out.i));
         }
         return (nValueRet >= nTargetValue);
 
@@ -1503,7 +1503,7 @@ bool CWallet::CreateCoinStake(const CKeyStore& keystore, unsigned int nBits, int
                 else
                     scriptPubKeyOut = scriptPubKeyKernel;
 
-                txNew.nTime -= n; 
+                txNew.nTime -= n;
                 txNew.vin.push_back(CTxIn(pcoin.first->GetHash(), pcoin.second));
                 nCredit += pcoin.first->vout[pcoin.second].nValue;
                 vwtxPrev.push_back(pcoin.first);
@@ -1605,7 +1605,7 @@ bool CWallet::CommitTransaction(CWalletTx& wtxNew, CReserveKey& reservekey, bool
 {
     {
         LOCK2(cs_main, cs_wallet);
-        
+
         //CommitTransaction will not let a burn transaction not pass if they do not match
         if (wtxNew.IsBurnTx() != fBurnTx)
             return false;
@@ -1731,8 +1731,8 @@ int CWallet::LoadWallet(bool& fFirstRunRet)
     if (!fFileBacked)
         return DB_LOAD_OK;
     fFirstRunRet = false;
-    DBErrors nLoadWalletRet = CWalletDB(strWalletFile,"cr+").LoadWallet(this);
-    if (nLoadWalletRet == DB_NEED_REWRITE)
+    int nLoadWalletRet = CWalletDB(strWalletFile,"cr+").LoadWallet(this);
+    if (nLoadWalletRet == 5)
     {
         if (CDB::Rewrite(strWalletFile, "\x04pool"))
         {
@@ -1741,10 +1741,10 @@ int CWallet::LoadWallet(bool& fFirstRunRet)
             // User will be prompted to unlock wallet the next operation
             // the requires a new key.
         }
-        nLoadWalletRet = DB_NEED_REWRITE;
+        nLoadWalletRet = 5;
     }
 
-    if (nLoadWalletRet != DB_LOAD_OK)
+    if (nLoadWalletRet != 0)
         return nLoadWalletRet;
     fFirstRunRet = !vchDefaultKey.IsValid();
 
@@ -1752,12 +1752,12 @@ int CWallet::LoadWallet(bool& fFirstRunRet)
     return DB_LOAD_OK;
 }
 
-DBErrors CWallet::ZapWalletTx(std::vector<CWalletTx>& vWtx)
+int CWallet::ZapWalletTx(std::vector<CWalletTx>& vWtx)
 {
     if (!fFileBacked)
-        return DB_LOAD_OK;
-    DBErrors nZapWalletTxRet = CWalletDB(strWalletFile,"cr+").ZapWalletTx(this, vWtx);
-    if (nZapWalletTxRet == DB_NEED_REWRITE)
+        return 0;
+    int nZapWalletTxRet = CWalletDB(strWalletFile,"cr+").ZapWalletTx(this, vWtx);
+    if (nZapWalletTxRet == 5)
     {
         if (CDB::Rewrite(strWalletFile, "\x04pool"))
         {
@@ -1769,10 +1769,10 @@ DBErrors CWallet::ZapWalletTx(std::vector<CWalletTx>& vWtx)
         }
     }
 
-    if (nZapWalletTxRet != DB_LOAD_OK)
+    if (nZapWalletTxRet != 0)
         return nZapWalletTxRet;
 
-    return DB_LOAD_OK;
+    return 0;
 }
 
 
@@ -2124,24 +2124,6 @@ void CWallet::DisableTransaction(const CTransaction &tx)
             }
         }
     }
-}
-
-CPubKey CReserveKey::GetReservedKey()
-{
-    if (nIndex == -1)
-    {
-        CKeyPool keypool;
-        pwallet->ReserveKeyFromKeyPool(nIndex, keypool);
-        if (nIndex != -1)
-            vchPubKey = keypool.vchPubKey;
-        else
-        {
-            printf("CReserveKey::GetReservedKey(): Warning: using default key instead of a new key, top up your keypool.");
-            vchPubKey = pwallet->vchDefaultKey;
-        }
-    }
-    assert(vchPubKey.IsValid());
-    return vchPubKey;
 }
 
 // wallet check/repair

@@ -309,6 +309,15 @@ void BitcoinGUI::createActions()
     chatPageAction->setToolTip(tr("View chat"));
     chatPageAction->setToolTip(chatPageAction->statusTip());
 
+    checkWalletAction = new QAction(QIcon(":/icons/inspect"), tr("&Check Wallet..."), this);
+    checkWalletAction->setStatusTip(tr("Check wallet integrity and report findings"));
+
+    repairWalletAction = new QAction(QIcon(":/icons/repair"), tr("&Repair Wallet..."), this);
+    repairWalletAction->setStatusTip(tr("Fix wallet integrity and remove orphans"));
+
+    zapWalletAction = new QAction(QIcon(":/icons/repair"), tr("&Zap Wallet..."), this);
+    zapWalletAction->setStatusTip(tr("Zaps txes from wallet then rescans (this is slow)..."));
+
     connect(blockAction, SIGNAL(triggered()), this, SLOT(showNormalIfMinimized()));
     connect(blockAction, SIGNAL(triggered()), this, SLOT(gotoBlockBrowser()));
     connect(messageAction, SIGNAL(triggered()), this, SLOT(showNormalIfMinimized()));
@@ -673,7 +682,7 @@ void BitcoinGUI::setNumBlocks(int count, int nTotalBlocks)
         tooltip = tr("Downloaded %1 blocks of transaction history.").arg(count);
     }
 
-    tooltip = tr("Current difficulty is %1.").arg(clientModel->GetDifficulty()) + QString("<br>") + tooltip;
+    tooltip = tr("Current difficulty is %1.").arg(clientModel->GetDifficulty()) + QString("\n") + tooltip;
 
     QDateTime now = QDateTime::currentDateTime();
     QDateTime lastBlockDate = clientModel->getLastBlockDate();
@@ -1101,8 +1110,8 @@ void BitcoinGUI::zapWallet()
 // clear tables
 
   pwalletMain = new CWallet("wallet.dat");
-  DBErrors nZapWalletRet = pwalletMain->ZapWalletTx(vWtx);
-  if (nZapWalletRet != DB_LOAD_OK)
+  int nZapWalletRet = pwalletMain->ZapWalletTx(vWtx);
+  if (nZapWalletRet != 0)
   {
     progressBarLabel->setText(tr("Error loading wallet.dat: Wallet corrupted."));
     splashMessage(_("Error loading wallet.dat: Wallet corrupted"));
@@ -1124,28 +1133,28 @@ void BitcoinGUI::zapWallet()
   pwalletMain = new CWallet("wallet.dat");
 
 
-  DBErrors nLoadWalletRet = pwalletMain->LoadWallet(fFirstRun);
-  if (nLoadWalletRet != DB_LOAD_OK)
+  int nLoadWalletRet = pwalletMain->LoadWallet(fFirstRun);
+  if (nLoadWalletRet != 0)
   {
-    if (nLoadWalletRet == DB_CORRUPT)
+    if (nLoadWalletRet == 2)
     {
       progressBarLabel->setText(tr("Error loading wallet.dat: Wallet corrupted."));
       splashMessage(_("Error loading wallet.dat: Wallet corrupted"));
       printf("Error loading wallet.dat: Wallet corrupted\n");
     }
-    else if (nLoadWalletRet == DB_NONCRITICAL_ERROR)
+    else if (nLoadWalletRet == 3)
     {
       setStatusTip(tr("Warning: error reading wallet.dat! All keys read correctly, but transaction data or address book entries might be missing or incorrect."));
       progressBarLabel->setText(tr("Warning - error reading wallet."));
       printf("Warning: error reading wallet.dat! All keys read correctly, but transaction data or address book entries might be missing or incorrect.\n");
     }
-    else if (nLoadWalletRet == DB_TOO_NEW)
+    else if (nLoadWalletRet == 4)
     {
       progressBarLabel->setText(tr("Error loading wallet.dat: Please check for a newer version of BitBar."));
       setStatusTip(tr("Error loading wallet.dat: Wallet requires newer version of BitBar"));
       printf("Error loading wallet.dat: Wallet requires newer version of BitBar\n");
     }
-    else if (nLoadWalletRet == DB_NEED_REWRITE)
+    else if (nLoadWalletRet == 5)
     {
   progressBarLabel->setText(tr("Wallet needs to be rewriten. Please restart BitBar to complete."));
       setStatusTip(tr("Wallet needed to be rewritten: restart BitBar to complete"));
@@ -1164,7 +1173,7 @@ void BitcoinGUI::zapWallet()
   
   progressBarLabel->setText(tr("Wallet loaded..."));
   splashMessage(_("Wallet loaded..."));
-  printf(" zap wallet  load     %15"PRI64d"ms\n", GetTimeMillis() - nStart);
+  printf(" zap wallet  load     %15lld ms\n", GetTimeMillis() - nStart);
 
   progressBarLabel->setText(tr("Loading lables..."));
   splashMessage(_("Loaded lables..."));
@@ -1198,11 +1207,11 @@ void BitcoinGUI::zapWallet()
   progressBarLabel->setText(tr("Please restart your wallet."));
   splashMessage(_("Please restart your wallet."));
   printf(" zap wallet  done - please restart wallet.\n");
-//  sleep (10);
+  //  sleep (10);
   progressBarLabel->setText(tr(""));
   progressBarLabel->setVisible(false);
 
-//  close splash screen
+  //  close splash screen
   if (splashref)
     splash.close();
 

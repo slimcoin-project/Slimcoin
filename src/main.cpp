@@ -3238,6 +3238,7 @@ bool LoadBlockIndex(bool fAllowNew)
 }
 
 
+static const char* strFormat = "%Y-%m-%dT%H:%M:%SZ";
 
 void PrintBlockTree()
 {
@@ -3284,15 +3285,16 @@ void PrintBlockTree()
         // print item
         CBlock block;
         block.ReadFromDisk(pindex, true, false);
-        printf("%d (%u,%u) %s  %08lx  %s  mint %7s  tx %d\n",
+        printf("%d,(%u,%u),%s,%08lx,%s,%s,%d,%d\n",
             pindex->nHeight,
             pindex->nFile,
             pindex->nBlockPos,
             block.GetHash().ToString().c_str(),
             block.nBits,
-            DateTimeStrFormat(block.GetBlockTime()).c_str(),
+            DateTimeStrFormat(strFormat, block.GetBlockTime()).c_str(),
             FormatMoney(pindex->nMint).c_str(),
-            block.vtx.size());
+            block.vtx.size(),
+            nCol);
 
         PrintWallets(block);
 
@@ -3313,9 +3315,12 @@ void PrintBlockTree()
     }
 }
 
-
 bool LoadExternalBlockFile(FILE* fileIn)
 {
+    unsigned int tempcount=0;
+    unsigned int steptemp=0;
+    char pString[256];
+    string tempmess;
     int64_t nStart = GetTimeMillis();
     static unsigned char pchMessageStart[4] = { 0x6e, 0x8b, 0x92, 0xa5 };
 
@@ -3348,6 +3353,15 @@ bool LoadExternalBlockFile(FILE* fileIn)
                     }
                     else
                         nPos += sizeof(pchData) - sizeof(pchMessageStart) + 1;
+		            tempcount ++;
+		            if(tempcount>=1000)
+		            {
+		              steptemp ++;
+		              // tempmess=mess+ boost::to_string(steptemp * 1000);
+		              sprintf(pString, _("bootstrap loading %d").c_str(), steptemp * 1000);
+		              InitMessage(pString);
+		              tempcount=0;
+		            }
                 } while(!fRequestShutdown);
                 if (nPos == (unsigned int)-1)
                     break;
@@ -3371,6 +3385,11 @@ bool LoadExternalBlockFile(FILE* fileIn)
                    __PRETTY_FUNCTION__);
         }
     }
+    steptemp=steptemp*1000 +tempcount;
+    // tempmess=mess+ boost::to_string(steptemp);
+    sprintf(pString, _("%d").c_str(), steptemp);
+    InitMessage(pString);
+
     printf("Loaded %i blocks from external file in %lld ms\n", nLoaded, GetTimeMillis() - nStart);
     return nLoaded > 0;
 }

@@ -102,180 +102,6 @@ void RPCTypeCheck(const Object& o,
     }
 }
 
-/*
-// ppcoin: make a public-private key pair
-Value makekeypair(const Array& params, bool fHelp)
-{
-    if (fHelp || params.size() > 1)
-        throw runtime_error(
-            "makekeypair [prefix]\n"
-            "Make a public/private key pair.\n"
-            "[prefix] is optional preferred prefix for the public key.\n");
-
-    string strPrefix = "";
-    if (params.size() > 0)
-        strPrefix = params[0].get_str();
- 
-    CKey key;
-    key.MakeNewKey(false);
-
-    CPrivKey vchPrivKey = key.GetPrivKey();
-    Object result;
-    result.push_back(Pair("PrivateKey", HexStr<CPrivKey::iterator>(vchPrivKey.begin(), vchPrivKey.end())));
-    result.push_back(Pair("PublicKey", HexStr(key.GetPubKey().Raw())));
-    return result;
-}
-*/
-
-// ppcoin: check wallet integrity
-Value checkwallet(const Array& params, bool fHelp)
-{
-    if (fHelp || params.size() > 0)
-        throw runtime_error(
-            "checkwallet\n"
-            "Check wallet for integrity.\n");
-
-    int nMismatchSpent;
-    int64 nBalanceInQuestion;
-    pwalletMain->FixSpentCoins(nMismatchSpent, nBalanceInQuestion, true);
-    Object result;
-    if (nMismatchSpent == 0)
-        result.push_back(Pair("wallet check passed", true));
-    else
-    {
-        result.push_back(Pair("mismatched spent coins", nMismatchSpent));
-        result.push_back(Pair("amount in question", ValueFromAmount(nBalanceInQuestion)));
-    }
-    return result;
-}
-
-
-// ppcoin: repair wallet
-Value repairwallet(const Array& params, bool fHelp)
-{
-    if (fHelp || params.size() > 0)
-        throw runtime_error(
-            "repairwallet\n"
-            "Repair wallet if checkwallet reports any problem.\n");
-
-    int nMismatchSpent;
-    int64 nBalanceInQuestion;
-    pwalletMain->FixSpentCoins(nMismatchSpent, nBalanceInQuestion);
-    Object result;
-    if (nMismatchSpent == 0)
-        result.push_back(Pair("wallet check passed", true));
-    else
-    {
-        result.push_back(Pair("mismatched spent coins", nMismatchSpent));
-        result.push_back(Pair("amount affected by repair", ValueFromAmount(nBalanceInQuestion)));
-    }
-    return result;
-}
-
-// zapwallettxes
-Value zapwallettxes(const Array& params, bool fHelp)
-{
-  if (fHelp || params.size() > 0)
-    throw runtime_error("-zapwallettxes\n"
-          "Delete all wallet transactions and only recover those parts of the blockchain through -rescan on startup\n");
-
-  std::vector<CWalletTx> vWtx;
-  Object result;
-
-  const char *mess="Zapping all transactions from wallet ...\n";
-  printf("%s",mess); // to debug.log
-
-  pwalletMain = new CWallet("wallet.dat");
-  DBErrors nZapWalletRet = pwalletMain->ZapWalletTx(vWtx);
-  if (nZapWalletRet != DB_LOAD_OK)
-  {
-    mess="Error loading wallet.dat: Wallet corrupted\n";
-    printf("%s",mess);
-    return(mess);
-  }
-
-  delete pwalletMain;
-  pwalletMain = NULL;
-
-  mess="Loading wallet...\n";
-  printf("%s",mess);
-
-  bool fFirstRun = true;
-  pwalletMain = new CWallet("wallet.dat");
-
-
-  DBErrors nLoadWalletRet = pwalletMain->LoadWallet(fFirstRun);
-  if (nLoadWalletRet != DB_LOAD_OK)
-  {
-    if (nLoadWalletRet == DB_CORRUPT)
-    {
-      mess="Error loading wallet.dat: Wallet corrupted\n";
-      printf("%s",mess);
-      return(mess);
-    }
-    else if (nLoadWalletRet == DB_NONCRITICAL_ERROR)
-    {
-      mess="Warning: error reading wallet.dat! All keys read correctly, but transaction data or address book entries might be missing or incorrect.\n";
-      printf("%s",mess);
-    }
-    else if (nLoadWalletRet == DB_TOO_NEW)
-    {
-      mess="Error loading wallet.dat: Wallet requires newer version of Bitcoin-scrypt\n";
-      printf("%s",mess);
-      return(mess);
-    }
-    else if (nLoadWalletRet == DB_NEED_REWRITE)
-    {
-      mess="Wallet needed to be rewritten: restart LitecoinPlus to complete\n";
-      printf("%s",mess);
-      return(mess);
-    }
-    else
-    {
-      mess="Unknown error loading wallet.dat\n";
-      printf("%s",mess);
-      return(mess);
-    } 
-  }
-  
-  mess="Wallet loaded...\n";
-  printf("%s",mess);
-
-  mess="Loaded lables...\n";
-  printf("%s",mess);
-
-  // Restore wallet transaction metadata
-  BOOST_FOREACH(const CWalletTx& wtxOld, vWtx)
-  {
-    uint256 hash = wtxOld.GetHash();
-    std::map<uint256, CWalletTx>::iterator mi = pwalletMain->mapWallet.find(hash);
-    if (mi != pwalletMain->mapWallet.end())
-    {
-      const CWalletTx* copyFrom = &wtxOld;
-      CWalletTx* copyTo = &mi->second;
-      copyTo->mapValue = copyFrom->mapValue;
-      copyTo->vOrderForm = copyFrom->vOrderForm;
-      copyTo->nTimeReceived = copyFrom->nTimeReceived;
-      copyTo->nTimeSmart = copyFrom->nTimeSmart;
-      copyTo->fFromMe = copyFrom->fFromMe;
-      copyTo->strFromAccount = copyFrom->strFromAccount;
-      copyTo->nOrderPos = copyFrom->nOrderPos;
-      copyTo->WriteToDisk();
-    }
-  }
-  mess="scanning for transactions...\n";
-  printf("%s",mess);
-
-  pwalletMain->ScanForWalletTransactions(pindexGenesisBlock, true);
-  pwalletMain->ReacceptWalletTransactions();
-  mess="Please restart your wallet.\n";
-  printf("%s",mess);
-
-  mess="Zap Wallet Finished.\nPlease restart your wallet for changes to take effect.\n";
-
-  return (mess);
-}
-
 double GetDifficulty(const CBlockIndex* blockindex = NULL)
 {
     // Floating point number that is a multiple of the minimum difficulty,
@@ -3369,45 +3195,116 @@ Value repairwallet(const Array& params, bool fHelp)
     return result;
 }
 
+// zapwallettxes
+Value zapwallettxes(const Array& params, bool fHelp)
+{
+  if (fHelp || params.size() > 0)
+    throw runtime_error("zapwallettxes\n"
+          "Delete all wallet transactions and only recover those parts of the blockchain through -rescan on startup\n");
+
+  std::vector<CWalletTx> vWtx;
+  Object result;
+
+  const char *mess="Zapping all transactions from wallet ...\n";
+  printf("%s",mess); // to debug.log
+
+  pwalletMain = new CWallet("wallet.dat");
+  int nZapWalletRet = pwalletMain->ZapWalletTx(vWtx);
+  if (nZapWalletRet != 0)
+  {
+    mess="Error loading wallet.dat: Wallet corrupted\n";
+    printf("%s",mess);
+    return(mess);
+  }
+
+  delete pwalletMain;
+  pwalletMain = NULL;
+
+  mess="Loading wallet...\n";
+  printf("%s",mess);
+
+  bool fFirstRun = true;
+  pwalletMain = new CWallet("wallet.dat");
+
+
+  int nLoadWalletRet = pwalletMain->LoadWallet(fFirstRun);
+  if (nLoadWalletRet != 0)
+  {
+    if (nLoadWalletRet == 1)
+    {
+      mess="Error loading wallet.dat: Wallet corrupted\n";
+      printf("%s",mess);
+      return(mess);
+    }
+    else if (nLoadWalletRet == 2)
+    {
+      mess="Warning: error reading wallet.dat! All keys read correctly, but transaction data or address book entries might be missing or incorrect.\n";
+      printf("%s",mess);
+    }
+    else if (nLoadWalletRet == 3)
+    {
+      mess="Error loading wallet.dat: Wallet requires newer version of Bitcoin-scrypt\n";
+      printf("%s",mess);
+      return(mess);
+    }
+    else if (nLoadWalletRet == 4)
+    {
+      mess="Wallet needed to be rewritten: restart Slimcoin to complete\n";
+      printf("%s",mess);
+      return(mess);
+    }
+    else
+    {
+      mess="Unknown error loading wallet.dat\n";
+      printf("%s",mess);
+      return(mess);
+    } 
+  }
+  
+  mess="Wallet loaded...\n";
+  printf("%s",mess);
+
+  mess="Loaded lables...\n";
+  printf("%s",mess);
+
+  // Restore wallet transaction metadata
+  BOOST_FOREACH(const CWalletTx& wtxOld, vWtx)
+  {
+    uint256 hash = wtxOld.GetHash();
+    std::map<uint256, CWalletTx>::iterator mi = pwalletMain->mapWallet.find(hash);
+    if (mi != pwalletMain->mapWallet.end())
+    {
+      const CWalletTx* copyFrom = &wtxOld;
+      CWalletTx* copyTo = &mi->second;
+      copyTo->mapValue = copyFrom->mapValue;
+      copyTo->vOrderForm = copyFrom->vOrderForm;
+      copyTo->nTimeReceived = copyFrom->nTimeReceived;
+      copyTo->nTimeSmart = copyFrom->nTimeSmart;
+      copyTo->fFromMe = copyFrom->fFromMe;
+      copyTo->strFromAccount = copyFrom->strFromAccount;
+      copyTo->nOrderPos = copyFrom->nOrderPos;
+      copyTo->WriteToDisk();
+    }
+  }
+  mess="scanning for transactions...\n";
+  printf("%s",mess);
+
+  pwalletMain->ScanForWalletTransactions(pindexGenesisBlock, true);
+  pwalletMain->ReacceptWalletTransactions();
+  mess="Please restart your wallet.\n";
+  printf("%s",mess);
+
+  mess="Zap Wallet Finished.\nPlease restart your wallet for changes to take effect.\n";
+
+  return (mess);
+}
+
 Value getsubsidy(const Array& params, bool fHelp)
 {
     static CBlock* pblock;
     pblock = CreateNewBlock(pwalletMain, false);
     return (boost::int64_t)GetProofOfWorkReward(pblock->nBits);
 }
-
-/*
-// ppcoin: make a public-private key pair
-Value makekeypair(const Array& params, bool fHelp)
-{
-    if (fHelp || params.size() > 1)
-        throw runtime_error(
-            "makekeypair [prefix]\n"
-            "Make a public/private ECC key pair.\n"
-            "[prefix] is optional preferred prefix for the public key.\n");
-
-    string strPrefix = "";
-    if (params.size() > 0)
-        strPrefix = params[0].get_str();
- 
-    CKey key;
-    int nCount = 0;
-    do
-    {
-        key.MakeNewKey(false);
-        nCount++;
-    } while (nCount < 10000 && strPrefix != HexStr(key.GetPubKey().Raw()).substr(0, strPrefix.size()));
-
-    if (strPrefix != HexStr(key.GetPubKey().Raw()).substr(0, strPrefix.size()))
-        return Value::null;
-
-    CPrivKey vchPrivKey = key.GetPrivKey();
-    Object result;
-    result.push_back(Pair("PrivateKey", HexStr<CPrivKey::iterator>(vchPrivKey.begin(), vchPrivKey.end())));
-    result.push_back(Pair("PublicKey", HexStr(key.GetPubKey().Raw())));
-    return result;
-}
-*/
 
 // ppcoin: make a public-private key pair
 Value makekeypair(const Array& params, bool fHelp)
@@ -3488,14 +3385,22 @@ Value makekeypair(const Array& params, bool fHelp)
 
 Value dumpbootstrap(const Array& params, bool fHelp)
 {
-    if (fHelp || params.size() < 1 || params.size() > 2)
+    if (fHelp || params.size() < 1 || params.size() > 3)
         throw runtime_error(
-            "dumpbootstrap <destination>\n"
-            "Creates a bootstrap format block dump of the blockchain in destination, which can be a directory or a path with filename.");
+            "dumpbootstrap <destination> <endblock> [startblock=0]\n"
+            "Creates a bootstrap format block dump of the blockchain in destination, which can be a directory or a path with filename, up to the given endblock number.\n"
+            "Optional <startblock> is the first block number to dump.");
 
     string strDest = params[0].get_str();
-    int nEndBlock = nBestHeight;
+    int nEndBlock = params[1].get_int();
+    if (nEndBlock < 0 || nEndBlock > nBestHeight)
+        throw runtime_error("End block number out of range.");
+
     int nStartBlock = 0;
+    if (params.size() > 2)
+        nStartBlock = params[2].get_int();
+    if (nStartBlock < 0 || nStartBlock > nEndBlock)
+        throw runtime_error("Start block number out of range.");
 
     boost::filesystem::path pathDest(strDest);
     if (boost::filesystem::is_directory(pathDest))
@@ -3520,6 +3425,7 @@ Value dumpbootstrap(const Array& params, bool fHelp)
             block.ReadFromDisk(pblockindex, true);
             fileout << FLATDATA(pchMessageStart) << fileout.GetSerializeSize(block) << block;
         }
+
     } catch(const boost::filesystem::filesystem_error &e) {
         throw JSONRPCError(-1, "Error: Bootstrap dump failed!");
     }
@@ -3529,14 +3435,25 @@ Value dumpbootstrap(const Array& params, bool fHelp)
 
 Value linearizehashes(const Array& params, bool fHelp)
 {
-    if (fHelp || params.size() < 1 || params.size() > 2)
+    if (fHelp || params.size() < 1 || params.size() > 3)
         throw runtime_error(
-            "linearizehashes <destination>\n"
-            "Creates a dump of linearized block hashes in destination, which can be a directory or a path with filename.");
+            "linearizehashes <destination> <endblock>  [startblock=0]\n"
+            "Creates a dump of linearized block hashes in destination, which can be a directory or a path with filename, up to the given endblock number.\n"
+            "Optional <startblock> is the first block number to dump.");
 
     string strDest = params[0].get_str();
-    int nEndBlock = nBestHeight;
+
+    int nEndBlock = 1646900; // 3rd Feb 2019
+    if (params.size() > 1)
+        nEndBlock = params[1].get_int();
+    if (nEndBlock < 0 || nEndBlock > nBestHeight)
+        throw runtime_error("End block number out of range.");
+
     int nStartBlock = 0;
+    if (params.size() > 2)
+        nStartBlock = params[2].get_int();
+    if (nStartBlock < 0 || nStartBlock > nEndBlock)
+        throw runtime_error("Start block number out of range.");
 
     boost::filesystem::path pathDest(strDest);
     if (boost::filesystem::is_directory(pathDest))
@@ -3556,7 +3473,7 @@ Value linearizehashes(const Array& params, bool fHelp)
             CBlock block;
             CBlockIndex* pblockindex = FindBlockByHeight(nHeight);
             block.ReadFromDisk(pblockindex, true);
-            std::string blockhash = block.GetHash().ToString().c_str();
+            std::string blockhash = block.GetHash().ToString();
             fileout << blockhash.append("\n");
         }
     } catch(const boost::filesystem::filesystem_error &e) {
@@ -4308,8 +4225,6 @@ static const CRPCCommand vRPCCommands[] =
     { "importpassphrase",         &importpassphrase,       false  },
     { "getcheckpoint",            &getcheckpoint,          true   },
     { "reservebalance",           &reservebalance,         false  },
-    { "checkwallet",              &checkwallet,            false  },
-    { "repairwallet",             &repairwallet,           false  },
     { "dumpbootstrap",            &dumpbootstrap,          false  },
     { "linearizehashes",          &linearizehashes,        false  },
     { "makekeypair",              &makekeypair,            false  },
