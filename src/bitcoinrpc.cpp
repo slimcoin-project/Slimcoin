@@ -4768,8 +4768,8 @@ void ThreadRPCServer2(void* parg)
             } else
               throw JSONRPCError(-32600, "Top-level object parse error");
 
-                // Send reply
-              stream << HTTPReply(200, strReply) << std::flush;
+            // Send reply
+            stream << HTTPReply(200, strReply) << std::flush;
         }
         catch (Object& objError)
         {

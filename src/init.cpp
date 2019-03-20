@@ -399,7 +399,6 @@ bool AppInit2(int argc, char *argv[])
         printf(" rescan      %15d ms\n", GetTimeMillis() - nStart);
     }
 
-
     if (mapArgs.count("-loadblock"))
     {
         BOOST_FOREACH(string strFile, mapMultiArgs["-loadblock"])
