@@ -3317,11 +3317,11 @@ void PrintBlockTree()
 
 bool LoadExternalBlockFile(FILE* fileIn)
 {
-    unsigned int tempcount=0;
-    unsigned int steptemp=0;
-    char pString[256];
-    string tempmess;
-    int64_t nStart = GetTimeMillis();
+   unsigned int tempcount=0;
+   unsigned int steptemp=0;
+   char pString[256];
+   string tempmess;
+   int64_t nStart = GetTimeMillis();
     static unsigned char pchMessageStart[4] = { 0x6e, 0x8b, 0x92, 0xa5 };
 
     int nLoaded = 0;
