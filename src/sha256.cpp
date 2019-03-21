@@ -41,7 +41,7 @@ static void digest_to_string(u8int *hash_digest, u8int *string)
   return;
 }
 */
-char * byte_to_hex =
+const char * byte_to_hex =
         "000102030405060708090a0b0c0d0e0f"
         "101112131415161718191a1b1c1d1e1f"
         "202122232425262728292a2b2c2d2e2f"
