@@ -86,7 +86,7 @@ CoinControlDialog::CoinControlDialog(QWidget *parent) :
     connect(ui->radioListMode, SIGNAL(toggled(bool)), this, SLOT(radioListMode(bool)));
     
     // click on checkbox
-    connect(ui->treeWidget, SIGNAL(itemChanged( QTreeWidgetItem*, int)), this, SLOT(viewItemChanged( QTreeWidgetItem*, int)));
+    connect(ui->treeWidget, SIGNAL(itemChanged(QTreeWidgetItem*, int)), this, SLOT(viewItemChanged(QTreeWidgetItem*, int)));
     
     // click on header
 #if QT_VERSION < 0x050000
@@ -363,7 +363,8 @@ QString CoinControlDialog::getPriorityLabel(double dPriority)
 
 void CoinControlDialog::updateLabels(WalletModel *model, QDialog* dialog)
 {
-    if (!model) return;
+    if (!model)
+        return;
 
     // nPayAmount
     qint64 nPayAmount = 0;
@@ -526,6 +527,9 @@ void CoinControlDialog::updateLabels(WalletModel *model, QDialog* dialog)
 
 void CoinControlDialog::updateView()
 {
+    if (!model || !model->getOptionsModel() || !model->getAddressTableModel())
+        return;
+
     bool treeMode = ui->radioTreeMode->isChecked();
 
     ui->treeWidget->clear();
@@ -544,20 +548,19 @@ void CoinControlDialog::updateView()
     BOOST_FOREACH(PAIRTYPE(QString, vector<COutput>) coins, mapCoins)
     {
         QTreeWidgetItem *itemWalletAddress = new QTreeWidgetItem();
+        itemWalletAddress->setCheckState(COLUMN_CHECKBOX, Qt::Unchecked);
         QString sWalletAddress = coins.first;
-        QString sWalletLabel = "";
-        if (model->getAddressTableModel())
-            sWalletLabel = model->getAddressTableModel()->labelForAddress(sWalletAddress);
-        if (sWalletLabel.length() == 0)
+        QString sWalletLabel = model->getAddressTableModel()->labelForAddress(sWalletAddress);
+        if (sWalletLabel.isEmpty())
             sWalletLabel = tr("(no label)");
-        
+
         if (treeMode)
         {
             // wallet address
             ui->treeWidget->addTopLevelItem(itemWalletAddress);
 
             itemWalletAddress->setFlags(flgTristate);
-            itemWalletAddress->setCheckState(COLUMN_CHECKBOX,Qt::Unchecked);
+            itemWalletAddress->setCheckState(COLUMN_CHECKBOX, Qt::Unchecked);
             
             for (int i = 0; i < ui->treeWidget->columnCount(); i++)
                 itemWalletAddress->setBackground(i, QColor(248, 247, 246));
@@ -580,14 +583,14 @@ void CoinControlDialog::updateView()
             nSum += out.tx->vout[out.i].nValue;
             nChildren++;
             
-//            model->getStakeWeightFromValue(out.tx->GetTxTime(), out.tx->vout[out.i].nValue, nTxWeight);
+            // model->getStakeWeightFromValue(out.tx->GetTxTime(), out.tx->vout[out.i].nValue, nTxWeight);
             nTxWeightSum += nTxWeight;
 			
             QTreeWidgetItem *itemOutput;
             if (treeMode)    itemOutput = new QTreeWidgetItem(itemWalletAddress);
             else             itemOutput = new QTreeWidgetItem(ui->treeWidget);
             itemOutput->setFlags(flgCheckbox);
-            itemOutput->setCheckState(COLUMN_CHECKBOX,Qt::Unchecked);
+            itemOutput->setCheckState(COLUMN_CHECKBOX, Qt::Unchecked);
                 
             // address
             CTxDestination outputAddress;
@@ -615,17 +618,15 @@ void CoinControlDialog::updateView()
             }
             else if (!treeMode)
             {
-                QString sLabel = "";
-                if (model->getAddressTableModel())
-                    sLabel = model->getAddressTableModel()->labelForAddress(sAddress);
-                if (sLabel.length() == 0)
+                QString sLabel = model->getAddressTableModel()->labelForAddress(sAddress);
+                if (sLabel.isEmpty())
                     sLabel = tr("(no label)");
                 itemOutput->setText(COLUMN_LABEL, sLabel); 
             }
 
             // amount
             itemOutput->setText(COLUMN_AMOUNT, BitcoinUnits::format(nDisplayUnit, out.tx->vout[out.i].nValue));
-            itemOutput->setText(COLUMN_AMOUNT_INT64, strPad(QString::number(out.tx->vout[out.i].nValue), 15, " ")); // padding so that sorting works correctly
+            itemOutput->setData(COLUMN_AMOUNT_INT64, Qt::DisplayRole, out.tx->vout[out.i].nValue);
 
             // date
             itemOutput->setText(COLUMN_DATE, QDateTime::fromTime_t(out.tx->GetTxTime()).toUTC().toString("yy-MM-dd hh:mm"));
@@ -639,28 +640,31 @@ void CoinControlDialog::updateView()
             */
 
             // confirmations
-            itemOutput->setText(COLUMN_CONFIRMATIONS, strPad(QString::number(out.nDepth), 8, " "));
+            // itemOutput->setText(COLUMN_CONFIRMATIONS, strPad(QString::number(out.nDepth), 8, " "));
+            itemOutput->setData(COLUMN_CONFIRMATIONS, Qt::DisplayRole, out.nDepth);
             
             // priority
             double dPriority = ((double)out.tx->vout[out.i].nValue  / (nInputSize + 78)) * (out.nDepth+1); // 78 = 2 * 34 + 10
             itemOutput->setText(COLUMN_PRIORITY, CoinControlDialog::getPriorityLabel(dPriority));
-            itemOutput->setText(COLUMN_PRIORITY_INT64, strPad(QString::number((int64)dPriority), 20, " "));
+            // itemOutput->setText(COLUMN_PRIORITY_INT64, strPad(QString::number((int64)dPriority), 20, " "));
+            itemOutput->setData(COLUMN_PRIORITY_INT64, Qt::DisplayRole, (int64)dPriority);
             dPrioritySum += (double)out.tx->vout[out.i].nValue  * (out.nDepth+1);
             nInputSum    += nInputSize;
 			
-	    // List Mode Weight
-	    itemOutput->setText(COLUMN_WEIGHT, strPad(QString::number(nTxWeight), 8, " "));
+            // List Mode Weight
+            // itemOutput->setText(COLUMN_WEIGHT, strPad(QString::number(nTxWeight), 8, " "));
+            itemOutput->setData(COLUMN_WEIGHT, Qt::DisplayRole, nTxWeight);
             
             // transaction hash
             uint256 txhash = out.tx->GetHash();
             itemOutput->setText(COLUMN_TXHASH, txhash.GetHex().c_str());
     
             // vout index
-            itemOutput->setText(COLUMN_VOUT_INDEX, QString::number(out.i));
+            itemOutput->setData(COLUMN_VOUT_INDEX, Qt::DisplayRole, out.i);
             
             // set checkbox
             if (coinControl->IsSelected(txhash, out.i))
-                itemOutput->setCheckState(COLUMN_CHECKBOX,Qt::Checked);
+                itemOutput->setCheckState(COLUMN_CHECKBOX, Qt::Checked);
         }
 
         // amount
@@ -669,12 +673,13 @@ void CoinControlDialog::updateView()
             dPrioritySum = dPrioritySum / (nInputSum + 78);
             itemWalletAddress->setText(COLUMN_CHECKBOX, "(" + QString::number(nChildren) + ")");
             itemWalletAddress->setText(COLUMN_AMOUNT, BitcoinUnits::format(nDisplayUnit, nSum));
-            itemWalletAddress->setText(COLUMN_AMOUNT_INT64, strPad(QString::number(nSum), 15, " "));
+            itemWalletAddress->setData(COLUMN_AMOUNT_INT64, Qt::DisplayRole, nSum);
             itemWalletAddress->setText(COLUMN_PRIORITY, CoinControlDialog::getPriorityLabel(dPrioritySum));
-            itemWalletAddress->setText(COLUMN_PRIORITY_INT64, strPad(QString::number((int64)dPrioritySum), 20, " "));
+            itemWalletAddress->setData(COLUMN_PRIORITY_INT64, Qt::DisplayRole, (int64)dPrioritySum);
             //Tree Mode Weight
-            itemWalletAddress->setText(COLUMN_WEIGHT, strPad(QString::number((uint64)nTxWeightSum),8," "));
-        
+            // itemWalletAddress->setText(COLUMN_WEIGHT, strPad(QString::number((uint64)nTxWeightSum),8," "));
+            itemWalletAddress->setData(COLUMN_WEIGHT, Qt::DisplayRole, (uint64)nTxWeightSum);
+
         }
     }
     

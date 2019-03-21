@@ -506,7 +506,70 @@ class TestMyView(unittest.TestCase):
         # return the serlialised data
         return '\n'.join([block_template.format(**locals()), txstr, cbs_template.format(**locals())])
 
-    @unittest.skip("Suspended, skipping")
+    def read_genesis_block(self, ds):
+        # Read file
+        # https://bitcoin.org/en/developer-reference#block-headers
+        # https://en.bitcoin.it/wiki/Protocol_specification#block
+        blockheight = 0
+        magic = ds.read_bytes(4).hex()
+        if magic != "6e8b92a5":
+            print("FAILED #{}\n{}\n{}".format(blockheight, magic, ds.read_bytes(512).hex()))
+            exit(0)
+        block_size = int(struct.pack('>l', *struct.unpack('<l', ds.read_bytes(4))).hex(), 16)
+        version = struct.pack('>l', *struct.unpack('<l', ds.read_bytes(4))).hex()
+        prev_header_hash = ds.read_bytes(32)[::-1].hex()
+        merkle_root_hash = ds.read_bytes(32)[::-1].hex()
+        timestamp = ds.read_bytes(4)[::-1].hex()
+        timestampint = int(timestamp, 16)
+        formatted_timestamp = datetime.fromtimestamp(int(timestamp, 16)).isoformat()
+        nbits = ds.read_bytes(4)[::-1].hex()
+        nonce = ds.read_bytes(4)[::-1].hex()
+        nonceint = int(nonce, 16)
+
+        fproofofburn = ds.read_boolean()
+        hashburnblock = ds.read_bytes(32)[::-1].hex()
+        burnhash = ds.read_bytes(32)[::-1].hex()
+        burnblockheight = ds.read_int32()
+        burnctx = ds.read_int32()
+        burnctxout = ds.read_int32()
+        neffectiveburncoins = ds.read_int64()
+        nburnbits = ds.read_uint32()
+
+        txcount = ds.read_compact_size()
+        txcountint = int(txcount)
+        txstr = ""
+        for txnum in range(1, txcountint+1):
+            tx_version = ds.read_bytes(4)[::-1].hex()
+            tx_ntime = ds.read_bytes(4)[::-1].hex()
+            tx_ntimeint = int(tx_ntime, 16)
+            formatted_tx_ntime = datetime.fromtimestamp(int(tx_ntime, 16)).isoformat()
+            tx_input = ds.read_compact_size()
+            input = int(tx_input)
+            vinstr = ""
+            for txin in range(0, input):
+                tx_prev_output_hash = ds.read_bytes(32)[::-1].hex()
+                tx_prev_output_sequence = ds.read_bytes(4)[::-1].hex()
+                coinbase_tx_length = ds.read_bytes(1)[::-1].hex()
+                coinbase_tx_lengthint = int(coinbase_tx_length, 16)
+                coinbase_tx = ds.read_bytes(int((coinbase_tx_length), 16)).hex()
+                sequence = ds.read_bytes(4)[::-1].hex()
+                vinstr += vin_template.format(**locals())
+            no_of_outputs = ds.read_compact_size()
+            voutstr = ""
+            for j in range(0, int(no_of_outputs)):
+                btc_amt = ds.read_bytes(8)[::-1].hex()
+                btc_amtint = int(btc_amt, 16)
+                pk_script_len = ds.read_compact_size()
+                pk_script_lenint = int(pk_script_len)
+                pk_script = ds.read_bytes(int(pk_script_lenint)).hex()
+                voutstr += vout_template.format(**locals())
+            tnburnbits = ds.read_bytes(4).hex()
+            txstr += tx_template.format(**locals())
+        block_sig_length = ds.read_bytes(1)[::-1].hex()
+        block_sig_lengthint = int(block_sig_length, 16)
+        block_sig = ds.read_bytes(int(block_sig_length, 16)).hex()
+        return '\n'.join([block_template.format(**locals()),txstr,cbs_template.format(**locals())])
+    # @unittest.skip("Suspended, skipping")
     def test_check_parse_chain(self):
         ds = BCDataStream()
         with open(datadir, "rb") as file:

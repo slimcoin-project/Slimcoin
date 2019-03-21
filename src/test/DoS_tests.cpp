@@ -136,9 +136,9 @@ BOOST_AUTO_TEST_CASE(DoS_checknbits)
 CTransaction RandomOrphan()
 {
     std::map<uint256, CDataStream*>::iterator it;
-  it = mapOrphanTransactions.lower_bound(GetRandHash());
-  if(it == mapOrphanTransactions.end())
-    it = mapOrphanTransactions.begin();
+    it = mapOrphanTransactions.lower_bound(GetRandHash());
+    if(it == mapOrphanTransactions.end())
+      it = mapOrphanTransactions.begin();
     const CDataStream* pvMsg = it->second;
     CTransaction tx;
     CDataStream(*pvMsg) >> tx;
@@ -215,10 +215,10 @@ BOOST_AUTO_TEST_CASE(DoS_mapOrphans)
     for (int j = 1; j < tx.vin.size(); j++)
         tx.vin[j].scriptSig = tx.vin[0].scriptSig;
 
-        // BOOST_CHECK(!AddOrphanTx(tx));
-        CDataStream ds(SER_DISK, CLIENT_VERSION);
-        ds << tx;
-        BOOST_CHECK(!AddOrphanTx(ds));
+    // BOOST_CHECK(!AddOrphanTx(tx));
+    CDataStream ds(SER_DISK, CLIENT_VERSION);
+    ds << tx;
+    BOOST_CHECK(!AddOrphanTx(ds));
   }
 
   // Test LimitOrphanTxSize() function:
