@@ -46,7 +46,7 @@ static void empty_wallet(void)
 
 BOOST_AUTO_TEST_CASE(coin_selection_tests)
 {
-    static set<pair<const CWalletTx*,unsigned int> > setCoinsRet;
+    static std::vector<std::pair<const CWalletTx*,unsigned int> > setCoinsRet;
     static int64 nValueRet;
 
     // test multiple times to allow for differences in the shuffle order
