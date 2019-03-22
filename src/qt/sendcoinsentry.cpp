@@ -20,11 +20,8 @@ SendCoinsEntry::SendCoinsEntry(QWidget *parent) :
 #ifdef MAC_OSX
     ui->payToLayout->setSpacing(4);
 #endif
-
-#if QT_VERSION >= 0x040700
     ui->payTo->setPlaceholderText(tr("Enter a Slimcoin address"));
     ui->addAsLabel->setPlaceholderText(tr("Enter a label for this address to add it to your address book"));
-#endif
     setFocusPolicy(Qt::TabFocus);
     setFocusProxy(ui->payTo);
 
@@ -68,6 +65,11 @@ void SendCoinsEntry::on_payTo_textChanged(const QString &address)
 void SendCoinsEntry::setModel(WalletModel *model)
 {
     this->model = model;
+
+    if(model && model->getOptionsModel())
+        connect(model->getOptionsModel(), SIGNAL(displayUnitChanged(int)), this, SLOT(updateDisplayUnit()));
+
+    connect(ui->payAmount, SIGNAL(textChanged()), this, SIGNAL(payAmountChanged()));
     clear();
 }
 
@@ -82,10 +84,13 @@ void SendCoinsEntry::clear()
     ui->addAsLabel->clear();
     ui->payAmount->clear();
     ui->payTo->setFocus();
-    if(model && model->getOptionsModel())
-    {
-        ui->payAmount->setDisplayUnit(model->getOptionsModel()->getDisplayUnit());
-    }
+    // if(model && model->getOptionsModel())
+    // {
+    //     ui->payAmount->setDisplayUnit(model->getOptionsModel()->getDisplayUnit());
+    // }
+
+    // update the display unit, to not use the default ("BTC")
+    updateDisplayUnit();
 }
 
 void SendCoinsEntry::on_deleteButton_clicked()
@@ -160,3 +165,11 @@ void SendCoinsEntry::setFocus()
     ui->payTo->setFocus();
 }
 
+void SendCoinsEntry::updateDisplayUnit()
+{
+    if(model && model->getOptionsModel())
+    {
+        // Update payAmount with the current unit
+        ui->payAmount->setDisplayUnit(model->getOptionsModel()->getDisplayUnit());
+    }
+}
