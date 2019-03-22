@@ -333,6 +333,7 @@ HEADERS += src/addrman.h \
     src/qt/guiutil.h \
     src/qt/inscriptiondialog.h \
     src/qt/messagepage.h \
+    src/qt/miningpage.h \
     src/qt/monitoreddatamapper.h \
     src/qt/multisigaddressentry.h \
     src/qt/multisiginputentry.h \
@@ -358,6 +359,11 @@ HEADERS += src/addrman.h \
     src/qt/transactionrecord.h \
     src/qt/transactiontablemodel.h \
     src/qt/transactionview.h \
+    src/qt/vanitygenpage.h \
+    src/qt/vanitygenwork.h \
+    src/qt/vanity_avl.h \
+    src/qt/vanity_pattern.h \
+    src/qt/vanity_util.h \
     src/qt/walletmodel.h \
     src/script.h \
     src/serialize.h \
@@ -412,6 +418,7 @@ SOURCES += src/addrman.cpp \
     src/qt/guiutil.cpp \
     src/qt/inscriptiondialog.cpp \
     src/qt/messagepage.cpp \
+    src/qt/miningpage.cpp \
     src/qt/monitoreddatamapper.cpp \
     src/qt/multisigaddressentry.cpp \
     src/qt/multisiginputentry.cpp \
@@ -437,6 +444,10 @@ SOURCES += src/addrman.cpp \
     src/qt/transactionrecord.cpp \
     src/qt/transactiontablemodel.cpp \
     src/qt/transactionview.cpp \
+    src/qt/vanitygenpage.cpp \
+    src/qt/vanitygenwork.cpp \
+    src/qt/vanity_pattern.cpp \
+    src/qt/vanity_util.cpp \
     src/qt/walletmodel.cpp \
     src/rpcdump.cpp \
     src/script.cpp \
@@ -462,6 +473,7 @@ FORMS += \
     src/qt/forms/editaddressdialog.ui \
     src/qt/forms/inscriptiondialog.ui \
     src/qt/forms/messagepage.ui \
+    src/qt/forms/miningpage.ui \
     src/qt/forms/multisigaddressentry.ui \
     src/qt/forms/multisiginputentry.ui \
     src/qt/forms/multisigdialog.ui \
@@ -471,7 +483,8 @@ FORMS += \
     src/qt/forms/sendcoinsentry.ui \
     src/qt/forms/signverifymessagedialog.ui \
     src/qt/forms/inscriptionpage.ui \
-    src/qt/forms/transactiondescdialog.ui
+    src/qt/forms/transactiondescdialog.ui \
+    src/qt/forms/vanitygenpage.ui
 
 contains(USE_QRCODE, 1) {
     HEADERS += src/qt/qrcodedialog.h
@@ -687,7 +700,7 @@ LIBS += -lssl -lcrypto -ldb_cxx$$BDB_LIB_SUFFIX
 # windows:DEFINES += WIN32
 # windows:RC_FILE = src/qt/res/bitcoin-qt.rc
 windows:LIBS += -lole32 -luuid -lgdi32 -lwsock32
-LIBS += -lboost_system$$BOOST_LIB_SUFFIX -lboost_filesystem$$BOOST_LIB_SUFFIX -lboost_program_options$$BOOST_LIB_SUFFIX -lboost_thread$$BOOST_THREAD_LIB_SUFFIX -lboost_chrono$$BOOST_THREAD_LIB_SUFFIX
+LIBS += -lboost_system$$BOOST_LIB_SUFFIX -lboost_filesystem$$BOOST_LIB_SUFFIX -lboost_program_options$$BOOST_LIB_SUFFIX -lboost_thread$$BOOST_THREAD_LIB_SUFFIX
 
 
 # for extra security against potential buffer overflows: enable GCCs Stack Smashing Protection

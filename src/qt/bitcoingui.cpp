@@ -27,6 +27,8 @@
 #include "reportview.h"
 #include "inscriptiondialog.h"
 #include "inscriptionpage.h"
+#include "vanitygenpage.h"
+#include "miningpage.h"
 #include "bitcoinunits.h"
 #include "guiconstants.h"
 #include "askpassphrasedialog.h"
@@ -65,7 +67,10 @@
 #include <QTimer>
 
 #include <QDragEnterEvent>
+#if QT_VERSION < 0x050000
 #include <QUrl>
+#include <QStyle>
+#endif
 #include <QSplashScreen>
 
 #include "blockbrowser.h"
@@ -117,6 +122,8 @@ BitcoinGUI::BitcoinGUI(QWidget *parent):
     // Create tabs
     overviewPage = new OverviewPage();
 
+    miningPage = new MiningPage(this);
+
     transactionsPage = new QWidget(this);
     QVBoxLayout *vbox = new QVBoxLayout();
     transactionView = new TransactionView(this);
@@ -147,8 +154,11 @@ BitcoinGUI::BitcoinGUI(QWidget *parent):
 
     inscriptionsPage = new InscriptionPage(this);
 
+    vanitygenPage = new VanityGenPage(this, this);
+
     centralWidget = new QStackedWidget(this);
     centralWidget->addWidget(overviewPage);
+    centralWidget->addWidget(miningPage);
     centralWidget->addWidget(transactionsPage);
     centralWidget->addWidget(addressBookPage);
     centralWidget->addWidget(receiveCoinsPage);
@@ -267,6 +277,13 @@ void BitcoinGUI::createActions()
     accountReportAction->setShortcut(QKeySequence(Qt::ALT + Qt::Key_6));
     tabGroup->addAction(accountReportAction);
 
+    miningAction = new QAction(QIcon(":/icons/mining"), tr("&Mining"), this);
+    miningAction->setStatusTip(tr("Configure mining"));
+    miningAction->setToolTip(miningAction->statusTip());
+    miningAction->setCheckable(true);
+    miningAction->setShortcut(QKeySequence(Qt::ALT + Qt::Key_7));
+    tabGroup->addAction(miningAction);
+
     connect(overviewAction, SIGNAL(triggered()), this, SLOT(showNormalIfMinimized()));
     connect(overviewAction, SIGNAL(triggered()), this, SLOT(gotoOverviewPage()));
     connect(sendCoinsAction, SIGNAL(triggered()), this, SLOT(showNormalIfMinimized()));
@@ -279,6 +296,7 @@ void BitcoinGUI::createActions()
     connect(addressBookAction, SIGNAL(triggered()), this, SLOT(gotoAddressBookPage()));
     connect(accountReportAction, SIGNAL(triggered()), this, SLOT(showNormalIfMinimized()));
     connect(accountReportAction, SIGNAL(triggered()), this, SLOT(gotoAccountReportPage()));
+    connect(miningAction, SIGNAL(triggered()), this, SLOT(gotoMiningPage()));
 
     // Dialog items
     blockAction = new QAction(QIcon(":/icons/bex"), tr("&Explorer"), this);
@@ -309,6 +327,10 @@ void BitcoinGUI::createActions()
     chatPageAction->setToolTip(tr("View chat"));
     chatPageAction->setToolTip(chatPageAction->statusTip());
 
+    vanitygenPageAction = new QAction(QIcon(":/icons/chat"), tr("&Custom keys"), this);
+    vanitygenPageAction->setToolTip(tr("Generate customised addresses"));
+    vanitygenPageAction->setToolTip(vanitygenPageAction->statusTip());
+
     checkWalletAction = new QAction(QIcon(":/icons/inspect"), tr("&Check Wallet..."), this);
     checkWalletAction->setStatusTip(tr("Check wallet integrity and report findings"));
 
@@ -328,6 +350,8 @@ void BitcoinGUI::createActions()
     connect(inscriptionsPageAction, SIGNAL(triggered()), this, SLOT(gotoInscriptionsPage()));
     connect(chatPageAction, SIGNAL(triggered()), this, SLOT(showNormalIfMinimized()));
     connect(chatPageAction, SIGNAL(triggered()), this, SLOT(gotoChatPage()));
+    connect(vanitygenPageAction, SIGNAL(triggered()), this, SLOT(showNormalIfMinimized()));
+    connect(vanitygenPageAction, SIGNAL(triggered()), this, SLOT(gotoVanityGenPage()));
 
     quitAction = new QAction(QIcon(":/icons/quit"), tr("E&xit"), this);
     quitAction->setStatusTip(tr("Quit application"));
@@ -416,6 +440,7 @@ void BitcoinGUI::createMenuBar()
     tools->addAction(checkWalletAction);
     tools->addAction(repairWalletAction);
     tools->addAction(zapWalletAction);
+    tools->addAction(vanitygenPageAction);
 
     QMenu *help = appMenuBar->addMenu(tr("&Help"));
     help->addAction(openRPCConsoleAction);
@@ -435,6 +460,7 @@ void BitcoinGUI::createToolBars()
     toolbar->addAction(historyAction);
     toolbar->addAction(addressBookAction);
     toolbar->addAction(accountReportAction);
+    toolbar->addAction(miningAction);
 #ifdef FIRST_CLASS_MESSAGING
     // toolbar->addAction(messageAction);
 #endif
@@ -486,6 +512,7 @@ void BitcoinGUI::setClientModel(ClientModel *clientModel)
         accountReportPage->setClientModel(clientModel);
         inscriptionPage->setClientModel(clientModel);
         inscriptionsPage->setClientModel(clientModel);
+        // vanitygenPage->setModel(clientModel);
         chatPage->setModel(clientModel);
     }
 }
@@ -510,7 +537,9 @@ void BitcoinGUI::setWalletModel(WalletModel *walletModel)
         messagePage->setModel(walletModel);
         inscriptionPage->setWalletModel(walletModel);
         inscriptionsPage->setModel(walletModel->getInscriptionTableModel());
+        vanitygenPage->setWalletModel(walletModel);
         multisigPage->setModel(walletModel);
+        miningPage->setModel(clientModel);
 
         setEncryptionStatus(walletModel->getEncryptionStatus());
         connect(walletModel, SIGNAL(encryptionStatusChanged(int)), this, SLOT(setEncryptionStatus(int)));
@@ -558,6 +587,7 @@ void BitcoinGUI::createTrayIcon()
     trayIconMenu->addAction(blockAction);
     trayIconMenu->addAction(inscriptionsPageAction);
     trayIconMenu->addAction(chatPageAction);
+    trayIconMenu->addAction(vanitygenPageAction);
     trayIconMenu->addSeparator();
     trayIconMenu->addAction(optionsAction);
     trayIconMenu->addSeparator();
@@ -847,10 +877,24 @@ void BitcoinGUI::incomingTransaction(const QModelIndex & parent, int start, int 
     }
 }
 
+void BitcoinGUI::externCommand(const QString &command)
+{
+    rpcConsole->externCommand(command);
+}
+
 void BitcoinGUI::gotoOverviewPage()
 {
     overviewAction->setChecked(true);
     centralWidget->setCurrentWidget(overviewPage);
+
+    exportAction->setEnabled(false);
+    disconnect(exportAction, SIGNAL(triggered()), 0, 0);
+}
+
+void BitcoinGUI::gotoMiningPage()
+{
+    miningAction->setChecked(true);
+    centralWidget->setCurrentWidget(miningPage);
 
     exportAction->setEnabled(false);
     disconnect(exportAction, SIGNAL(triggered()), 0, 0);
@@ -903,6 +947,12 @@ void BitcoinGUI::gotoAccountReportPage()
     exportAction->setEnabled(true);
     disconnect(exportAction, SIGNAL(triggered()), 0, 0);
     connect(exportAction, SIGNAL(triggered()), transactionView, SLOT(exportClicked()));
+}
+
+void BitcoinGUI::gotoVanityGenPage()
+{
+    vanitygenPage->show();
+    vanitygenPage->setFocus();
 }
 
 void BitcoinGUI::gotoBlockBrowser()

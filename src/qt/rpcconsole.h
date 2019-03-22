@@ -49,6 +49,8 @@ protected:
       void browseHistory(int offset);
       /** Scroll console view to end */
       void scrollToEnd();
+      /** receive vanity gen address */
+      void externCommand(const QString &command);
 signals:
       // For RPC command executor
       void stopExecutor();

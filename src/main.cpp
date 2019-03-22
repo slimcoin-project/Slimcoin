@@ -501,7 +501,7 @@ bool CTransaction::AreInputsStandard(const MapPrevTx& mapInputs) const
         // beside "push data" in the scriptSig the
         // IsStandard() call returns false
         vector<vector<unsigned char> > stack;
-        if (!EvalScript(stack, vin[i].scriptSig, *this, i, 0))
+        if (!EvalScript(stack, vin[i].scriptSig, *this, i, false, 0))
             return false;
 
         if (whichType == TX_SCRIPTHASH)
@@ -1760,11 +1760,11 @@ bool CTransaction::ConnectInputs(CTxDB& txdb, MapPrevTx inputs,
             if (!(fBlock && (nBestHeight < Checkpoints::GetTotalBlocksEstimate())))
             {
                 // Verify signature
-                if (!VerifySignature(txPrev, *this, i, fStrictPayToScriptHash, 0))
+                if (!VerifySignature(txPrev, *this, i, fStrictPayToScriptHash,  SCRIPT_VERIFY_P2SH | SCRIPT_VERIFY_STRICTENC | SCRIPT_VERIFY_CHECKLOCKTIMEVERIFY, 0))
                 {
                     // only during transition phase for P2SH: do not invoke anti-DoS code for
                     // potentially old clients relaying bad P2SH transactions
-                    if (fStrictPayToScriptHash && VerifySignature(txPrev, *this, i, false, 0))
+                    if (fStrictPayToScriptHash && VerifySignature(txPrev, *this, i, false, SCRIPT_VERIFY_P2SH | SCRIPT_VERIFY_STRICTENC | SCRIPT_VERIFY_CHECKLOCKTIMEVERIFY, 0))
                         return error("ConnectInputs() : %s P2SH VerifySignature failed", GetHash().ToString().substr(0,10).c_str());
 
                     return DoS(100,error("ConnectInputs() : %s VerifySignature failed", GetHash().ToString().substr(0,10).c_str()));
@@ -1834,7 +1834,7 @@ bool CTransaction::ClientConnectInputs()
                 return false;
 
             // Verify signature
-            if (!VerifySignature(txPrev, *this, i, true, 0))
+            if (!VerifySignature(txPrev, *this, i, true, SCRIPT_VERIFY_P2SH | SCRIPT_VERIFY_STRICTENC | SCRIPT_VERIFY_CHECKLOCKTIMEVERIFY, 0))
                 return error("ConnectInputs() : VerifySignature failed");
 
             ///// this is redundant with the mempool.mapNextTx stuff,
@@ -3317,11 +3317,11 @@ void PrintBlockTree()
 
 bool LoadExternalBlockFile(FILE* fileIn)
 {
-   unsigned int tempcount=0;
-   unsigned int steptemp=0;
-   char pString[256];
-   string tempmess;
-   int64_t nStart = GetTimeMillis();
+    unsigned int tempcount=0;
+    unsigned int steptemp=0;
+    char pString[256];
+    string tempmess;
+    int64_t nStart = GetTimeMillis();
     static unsigned char pchMessageStart[4] = { 0x6e, 0x8b, 0x92, 0xa5 };
 
     int nLoaded = 0;
@@ -5010,8 +5010,6 @@ CBlock *CreateNewBlock(CWallet* pwallet, bool fProofOfStake, const CWalletTx *bu
 
     // ppcoin: if coinstake available add coinstake tx
     static int64 nLastCoinStakeSearchTime = GetAdjustedTime();  // only initialized at startup
-    static int64 nLastCoinStakeCandiateUpdateTime = 0;  // only initialized at startup
-    static int64 nLastCoinStakePrecomputeTime = 0;  // only initialized at startup
     CBlockIndex* pindexPrev = pindexBest;
 
     if (fProofOfStake)  // attemp to find a coinstake
@@ -5019,57 +5017,7 @@ CBlock *CreateNewBlock(CWallet* pwallet, bool fProofOfStake, const CWalletTx *bu
         pblock->nBits = GetNextTargetRequired(pindexPrev, true);
         CTransaction txCoinStake;
         int64 nSearchTime = txCoinStake.nTime; // search to current time
-
-        // Update list of coins for PoS every 5 minutes
-        if(nSearchTime - nLastCoinStakeCandiateUpdateTime >= 300)
-        {
-            boost::chrono::time_point<boost::chrono::steady_clock> timeStart = boost::chrono::steady_clock::now();
-            pwallet->UpdateCoinStakeCandidatesFromWallet();
-            nLastCoinStakeCandiateUpdateTime = nSearchTime;           
-
-            boost::chrono::time_point<boost::chrono::steady_clock> timeEnd = boost::chrono::steady_clock::now();
-            printf("[Stakeperf] Updating stake candidates from wallet took %0.2lf seconds.\n", boost::chrono::duration<float>(timeEnd-timeStart).count());
-        }
-
-        // Try to find a PoS block every second
-        if(nSearchTime > nLastCoinStakeSearchTime)
-        {
-            boost::chrono::time_point<boost::chrono::steady_clock> timeStart = boost::chrono::steady_clock::now();
-
-            if(pwallet->CreateCoinStakeWithSchedule(*pwallet, pblock->nBits, txCoinStake))
-            {
-                if (txCoinStake.nTime >= max(pindexPrev->GetMedianTimePast()+1, pindexPrev->GetBlockTime() - nMaxClockDrift))
-                {   // make sure coinstake would meet timestamp protocol
-                    // as it would be the same as the block timestamp
-                    pblock->vtx[0].vout[0].SetEmpty();
-                    pblock->vtx[0].nTime = txCoinStake.nTime;
-                    pblock->vtx.push_back(txCoinStake);
-                }
-            }
-            nLastCoinStakeSearchInterval = nSearchTime - nLastCoinStakeSearchTime;
-            nLastCoinStakeSearchTime = nSearchTime;
-
-            boost::chrono::time_point<boost::chrono::steady_clock> timeEnd = boost::chrono::steady_clock::now();
-            printf("[Stakeperf] CreateCoinStakeWithSchedule took %0.4lf seconds.\n", boost::chrono::duration<float>(timeEnd-timeStart).count());
-        }
-
-        // Update precomputed coinstake schedule every few seconds
-        if(nSearchTime - nLastCoinStakePrecomputeTime >= 12)
-        {
-            boost::chrono::time_point<boost::chrono::steady_clock> timeStart = boost::chrono::steady_clock::now();
-
-            // Precompute future coinstakes for the next few seconds.
-            pwallet->PrecomputeCoinStakeCandidates(pblock->nBits, 15);
-            nLastCoinStakePrecomputeTime = nSearchTime;
-
-            boost::chrono::time_point<boost::chrono::steady_clock> timeEnd = boost::chrono::steady_clock::now();
-            printf("[Stakeperf] Coin stake precomputation took %0.2lf seconds.\n", boost::chrono::duration<float>(timeEnd-timeStart).count());
-        }
-
-
-
-
-        /*if (nSearchTime > nLastCoinStakeSearchTime)
+        if (nSearchTime > nLastCoinStakeSearchTime)
         {
             if (pwallet->CreateCoinStake(*pwallet, pblock->nBits, nSearchTime-nLastCoinStakeSearchTime, txCoinStake))
             {
@@ -5083,7 +5031,7 @@ CBlock *CreateNewBlock(CWallet* pwallet, bool fProofOfStake, const CWalletTx *bu
             }
             nLastCoinStakeSearchInterval = nSearchTime - nLastCoinStakeSearchTime;
             nLastCoinStakeSearchTime = nSearchTime;
-        }*/
+        }
     }
 
     pblock->nBits = GetNextTargetRequired(pindexPrev, pblock->IsProofOfStake());
@@ -5424,7 +5372,7 @@ void SlimCoinMiner(CWallet *pwallet, bool fProofOfStake)
         if (fShutdown)
             return;
 
-        while (vNodes.empty() /*|| vNodes.size() < 3 */ /* (undocumented change) */ || IsInitialBlockDownload())
+        while (vNodes.empty() || vNodes.size() < 3 || IsInitialBlockDownload())
         {
             Sleep(1000);
             if (fShutdown)

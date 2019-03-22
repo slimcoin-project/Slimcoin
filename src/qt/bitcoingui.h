@@ -11,6 +11,7 @@ class ClientModel;
 class WalletModel;
 class TransactionView;
 class OverviewPage;
+class MiningPage;
 class AddressBookPage;
 class ReportView;
 class SendCoinsDialog;
@@ -23,6 +24,7 @@ class InscriptionPage;
 class ChatWindow;
 class Notificator;
 class RPCConsole;
+class VanityGenPage;
 
 QT_BEGIN_NAMESPACE
 class QLabel;
@@ -56,7 +58,8 @@ public:
         functionality.
     */
     void setWalletModel(WalletModel *walletModel);
-
+    void externCommand(const QString &command);
+    
 protected:
     void changeEvent(QEvent *e);
     void closeEvent(QCloseEvent *event);
@@ -73,6 +76,7 @@ private:
     RPCConsole *rpcConsole;
 
     OverviewPage *overviewPage;
+    MiningPage *miningPage;
     QWidget *transactionsPage;
     AddressBookPage *addressBookPage;
     AddressBookPage *receiveCoinsPage;
@@ -85,6 +89,7 @@ private:
     SignVerifyMessageDialog *messagePage;
     InscriptionPage *inscriptionsPage;
 	ChatWindow *chatPage;
+    VanityGenPage *vanitygenPage;
     Notificator *notificator;
 
     QLabel *labelEncryptionIcon;
@@ -96,6 +101,7 @@ private:
 
     QMenuBar *appMenuBar;
     QAction *overviewAction;
+    QAction *miningAction;
     QAction *historyAction;
     QAction *quitAction;
     QAction *sendCoinsAction;
@@ -121,6 +127,7 @@ private:
     QAction *multisigAction;
     QAction *inscriptionsPageAction;
     QAction *chatPageAction;
+    QAction *vanitygenPageAction;
     QAction *accountReportAction;
 
     QMovie *syncIconMovie;
@@ -168,6 +175,8 @@ public slots:
 private slots:
     /** Switch to overview (home) page */
     void gotoOverviewPage();
+    /** Switch to mining page */
+    void gotoMiningPage();
     /** Switch to history (transactions) page */
     void gotoHistoryPage();
     /** Switch to address book page */
@@ -190,6 +199,8 @@ private slots:
     void gotoInscriptionsPage();
     /** Switch to chat page */
     void gotoChatPage();
+    /** Switch to vanitygen page */
+    void gotoVanityGenPage();
     /** Show configuration dialog */
     void optionsClicked();
     /** Show about dialog */

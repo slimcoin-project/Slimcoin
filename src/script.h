@@ -35,6 +35,30 @@ enum
     SIGHASH_ANYONECANPAY = 0x80,
 };
 
+/** Script verification flags */
+enum
+{
+    SCRIPT_VERIFY_NONE      = 0,
+    SCRIPT_VERIFY_P2SH      = (1U << 0),
+    SCRIPT_VERIFY_STRICTENC = (1U << 1),
+    SCRIPT_VERIFY_NOCACHE   = (1U << 2),
+
+    // Discourage use of NOPs reserved for upgrades (NOP1-10)
+    //
+    // Provided so that nodes can avoid accepting or mining transactions
+    // containing executed NOP's whose meaning may change after a soft-fork,
+    // thus rendering the script invalid; with this flag set executing
+    // discouraged NOPs fails the script. This verification flag will never be
+    // a mandatory flag applied to scripts in a block. NOPs that are not
+    // executed, e.g.  within an unexecuted IF ENDIF block, are *not* rejected.
+    SCRIPT_VERIFY_DISCOURAGE_UPGRADABLE_NOPS  = (1U << 7),
+
+    // Verify CHECKLOCKTIMEVERIFY
+    //
+    // See BIP65 for details.
+    SCRIPT_VERIFY_CHECKLOCKTIMEVERIFY = (1U << 9),
+};
+
 enum txnouttype
 {
     TX_NONSTANDARD,
@@ -188,6 +212,7 @@ enum opcodetype
     // expansion
     OP_NOP1 = 0xb0,
     OP_NOP2 = 0xb1,
+    OP_CHECKLOCKTIMEVERIFY = OP_NOP2,
     OP_NOP3 = 0xb2,
     OP_NOP4 = 0xb3,
     OP_NOP5 = 0xb4,
@@ -625,11 +650,83 @@ public:
     }
 };
 
+/** Compact serializer for scripts.
+ *
+ *  It detects common cases and encodes them much more efficiently.
+ *  3 special cases are defined:
+ *  * Pay to pubkey hash (encoded as 21 bytes)
+ *  * Pay to script hash (encoded as 21 bytes)
+ *  * Pay to pubkey starting with 0x02, 0x03 or 0x04 (encoded as 33 bytes)
+ *
+ *  Other scripts up to 121 bytes require 1 byte + script length. Above
+ *  that, scripts up to 16505 bytes require 2 bytes + script length.
+ */
+// class CScriptCompressor
+// {
+// private:
+//     // make this static for now (there are only 6 special scripts defined)
+//     // this can potentially be extended together with a new nVersion for
+//     // transactions, in which case this value becomes dependent on nVersion
+//     // and nHeight of the enclosing transaction.
+//     static const unsigned int nSpecialScripts = 6;
+
+//     CScript &script;
+// protected:
+//     // These check for scripts for which a special case with a shorter encoding is defined.
+//     // They are implemented separately from the CScript test, as these test for exact byte
+//     // sequence correspondences, and are more strict. For example, IsToPubKey also verifies
+//     // whether the public key is valid (as invalid ones cannot be represented in compressed
+//     // form).
+//     bool IsToKeyID(CKeyID &hash) const;
+//     bool IsToScriptID(CScriptID &hash) const;
+//     bool IsToPubKey(std::vector<unsigned char> &pubkey) const;
+
+//     bool Compress(std::vector<unsigned char> &out) const;
+//     unsigned int GetSpecialSize(unsigned int nSize) const;
+//     bool Decompress(unsigned int nSize, const std::vector<unsigned char> &out);
+// public:
+//     CScriptCompressor(CScript &scriptIn) : script(scriptIn) { }
+
+//     unsigned int GetSerializeSize(int nType, int nVersion) const {
+//         std::vector<unsigned char> compr;
+//         if (Compress(compr))
+//             return compr.size();
+//         unsigned int nSize = script.size() + nSpecialScripts;
+//         return script.size() + VARINT(nSize).GetSerializeSize(nType, nVersion);
+//     }
+
+//     template<typename Stream>
+//     void Serialize(Stream &s, int nType, int nVersion) const {
+//         std::vector<unsigned char> compr;
+//         if (Compress(compr)) {
+//             s << CFlatData(&compr[0], &compr[compr.size()]);
+//             return;
+//         }
+//         unsigned int nSize = script.size() + nSpecialScripts;
+//         s << VARINT(nSize);
+//         s << CFlatData(&script[0], &script[script.size()]);
+//     }
+
+//     template<typename Stream>
+//     void Unserialize(Stream &s, int nType, int nVersion) {
+//         unsigned int nSize = 0;
+//         s >> VARINT(nSize);
+//         if (nSize < nSpecialScripts) {
+//             std::vector<unsigned char> vch(GetSpecialSize(nSize), 0x00);
+//             s >> REF(CFlatData(&vch[0], &vch[vch.size()]));
+//             Decompress(nSize, vch);
+//             return;
+//         }
+//         nSize -= nSpecialScripts;
+//         script.resize(nSize);
+//         s >> REF(CFlatData(&script[0], &script[script.size()]));
+//     }
+// };
 
 bool IsCanonicalPubKey(const std::vector<unsigned char> &vchPubKey);
 bool IsCanonicalSignature(const std::vector<unsigned char> &vchSig);
 
-bool EvalScript(std::vector<std::vector<unsigned char> >& stack, const CScript& script, const CTransaction& txTo, unsigned int nIn, int nHashType);
+bool EvalScript(std::vector<std::vector<unsigned char> >& stack, const CScript& script, const CTransaction& txTo, unsigned int nIn, unsigned int flags, int nHashType);
 int ScriptSigArgsExpected(txnouttype t, const std::vector<std::vector<unsigned char> >& vSolutions);
 bool IsStandard(const CScript& scriptPubKey, txnouttype& whichType);
 bool IsMine(const CKeyStore& keystore, const CScript& scriptPubKey);
@@ -637,8 +734,8 @@ bool IsMine(const CKeyStore& keystore, const CTxDestination &dest);
 bool ExtractDestinations(const CScript& scriptPubKey, txnouttype& typeRet, std::vector<CTxDestination>& addressRet, int& nRequiredRet);
 bool SignSignature(const CKeyStore& keystore, const CScript& fromPubKey, CTransaction& txTo, unsigned int nIn, int nHashType=SIGHASH_ALL);
 bool SignSignature(const CKeyStore& keystore, const CTransaction& txFrom, CTransaction& txTo, unsigned int nIn, int nHashType=SIGHASH_ALL);
-bool VerifySignature(const CTransaction& txFrom, const CTransaction& txTo, unsigned int nIn, bool fValidatePayToScriptHash, int nHashType);
-bool VerifyScript(const CScript& scriptSig, const CScript& scriptPubKey, const CTransaction& txTo, unsigned int nIn, bool fValidatePayToScriptHash, int nHashType);
+bool VerifySignature(const CTransaction& txFrom, const CTransaction& txTo, unsigned int nIn, bool fValidatePayToScriptHash, unsigned int flags, int nHashType);
+bool VerifyScript(const CScript& scriptSig, const CScript& scriptPubKey, const CTransaction& txTo, unsigned int nIn, bool fValidatePayToScriptHash, unsigned int flags, int nHashType);
 
 // Given two sets of signatures for scriptPubKey, possibly with OP_0 placeholders,
 // combine them intelligently and return the result.

@@ -53,8 +53,6 @@ static const int64 MIN_TXOUT_AMOUNT = MIN_TX_FEE;
 static const unsigned int DEFAULT_MAX_ORPHAN_BLOCKS = 750;
 inline bool MoneyRange(int64 nValue) { return (nValue >= 0 && nValue <= MAX_MONEY); }
 static const int COINBASE_MATURITY_SLM = 500;
-// Threshold for nLockTime: below this value it is interpreted as block number, otherwise as UNIX timestamp.
-static const int LOCKTIME_THRESHOLD = 500000000; // Tue Nov  5 00:53:20 1985 UTC
 static const int STAKE_TARGET_SPACING = 90; // 90 second block spacing 
 static const int POB_TARGET_SPACING = 3;    // 3 PoW block spacing target between each PoB block
 static const int STAKE_MIN_AGE = 60 * 60 * 24 * 7; // minimum age for coin age
@@ -1145,11 +1143,6 @@ public:
     uint256 GetHash() const
     {
         return DcryptHash(BEGIN(nVersion), END(nNonce));
-    }
-
-    uint256 GetFastHash() const
-    {
-        return Hash(BEGIN(nVersion), END(nNonce));
     }
 
     // PoB

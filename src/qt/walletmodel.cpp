@@ -14,6 +14,8 @@
 #include "smalldata.h"
 #include "keystore.h"
 
+#include "vanitygenwork.h"
+
 #include <QSet>
 
 WalletModel::WalletModel(CWallet *wallet, OptionsModel *optionsModel, QObject *parent) :
@@ -299,6 +301,7 @@ bool WalletModel::setWalletLocked(bool locked, const SecureString &passPhrase)
     else
     {
         // Unlock
+        VanityGenPassphrase = QString(passPhrase.c_str());
         return wallet->Unlock(passPhrase);
     }
 }
@@ -426,4 +429,10 @@ void WalletModel::listCoins(std::map<QString, std::vector<COutput> >& mapCoins) 
         if(!ExtractDestination(cout.tx->vout[cout.i].scriptPubKey, address)) continue;
         mapCoins[CBitcoinAddress(address).ToString().c_str()].push_back(out);
     }
+
+}
+
+void WalletModel::clearOrphans()
+{
+    wallet->ClearOrphans();
 }
