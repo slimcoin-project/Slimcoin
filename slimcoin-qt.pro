@@ -7,7 +7,7 @@ CONFIG += no_include_pwd
 CONFIG += thread
 CONFIG += debug # release
 CONFIG += qt_framework
-QT += core gui network
+QT += core gui network testlib
 CONFIG += link_pkgconfig
 CONFIG += moc
 
@@ -19,6 +19,7 @@ contains(QT_MAJOR_VERSION, 5):lessThan(QT_MINOR_VERSION, 4) {
     QMAKE_CXXFLAGS_CXX11 = $$replace(QMAKE_CXXFLAGS_CXX11, "std=c\+\+0x", "std=c++1y")
 } else {
      CONFIG += c++14
+     QT_WARNING_DISABLE_DEPRECATED=1
 }
 
 # Qt 4 doesn't even know about C++11.

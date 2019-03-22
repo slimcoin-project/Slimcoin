@@ -622,14 +622,14 @@ void BitcoinGUI::optionsClicked()
 {
     if(!clientModel || !clientModel->getOptionsModel())
         return;
-    OptionsDialog dlg;
+    OptionsDialog dlg(this);
     dlg.setModel(clientModel->getOptionsModel());
     dlg.exec();
 }
 
 void BitcoinGUI::aboutClicked()
 {
-    AboutDialog dlg;
+    AboutDialog dlg(this);
     dlg.setModel(clientModel);
     dlg.exec();
 }
@@ -1256,11 +1256,7 @@ void BitcoinGUI::splashMessage(const std::string &message)
 
 void BitcoinGUI::backupWallet()
 {
-#if QT_VERSION < 0x050000
-    QString saveDir = QDesktopServices::storageLocation(QDesktopServices::DocumentsLocation);
-#else
     QString saveDir = GetDataDir().string().c_str();
-#endif
     QString filename = QFileDialog::getSaveFileName(this, tr("Backup Wallet"), saveDir, tr("Wallet Data (*.dat)"));
     if(!filename.isEmpty()) {
         if(!walletModel->backupWallet(filename)) {

@@ -4060,6 +4060,47 @@ Value getinscription(const Array& params, bool fHelp)
     return false;
 }
 
+Value getmoneysupply(const Array& params, bool fHelp)
+{
+    if (fHelp || params.size() < 1 || params.size() > 1)
+        throw runtime_error("getmoneysupply <blockhash> \n");
+
+    std::string strHash = params[0].get_str();
+    uint256 hash(strHash);
+
+    if (mapBlockIndex.count(hash) == 0)
+        throw JSONRPCError(RPC_INVALID_ADDRESS_OR_KEY, "Block not found");
+
+    CBlock block;
+    CBlockIndex* pblockindex = mapBlockIndex[hash];
+    block.ReadFromDisk(pblockindex, true, false);
+
+    Object result;
+    result.push_back(Pair("moneysupply", ValueFromAmount(pblockindex->nMoneySupply)));
+    return result;
+}
+
+Value getburnedcoins(const Array& params, bool fHelp)
+{
+    if (fHelp || params.size() < 1 || params.size() > 1)
+        throw runtime_error("getburnedcoins <blockhash> \n");
+
+    std::string strHash = params[0].get_str();
+    uint256 hash(strHash);
+
+    if (mapBlockIndex.count(hash) == 0)
+        throw JSONRPCError(RPC_INVALID_ADDRESS_OR_KEY, "Block not found");
+
+    CBlock block;
+    CBlockIndex* pblockindex = mapBlockIndex[hash];
+    block.ReadFromDisk(pblockindex, true, false);
+
+    Object result;
+    result.push_back(Pair("burnedcoins", ValueFromAmount(pblockindex->burnt)));
+    return result;
+}
+
+
 /*
 Value getinscription(const Array& params, bool fHelp)
 {
@@ -4769,8 +4810,8 @@ void ThreadRPCServer2(void* parg)
             } else
               throw JSONRPCError(-32600, "Top-level object parse error");
 
-                // Send reply
-              stream << HTTPReply(200, strReply) << std::flush;
+            // Send reply
+            stream << HTTPReply(200, strReply) << std::flush;
         }
         catch (Object& objError)
         {

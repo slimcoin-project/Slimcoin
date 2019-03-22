@@ -900,6 +900,59 @@ https://en.bitcoin.it/wiki/Script#Obsolete_pay-to-pubkey_transaction
 https://en.bitcoin.it/wiki/Script#Standard_Transaction_to_Bitcoin_address_.28pay-to-pubkey-hash.29
 https://en.bitcoin.it/wiki/Script#Provably_Unspendable.2FPrunable_Outputs
 
+## jonnylatte on Dcrypt
+
+While I'm on the topic of RAM, it's possible to completely eliminate the dynamic memory requirements of the dcrypt function:
+
+    #define SHA256_HEX_LEN 64
+
+    uint256 dcrypt_progressive(const uint8_t *data, size_t data_sz)
+    {
+        //if(fTestNet) return sha256d(data,data_sz);   // for testnet hashes use sha256d
+
+        SHA256_CTX  ctx;   // sha256 context
+        uint256     hash_result;    
+
+        uint32_t    index = 0;
+        uint8_t     index_values[SHA256_HEX_LEN +1]; 
+        uint8_t     scratch_pad[SHA256_HEX_LEN +1];  
+
+        SHA256_Init(&ctx);  // initialize context which will progressively hash the result as data for it is generated in scratch_pad
+
+        sha256_to_str(data, data_sz, index_values);    // initialize index_values with sha256(data) -> ascii/hex
+        memset(scratch_pad, 0xff, SHA256_HEX_LEN);     // initialize scratchpad all 0xff 
+
+        do
+        {
+            index += hex_char_to_int(index_values[index]) + 1; // increment index by the value of the hex char in index_values and add 1 so index is always increasing
+
+            if(index >= INDEX_BUFFER_LEN) // if index is past index_values size, wrap index around and scramble index_values
+            {
+                index &= 0x3f;  // wrap index around
+                sha256_to_str(index_values, INDEX_BUFFER_LEN, index_values); //rescramble with sha256(index_values) -> ascii/hex
+            }
+
+            scratch_pad[SHA256_HEX_LEN] = index_values[index]; //set a byte in scratch_pad to index_values[index]
+            sha256_to_str(scratch_pad, SHA256_HEX_LEN + 1, scratch_pad); // sha256 hash 
+
+            SHA256_Update(&ctx,scratch_pad,SHA256_HEX_LEN); // write scratch_pad to the sha256 context that will generate the resulting dcrypt hash
+        }
+        while( (index != SHA256_HEX_LEN - 1) || (index_values[SHA256_HEX_LEN - 1] != scratch_pad[SHA256_HEX_LEN - 1] )); 
+        // loop ends when index is at "SHA256_HEX_LEN - 1" and the value of index_values matches the value of scratch_pad at that location
+        // this should have a 1 in 16 chance for every time index happens to hit "SHA256_HEX_LEN - 1" 
+
+        SHA256_Update(&ctx,  (u8int*)data,data_sz); // write the original data to the sha256 context for the resulting hash
+        SHA256_Final((u8int*)hash_result, &ctx);    // finalize the hash and store the result
+
+        return hash_result; // we are done here
+    }
+
+Instead of building up a buffer and hashing it at the end, this version progressively hashes the data generated. SHA256 contexts have an internal buffer which is of fixed size. So it seems Dcrypt was never memory hard except for the fact that you can get a minor optimization with hashing by buffering the data instead of hashing progressively and then aborting if the resulting buffer gets too big. The optimization is not that you are saving memory or preventing too much memory use, it's that you are not hashing longer buffers, saving the processing of the large data. This is probably why there isn't a spectacular increase in efficiency by limiting the number of iterations (you are only really saving one SHA256 call on the larger buffer but still wasting many small calls for calculating the scratchpad and index values)
+
+In any case I think this version of Dcrypt algorithm might be better for the main client to prevent too much resource usage while we wait on the possibility of a change in hash functions.
+
+I dont think its bad that Dcrypt has fixed memory usage. I hope my code is a clear implementation that could be of help to someone writing a GPU miner which I now believe should not be too difficult to implement (the problem is now variable computation time instead of variable memory usage) If we have a GPU miner then it will be much harder for a botnet or server farm to compete and if we can do it with dcrypt then changing the hashing function is less important... 
+
 ---
 
 [quote author=Slimcoin Community link=topic=1141676.msg12038461#msg12038461 date=1438574772]
@@ -1181,6 +1234,7 @@ Tutorial for Windows source code compilation: [url=https://bitcointalk.org/index
 [/quote]
 
 ---
+
 ## What is coin control?
 When you send bitcoins to someone else, the bitcoin client chooses kinda randomly which of your addresses will send the coins. With coin control you can exactly choose, which of your addresses will be the sending addresses. And even more specific which of your unspent outputs will be the sending inputs.
   
