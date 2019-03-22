@@ -285,7 +285,6 @@ void OverviewPage::displayUnitChanged()
         return;
     if(currentBalance != -1)
         setBalance(currentBalance, currentStake, currentUnconfirmedBalance, currentImmatureBalance, currentReserveBalance, BurnCoinsBalances(currentNetBurnCoins, currentEffectiveBurnCoins, currentImmatureBurnCoins));
-
     txdelegate->unit = model->getOptionsModel()->getDisplayUnit();
     ui->listTransactions->update();
 }
