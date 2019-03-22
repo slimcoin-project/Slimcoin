@@ -105,9 +105,9 @@ Value importpassphrase(const Array& params, bool fHelp)
 
 Value importprivkey(const Array& params, bool fHelp)
 {
-    if (fHelp || params.size() < 1 || params.size() > 2)
+    if (fHelp || params.size() < 1 || params.size() > 3)
         throw runtime_error(
-            "importprivkey <slimcoinprivkey> [label]\n"
+            "importprivkey <slimcoinprivkey> [label] [rescan=false]\n"
             "Adds a private key (as returned by dumpprivkey) to your wallet.");
 
     string strSecret = params[0].get_str();
@@ -116,6 +116,11 @@ Value importprivkey(const Array& params, bool fHelp)
         strLabel = params[1].get_str();
     CBitcoinSecret vchSecret;
     bool fGood = vchSecret.SetString(strSecret);
+
+    // Whether to perform rescan after import
+    bool fRescan = false;
+    if (params.size() > 2)
+        fRescan = params[2].get_bool();
 
     if (!fGood) throw JSONRPCError(-5,"Invalid private key");
     if (pwalletMain->IsLocked())
@@ -137,8 +142,10 @@ Value importprivkey(const Array& params, bool fHelp)
         if (!pwalletMain->AddKey(key))
             throw JSONRPCError(-4,"Error adding key to wallet");
 
-        pwalletMain->ScanForWalletTransactions(pindexGenesisBlock, true);
-        pwalletMain->ReacceptWalletTransactions();
+        if (fRescan) {
+          pwalletMain->ScanForWalletTransactions(pindexGenesisBlock, true);
+          pwalletMain->ReacceptWalletTransactions();
+        }
     }
 
     MainFrameRepaint();

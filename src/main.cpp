@@ -610,6 +610,9 @@ bool CTransaction::CheckTransaction() const
         return DoS(10, error("CTransaction::CheckTransaction() : vin empty"));
     if (vout.empty())
         return DoS(10, error("CTransaction::CheckTransaction() : vout empty"));
+    // Time (prevent mempool memory exhaustion attack)
+    if (nTime > GetAdjustedTime() + nMaxClockDrift)
+        return DoS(10, error("CTransaction::CheckTransaction() : timestamp is too far into the future"));
     // Size limits
     if (::GetSerializeSize(*this, SER_NETWORK, PROTOCOL_VERSION) > MAX_BLOCK_SIZE)
         return DoS(100, error("CTransaction::CheckTransaction() : size limits failed"));
@@ -659,6 +662,83 @@ bool CTransaction::CheckTransaction() const
 
     return true;
 }
+
+/*
+int64 CTransaction::GetMinFee(unsigned int nBlockSize, bool fAllowFree,
+                              enum GetMinFee_mode mode, unsigned int nBytes) const
+{
+    // Base fee is either MIN_TX_FEE or MIN_RELAY_TX_FEE
+    int64 nBaseFee = (mode == GMF_RELAY) ? MIN_RELAY_TX_FEE : MIN_TX_FEE;
+    unsigned int nNewBlockSize = nBlockSize + nBytes;
+    int64 nMinFee = (1 + (int64)nBytes / 1000) * nBaseFee;
+    // To limit dust spam, require MIN_TX_FEE/MIN_RELAY_TX_FEE if any output is less than 0.01
+    if (nMinFee < nBaseFee)
+    {
+        BOOST_FOREACH(const CTxOut& txout, vout)
+            if (txout.nValue < CENT)
+                nMinFee = nBaseFee;
+    }
+    // Raise the price as the block approaches full
+    if (nBlockSize != 1 && nNewBlockSize >= MAX_BLOCK_SIZE_GEN/2)
+    {
+        if (nNewBlockSize >= MAX_BLOCK_SIZE_GEN)
+            return MAX_MONEY;
+        nMinFee *= MAX_BLOCK_SIZE_GEN / (MAX_BLOCK_SIZE_GEN - nNewBlockSize);
+    }
+    if (!MoneyRange(nMinFee))
+        nMinFee = MAX_MONEY;
+    return nMinFee;
+}
+*/
+int64 CTransaction::GetMinFee(unsigned int nBlockSize, bool fAllowFree,
+                              enum GetMinFee_mode mode, unsigned int nBytes) const
+{
+    // Base fee is either MIN_TX_FEE or MIN_RELAY_TX_FEE
+    int64 nBaseFee = (mode == GMF_RELAY) ? MIN_RELAY_TX_FEE : MIN_TX_FEE;
+    /* Obsoleted by integration of coincontrol, now passed in as arg
+    unsigned int nBytes = ::GetSerializeSize(*this, SER_NETWORK, PROTOCOL_VERSION);
+    */
+    unsigned int nNewBlockSize = nBlockSize + nBytes;
+    int64 nMinFee = (1 + (int64)nBytes / 1000) * nBaseFee;
+
+    if (fAllowFree)
+    {
+        if (nBlockSize == 1)
+        {
+            // Transactions under 10K are free
+            // (about 4500bc if made of 50bc inputs)
+            if (nBytes < 10000)
+                nMinFee = 0;
+        }
+        else
+        {
+            // Free transaction area
+            if (nNewBlockSize < 27000)
+                nMinFee = 0;
+        }
+    }
+
+    // To limit dust spam, require MIN_TX_FEE/MIN_RELAY_TX_FEE if any output is less than 0.01
+    if (nMinFee < nBaseFee)
+    {
+        BOOST_FOREACH(const CTxOut& txout, vout)
+            if (txout.nValue < CENT)
+                nMinFee = nBaseFee;
+    }
+
+    // Raise the price as the block approaches full
+    if (nBlockSize != 1 && nNewBlockSize >= MAX_BLOCK_SIZE_GEN/2)
+    {
+        if (nNewBlockSize >= MAX_BLOCK_SIZE_GEN)
+            return MAX_MONEY;
+        nMinFee *= MAX_BLOCK_SIZE_GEN / (MAX_BLOCK_SIZE_GEN - nNewBlockSize);
+    }
+
+    if (!MoneyRange(nMinFee))
+        nMinFee = MAX_MONEY;
+    return nMinFee;
+}
+
 
 bool CTxMemPool::accept(CTxDB& txdb, CTransaction &tx, bool fCheckInputs,
                         bool* pfMissingInputs)
@@ -3158,6 +3238,7 @@ bool LoadBlockIndex(bool fAllowNew)
 }
 
 
+static const char* strFormat = "%Y-%m-%dT%H:%M:%SZ";
 
 void PrintBlockTree()
 {
@@ -3204,15 +3285,16 @@ void PrintBlockTree()
         // print item
         CBlock block;
         block.ReadFromDisk(pindex, true, false);
-        printf("%d (%u,%u) %s  %08lx  %s  mint %7s  tx %d",
+        printf("%d,(%u,%u),%s,%08lx,%s,%s,%d,%d\n",
             pindex->nHeight,
             pindex->nFile,
             pindex->nBlockPos,
             block.GetHash().ToString().c_str(),
             block.nBits,
-            DateTimeStrFormat(block.GetBlockTime()).c_str(),
+            DateTimeStrFormat(strFormat, block.GetBlockTime()).c_str(),
             FormatMoney(pindex->nMint).c_str(),
-            block.vtx.size());
+            block.vtx.size(),
+            nCol);
 
         PrintWallets(block);
 
@@ -3233,9 +3315,12 @@ void PrintBlockTree()
     }
 }
 
-
 bool LoadExternalBlockFile(FILE* fileIn)
 {
+    unsigned int tempcount=0;
+    unsigned int steptemp=0;
+    char pString[256];
+    string tempmess;
     int64_t nStart = GetTimeMillis();
     static unsigned char pchMessageStart[4] = { 0x6e, 0x8b, 0x92, 0xa5 };
 
@@ -3268,6 +3353,15 @@ bool LoadExternalBlockFile(FILE* fileIn)
                     }
                     else
                         nPos += sizeof(pchData) - sizeof(pchMessageStart) + 1;
+		            tempcount ++;
+		            if(tempcount>=1000)
+		            {
+		              steptemp ++;
+		              // tempmess=mess+ boost::to_string(steptemp * 1000);
+		              sprintf(pString, _("bootstrap loading %d").c_str(), steptemp * 1000);
+		              InitMessage(pString);
+		              tempcount=0;
+		            }
                 } while(!fRequestShutdown);
                 if (nPos == (unsigned int)-1)
                     break;
@@ -3291,6 +3385,11 @@ bool LoadExternalBlockFile(FILE* fileIn)
                    __PRETTY_FUNCTION__);
         }
     }
+    steptemp=steptemp*1000 +tempcount;
+    // tempmess=mess+ boost::to_string(steptemp);
+    sprintf(pString, _("%d").c_str(), steptemp);
+    InitMessage(pString);
+
     printf("Loaded %i blocks from external file in %lld ms\n", nLoaded, GetTimeMillis() - nStart);
     return nLoaded > 0;
 }
@@ -5273,7 +5372,7 @@ void SlimCoinMiner(CWallet *pwallet, bool fProofOfStake)
         if (fShutdown)
             return;
 
-        while (vNodes.empty() || IsInitialBlockDownload())
+        while (vNodes.empty() /*|| vNodes.size() < 3 */ /* (undocumented change) */ || IsInitialBlockDownload())
         {
             Sleep(1000);
             if (fShutdown)

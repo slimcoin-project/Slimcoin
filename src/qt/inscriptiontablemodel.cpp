@@ -152,8 +152,8 @@ InscriptionTableModel::InscriptionTableModel(CWallet *wallet, WalletModel *paren
     wallet(wallet),
     priv(0)
 {
-    columns << tr("Inscription content") ;
-    columns << tr("Inscription date") ;
+    columns << tr("Inscription content      ") ;
+    columns << tr("Inscription date         ") ;
     priv = new InscriptionTablePriv(wallet, this);
     priv->refreshTable();
 }
@@ -177,6 +177,7 @@ int InscriptionTableModel::columnCount(const QModelIndex &parent) const
 
 void InscriptionTableModel::refreshInscriptionTable()
 {
+    /* FIXME: Use explicit check for NULL */
     if (this) {
         printf("Refreshing inscription table");
         priv->refreshTable();

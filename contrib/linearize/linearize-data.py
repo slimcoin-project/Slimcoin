@@ -50,14 +50,15 @@ def wordreverse(in_buf):
 	return b''.join(out_words)
 
 def calc_hdr_hash(blk_hdr):
-	hash1 = hashlib.sha256()
-	hash1.update(blk_hdr)
-	hash1_o = hash1.digest()
+	# hash1 = hashlib.sha256()
+	# hash1.update(blk_hdr)
+	# hash1_o = hash1.digest()
 
-	hash2 = hashlib.sha256()
-	hash2.update(hash1_o)
-	hash2_o = hash2.digest()
+	# hash2 = hashlib.sha256()
+	# hash2.update(hash1_o)
+	# hash2_o = hash2.digest()
 
+	hash2_o = dcrypt_hash.getPoWHash(blk_hdr)
 	return hash2_o
 
 def calc_hash_str(blk_hdr):
@@ -176,7 +177,10 @@ class BlockDataCopier:
 					(self.blkCountIn, self.blkCountOut, len(self.blkindex), 100.0 * self.blkCountOut / len(self.blkindex)))
 
 	def inFileName(self, fn):
-		return os.path.join(self.settings['input'], "blk%05d.dat" % fn)
+		return os.path.join(
+			self.settings['input'],
+			"blk%04d.dat" % 1 # fn
+			)
 
 	def fetchBlock(self, extent):
 		'''Fetch block contents from disk given extents'''

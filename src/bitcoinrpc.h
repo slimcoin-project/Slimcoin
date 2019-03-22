@@ -10,6 +10,7 @@
 
 #include <string>
 #include <map>
+#include "wallet.h"
 
 class CReserveKey;
 class CBlockIndex;
@@ -69,6 +70,11 @@ enum RPCErrorCode
     RPC_WALLET_ALREADY_UNLOCKED     = -17, // Wallet is already unlocked
 
 };
+
+extern json_spirit::Value ValueFromAmount(int64 amount);
+extern json_spirit::Value checkwallet(const json_spirit::Array& params, bool fHelp);
+extern json_spirit::Value repairwallet(const json_spirit::Array& params, bool fHelp);
+extern json_spirit::Value zapwallettxes(const json_spirit::Array& params, bool fHelp);
 
 void ThreadRPCServer(void* parg);
 int CommandLineRPC(int argc, char *argv[]);
