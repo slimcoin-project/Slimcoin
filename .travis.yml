@@ -32,7 +32,7 @@ install:
 script: 
   - make -f makefile.unix -j 5 slimcoind
   - make -f makefile.unix test_slimcoin
-  - ./test_slimcoin
+  - ./test_slimcoin -r detailed -d -l all
   - cd ..
   - source /opt/qt55/bin/qt55-env.sh
   - /opt/qt55/bin/qmake RELEASE=1 USE_QRCODE=1 FIRST_CLASS_MESSAGING=1 USE_UPNPC=1 USE_OLDC=1
