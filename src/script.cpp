@@ -54,15 +54,6 @@ bool CastToBool(const valtype& vch)
     return false;
 }
 
-void MakeSameSize(valtype& vch1, valtype& vch2)
-{
-    // Lengthen the shorter one
-    if (vch1.size() < vch2.size())
-        vch1.resize(vch2.size(), 0);
-    if (vch2.size() < vch1.size())
-        vch2.resize(vch1.size(), 0);
-}
-
 
 
 //
