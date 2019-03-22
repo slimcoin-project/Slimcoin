@@ -1236,31 +1236,41 @@ bool CWallet::SelectCoinsMinConf(int64 nTargetValue, int nConfMine, int nConfThe
     return true;
 }
 
-bool CWallet::SelectCoins(int64 nTargetValue, unsigned int nSpendTime, set<pair<const CWalletTx*,unsigned int> >& setCoinsRet, int64& nValueRet, const CCoinControl* coinControl) const
+bool CWallet::SelectCoins(int64 nTargetValue, unsigned int nSpendTime, set<pair<const CWalletTx*,unsigned int> >& setCoinsRet, int64& nValueRet, const CCoinControl *coinControl) const
 {
     vector<COutput> vCoins;
-    AvailableCoins(nSpendTime, vCoins, true);
+    AvailableCoins(nSpendTime, vCoins, true, coinControl);
 
     vector<pair<const CWalletTx*,unsigned int> > vCoinsRet;
 
-    bool success = (SelectCoinsMinConf(nTargetValue, 1, 6, vCoins, vCoinsRet, nValueRet) ||
-            SelectCoinsMinConf(nTargetValue, 1, 1, vCoins, vCoinsRet, nValueRet) ||
-            SelectCoinsMinConf(nTargetValue, 0, 1, vCoins, vCoinsRet, nValueRet));
+    // coin control -> return all selected outputs (we want all selected to go into the transaction for sure)
+    if (coinControl && coinControl->HasSelected())
+    {
+        BOOST_FOREACH(const COutput& out, vCoins)
+        {
+            nValueRet += out.tx->vout[out.i].nValue;
+            setCoinsRet.insert(make_pair(out.tx, out.i));
+        }
+        return (nValueRet >= nTargetValue);
+    }
+
+    // default selection algorithm without CoinControl
+    bool result = (SelectCoinsMinConf(nTargetValue, 1, 6, vCoins, vCoinsRet, nValueRet) ||
+                   SelectCoinsMinConf(nTargetValue, 1, 1, vCoins, vCoinsRet, nValueRet) ||
+                   SelectCoinsMinConf(nTargetValue, 0, 1, vCoins, vCoinsRet, nValueRet));
 
     BOOST_FOREACH(const PAIRTYPE(const CWalletTx*,unsigned int)& c, vCoinsRet)
     {
         setCoinsRet.insert(c);
     }
 
-    return success;
+    return result;
 }
 
-
-
-bool CWallet::SelectCoinsForPoS(int64 nTargetValue, unsigned int nSpendTime, vector<pair<const CWalletTx*,unsigned int> >& vCoinsRet, int64& nValueRet) const
+bool CWallet::SelectCoinsForPoS(int64 nTargetValue, unsigned int nSpendTime, vector<pair<const CWalletTx*,unsigned int> >& vCoinsRet, int64& nValueRet, const CCoinControl *coinControl) const
 {
     vector<COutput> vCoins;
-    AvailableCoins(nSpendTime, vCoins, true);
+    AvailableCoins(nSpendTime, vCoins, true, coinControl);
 
     return SelectCoinsMinConf(nTargetValue, 1, 1, vCoins, vCoinsRet, nValueRet);
 }
