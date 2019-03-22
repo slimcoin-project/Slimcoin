@@ -66,16 +66,14 @@
 #include <QTimer>
 
 #include <QDragEnterEvent>
+#if QT_VERSION < 0x050000
 #include <QUrl>
-#include <QSplashScreen>
+#include <QStyle>
+#endif
 
 #include "blockbrowser.h"
 
 #include <iostream>
-
-extern CWallet *pwalletMain;
-
-static QSplashScreen *splashref;
 
 BitcoinGUI::BitcoinGUI(QWidget *parent):
     QMainWindow(parent),
@@ -107,7 +105,6 @@ BitcoinGUI::BitcoinGUI(QWidget *parent):
 
     // Create application menu bar
     createMenuBar();
-    menuBar()->setNativeMenuBar(false);// menubar on form instead
 
     // Create the toolbars
     createToolBars();
@@ -321,15 +318,6 @@ void BitcoinGUI::createActions()
     chatPageAction->setToolTip(tr("View chat"));
     chatPageAction->setToolTip(chatPageAction->statusTip());
 
-    checkWalletAction = new QAction(QIcon(":/icons/inspect"), tr("&Check Wallet..."), this);
-    checkWalletAction->setStatusTip(tr("Check wallet integrity and report findings"));
-
-    repairWalletAction = new QAction(QIcon(":/icons/repair"), tr("&Repair Wallet..."), this);
-    repairWalletAction->setStatusTip(tr("Fix wallet integrity and remove orphans"));
-
-    zapWalletAction = new QAction(QIcon(":/icons/repair"), tr("&Zap Wallet..."), this);
-    zapWalletAction->setStatusTip(tr("Zaps txes from wallet then rescans (this is slow)..."));
-
     connect(blockAction, SIGNAL(triggered()), this, SLOT(showNormalIfMinimized()));
     connect(blockAction, SIGNAL(triggered()), this, SLOT(gotoBlockBrowser()));
     connect(messageAction, SIGNAL(triggered()), this, SLOT(showNormalIfMinimized()));
@@ -384,11 +372,6 @@ void BitcoinGUI::createActions()
     connect(optionsAction, SIGNAL(triggered()), this, SLOT(optionsClicked()));
     connect(toggleHideAction, SIGNAL(triggered()), this, SLOT(toggleHidden()));
     connect(encryptWalletAction, SIGNAL(triggered(bool)), this, SLOT(encryptWallet(bool)));
-
-    connect(checkWalletAction, SIGNAL(triggered()), this, SLOT(checkWallet()));
-    connect(repairWalletAction, SIGNAL(triggered()), this, SLOT(repairWallet()));
-    connect(zapWalletAction, SIGNAL(triggered()), this, SLOT(zapWallet()));
-
     connect(backupWalletAction, SIGNAL(triggered()), this, SLOT(backupWallet()));
     connect(changePassphraseAction, SIGNAL(triggered()), this, SLOT(changePassphrase()));
 }
@@ -424,10 +407,6 @@ void BitcoinGUI::createMenuBar()
     tools->addAction(multisigAction);
     tools->addAction(inscriptionsPageAction);
     tools->addAction(chatPageAction);
-    tools->addSeparator();
-    tools->addAction(checkWalletAction);
-    tools->addAction(repairWalletAction);
-    tools->addAction(zapWalletAction);
 
     QMenu *help = appMenuBar->addMenu(tr("&Help"));
     help->addAction(openRPCConsoleAction);
@@ -620,14 +599,14 @@ void BitcoinGUI::optionsClicked()
 {
     if(!clientModel || !clientModel->getOptionsModel())
         return;
-    OptionsDialog dlg(this);
+    OptionsDialog dlg;
     dlg.setModel(clientModel->getOptionsModel());
     dlg.exec();
 }
 
 void BitcoinGUI::aboutClicked()
 {
-    AboutDialog dlg(this);
+    AboutDialog dlg;
     dlg.setModel(clientModel);
     dlg.exec();
 }
@@ -696,7 +675,7 @@ void BitcoinGUI::setNumBlocks(int count, int nTotalBlocks)
         tooltip = tr("Downloaded %1 blocks of transaction history.").arg(count);
     }
 
-    tooltip = tr("Current difficulty is %1.").arg(clientModel->GetDifficulty()) + QString("\n") + tooltip;
+    tooltip = tr("Current difficulty is %1.").arg(clientModel->GetDifficulty()) + QString("<br>") + tooltip;
 
     QDateTime now = QDateTime::currentDateTime();
     QDateTime lastBlockDate = clientModel->getLastBlockDate();
@@ -1050,209 +1029,13 @@ void BitcoinGUI::encryptWallet(bool status)
     setEncryptionStatus(walletModel->getEncryptionStatus());
 }
 
-void BitcoinGUI::checkWallet()
-{
-
-    int nMismatchSpent;
-    int64 nBalanceInQuestion;
-    int nOrphansFound;
-
-    if(!walletModel)
-        return;
-
-    // Check the wallet as requested by user
-    walletModel->checkWallet(nMismatchSpent, nBalanceInQuestion, nOrphansFound);
-
-    if (nMismatchSpent == 0 && nOrphansFound == 0)
-        error(tr("Check Wallet Information"),
-                tr("Wallet passed integrity test!\n"
-                   "Nothing found to fix."),true);
-  else
-       error(tr("Check Wallet Information"),
-               tr("Wallet failed integrity test!\n\n"
-                  "Mismatched coin(s) found: %1.\n"
-                  "Amount in question: %2.\n"
-                  "Orphans found: %3.\n\n"
-                  "Please backup wallet and run repair wallet.\n")
-                        .arg(nMismatchSpent)
-                        .arg(BitcoinUnits::formatWithUnit(walletModel->getOptionsModel()->getDisplayUnit(), nBalanceInQuestion,true))
-                        .arg(nOrphansFound),true);
-}
-
-void BitcoinGUI::repairWallet()
-{
-    int nMismatchSpent;
-    int64 nBalanceInQuestion;
-    int nOrphansFound;
-
-    if(!walletModel)
-        return;
-
-    // Repair the wallet as requested by user
-    walletModel->repairWallet(nMismatchSpent, nBalanceInQuestion, nOrphansFound);
-
-    if (nMismatchSpent == 0 && nOrphansFound == 0)
-       error(tr("Repair Wallet Information"),
-               tr("Wallet passed integrity test!\n"
-                  "Nothing found to fix."),true);
-    else
-       error(tr("Repair Wallet Information"),
-               tr("Wallet failed integrity test and has been repaired!\n"
-                  "Mismatched coin(s) found: %1\n"
-                  "Amount affected by repair: %2\n"
-                  "Orphans removed: %3\n")
-                        .arg(nMismatchSpent)
-                        .arg(BitcoinUnits::formatWithUnit(walletModel->getOptionsModel()->getDisplayUnit(), nBalanceInQuestion,true))
-                        .arg(nOrphansFound),true);
-}
-
-void BitcoinGUI::zapWallet()
-{
-  if(!walletModel)
-    return;
-
-  progressBarLabel->setText(tr("Starting zapwallettxes..."));
-  progressBarLabel->setVisible(true);
-
-  // bring up splash screen
-  QSplashScreen splash(QPixmap(":/images/splash"), 0);
-  splash.setEnabled(false);
-  splash.show();
-  splash.setAutoFillBackground(true);
-  splashref = &splash;
-
-  // Zap the wallet as requested by user
-  // 1= save meta data
-  // 2=remove meta data needed to restore wallet transaction meta data after -zapwallettxes
-  std::vector<CWalletTx> vWtx;
-
-  progressBarLabel->setText(tr("Zapping all transactions from wallet..."));
-  splashMessage(_("Zapping all transactions from wallet..."));
-  printf("Zapping all transactions from wallet...\n");
-
-// clear tables
-
-  pwalletMain = new CWallet("wallet.dat");
-  int nZapWalletRet = pwalletMain->ZapWalletTx(vWtx);
-  if (nZapWalletRet != 0)
-  {
-    progressBarLabel->setText(tr("Error loading wallet.dat: Wallet corrupted."));
-    splashMessage(_("Error loading wallet.dat: Wallet corrupted"));
-    printf("Error loading wallet.dat: Wallet corrupted\n");
-    if (splashref)
-      splash.close();
-    return;
-  }
-
-  delete pwalletMain;
-  pwalletMain = NULL;
-
-  progressBarLabel->setText(tr("Loading wallet..."));
-  splashMessage(_("Loading wallet..."));
-  printf("Loading wallet...\n");
-
-  int64 nStart = GetTimeMillis();
-  bool fFirstRun = true;
-  pwalletMain = new CWallet("wallet.dat");
-
-
-  int nLoadWalletRet = pwalletMain->LoadWallet(fFirstRun);
-  if (nLoadWalletRet != 0)
-  {
-    if (nLoadWalletRet == 2)
-    {
-      progressBarLabel->setText(tr("Error loading wallet.dat: Wallet corrupted."));
-      splashMessage(_("Error loading wallet.dat: Wallet corrupted"));
-      printf("Error loading wallet.dat: Wallet corrupted\n");
-    }
-    else if (nLoadWalletRet == 3)
-    {
-      setStatusTip(tr("Warning: error reading wallet.dat! All keys read correctly, but transaction data or address book entries might be missing or incorrect."));
-      progressBarLabel->setText(tr("Warning - error reading wallet."));
-      printf("Warning: error reading wallet.dat! All keys read correctly, but transaction data or address book entries might be missing or incorrect.\n");
-    }
-    else if (nLoadWalletRet == 4)
-    {
-      progressBarLabel->setText(tr("Error loading wallet.dat: Please check for a newer version of BitBar."));
-      setStatusTip(tr("Error loading wallet.dat: Wallet requires newer version of BitBar"));
-      printf("Error loading wallet.dat: Wallet requires newer version of BitBar\n");
-    }
-    else if (nLoadWalletRet == 5)
-    {
-  progressBarLabel->setText(tr("Wallet needs to be rewriten. Please restart BitBar to complete."));
-      setStatusTip(tr("Wallet needed to be rewritten: restart BitBar to complete"));
-      printf("Wallet needed to be rewritten: restart BitBar to complete\n");
-      if (splashref)
-        splash.close();
-      return;
-    }
-    else
-    {
-      progressBarLabel->setText(tr("Error laoding wallet.dat"));
-      setStatusTip(tr("Error loading wallet.dat"));
-      printf("Error loading wallet.dat\n");
-    } 
-  }
-  
-  progressBarLabel->setText(tr("Wallet loaded..."));
-  splashMessage(_("Wallet loaded..."));
-  printf(" zap wallet  load     %15lld ms\n", GetTimeMillis() - nStart);
-
-  progressBarLabel->setText(tr("Loading lables..."));
-  splashMessage(_("Loaded lables..."));
-  printf(" zap wallet  loading metadata\n");
-
-  // Restore wallet transaction metadata after -zapwallettxes=1
-  BOOST_FOREACH(const CWalletTx& wtxOld, vWtx)
-  {
-    uint256 hash = wtxOld.GetHash();
-    std::map<uint256, CWalletTx>::iterator mi = pwalletMain->mapWallet.find(hash);
-    if (mi != pwalletMain->mapWallet.end())
-    {
-      const CWalletTx* copyFrom = &wtxOld;
-      CWalletTx* copyTo = &mi->second;
-      copyTo->mapValue = copyFrom->mapValue;
-      copyTo->vOrderForm = copyFrom->vOrderForm;
-      copyTo->nTimeReceived = copyFrom->nTimeReceived;
-      copyTo->nTimeSmart = copyFrom->nTimeSmart;
-      copyTo->fFromMe = copyFrom->fFromMe;
-      copyTo->strFromAccount = copyFrom->strFromAccount;
-      copyTo->nOrderPos = copyFrom->nOrderPos;
-      copyTo->WriteToDisk();
-    }
-  }
-  progressBarLabel->setText(tr("Scanning for transactions..."));
-  splashMessage(_("scanning for transactions..."));
-  printf(" zap wallet  scanning for transactions\n");
-
-  pwalletMain->ScanForWalletTransactions(pindexGenesisBlock, true);
-  pwalletMain->ReacceptWalletTransactions();
-  progressBarLabel->setText(tr("Please restart your wallet."));
-  splashMessage(_("Please restart your wallet."));
-  printf(" zap wallet  done - please restart wallet.\n");
-  //  sleep (10);
-  progressBarLabel->setText(tr(""));
-  progressBarLabel->setVisible(false);
-
-  //  close splash screen
-  if (splashref)
-    splash.close();
-
-  QMessageBox::warning(this, tr("Zap Wallet Finished."), tr("Please restart your wallet for changes to take effect."));
-}
-
-void BitcoinGUI::splashMessage(const std::string &message)
-{
-  if(splashref)
-  {
-    splashref->showMessage(QString::fromStdString(message), Qt::AlignBottom|Qt::AlignHCenter, QColor(120,80,25));
-    QApplication::instance()->processEvents();
-  }
-}
-
 void BitcoinGUI::backupWallet()
 {
+#if QT_VERSION < 0x050000
+    QString saveDir = QDesktopServices::storageLocation(QDesktopServices::DocumentsLocation);
+#else
     QString saveDir = GetDataDir().string().c_str();
+#endif
     QString filename = QFileDialog::getSaveFileName(this, tr("Backup Wallet"), saveDir, tr("Wallet Data (*.dat)"));
     if(!filename.isEmpty()) {
         if(!walletModel->backupWallet(filename)) {
