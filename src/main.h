@@ -1147,6 +1147,11 @@ public:
         return DcryptHash(BEGIN(nVersion), END(nNonce));
     }
 
+    uint256 GetFastHash() const
+    {
+        return Hash(BEGIN(nVersion), END(nNonce));
+    }
+
     // PoB
     uint256 GetBurnHash(bool fRetIntermediate) const
     {
