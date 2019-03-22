@@ -129,7 +129,7 @@ int CWalletDB::LoadWallet(CWallet* pwallet)
     if(Read((string)"minversion", nMinVersion))
     {
       if(nMinVersion > CLIENT_VERSION)
-        return DB_TOO_NEW;
+        return 4;
       pwallet->LoadMinVersion(nMinVersion);
     }
 
@@ -138,7 +138,7 @@ int CWalletDB::LoadWallet(CWallet* pwallet)
     if(!pcursor)
     {
       printf("Error getting wallet database cursor\n");
-      return DB_CORRUPT;
+      return 2;
     }
 
     while (true)
@@ -252,12 +252,12 @@ int CWalletDB::LoadWallet(CWallet* pwallet)
           if (key.GetPubKey() != vchPubKey)
           {
             printf("Error reading wallet database: CPrivKey pubkey inconsistency\n");
-            return DB_CORRUPT;
+            return 2;
           }
           if (!key.IsValid())
           {
             printf("Error reading wallet database: invalid CPrivKey\n");
-          return DB_CORRUPT;
+          return 2;
         }
       }
         else
@@ -269,18 +269,18 @@ int CWalletDB::LoadWallet(CWallet* pwallet)
           if (key.GetPubKey() != vchPubKey)
           {
             printf("Error reading wallet database: CWalletKey pubkey inconsistency\n");
-            return DB_CORRUPT;
+            return 2;
           }
           if (!key.IsValid())
           {
             printf("Error reading wallet database: invalid CWalletKey\n");
-            return DB_CORRUPT;
+            return 2;
           }
         }
         if (!pwallet->LoadKey(key))
         {
           printf("Error reading wallet database: LoadKey failed\n");
-          return DB_CORRUPT;
+          return 2;
         }
       }
       else if (strType == "mkey")
@@ -292,7 +292,7 @@ int CWalletDB::LoadWallet(CWallet* pwallet)
         if(pwallet->mapMasterKeys.count(nID) != 0)
         {
           printf("Error reading wallet database: duplicate CMasterKey id %u\n", nID);
-          return DB_CORRUPT;
+          return 2;
         }
         pwallet->mapMasterKeys[nID] = kMasterKey;
         if (pwallet->nMasterKeyMaxID < nID)
@@ -307,7 +307,7 @@ int CWalletDB::LoadWallet(CWallet* pwallet)
         if (!pwallet->LoadCryptedKey(vchPubKey, vchPrivKey))
         {
           printf("Error reading wallet database: LoadCryptedKey failed\n");
-          return DB_CORRUPT;
+          return 2;
         }
         fIsEncrypted = true;
       }
@@ -336,7 +336,7 @@ int CWalletDB::LoadWallet(CWallet* pwallet)
         if (!pwallet->LoadCScript(script))
         {
           printf("Error reading wallet database: LoadCScript failed\n");
-            return DB_CORRUPT;
+            return 2;
           }
         }
     }
@@ -351,12 +351,95 @@ int CWalletDB::LoadWallet(CWallet* pwallet)
 
   // Rewrite encrypted wallets of versions 0.4.0 and 0.5.0rc:
   if(fIsEncrypted && (nFileVersion == 40000 || nFileVersion == 50000))
-    return DB_NEED_REWRITE;
+    return 6;
 
   if(nFileVersion < CLIENT_VERSION) // Update
     WriteVersion(CLIENT_VERSION);
 
-  return DB_LOAD_OK;
+  return 0;
+}
+
+int CWalletDB::FindWalletTx(CWallet* pwallet, vector<uint256>& vTxHash, vector<CWalletTx>& vWtx)
+{
+    pwallet->vchDefaultKey = CPubKey();
+    bool fNoncriticalErrors = false;
+    int result = 0;
+
+    try {
+        LOCK(pwallet->cs_wallet);
+        int nMinVersion = 0;
+        if (Read((string)"minversion", nMinVersion))
+        {
+            if (nMinVersion > CLIENT_VERSION)
+                return 3;
+            pwallet->LoadMinVersion(nMinVersion);
+        }
+
+        // Get cursor
+        Dbc* pcursor = GetCursor();
+        if (!pcursor)
+        {
+            printf("Error getting wallet database cursor\n");
+            return 2;
+        }
+
+        while (true)
+        {
+            // Read next record
+            CDataStream ssKey(SER_DISK, CLIENT_VERSION);
+            CDataStream ssValue(SER_DISK, CLIENT_VERSION);
+            int ret = ReadAtCursor(pcursor, ssKey, ssValue);
+            if (ret == DB_NOTFOUND)
+                break;
+            else if (ret != 0)
+            {
+                printf("Error reading next record from wallet database\n");
+                return 2;
+            }
+
+            string strType;
+            ssKey >> strType;
+            if (strType == "tx") {
+                uint256 hash;
+                ssKey >> hash;
+
+                CWalletTx wtx;
+                ssValue >> wtx;
+
+                vTxHash.push_back(hash);
+                vWtx.push_back(wtx);
+            }
+        }
+        pcursor->close();
+    }
+    catch (const boost::thread_interrupted&) {
+        throw;
+    }
+    catch (...) {
+        result = 2;
+    }
+
+    if (fNoncriticalErrors && result == 0)
+        result = 5;
+
+    return result;
+}
+
+int CWalletDB::ZapWalletTx(CWallet* pwallet, vector<CWalletTx>& vWtx)
+{
+    // build list of wallet TXs
+    vector<uint256> vTxHash;
+    int err = FindWalletTx(pwallet, vTxHash, vWtx);
+    if (err != 0)
+        return err;
+
+    // erase each wallet TX
+    BOOST_FOREACH (uint256& hash, vTxHash) {
+        if (!EraseTx(hash))
+            return DB_CORRUPT;
+    }
+
+    return 0;
 }
 
 void ThreadFlushWalletDB(void* parg)

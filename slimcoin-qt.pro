@@ -7,7 +7,7 @@ CONFIG += no_include_pwd
 CONFIG += thread
 CONFIG += debug # release
 CONFIG += qt_framework
-QT += core gui network
+QT += core gui network testlib
 CONFIG += link_pkgconfig
 CONFIG += moc
 
@@ -134,7 +134,7 @@ contains(USE_QRCODE, 1) {
     message(Building with QRCode support)
     DEFINES += USE_QRCODE
     isEmpty(QRENCODE_LIB_PATH) {
-        # !macx:unix:QRENCODE_LIB_PATH = /usr/lib
+        !macx:unix:QRENCODE_LIB_PATH = /usr/lib
         contains(CONFIG, brew) {
             macx:QRENCODE_LIB_PATH = /usr/local/lib
         }else{
@@ -325,6 +325,8 @@ HEADERS += src/addrman.h \
     src/qt/chatclient.h \
     src/qt/chatwindow.h \
     src/qt/clientmodel.h \
+    src/qt/coincontroldialog.h \
+    src/qt/coincontroltreewidget.h \
     src/qt/csvmodelwriter.h \
     src/qt/editaddressdialog.h \
     src/qt/guiconstants.h \
@@ -403,6 +405,8 @@ SOURCES += src/addrman.cpp \
     src/qt/chatclient.cpp \
     src/qt/chatwindow.cpp \
     src/qt/clientmodel.cpp \
+    src/qt/coincontroldialog.cpp \
+    src/qt/coincontroltreewidget.cpp \
     src/qt/csvmodelwriter.cpp \
     src/qt/editaddressdialog.cpp \
     src/qt/guiutil.cpp \
@@ -454,6 +458,7 @@ FORMS += \
     src/qt/forms/burncoinsdialog.ui \
     src/qt/forms/burncoinsentry.ui \
     src/qt/forms/chatwindow.ui \
+    src/qt/forms/coincontroldialog.ui \
     src/qt/forms/editaddressdialog.ui \
     src/qt/forms/inscriptiondialog.ui \
     src/qt/forms/messagepage.ui \

@@ -146,7 +146,7 @@
     </font>
    </property>
    <property name="text">
-    <string>Automatically-deducted fee 0.02 SLM. Maximum 80 characters.</string>
+    <string>Automatically-deducted fee 0.02 SLM. Maximum 100 characters.</string>
    </property>
   </widget>
  </widget>

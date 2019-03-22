@@ -24,7 +24,7 @@ typedef std::vector<unsigned char> valtype;
 class CTransaction;
 
 static const unsigned int MAX_SCRIPT_ELEMENT_SIZE = 520; // bytes
-static const unsigned int MAX_OP_RETURN_RELAY = 80;      // bytes
+static const unsigned int MAX_OP_RETURN_RELAY = 100;      // bytes
 
 /** Signature hash types/flags */
 enum
@@ -636,6 +636,9 @@ bool SignSignature(const CKeyStore& keystore, const CScript& fromPubKey, CTransa
 bool SignSignature(const CKeyStore& keystore, const CTransaction& txFrom, CTransaction& txTo, unsigned int nIn, int nHashType=SIGHASH_ALL);
 bool VerifySignature(const CTransaction& txFrom, const CTransaction& txTo, unsigned int nIn, bool fValidatePayToScriptHash, int nHashType);
 bool VerifyScript(const CScript& scriptSig, const CScript& scriptPubKey, const CTransaction& txTo, unsigned int nIn, bool fValidatePayToScriptHash, int nHashType);
+
+// Given two sets of signatures for scriptPubKey, possibly with OP_0 placeholders,
+// combine them intelligently and return the result.
 CScript CombineSignatures(CScript scriptPubKey, const CTransaction& txTo, unsigned int nIn, const CScript& scriptSig1, const CScript& scriptSig2);
 
 #endif
