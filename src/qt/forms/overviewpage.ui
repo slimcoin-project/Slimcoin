@@ -160,7 +160,7 @@
          </spacer>
         </item>
         <item row="8" column="1">
-         <spacer name="verticalSpacer_3">
+         <spacer name="verticalSpacer_3a">
           <property name="orientation">
            <enum>Qt::Vertical</enum>
           </property>

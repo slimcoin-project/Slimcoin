@@ -82,7 +82,7 @@ void WalletModel::update()
 
     BurnCoinsBalances newBurnBalances = getBurnCoinBalances();
 
-    if(cachedBalance != newBalance || cachedUnconfirmedBalance != newUnconfirmedBalance|| cachedImmatureBalance != newImmatureBalance || cachedBurnCoinsBalances != newBurnBalances)
+    if(cachedBalance != newBalance || cachedUnconfirmedBalance != newUnconfirmedBalance || cachedImmatureBalance != newImmatureBalance || cachedBurnCoinsBalances != newBurnBalances)
         emit balanceChanged(newBalance, getStake(), newUnconfirmedBalance, newImmatureBalance, newReserveBalance, newBurnBalances);
 
     if(cachedNumTransactions != newNumTransactions)
