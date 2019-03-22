@@ -67,7 +67,6 @@ protected:
 private:
     ClientModel *clientModel;
     WalletModel *walletModel;
-
     QStackedWidget *centralWidget;
 
     QSystemTrayIcon *trayIcon;

@@ -369,7 +369,8 @@ HEADERS += src/addrman.h \
     src/util.h \
     src/wallet.h \
     src/walletdb.h \
-    src/version.h
+    src/version.h \
+    src/qt/miningpage.h
 
 SOURCES += src/addrman.cpp \
     src/bitcoinrpc.cpp \
@@ -445,7 +446,8 @@ SOURCES += src/addrman.cpp \
     src/util.cpp \
     src/version.cpp \
     src/wallet.cpp \
-    src/walletdb.cpp
+    src/walletdb.cpp \
+    src/qt/miningpage.cpp
 
 RESOURCES += \
     src/qt/bitcoin.qrc
@@ -471,7 +473,8 @@ FORMS += \
     src/qt/forms/sendcoinsentry.ui \
     src/qt/forms/signverifymessagedialog.ui \
     src/qt/forms/inscriptionpage.ui \
-    src/qt/forms/transactiondescdialog.ui
+    src/qt/forms/transactiondescdialog.ui \
+    src/qt/forms/miningpage.ui
 
 contains(USE_QRCODE, 1) {
     HEADERS += src/qt/qrcodedialog.h
