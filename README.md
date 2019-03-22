@@ -905,6 +905,7 @@ https://en.bitcoin.it/wiki/Script#Obsolete_pay-to-pubkey_transaction
 https://en.bitcoin.it/wiki/Script#Standard_Transaction_to_Bitcoin_address_.28pay-to-pubkey-hash.29
 https://en.bitcoin.it/wiki/Script#Provably_Unspendable.2FPrunable_Outputs
 
+---
 ## jonnylatte on Dcrypt
 
 While I'm on the topic of RAM, it's possible to completely eliminate the dynamic memory requirements of the dcrypt function:
