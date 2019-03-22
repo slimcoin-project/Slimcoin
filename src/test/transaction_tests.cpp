@@ -380,11 +380,11 @@ BOOST_AUTO_TEST_CASE(test_IsStandard)
 
     // Only one TX_NULL_DATA permitted in all cases
     t1.vout.resize(2);
-    t1.vout[0].scriptPubKey = CScript() << OP_RETURN << ParseHex("04678afdb0fe5548271967f1a67130b7105cd6a828e03909a67962e0ea1f61deb649f6bc3f4cef3804678afdb0fe5548271967f1a67130b7105cd6a828e03909a67962e0ea1f61deb649f6bc3f4cef38");
-    t1.vout[1].scriptPubKey = CScript() << OP_RETURN << ParseHex("04678afdb0fe5548271967f1a67130b7105cd6a828e03909a67962e0ea1f61deb649f6bc3f4cef3804678afdb0fe5548271967f1a67130b7105cd6a828e03909a67962e0ea1f61deb649f6bc3f4cef38");
+    t1.vout[0].scriptPubKey = CScript() << OP_RETURN << ParseHex("172f12a1415ccc83391ede6b8f85119f810891c504678afdb0fe5548271967f1a67130b7105cd6a828e03909a67962e0ea1f61deb649f6bc3f4cef3804678afdb0fe5548271967f1a67130b7105cd6a828e03909a67962e0ea1f61deb649f6bc3f4cef38");
+    t1.vout[1].scriptPubKey = CScript() << OP_RETURN << ParseHex("172f12a1415ccc83391ede6b8f85119f810891c504678afdb0fe5548271967f1a67130b7105cd6a828e03909a67962e0ea1f61deb649f6bc3f4cef3804678afdb0fe5548271967f1a67130b7105cd6a828e03909a67962e0ea1f61deb649f6bc3f4cef38");
     BOOST_CHECK(!t1.IsStandard());
 
-    t1.vout[0].scriptPubKey = CScript() << OP_RETURN << ParseHex("04678afdb0fe5548271967f1a67130b7105cd6a828e03909a67962e0ea1f61deb649f6bc3f4cef3804678afdb0fe5548271967f1a67130b7105cd6a828e03909a67962e0ea1f61deb649f6bc3f4cef38");
+    t1.vout[0].scriptPubKey = CScript() << OP_RETURN << ParseHex("172f12a1415ccc83391ede6b8f85119f810891c504678afdb0fe5548271967f1a67130b7105cd6a828e03909a67962e0ea1f61deb649f6bc3f4cef3804678afdb0fe5548271967f1a67130b7105cd6a828e03909a67962e0ea1f61deb649f6bc3f4cef38");
     t1.vout[1].scriptPubKey = CScript() << OP_RETURN;
     BOOST_CHECK(!t1.IsStandard());
 

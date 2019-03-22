@@ -54,15 +54,6 @@ bool CastToBool(const valtype& vch)
     return false;
 }
 
-void MakeSameSize(valtype& vch1, valtype& vch2)
-{
-    // Lengthen the shorter one
-    if (vch1.size() < vch2.size())
-        vch1.resize(vch2.size(), 0);
-    if (vch2.size() < vch1.size())
-        vch2.resize(vch1.size(), 0);
-}
-
 
 
 //
@@ -1592,7 +1583,7 @@ bool ExtractDestinations(const CScript& scriptPubKey, txnouttype& typeRet, vecto
     return true;
 }
 
-bool VerifyScript(const CScript& scriptSig, const CScript& scriptPubKey, const CTransaction& txTo, unsigned int nIn,
+bool VerifyScript(const CScript &scriptSig, const CScript &scriptPubKey, const CTransaction &txTo, unsigned int nIn,
                  bool fValidatePayToScriptHash, unsigned int flags, int nHashType)
 {
     vector<vector<unsigned char> > stack, stackCopy;

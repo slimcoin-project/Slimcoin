@@ -1246,8 +1246,8 @@ bool CWallet::SelectCoins(int64 nTargetValue, unsigned int nSpendTime, set<pair<
     {
         BOOST_FOREACH(const COutput& out, vCoins)
         {
-                nValueRet += out.tx->vout[out.i].nValue;
-                setCoinsRet.insert(make_pair(out.tx, out.i));
+            nValueRet += out.tx->vout[out.i].nValue;
+            setCoinsRet.insert(make_pair(out.tx, out.i));
         }
         return (nValueRet >= nTargetValue);
 
