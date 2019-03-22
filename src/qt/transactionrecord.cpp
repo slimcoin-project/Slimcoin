@@ -36,7 +36,6 @@ QList<TransactionRecord> TransactionRecord::decomposeTransaction(const CWallet *
   QList<TransactionRecord> parts;
   int64 nTime = wtx.GetTxTime();
   int64 nCredit = wtx.GetCredit(true);
-  int64 nDebit = wtx.GetDebit();
   int64 nDebit = wtx.GetDebit(MINE_SPENDABLE|MINE_WATCH_ONLY);
   int64 nNet = nCredit - nDebit;
   uint256 hash = wtx.GetHash();
@@ -57,7 +56,7 @@ QList<TransactionRecord> TransactionRecord::decomposeTransaction(const CWallet *
         if(ExtractDestination(txout.scriptPubKey, address) && IsMine(*wallet, address))
             sub.address = CBitcoinAddress(address).ToString();
 
-        sub.involvesWatchAddress = mine == MINE_WATCH_ONLY;
+        sub.involvesWatchAddress = wallet->IsMine(txout) == MINE_WATCH_ONLY;
         parts.append(sub);
     }
     else if (nNet > 0 || wtx.IsCoinBase())

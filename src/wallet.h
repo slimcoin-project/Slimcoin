@@ -84,6 +84,13 @@ private:
     // the maxmimum wallet format version: memory-only variable that specifies to what version this wallet may be upgraded
     int nWalletMaxVersion;
 
+    typedef std::multimap<COutPoint, uint256> TxSpends;
+    TxSpends mapTxSpends;
+    void AddToSpends(const COutPoint& outpoint, const uint256& wtxid);
+    void AddToSpends(const uint256& wtxid);
+
+    void SyncMetaData(std::pair<TxSpends::iterator, TxSpends::iterator>);
+
 public:
     mutable CCriticalSection cs_wallet;
 
@@ -197,10 +204,11 @@ public:
     bool AddWatchOnly(const CTxDestination &dest);
     // Adds a watch-only address to the store, without saving it to disk (used by LoadWallet)
     bool LoadWatchOnly(const CTxDestination &dest);
+    bool IsSpent(const uint256& hash, unsigned int n) const;
 
     void GetAllReserveKeys(std::set<CKeyID>& setAddress);
     isminetype IsMine(const CTxIn& txin) const;
-    int64 GetDebit(const CTxIn& txin) const;
+    int64 GetDebit(const CTxIn& txin, const isminefilter& filter) const;
     isminetype IsMine(const CTxOut& txout) const
     {
         return ::IsMine(*this, txout.scriptPubKey);
@@ -227,7 +235,7 @@ public:
     }
     bool IsFromMe(const CTransaction& tx) const
     {
-        return (GetDebit(tx, MINE_SPENDABLE|MINE_WATCH_ONLY) > 0);
+        return (GetDebit(tx) > 0);
     }
     int64 GetDebit(const CTransaction& tx) const
     {
@@ -546,6 +554,9 @@ CWalletTx(const CWallet* pwalletIn, const CTransaction& txIn) : CMerkleTx(txIn)
         return (!!vfSpent[nOut]);
     }
 
+    int64_t GetDebit(const isminefilter& filter) const;
+    int64_t GetCredit(const isminefilter& filter) const;
+
     int64 GetDebit() const
     {
         if (vin.empty())
@@ -655,7 +666,7 @@ CWalletTx(const CWallet* pwalletIn, const CTransaction& txIn) : CMerkleTx(txIn)
                     std::list<std::pair<CTxDestination, int64> >& listSent, int64& nFee, std::string& strSentAccount, const isminefilter& filter) const;
 
     void GetAccountAmounts(const std::string& strAccount, int64& nGenerated, int64& nReceived, 
-                           int64& nSent, int64& nFee) const;
+                           int64& nSent, int64& nFee, const isminefilter& filter) const;
 
     bool IsFromMe(const isminefilter& filter) const
     {
@@ -669,7 +680,7 @@ CWalletTx(const CWallet* pwalletIn, const CTransaction& txIn) : CMerkleTx(txIn)
             return false;
         if (GetDepthInMainChain() >= 1)
             return true;
-        if (!IsFromMe()) // using wtx's cached debit
+        if (!IsFromMe(MINE_SPENDABLE|MINE_WATCH_ONLY)) // using wtx's cached debit
             return false;
 
         // If no confirmations but it's from us, we can still

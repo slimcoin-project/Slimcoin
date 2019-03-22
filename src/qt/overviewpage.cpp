@@ -320,7 +320,7 @@ void OverviewPage::reserveBalanceChanged()
     if(!model || !model->getOptionsModel())
         return;
     if(currentBalance != -1)
-        setBalance(currentBalance, currentStake, currentUnconfirmedBalance, currentImmatureBalance, currentReserveBalance, BurnCoinsBalances(currentNetBurnCoins, currentEffectiveBurnCoins, currentImmatureBurnCoins));
+        setBalance(currentBalance, currentStake, currentUnconfirmedBalance, currentImmatureBalance, currentReserveBalance, BurnCoinsBalances(currentNetBurnCoins, currentEffectiveBurnCoins, currentImmatureBurnCoins, currentWatchOnlyBalance, currentWatchUnconfBalance, currentWatchImmatureBalance));
 
     /*
     int unit = model->getOptionsModel()->getDisplayUnit();

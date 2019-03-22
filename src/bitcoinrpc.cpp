@@ -1258,9 +1258,7 @@ Value getbalance(const Array& params, bool fHelp)
 
     int nMinDepth = 1;
     if (params.size() > 1)
-    {
         nMinDepth = params[1].get_int();
-    }
 
     isminefilter filter = MINE_SPENDABLE;
     if(params.size() > 2)
@@ -1429,7 +1427,7 @@ Value burncoins(const Array& params, bool fHelp)
                                              "Error: Please enter the wallet passphrase with walletpassphrase first.");
 
     // Check funds
-    int64 nBalance = GetAccountBalance(strAccount, nMinDepth);
+    int64 nBalance = GetAccountBalance(strAccount, nMinDepth, MINE_SPENDABLE);
     if (nAmount > nBalance)
         throw JSONRPCError(RPC_WALLET_INSUFFICIENT_FUNDS, "Account has insufficient funds");
 
@@ -2005,7 +2003,7 @@ Value listburnminted(const Array& params, bool fHelp)
         /***Unused variables only needed as function arguments for wtx.GetAmounts()***/
 
         int64 nGeneratedImmature, nGeneratedMature;    
-        wtx.GetAmounts(nGeneratedImmature, nGeneratedMature, listReceived, listSent, nFee, strSentAccount);
+        wtx.GetAmounts(nGeneratedImmature, nGeneratedMature, listReceived, listSent, nFee, strSentAccount, MINE_SPENDABLE);
 
         //Reward is immature
         if (nGeneratedImmature)
@@ -2099,7 +2097,8 @@ void ListTransactions(const CWalletTx& wtx, const string& strAccount, int nMinDe
             {
                 Object entry;
                 if(involvesWatchonly || (::IsMine(*pwalletMain, r.first) & MINE_WATCH_ONLY))
-                    entry.push_back(Pair("involvesWatchonly", true));                entry.push_back(Pair("account", account));
+                    entry.push_back(Pair("involvesWatchonly", true));
+                entry.push_back(Pair("account", account));
                 entry.push_back(Pair("address", CBitcoinAddress(r.first).ToString()));
                 entry.push_back(Pair("category", "receive"));
                 entry.push_back(Pair("amount", ValueFromAmount(r.second)));
@@ -2139,47 +2138,24 @@ Value listtransactions(const Array& params, bool fHelp)
 
     string strAccount = "*";
     isminefilter filter = MINE_SPENDABLE;
-    // if (params.size() > 0)
-    //     strAccount = params[0].get_str();
+    if (params.size() > 0)
+        strAccount = params[0].get_str();
 
     bool fBurnTx = false;
-    // if (params.size() > 1)
-    //     fBurnTx = params[1].get_bool();
+    if (params.size() > 1)
+        fBurnTx = params[1].get_bool();
 
     int nCount = 10;
-    // if (params.size() > 2)
-    //     nCount = params[2].get_int();
+    if (params.size() > 2)
+        nCount = params[2].get_int();
 
     int nFrom = 0;
-    // if (params.size() > 3)
-    //     nFrom = params[3].get_int();
-
-    if (params.size() > 0)
-    {
-        strAccount = params[0].get_str();
-    }
-
-    if (params.size() > 1)
-    {
-        fBurnTx = params[1].get_bool();
-    }
-
-    if (params.size() > 2)
-    {
-        nCount = params[2].get_int();
-    }
-
     if (params.size() > 3)
-    {
         nFrom = params[3].get_int();
-    }
 
     if (params.size() > 4)
-    {
         if(params[4].get_bool())
             filter = filter | MINE_WATCH_ONLY;
-    }
-
 
     if (nCount < 0)
         throw JSONRPCError(RPC_INVALID_PARAMETER, "Negative count");
@@ -2312,7 +2288,7 @@ Value listsinceblock(const Array& params, bool fHelp)
 {
     if (fHelp)
         throw runtime_error(
-            "listsinceblock [blockhash] [target-confirmations]][includeWatchonly=false\n"
+            "listsinceblock [blockhash] [target-confirmations] [includeWatchonly=false\n"
             "Get all transactions in blocks since block [blockhash], or all transactions if omitted");
 
     CBlockIndex *pindex = NULL;
@@ -2333,9 +2309,7 @@ Value listsinceblock(const Array& params, bool fHelp)
         target_confirms = params[1].get_int();
 
         if (target_confirms < 1)
-        {
             throw JSONRPCError(RPC_INVALID_PARAMETER, "Invalid parameter");
-
     }
 
     if (params.size() > 2)
@@ -2388,6 +2362,7 @@ Value gettransaction(const Array& params, bool fHelp)
             "gettransaction <txid>\n"
             "Get detailed information about <txid>");
 
+    isminefilter filter = MINE_SPENDABLE|MINE_WATCH_ONLY;
     uint256 hash;
     hash.SetHex(params[0].get_str());
 
@@ -2409,7 +2384,7 @@ Value gettransaction(const Array& params, bool fHelp)
     WalletTxToJSON(pwalletMain->mapWallet[hash], entry);
 
     Array details;
-    ListTransactions(pwalletMain->mapWallet[hash], "*", 0, false, details);
+    ListTransactions(pwalletMain->mapWallet[hash], "*", 0, false, details, filter);
     entry.push_back(Pair("details", details));
 
     return entry;
