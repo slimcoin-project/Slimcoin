@@ -186,10 +186,11 @@ public:
     int64 GetOldestKeyPoolTime();
     void GetAllReserveKeys(std::set<CKeyID>& setAddress);
 
-    isminetype IsMine(const CTxIn &txin) const;
+    bool IsMine(const CTxIn& txin) const;
     int64 GetDebit(const CTxIn& txin) const;
-    isminetype IsMine(const CTxOut &txout) const {
-        return(::IsMine(*this, txout.scriptPubKey));
+    bool IsMine(const CTxOut& txout) const
+    {
+        return ::IsMine(*this, txout.scriptPubKey);
     }
     int64 GetCredit(const CTxOut& txout) const
     {
@@ -670,10 +671,10 @@ public:
     const CWalletTx *tx;
     int i;
     int nDepth;
-    bool fSpendable;
 
-    COutput(const CWalletTx *txIn, int iIn, int nDepthIn, bool fSpendableIn) {
-        tx = txIn; i = iIn; nDepth = nDepthIn; fSpendable = fSpendableIn;
+    COutput(const CWalletTx *txIn, int iIn, int nDepthIn)
+    {
+        tx = txIn; i = iIn; nDepth = nDepthIn;
     }
 
     std::string ToString() const

@@ -105,39 +105,6 @@ bool CWallet::Lock()
 //         serves to disable the trivial sendmoney when OS account compromised
 bool fWalletUnlockMintOnly = false;
 
-bool CWallet::AddWatchOnly(const CScript &dest) {
-
-    if(!CCryptoKeyStore::AddWatchOnly(dest))
-      return(false);
-
-    /* No birthday information for watch only keys */
-    UpdateTimeFirstKey();
-
-    if(!fFileBacked)
-      return(true);
-
-    return(CWalletDB(strWalletFile).WriteWatchOnly(dest));
-}
-
-bool CWallet::RemoveWatchOnly(const CScript &dest) {
-
-    LOCK(cs_wallet);
-
-    if(!CCryptoKeyStore::RemoveWatchOnly(dest))
-      return(false);
-
-    if(fFileBacked) {
-        if(!CWalletDB(strWalletFile).EraseWatchOnly(dest))
-          return(false);
-    }
-
-    return(true);
-}
-
-bool CWallet::LoadWatchOnly(const CScript &dest) {
-    return(CCryptoKeyStore::AddWatchOnly(dest));
-}
-
 bool CWallet::Unlock(const SecureString& strWalletPassphrase)
 {
     if (!IsLocked())
@@ -518,20 +485,20 @@ bool CWallet::EraseFromWallet(uint256 hash)
 }
 
 
-isminetype CWallet::IsMine(const CTxIn &txin) const {
-
+bool CWallet::IsMine(const CTxIn &txin) const
+{
     {
         LOCK(cs_wallet);
         map<uint256, CWalletTx>::const_iterator mi = mapWallet.find(txin.prevout.hash);
         if (mi != mapWallet.end())
         {
             const CWalletTx& prev = (*mi).second;
-            if(txin.prevout.n < prev.vout.size())
-                return(IsMine(prev.vout[txin.prevout.n]));
+            if (txin.prevout.n < prev.vout.size())
+                if (IsMine(prev.vout[txin.prevout.n]))
+                    return true;
         }
     }
-
-    return(MINE_NO);
+    return false;
 }
 
 int64 CWallet::GetDebit(const CTxIn &txin) const
@@ -1141,10 +1108,6 @@ bool CWallet::SelectCoinsMinConf(int64 nTargetValue, int nConfMine, int nConfThe
 
     BOOST_FOREACH(COutput output, vCoins)
     {
-
-        if(!output.fSpendable)
-          continue;
-
         const CWalletTx *pcoin = output.tx;
 
         if (output.nDepth < (pcoin->IsFromMe() ? nConfMine : nConfTheirs))
@@ -2123,16 +2086,4 @@ void CWallet::ClearOrphans()
         EraseFromWallet(*it);
         UpdatedTransaction(*it);
     }
-}
-
-void CWallet::UpdateTimeFirstKey(int64 nCreateTime) {
-    const int64 nBirthday = 1356998400; /* 1-Jan-2013 00:00:00 */
-
-    LOCK(cs_wallet);
-    if(nCreateTime < nBirthday) {
-        nTimeFirstKey = nBirthday;
-    } else if(!nTimeFirstKey || (nCreateTime < nTimeFirstKey)) {
-        nTimeFirstKey = nCreateTime;
-    }
-
 }

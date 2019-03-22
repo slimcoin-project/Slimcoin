@@ -282,16 +282,6 @@ int CWalletDB::LoadWallet(CWallet* pwallet)
       else if (strType == "ckey")
       {
         vector<unsigned char> vchPubKey;
-        else if(strType == "watch") {
-            CScript script;
-            ssKey >> script;
-            char fYes;
-            ssValue >> fYes;
-            if(fYes == '1')
-              pwallet->LoadWatchOnly(script);
-
-            pwallet->UpdateTimeFirstKey();
-        }
         ssKey >> vchPubKey;
         vector<unsigned char> vchPrivKey;
         ssValue >> vchPrivKey;

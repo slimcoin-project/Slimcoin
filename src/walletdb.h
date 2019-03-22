@@ -123,16 +123,6 @@ public:
         return Write(std::make_pair(std::string("cscript"), hash), redeemScript, false);
     }
 
-    bool WriteWatchOnly(const CScript &dest) {
-        nWalletDBUpdated++;
-        return(Write(std::make_pair(std::string("watch"), dest), '1'));
-    }
-
-    bool EraseWatchOnly(const CScript &dest) {
-        nWalletDBUpdated++;
-        return(Erase(std::make_pair(std::string("watch"), dest)));
-    }
-
     bool WriteBestBlock(const CBlockLocator& locator)
     {
         nWalletDBUpdated++;

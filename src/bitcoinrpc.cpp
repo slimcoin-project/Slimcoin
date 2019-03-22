@@ -1720,7 +1720,7 @@ Value addmultisigaddress(const Array& params, bool fHelp)
     {
         string msg = "addmultisigaddress <nrequired> <'[\"key\",\"key\"]'> [account]\n"
             "Add a nrequired-to-sign multisignature address to the wallet\n"
-            "each key is a Slimcoin address or hex-encoded public key\n"
+            "each key is a peercoin address or hex-encoded public key\n"
             "If [account] is specified, assign address to [account].";
         throw runtime_error(msg);
     }
@@ -1750,7 +1750,7 @@ Value createmultisig(const Array& params, bool fHelp)
             "1. nrequired (numeric, required) The number of required signatures out of the n keys or addresses.\n"
             "2. \"keys\" (string, required) A json array of keys which are peercoin addresses or hex-encoded public keys\n"
             " [\n"
-            " \"key\" (string) Slimcoin address or hex-encoded public key\n"
+            " \"key\" (string) peercoin address or hex-encoded public key\n"
             " ,...\n"
             " ]\n"
 
@@ -1762,7 +1762,7 @@ Value createmultisig(const Array& params, bool fHelp)
 
             "\nExamples:\n"
             "\nCreate a multisig address from 2 addresses\n"
-            "slimcoind createmultisig 2 \"[\\\"PCHAhUGKiFKDHKW8Pgw3qrp2vMfhwWjuCo\\\",\\\"PJrhyo8CUvFZQT8j67Expre2PYLhavnHXb\\\"]\""
+            "peerunityd createmultisig 2 \"[\\\"PCHAhUGKiFKDHKW8Pgw3qrp2vMfhwWjuCo\\\",\\\"PJrhyo8CUvFZQT8j67Expre2PYLhavnHXb\\\"]\""
             "\nAs a json rpc call\n"
             "curl --user myusername --data-binary '{\"jsonrpc\": \"1.0\", \"id\": \"curltest\", \"method\": \"icreatemultisig\", \"params\": [2, \"[\\\"PCHAhUGKiFKDHKW8Pgw3qrp2vMfhwWjuCo\\\",\\\"PJrhyo8CUvFZQT8j67Expre2PYLhavnHXb\\\"]\"]} -H 'content-type: text/plain;' http://127.0.0.1:9902"
         ;
@@ -4097,8 +4097,6 @@ static const CRPCCommand vRPCCommands[] =
     { "dumpprivkey",              &dumpprivkey,            false  },
     { "importprivkey",            &importprivkey,          false  },
     { "importpassphrase",         &importpassphrase,       false  },
-    { "importaddress",            &importaddress,          false  },
-    { "importpubkey",             &importpubkey,           false  },
     { "getcheckpoint",            &getcheckpoint,          true   },
     { "reservebalance",           &reservebalance,         false  },
     { "checkwallet",              &checkwallet,            false  },
@@ -4808,9 +4806,6 @@ Array RPCConvertValues(const std::string &strMethod, const std::vector<std::stri
     if (strMethod == "calcburnhash"           && n > 0) ConvertTo<bool>(params[0]);
     if (strMethod == "burncoins"              && n > 1) ConvertTo<double>(params[1]);
     if (strMethod == "burncoins"              && n > 2) ConvertTo<boost::int64_t>(params[2]);
-    if (strMethod == "importprivkey"          && n > 2) ConvertTo<bool>(params[2]);
-    if (strMethod == "importaddress"          && n > 2) ConvertTo<bool>(params[2]);
-    if (strMethod == "importpubkey"           && n > 2) ConvertTo<bool>(params[2]);
     if (strMethod == "listtransactions"       && n > 1) ConvertTo<bool>(params[1]);
     if (strMethod == "listtransactions"       && n > 2) ConvertTo<boost::int64_t>(params[2]);
     if (strMethod == "listtransactions"       && n > 3) ConvertTo<boost::int64_t>(params[3]);
