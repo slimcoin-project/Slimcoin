@@ -1,0 +1,123 @@
+`./src/bitcoinrpc.cpp`:
+
+    -keypool
+    -rpcconnect
+    -rpcport
+    -rpcsslcertificatechainfile
+    -rpcsslciphers
+    -rpcsslprivatekeyfile
+    -rpctimeout
+    genproclimit
+
+    -gen
+    generate
+    -rpcssl
+
+`./src/db.cpp`:
+
+    -checkblocks
+    -checklevel
+    -dbcache
+    -dblogsize
+
+`./src/init.cpp`:
+
+    -checkpointkey
+    -timeout
+    -upgradewallet
+
+    -daemon
+    -debug
+    -detachdb
+    -dns
+    -fastindex
+    -listen
+    -loadblockindextest
+    -logtimestamps
+    -printblockindex
+    -printtoconsole
+    -printtodebugger
+    -rescan
+    -server
+    -testnet
+
+`./src/irc.cpp`:
+
+    -irc
+
+`./src/kernel.cpp`:
+
+    -printstakemodifier
+
+`./src/main.cpp`:
+
+    -blocknotify
+    -genproclimit
+    -limitfreerelay
+    -maxorphanblocks
+
+    -allowreceivebyip
+    -dropmessagestest
+    -printcoinage
+    -printcreation
+    -printmessagestart
+    -printpriority
+    -testsafemode
+
+`./src/main.h`:
+
+    -printstakemodifier
+
+`./src/net.cpp`:
+
+    -banscore
+    -bantime
+    -maxconnections
+    -maxconnections
+    -port
+
+    -irc
+    -upnp
+    -dnsseed
+    -gen
+
+`./src/net.h`:
+
+    -maxreceivebuffer
+    -maxsendbuffer
+
+`./src/qt/bitcoin.cpp`:
+
+    -lang
+
+    -min
+    -splash
+    -testnet
+
+`./src/qt/overviewpage.cpp`:
+
+    -chart
+
+`./src/script.cpp`:
+
+    -maxsigcachesize
+
+`./src/util.cpp`:
+
+    -conf
+    -pid
+
+`./src/wallet.cpp`:
+
+    -keypool
+    -walletnotify
+
+    -avatar
+    -printcoinstake
+    -printfee
+    -printkeypool
+    -printselectcoin
+
+`./src/walletdb.cpp`:
+
+    -flushwallet

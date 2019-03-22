@@ -10,6 +10,7 @@
 #include "bignum.h"
 #include "net.h"
 #include "script.h"
+#include "base58.h"
 #include <math.h>       /* pow */
 
 #ifdef WIN32
@@ -104,6 +105,7 @@ extern std::map<uint256, CBlock*> mapOrphanBlocks;
 
 // Settings
 extern int64 nTransactionFee;
+extern int64 nReserveBalance;
 
 //////////////////////////////////////////////////////////////////////////////
 /*                              Proof Of Burn                               */
@@ -186,7 +188,6 @@ inline int64 BurnCalcEffectiveCoins(int64 nCoins, s32int depthInChain)
 inline void GetBurnAddress(CBitcoinAddress &addressRet)
 {
     addressRet = fTestNet ? burnTestnetAddress : burnOfficialAddress;
-    return;
 }
 
 //the burn address, when created, the constuctor automatically assigns its value
@@ -234,15 +235,17 @@ class CTxIndex;
 
 void RegisterWallet(CWallet* pwalletIn);
 void UnregisterWallet(CWallet* pwalletIn);
-void SyncWithWallets(const CTransaction& tx, const CBlock* pblock=NULL, bool fUpdate=false, bool fConnect=true);
+void SyncWithWallets(const CTransaction& tx, const CBlock* pblock = NULL, bool fUpdate = false, bool fConnect = true);
 bool ProcessBlock(CNode* pfrom, CBlock* pblock);
 bool CheckDiskSpace(uint64 nAdditionalBytes=0);
 FILE* OpenBlockFile(unsigned int nFile, unsigned int nBlockPos, const char* pszMode="rb");
 FILE* AppendBlockFile(unsigned int& nFileRet);
 bool LoadBlockIndex(bool fAllowNew=true);
 void PrintBlockTree();
+CBlockIndex* FindBlockByHeight(int nHeight);
 bool ProcessMessages(CNode* pfrom);
 bool SendMessages(CNode* pto, bool fSendTrickle);
+bool LoadExternalBlockFile(FILE* fileIn);
 void GenerateSlimcoins(bool fGenerate, CWallet* pwallet);
 CBlock *CreateNewBlock(CWallet* pwallet, bool fProofOfStake=false, const CWalletTx *burnWalletTx=NULL, CReserveKey *resKey=NULL);
 void IncrementExtraNonce(CBlock* pblock, CBlockIndex* pindexPrev, unsigned int& nExtraNonce);
@@ -261,6 +264,7 @@ uint256 WantedByOrphan(const CBlock* pblockOrphan);
 const CBlockIndex* GetLastBlockIndex(const CBlockIndex* pindex, bool fProofOfStake);
 void SlimCoinMiner(CWallet *pwallet, bool fProofOfStake);
 CBlockIndex *pindexByHeight(s32int nHeight);
+bool GetTransaction(const uint256 &hash, CTransaction &tx, uint256 &hashBlock);
 
 //Returns the number of proof of work blocks between (not including) the
 // blocks with heights startHeight and endHeight
@@ -538,8 +542,6 @@ public:
     std::string ToString() const
     {
         if (IsEmpty()) return "CTxOut(empty)";
-        if (scriptPubKey.size() < 6)
-            return "CTxOut(error)";
         return strprintf("CTxOut(nValue=%s, scriptPubKey=%s)", FormatMoney(nValue).c_str(), scriptPubKey.ToString().c_str());
     }
 
@@ -727,11 +729,13 @@ public:
         u32int i;
         for(i = 0; i < vout.size(); i++)
         {
-            CBitcoinAddress address;
-            if(!ExtractAddress(vout[i].scriptPubKey, address))
+            // CBitcoinAddress address;
+            // CTxDestination ctx_address = CTxDestination(address);
+            CTxDestination address;
+            if(!ExtractDestination(vout[i].scriptPubKey, address))
                 continue;
-
-            if(address == burnAddress)
+            /* FIXME: sanity check required */
+            if(address == burnAddress.Get())
                 break;
         }
 
@@ -792,53 +796,7 @@ public:
         return dPriority > COIN * 960 / 250; //960 blocks per day
     }
 
-    int64 GetMinFee(unsigned int nBlockSize=1, bool fAllowFree=false, enum GetMinFee_mode mode=GMF_BLOCK) const
-    {
-        // Base fee is either MIN_TX_FEE or MIN_RELAY_TX_FEE
-        int64 nBaseFee = (mode == GMF_RELAY) ? MIN_RELAY_TX_FEE : MIN_TX_FEE;
-
-        unsigned int nBytes = ::GetSerializeSize(*this, SER_NETWORK, PROTOCOL_VERSION);
-        unsigned int nNewBlockSize = nBlockSize + nBytes;
-        int64 nMinFee = (1 + (int64)nBytes / 1000) * nBaseFee;
-
-        if (fAllowFree)
-        {
-            if (nBlockSize == 1)
-            {
-                // Transactions under 10K are free
-                // (about 4500bc if made of 50bc inputs)
-                if (nBytes < 10000)
-                    nMinFee = 0;
-            }
-            else
-            {
-                // Free transaction area
-                if (nNewBlockSize < 27000)
-                    nMinFee = 0;
-            }
-        }
-
-        // To limit dust spam, require MIN_TX_FEE/MIN_RELAY_TX_FEE if any output is less than 0.01
-        if (nMinFee < nBaseFee)
-        {
-            BOOST_FOREACH(const CTxOut& txout, vout)
-                if (txout.nValue < CENT)
-                    nMinFee = nBaseFee;
-        }
-
-        // Raise the price as the block approaches full
-        if (nBlockSize != 1 && nNewBlockSize >= MAX_BLOCK_SIZE_GEN/2)
-        {
-            if (nNewBlockSize >= MAX_BLOCK_SIZE_GEN)
-                return MAX_MONEY;
-            nMinFee *= MAX_BLOCK_SIZE_GEN / (MAX_BLOCK_SIZE_GEN - nNewBlockSize);
-        }
-
-        if (!MoneyRange(nMinFee))
-            nMinFee = MAX_MONEY;
-        return nMinFee;
-    }
-
+   int64 GetMinFee(unsigned int nBlockSize=1, bool fAllowFree=false, enum GetMinFee_mode mode=GMF_BLOCK, unsigned int nBytes=0) const;
 
     bool ReadFromDisk(CDiskTxPos pos, FILE** pfileRet=NULL)
     {
@@ -914,6 +872,7 @@ public:
     }
 
 
+    bool ReadFromDisk(CTxDB& txdb, const uint256& hash, CTxIndex& txindexRet);
     bool ReadFromDisk(CTxDB& txdb, COutPoint prevout, CTxIndex& txindexRet);
     bool ReadFromDisk(CTxDB& txdb, COutPoint prevout);
     bool ReadFromDisk(COutPoint prevout);
@@ -1218,7 +1177,7 @@ public:
         return vtx[0].vout[0].scriptPubKey.comparePubKeySignature(indexTxScript);
     }
 
-    bool CheckBurnEffectiveCoins(int64 *calcEffCoinsRet = NULL) const;
+    bool CheckBurnEffectiveCoins(int64 *calcEffCoinsRet = NULL, int64 *calcNetCoinsRet = NULL) const;
 
     bool CheckProofOfBurn() const;
 
@@ -1407,7 +1366,7 @@ public:
             vtx.size(),
             HexStr(vchBlockSig.begin(), vchBlockSig.end()).c_str());
 
-        printf("CBlock General PoB(nBurnBits=%08x nEffectiveBurnCoins=%" PRI64u " (formatted %s))\n",
+        printf("CBlock General PoB(nBurnBits=%08x nEffectiveBurnCoins=%llu (formatted %s))\n",
                      nBurnBits, nEffectiveBurnCoins, FormatMoney(nEffectiveBurnCoins).c_str());
         
         if(IsProofOfBurn())
@@ -1435,7 +1394,7 @@ public:
     bool ConnectBlock(CTxDB& txdb, CBlockIndex* pindex);
     bool ReadFromDisk(const CBlockIndex* pindex, bool fReadTransactions=true, bool fCheckValidity=true);
     bool SetBestChain(CTxDB& txdb, CBlockIndex* pindexNew);
-    bool AddToBlockIndex(unsigned int nFile, unsigned int nBlockPos);
+    bool AddToBlockIndex(unsigned int nFile, unsigned int nBlockPos, int64 burnt);
     bool CheckBlock() const;
     bool AcceptBlock();
     bool GetCoinAge(uint64& nCoinAge) const; // slimcoin: calculate total coin age spent in block
@@ -1502,6 +1461,7 @@ public:
     s32int burnCTxOut;
     int64 nEffectiveBurnCoins;
     u32int nBurnBits;
+    int64 burnt;
 
     CBlockIndex()
     {
@@ -1535,6 +1495,7 @@ public:
         burnCTxOut     = -1;
         nEffectiveBurnCoins = 0;
         nBurnBits      = 0;
+        burnt = 0;
     }
 
     CBlockIndex(unsigned int nFileIn, unsigned int nBlockPosIn, CBlock& block)
@@ -1569,6 +1530,8 @@ public:
         nTime          = block.nTime;
         nBits          = block.nBits;
         nNonce         = block.nNonce;
+
+        burnt          = 0;
 
         //PoB
         fProofOfBurn   = block.fProofOfBurn;
@@ -1729,7 +1692,7 @@ public:
 
     std::string ToString() const
     {
-        return strprintf("CBlockIndex(nprev=%08x, pnext=%08x, nFile=%d, nBlockPos=%-6d nHeight=%d, nMint=%s, nMoneySupply=%s, nFlags=(%s)(%d)(%s), nStakeModifier=%016" PRI64x ", nStakeModifierChecksum=%08x, hashProofOfStake=%s, prevoutStake=(%s), nStakeTime=%d merkle=%s, hashBlock=%s, nBurnBits=%08x nEffectiveBurnCoins=%" PRI64u " (formatted %s))",
+        return strprintf("CBlockIndex(nprev=%08x, pnext=%08x, nFile=%d, nBlockPos=%-6d nHeight=%d, nMint=%s, nMoneySupply=%s, nFlags=(%s)(%d)(%s), nStakeModifier=%016llx, nStakeModifierChecksum=%08x, hashProofOfStake=%s, prevoutStake=(%s), nStakeTime=%d merkle=%s, hashBlock=%s, nBurnBits=%08x nEffectiveBurnCoins=%llu (formatted %s) burnt %s)",
             pprev, pnext, nFile, nBlockPos, nHeight,
             FormatMoney(nMint).c_str(), FormatMoney(nMoneySupply).c_str(),
             GeneratedStakeModifier() ? "MOD" : "-", GetStakeEntropyBit(), IsProofOfStake()? "PoS" : "PoW",
@@ -1738,7 +1701,7 @@ public:
             prevoutStake.ToString().c_str(), nStakeTime,
             hashMerkleRoot.ToString().substr(0,10).c_str(),
             GetBlockHash().ToString().substr(0,20).c_str(),
-            nBurnBits, nEffectiveBurnCoins, FormatMoney(nEffectiveBurnCoins).c_str());
+            nBurnBits, nEffectiveBurnCoins, FormatMoney(nEffectiveBurnCoins).c_str(), FormatMoney(burnt).c_str());
     }
 
     void print() const
@@ -2071,8 +2034,8 @@ public:
         return strprintf(
                 "CAlert(\n"
                 "    nVersion     = %d\n"
-                "    nRelayUntil  = %" PRI64d "\n"
-                "    nExpiration  = %" PRI64d "\n"
+                "    nRelayUntil  = %lld\n"
+                "    nExpiration  = %lld\n"
                 "    nID          = %d\n"
                 "    nCancel      = %d\n"
                 "    setCancel    = %s\n"
@@ -2209,6 +2172,7 @@ public:
                 bool fCheckInputs, bool* pfMissingInputs);
     bool addUnchecked(CTransaction &tx);
     bool remove(CTransaction &tx);
+    void queryHashes(std::vector<uint256>& vtxid);
 
     unsigned long size()
     {

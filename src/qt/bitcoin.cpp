@@ -7,6 +7,7 @@
 #include "walletmodel.h"
 #include "optionsmodel.h"
 #include "guiutil.h"
+#include "util.h"
 
 #include "init.h"
 #include "ui_interface.h"
@@ -105,8 +106,10 @@ void InitMessage(const std::string &message)
   if(splashref)
   {
     //the addition of the newline is there to bump the text up so it fully fits in the coin's picture
-    splashref->showMessage(QString::fromStdString(message + "\n"), Qt::AlignBottom | Qt::AlignHCenter, QColor(55,55,55));
+    // splashref->showMessage(QString::fromStdString(message + "\n"), Qt::AlignBottom | Qt::AlignHCenter, QColor(55,55,55));
+    splashref->showMessage(QString::fromStdString(message+"\n\n") + QString::fromStdString(FormatFullVersion().c_str()), Qt::AlignBottom|Qt::AlignHCenter, QColor(55,55,55));
     QApplication::instance()->processEvents();
+
   }
 }
 
@@ -173,16 +176,31 @@ int main(int argc, char *argv[])
   QTextCodec::setCodecForTr(QTextCodec::codecForName("UTF-8"));
   QTextCodec::setCodecForCStrings(QTextCodec::codecForTr());
 #endif
+
 #if QT_VERSION > 0x050100
     // Generate high-dpi pixmaps
     QApplication::setAttribute(Qt::AA_UseHighDpiPixmaps);
 #endif
 #if QT_VERSION >= 0x050600
-    QGuiApplication::setAttribute(Qt::AA_EnableHighDpiScaling);
+    QApplication::setAttribute(Qt::AA_EnableHighDpiScaling);
+    // Address 4K screen resolution: http://doc.qt.io/qt-5/highdpi.html
+    // enable automatic scaling based on the pixel density of the monitor
+    qputenv( "QT_AUTO_SCREEN_SCALE_FACTOR", "1" );
 #endif
-#ifdef Q_OS_MAC
+#ifdef MAC_OSX
     QApplication::setAttribute(Qt::AA_DontShowIconsInMenus);
 #endif
+/* FIXME: refactor to Qt5.6+
+#if QT_VERSION >= 0x050500
+    // Because of the POODLE attack it is recommended to disable SSLv3 (https://disablessl3.com/),
+    // so set SSL protocols to TLS1.0+.
+    QSslConfiguration sslconf = QSslConfiguration::defaultConfiguration();
+    sslconf.setProtocol(QSsl::TlsV1_0OrLater);
+    QSslConfiguration::setDefaultConfiguration(sslconf);
+#endif
+*/
+
+  // TODO: Do not refer to data directory yet, this can be overridden by Intro::pickDataDirectory
 
   // ... then bitcoin.conf:
   if(!boost::filesystem::is_directory(GetDataDir(false)))
@@ -230,9 +248,12 @@ int main(int argc, char *argv[])
   if(!translator.isEmpty())
     app.installTranslator(&translator);
 
-  QSplashScreen splash(QPixmap(":/images/splash_testnet"), 0);
+  QPixmap testnet_splash_pixmap = QPixmap(":/images/splash_testnet");
+  QSplashScreen splash(QPixmap(":/images/splash"), Qt::Window);
   if(GetBoolArg("-splash", true) && !GetBoolArg("-min"))
   {
+    if(GetBoolArg("-testnet", false))
+      splash.setPixmap(testnet_splash_pixmap);
     splash.show();
     splash.setAutoFillBackground(true);
     splashref = &splash;

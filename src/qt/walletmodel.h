@@ -2,13 +2,23 @@
 #define WALLETMODEL_H
 
 #include <QObject>
+#include <vector>
+#include <map>
 
 #include "allocators.h" /* for SecureString */
+#include "wallet.h"
 
 class OptionsModel;
 class AddressTableModel;
 class TransactionTableModel;
 class CWallet;
+class CKeyID;
+class CPubKey;
+class COutput;
+class COutPoint;
+class uint256;
+class CCoinControl;
+class InscriptionTableModel;
 
 class BurnCoinsBalances
 {
@@ -85,10 +95,13 @@ public:
   OptionsModel *getOptionsModel();
   AddressTableModel *getAddressTableModel();
   TransactionTableModel *getTransactionTableModel();
+  InscriptionTableModel *getInscriptionTableModel();
 
   qint64 getBalance() const;
+  qint64 getReserveBalance() const;
   qint64 getStake() const;
   qint64 getUnconfirmedBalance() const;
+    qint64 getImmatureBalance() const;
   int getNumTransactions() const;
   EncryptionStatus getEncryptionStatus() const;
   BurnCoinsBalances getBurnCoinBalances() const;
@@ -99,7 +112,7 @@ public:
   // Return status record for SendCoins, contains error id + information
   struct SendCoinsReturn
   {
-  SendCoinsReturn(StatusCode status,
+  SendCoinsReturn(StatusCode status=Aborted,
                   qint64 fee=0,
                   QString hex=QString()):
     status(status), fee(fee), hex(hex) {}
@@ -110,7 +123,7 @@ public:
   };
 
   // Send coins to a list of recipients
-  SendCoinsReturn sendCoins(const QList<SendCoinsRecipient> &recipients, QString &txmessage, bool fBurnTx);
+  SendCoinsReturn sendCoins(const QList<SendCoinsRecipient> &recipients, const CCoinControl *coinControl, QString &txmessage, bool fBurnTx);
 
   // Wallet encryption
   bool setWalletEncrypted(bool encrypted, const SecureString &passphrase);
@@ -119,6 +132,9 @@ public:
   bool changePassphrase(const SecureString &oldPass, const SecureString &newPass);
   // Wallet backup
   bool backupWallet(const QString &filename);
+  // Wallet Repair
+  void checkWallet(int& nMismatchSpent, qint64& nBalanceInQuestion, int& nOrphansFound);
+  void repairWallet(int& nMismatchSpent, qint64& nBalanceInQuestion, int& nOrphansFound);
 
   // RAI object for unlocking wallet, returned by requestUnlock()
   class UnlockContext
@@ -142,6 +158,11 @@ public:
 
   UnlockContext requestUnlock();
 
+	bool getPubKey(const CKeyID &address, CPubKey& vchPubKeyOut) const;
+	void getOutputs(const std::vector<COutPoint>& vOutpoints, std::vector<COutput>& vOutputs);
+	void listCoins(std::map<QString, std::vector<COutput> >& mapCoins) const;
+  CWallet * getWallet();
+
 private:
   CWallet *wallet;
 
@@ -151,20 +172,26 @@ private:
 
   AddressTableModel *addressTableModel;
   TransactionTableModel *transactionTableModel;
+  InscriptionTableModel *inscriptionTableModel;
 
   // Cache some values to be able to detect changes
   qint64 cachedBalance;
+  qint64 cachedReserveBalance;
   qint64 cachedUnconfirmedBalance;
+  qint64 cachedImmatureBalance;
   qint64 cachedNumTransactions;
   EncryptionStatus cachedEncryptionStatus;
   BurnCoinsBalances cachedBurnCoinsBalances;
 
 signals:
   // Signal that balance in wallet changed
-  void balanceChanged(qint64 balance, qint64 stake, qint64 unconfirmedBalance, BurnCoinsBalances cachedBurnCoinsBalances);
+  void balanceChanged(qint64 balance, qint64 stake, qint64 unconfirmedBalance, qint64 immatureBalance, qint64 reserveBalance, BurnCoinsBalances cachedBurnCoinsBalances);
 
   // Number of transactions in wallet changed
   void numTransactionsChanged(int count);
+
+  // Reserve balance in wallet changed
+  void reserveBalanceChanged(int count);
 
   // Encryption status of wallet changed
   void encryptionStatusChanged(int status);

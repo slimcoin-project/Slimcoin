@@ -873,10 +873,14 @@ void ThreadMapPort2(void* parg)
 #ifndef UPNPDISCOVER_SUCCESS
     /* miniupnpc 1.5 */
     devlist = upnpDiscover(2000, multicastif, minissdpdpath, 0);
-#else
+#elif MINIUPNPC_API_VERSION < 14
     /* miniupnpc 1.6 */
     int error = 0;
     devlist = upnpDiscover(2000, multicastif, minissdpdpath, 0, 0, &error);
+#else
+    /* miniupnpc 1.9.20150730 */
+    int error = 0;
+    devlist = upnpDiscover(2000, multicastif, minissdpdpath, 0, 0, 2, &error);
 #endif
 
     struct UPNPUrls urls;
@@ -1000,7 +1004,11 @@ void MapPort(bool /* unused fMapPort */)
 // testnet dns seed begins with 't', all else are dns seeds.
 // FIXME: strDNSSeed required
 static const char *strDNSSeed[][2] = {
-  {"seed", "seed.slimcoin.bit"}
+    {"seed0", "seed.slimcoin.bit"},
+    {"seed1", "145.239.189.106"},
+    {"seed2", "185.68.67.37"},
+    {"seed3", "5.9.39.9"},
+    {"seed4", "144.76.64.49"}
 };
 
 void ThreadDNSAddressSeed(void* parg)
@@ -1069,7 +1077,7 @@ void ThreadDNSAddressSeed2(void* parg)
 // Physical IP seeds: 32-bit IPv4 addresses: e.g. 178.33.22.32 = 0x201621b2
 unsigned int pnSeed[] =
 {
-  0x231621b2, 0x4a54c854, 0x13cca445, 0x4b64bb25, 0x09510905, 0x471503c0, 0xd8fab56b, 0xd9fab56b,
+  0x95efbd6a, 0xb9444325, 0x59279, 0x904c4031
 };
 
 void DumpAddresses()

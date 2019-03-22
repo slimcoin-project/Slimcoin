@@ -175,7 +175,7 @@ void TransactionView::setModel(WalletModel *model)
         transactionView->horizontalHeader()->resizeSection(
                 TransactionTableModel::Status, 23);
         transactionView->horizontalHeader()->resizeSection(
-                TransactionTableModel::Date, 120);
+                TransactionTableModel::Date, 128);
         transactionView->horizontalHeader()->resizeSection(
                 TransactionTableModel::Type, 120);
 #if QT_VERSION < 0x050000

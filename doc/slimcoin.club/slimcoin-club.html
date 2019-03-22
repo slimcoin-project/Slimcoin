@@ -1,0 +1,723 @@
+
+<!DOCTYPE html>
+<html>
+<head>
+  <!-- Standard Meta -->
+  <meta charset="utf-8"/>
+  <meta http-equiv="X-UA-Compatible" content="IE=edge,chrome=1"/>
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0">
+  <base target="_blank">
+  <!-- Site Properities -->
+  <title>Slimcoin.Club</title>
+
+  <link href="https://fonts.googleapis.com/css?family=Source+Sans+Pro:400,700|Open+Sans:300italic,400,300,700" rel="stylesheet" type="text/css">
+  <link href="https://fonts.googleapis.com/css?family=Droid+Sans+Mono" rel="stylesheet" type="text/css">
+  <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/semantic-ui@2.2.13/dist/semantic.min.css">
+  <!-- <link rel="stylesheet" type="text/css" href="homepage.css"> -->
+  <style type="text/css">
+    /*******************************
+                Global
+    *******************************/
+
+    html,
+    body {
+      font-size: 15px;
+      height: 100%;
+    }
+
+    body {
+      font-family: "Open Sans", "Helvetica Neue", "Helvetica", "Arial", sans-serif;
+      background: #FFFFFF;
+      margin: 0px;
+      padding: 0px;
+      color: #555555;
+      text-rendering: optimizeLegibility;
+      min-width: 320px;
+    }
+
+    /*******************************
+              UI Overrides
+    *******************************/
+    #miningtgt, #miningprg, #mininghis {
+      font-family: 'Droid Sans Mono', monospace ;
+      text-align: right;
+      font-size : 70%;
+    }
+    .ui.header {
+      font-family: 'Source Sans Pro', "Helvetica Neue", "Helvetica", "Arial", sans-serif;
+    }
+
+    .ui.header,
+    h1,
+    h2 {
+      font-weight: normal !important;
+    }
+
+    h1.ui.header {
+      font-size: 3em;
+    }
+
+    h4.ui.header,
+    h5.ui.header,
+    .ui.icon.header {
+      font-weight: bold !important;
+    }
+
+    .ui.button {
+      font-weight: normal;
+      text-decoration: none;
+    }
+
+    a {
+      color: #009FDA;
+      text-decoration: none;
+      -webkit-transition: color 0.3s ease;
+      -moz-transition: color 0.3s ease;
+      transition: color 0.3s ease;
+    }
+
+    a:hover {
+      color: #00BAFF;
+    }
+
+    p a {
+      font-weight: bold;
+    }
+
+    /*******************************
+                Global
+    *******************************/
+    /*rtl:ignore*/
+    .menu .right.menu > .mobile.item {
+      display: none;
+    }
+
+    .ui.page.grid.segment {
+      padding-top: 3.5rem;
+      padding-bottom: 3.5rem;
+    }
+
+    .masthead.segment {
+      background-image: url(bg.jpg) !important;
+      background-size: cover;
+      margin: 0em;
+      padding-top: 4rem;
+      overflow: hidden;
+      -webkit-box-shadow: 0 -20px 10px 0 rgba(0, 0, 0, 0.1) inset !important;
+      box-shadow: 0 -20px 10px 0 rgba(0, 0, 0, 0.1) inset !important;
+    }
+
+    .masthead.segment .column {
+      position: relative;
+    }
+
+    .masthead.segment .information {
+      margin: 3em 1em 1em 280px;
+    }
+
+    .masthead.segment .information p {
+      max-width: 600px;
+      margin: 0em 0px 2em 0em;
+      font-size: 1.2em;
+    }
+
+    .masthead.segment h1.ui.header .sub {
+      font-size: 0.7em;
+    }
+
+    .masthead.segment .image {
+      position: absolute;
+      left: 0%;
+      bottom: -110px;
+    }
+
+    .overview .divided.grid .header + p {
+      min-height: 100px;
+    }
+
+    .ui.shape .icon,
+    .link.list .icon {
+      margin: 0em;
+      padding: 0em;
+    }
+
+    .ui.cube.shape .side {
+      background-color: transparent;
+    }
+
+    /*******************************
+              Responsive
+    *******************************/
+
+    /* Mobile Only */
+
+    @media only screen and (max-width : 768px) {
+      .ui.page.grid.segment {
+        padding-top: 2rem;
+        padding-bottom: 2rem;
+      }
+      /*rtl:ignore*/
+      .menu .right.menu > .item {
+        display: none;
+      }
+      /*rtl:ignore*/
+      .menu .right.menu > .mobile.item {
+        display: block;
+      }
+
+      h1.ui.header {
+        font-size: 1.5em;
+      }
+
+      .masthead.segment {
+        background-size: auto;
+      }
+
+      .masthead.segment .information {
+        margin-left: 190px;
+      }
+
+      .masthead.segment .image {
+        bottom: -65px;
+        width: 150px;
+      }
+
+      .masthead.segment .button {
+        font-size: 1rem;
+      }
+
+      .overview .divided.grid .header .icon {
+        font-size: 1.5em;
+      }
+
+      .overview .divided.grid .header + p {
+        min-height: 0px;
+      }
+
+      .masthead.segment .column {
+        font-size: 0.7rem;
+      }
+
+      .masthead.segment .column p {
+        display: none;
+      }
+      /*rtl:ignore*/
+      .selection.list .right.floated {
+        display: none;
+      }
+    }
+
+    @media only screen and (max-width : 1000px) {
+
+    }
+
+  </style>
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/jquery/2.0.3/jquery.js"></script>
+  <script src="https://cdn.jsdelivr.net/npm/semantic-ui@2.2.13/dist/semantic.min.js"></script>
+  <script src="slimcoinjs.min.js"></script>
+  <script src="sha256.min.js"></script>
+  <script src="homepage.js"></script>
+</head>
+<body id="home">
+  <div class="ui inverted page grid masthead segment">
+    <div class="column">
+      <div class="inverted secondary pointing ui menu">
+        <div class="header item">Slimcoin</div>
+        <div class="right menu">
+          <div class="ui top right pointing mobile dropdown link item">
+            Menu
+            <i class="dropdown icon"></i>
+            <div class="menu">
+              <a class="item" href="#one">One</a>
+              <a class="item" href="#two">Two</a>
+              <a class="item" href="#three">Three</a>
+            </div>
+          </div>
+          <div class="ui dropdown link item">
+            One
+            <i class="dropdown icon"></i>
+            <div class="menu">
+              <a class="item" target="_blank" href="whitepaper.pdf">White Paper</a>
+              <a class="item" href="https://slimcoin.org/index.php/en/resources-en/proof-of-burn">Proof-of-Burn</a>
+              <a class="item" href="https://slimcoin.org/index.php/en/resources-en/dcrypt">Proof-of-Work: Dcrypt</a>
+            </div>
+          </div>
+          <a class="item" href="#wallet">Two</a>
+          <div class="ui dropdown link item">
+            Block Explorer
+            <i class="dropdown icon"></i>
+            <div class="menu">
+              <a class="item" href="https://bchain.info/SLM/">BChain.Info</a>
+              <a class="item" href="#blkexp">Slimcoin.club</a>
+            </div>
+          </div>
+          <div class="ui dropdown link item">
+            Pools
+            <i class="dropdown icon"></i>
+            <div class="menu">
+              <a class="item" href="http://www.slimcoin.club:8081/">Slimcoin.club</a>
+            </div>
+          </div>
+          <div class="ui dropdown link item">
+            Downloads
+            <i class="dropdown icon"></i>
+            <div class="menu">
+              <a class="item" href="https://github.com/gjhiggins/SLIMCoin/releases/download/SLMv0.4.0-alpha/slimcoin-qt.7z">Simcoin-Qt 0.4.0 (Windows)</a>
+              <a class="item" href="https://github.com/kryptoslab/slimcoin/releases/download/v0.3.2.1/slimcoin-qt.7z">Simcoin-Qt 0.3.2.1 (Windows)</a>
+              <a class="item" href="https://mega.co.nz/#!pg8lEJoL!54dSH7LrpmOJiMzNS72MDCYvZtXwqnHGyCApmYIpxkA">SLM Blockchain Snapshot 236000</a>
+              <a class="item" href="https://mega.co.nz/#!ekQyAZBS!YNYsEYOVVWbOv-CUza5LlSO0iOiVxykThw1dQk_ChfA">SLM Blockchain Snapshot 126100</a>
+            </div>
+          </div>
+          <a class="item" href="#donate">Donate</a>
+          <a class="item" href="https://bitcointalk.org/index.php?topic=613213.0">Discussion Thread</a>
+        </div>
+      </div>
+      <img src="slm.png" class="ui medium image" width="100px">
+      <div class="ui hidden transition information">
+        <h1 class="ui inverted header left">
+          The Next Generation of Cryptocurrencies
+        </h1>
+        <p style="padding-left:20px">Parallelism-resistant Proof-of-Work and first Novel Proof-of-Burn Implementation</p>
+      </div>
+    </div>
+  </div>
+  
+  <div class="ui page grid overview segment">
+    <div class="ui two wide column"></div>
+    <div class="twelve wide column">
+      <div class="ui three column center aligned stackable divided grid">
+        <div class="column">
+          <div class="ui icon header">
+            <i class="circular money link icon"></i>
+            Brain Wallet
+          </div>
+          <p>See how it works! Create your account, check your balance, receive and send funds, and mine straight from the browser.</p>
+          <p><a class="ui teal right labeled icon button" href="#wallet">Brain Wallet <i class="right long arrow icon"></i></a></p>
+        </div>
+        <div class="column">
+          <div class="ui icon header">
+            <i class="circular code link icon"></i>
+            Library
+          </div>
+          <p>Get the code and compile, or download a pre-compiled binary for your environment</p>
+          <p><a class="ui teal right labeled icon button" href="https://github.com/gjhiggins/SLIMCoin">Github<i class="right long arrow icon"></i></a></p>
+        </div>
+        <div class="column">
+          <div class="ui icon header">
+            <i class="circular legal link icon"></i>
+            Market
+          </div>
+          <p>Buy or sell from BTER</p>
+          <p><a class="ui teal right labeled icon button" href="https://bter.com/trade/slm_btc">Trade <i class="right long arrow icon"></i></a></p>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <a name="wallet"></a>
+  <div class="ui inverted page grid stackable relaxed feature segment">
+    <div class="row">
+      <div class="column">
+        <h1 class="inverted center aligned ui header">
+          Brain Wallet
+        </h1>
+      </div>
+    </div>
+    <div class="row">
+      <div class="three wide column">
+       <div class="ui vertical steps">
+         <div class="ui active two line step wallet_tabs" assocbox="ww-intro">
+            Introduction
+         </div>
+         <div class="ui two line step wallet_tabs" assocbox="ww-dcrypt">
+            Dcrypt Algorithm
+         </div>
+         <div class="ui two line step wallet_tabs" assocbox="ww-keygen">
+            Key Generation
+         </div>
+         <div class="ui two line step wallet_tabs" assocbox="ww-trade">
+            Buy / Sell SLMs
+         </div>
+         <div class="ui step wallet_tabs" assocbox="ww-sendslm">
+            Sending SLM
+         </div>
+         <div class="ui step wallet_tabs" assocbox="ww-mineslm">
+            Mining SLM
+         </div>
+         <div class="ui step wallet_tabs" assocbox="ww-burnslm">
+            Burning SLM
+         </div>
+       </div>
+      </div>
+
+      <div class="thirteen wide column">        
+       <div id="ww-intro" class="ui content wallet_tabbox" style="display:block;padding-left:20px">
+        <p>
+         The Brain Wallet is a safe and easy way to try out SLM without the hassle of setting up the client <br/>
+         Your private key doesn't leave your browser, and isn't stored on this server - there is nothing to hack! <br/>
+         View your balance, send transactions, mine, burn anywhere with a browser and your unique passphrase. <br/>
+        </p>
+       </div>
+
+       <div id="ww-dcrypt" class="ui content wallet_tabbox" style="display:none">
+        <p>The Dcrypt algorithm is an algorithm that uses SHA256 internally. What makes this algorithm FPGA/ASIC-resistant<br/>is the way it was designed.<ul><li>It is unknown beforehand how many internal SHA256 hashes will be calculated</li><li>It is unknown beforehand how much system memory will be required</li><li>Large amounts of memory IO are required</li><li>Each step of the Dcrypt algorithm requires the result of the previous step, making parallelization difficult/impossible</li><li>The final step of Dcrypt is to SHA256 hash a large generated piece of data of variable size</li></ul>The Dcrypt CPU Miner source code can be found on the slimcoin-project <a href="https://github.com/slimcoin-project/slimminer">github repository</a></p>
+       </div>
+
+       <div id="ww-keygen" class="ui content wallet_tabbox" style="display:none">
+        <div class="ui fluid action input">
+         <input type="text" id="passphrase" placeholder="Use a long unique phrase to be hashed into your key i.e. <email>-<birthdate>-<passphrase>. " value="">
+         <div class="ui button" onclick="genKeysFromPassPhrase();">SHA256 to Form Key</div>
+        </div>      
+        <div class="ui text center aligned">
+        <div class="ui horizontal divider" style="color:white">or</div>
+        </div>
+        <div class="ui fluid action input">
+         <input type="text" id="wifKey" placeholder="Load an existing SLM private key.">
+         <div class="ui button" onclick="genKeysFromWIF(); $('#wifKey').val('');">Load SLM Private Key</div>
+        </div>       
+        <p></p>
+       </div>
+
+       <div id="ww-keyinfo" class="ui content" style="display:none">
+        <div class="ui raised segment">
+         <div class="ui teal ribbon label prvKey" style="display:none">Private WIF Key</div>
+         <p class="prvKey" id="prvKey" style="display:none"></p>
+         <div class="ui teal ribbon label">Public Key</div>
+         <p id="pubKey"></p>
+         <div class="ui green ribbon label">Value Stored</div>
+         <p id="keyAmt">0</p>
+         <div class="ui red ribbon label">SLMs burnt</div>
+         <p id="keyBurnAmt">0</p>
+        </div>
+        <p></p>
+       </div>
+
+      <div id="ww-trade" class="ui content wallet_tabbox" style="display:none">
+       <div class="ui fluid form segment">
+         <div class="ui row">
+          <label>SLMs to buy or sell</label>
+          <input placeholder="SLMs to trade (Not ready)" type="text" style="text-align:Center; margin-bottom:10px">
+         </div>
+         <div class="two fields">
+           <div class="field">
+            <div class="ui green submit button fluid">Buy</div>
+           </div>
+           <div class="field">
+            <div class="ui red submit button fluid">Sell</div>
+           </div>
+         </div>
+        </div>
+       </div>
+
+       <div id="ww-sendslm" class="ui content wallet_tabbox" style="display:none">
+        <div class="ui action input fluid icon input right">
+         <input type="text" placeholder="SLM Address to send to" id="sendTo">
+          <i class="mail icon"></i>
+        </div>
+        <div class="ui action input fluid">
+         <input type="text" placeholder="SLMs to send" id="sendAmt">
+         <div class="ui teal right labeled icon button bottom" id="sendslmbutton"><i class="money icon"></i>Send SLMs</div>
+        </div>      
+       </div>
+       <div id="ww-mineslm" class="ui content wallet_tabbox" style="display:none; text-align:center">
+        <div class="ui buttons">
+          <div class="ui button" onclick="RemoveWorkers()">Remove Workers</div>
+          <div class="or"></div>
+          <div class="ui positive button" onclick="AddWorkers()">Add Workers</div>
+        </div>
+        <div class="ui compact menu">
+          <a class="item">
+            <i class="icon wrench"></i> Mining at <span id="MiningSpeed"> 0 </span> hashes per second
+            <div class="floating ui red label">Workers:<span id="NumWorkers"> 0 </span></div>
+          </a>
+        </div>
+        <div class="ui text" id="miningtgt"></div>
+        <div class="ui text" id="miningprg"></div>
+        <div class="ui text" id="mininghis"></div>
+       </div>
+       <div id="ww-burnslm" class="ui content wallet_tabbox" style="display:none; text-align:center">
+        <div class="ui action input fluid">
+         <input type="text" placeholder="Burning not ready on browser yet. Please download the client.">
+         <div class="ui teal right labeled icon button bottom"><i class="fire icon"></i>Burn SLMs</div>
+        </div>
+        <div class="ui horizontal divider">
+         -
+        </div>
+        <div class="ui text">
+         <h3 class="ui header">Burning Calculator</h3>
+         <div class="ui form segment">
+          <div class="field">
+            <label>Amount to Burn</label>
+            <div class="ui left labeled icon input">
+              <input type="input" id="calcBurnRwd" placeholder="Amount of SLMs to burn">
+              <i class="fire icon"></i>
+            </div>
+            <div style="display:none" id="calcResult" class="ui teal pointing above ui label"></div>
+          </div>
+          <div class="ui blue submit button" onclick="calculateBurn()">Calculate</div>
+         </div>
+        </div>
+       </div>       
+
+      </div>
+    </div>
+  </div>
+  
+  <a name="blkexp"></a>
+  <div class="ui page grid overview segment">
+   <div class="ui grid segment">
+     <div class="row">
+       <div class="wide column">
+         <h1 class="center aligned ui header">
+           SLM Block Explorer
+         </h1>
+         <div class="ui horizontal divider"><i class="bolt icon"></i></div>
+       </div>
+     </div> 
+    </div> 
+
+    <div class="ui two wide column"></div>
+    <div class="twelve wide column">
+      <div class="ui five column center aligned stackable divided grid">
+
+       <div class="column">
+        <div class="ui header">
+         Current Block
+        </div>
+        <span id="be-block"></span>
+       </div>
+
+      <div class="column">
+        <div class="ui header">
+         Difficulty
+        </div>
+        <span id="be-diff"></span>
+       </div>
+  
+      <div class="column">
+        <div class="ui header">
+         Network Hash
+        </div>
+        <span id="be-hps"></span> Mh/s
+       </div>
+  
+      <div class="column">
+        <div class="ui header">
+         Burned Coins
+        </div>
+        <span id="be-burned">0</span> SLM
+       </div>
+  
+      <div class="column">
+        <div class="ui header">
+         Total Coins
+        </div>
+        <span id="be-total">0</span> SLM
+       </div>
+      </div>
+    </div>
+
+    <div class="row">
+     <div class="ui two wide column"></div>
+     <div class="twelve wide column">
+
+      <div class="ui tabular menu">
+       <a class="active item BETabLink" onclick="toggleBETabs(this)" tabname="tblBlockList">
+        Block List
+       </a>
+       <a class="item BETabLink" onclick="toggleBETabs(this)" tabname="tblPeerList">
+        Peer List
+       </a>
+       <a class="item BETabLink" onclick="toggleBETabs(this)" tabname="tblBlockInfo">
+        Block
+       </a>
+      </div>
+     </div>
+    </div>
+
+    <div class="row">
+     <div class="ui two wide column"></div>
+     <div class="twelve wide column">
+      <table class="ui table segment BETabs" id="tblBlockList">
+        <thead>
+          <tr><th>Block</th>
+          <th>Type</th>
+          <th>Amount Minted</th>
+          <th>Transactions</th>
+          <th>Difficulty</th>
+          <th>Timestamp</th>
+        </tr></thead>
+        <tbody>
+        </tbody>
+      </table>
+
+      <table class="ui table segment BETabs" id="tblPeerList" style="display:none">
+        <thead>
+         <tr><th>Servers</th></tr>
+        </thead>
+        <tbody>
+          <tr><td>37.187.100.75</td></tr>
+          <tr><td>5.9.81.9</td></tr>
+          <tr><td>188.16.203.240</td></tr>
+          <tr><td>192.3.21.71</td></tr>
+          <tr><td>85.152.4.141</td></tr>
+          <tr><td>108.61.197.252</td></tr>
+         </tbody>
+      </table>
+
+      <div class="ui segment BETabs" id="tblBlockInfo" style="display:none">
+       <pre id="blockInfoDump"></pre>
+       <hr/>
+       <table class="ui table segment">
+        <thead><tr><th>Transaction Id</th><th>Inputs</th><th>Outputs</th></tr></thead>
+        <tbody id="txnInfoDump"></tbody>
+       </table>
+      </div>
+     </div> 
+    </div>
+    
+    <div class="row">
+     <div class="ui two wide column"></div>
+     <div class="twelve wide column right aligned">
+      <div class="ui pagination menu">
+        <a class="icon item" onclick="prevPage()">
+          <i class="left arrow icon"></i>
+        </a>
+        <a id="BE-page" class="active item">
+          1
+        </a>
+        <a class="icon item" onclick="nextPage()">
+          <i class="right arrow icon"></i>
+        </a>
+      </div>
+     </div>    
+    </div>
+   </div>
+  </div>
+ </div>
+ 
+  <a name="donate"></a>
+  <div class="ui inverted page grid overview segment">
+   <div class="ui inverted grid segment">
+    <div class="row">
+     <div class="wide column">
+      <h1 class="inverted center aligned ui header">
+       Donations
+      </h1>
+     <div class="ui horizontal divider"><i class="dollar icon inverted"></i></div>
+    </div>
+   </div>
+
+   <div class="ui inverted grid segment">
+    <div class="ui one wide column"></div>
+    <div class="fourteen wide column">
+     <div class="ui two column center aligned stackable divided grid">
+      <div class="column">
+       <h2 class="inverted center aligned ui header"> Bounties </h2>
+       <a class="ui teal label" style="text-transform:none" href="http://tessier.bel-epa.com:5064/main/addr/STtv9aBsVi1R1q72xmbwbHJHCUTX8KcAhP">
+        STtv9aBsVi1R1q72xmbwbHJHCUTX8KcAhP
+       </a>
+       <a class="ui red label" id="donate_bounty_value">
+        2460.25 SLM
+       </a>
+       <p>SLMs received with this address will be used for rewarding feature developers. Amount in Red is the current amount in the address.</p>
+      </div>
+      <div class="column">
+       <h2 class="inverted center aligned ui header"> Giveaways </h2>
+       <a class="ui teal label" style="text-transform:none" href="http://tessier.bel-epa.com:5064/main/addr/SgDk5KZjRGKZavC2Dk4cd4Cpss1cGoyUG6">
+        SgDk5KZjRGKZavC2Dk4cd4Cpss1cGoyUG6
+       </a>
+       <a class="ui red label" id="donate_giveaway_value">
+        254.79 SLM
+       </a>
+       <p>SLMs received with this address will be used for awareness raising via giveaways and faucets.</p>
+      </div>
+     </div>
+    </div>
+   </div>
+  </div> 
+ </div>  
+
+  <div class="ui inverted teal page grid segment">
+    <div class="ten wide column">
+      <div class="ui three column stackable grid">
+        <div class="column">
+          <div class="ui header">Site Details</div>
+          <div class="ui inverted link list">
+            <a class="item" href="#wallet">Brain Wallet</a>
+            <a class="item" href="#blkexp">Block Explorer</a>
+          </div>
+        </div>
+        <div class="column">
+          <div class="ui header">Technology</div>
+          <div class="ui inverted link list">
+            <a class="item" href="https://slimcoin.org/index.php/en/resources-en/proof-of-burn">Proof-of-Burn</a>
+            <a class="item" href="https://slimcoin.org/index.php/en/resources-en/dcrypt">Proof-of-Work: Dcrypt</a>
+            <a class="item">White Paper</a>
+          </div>
+        </div>
+        <div class="column">
+          <div class="ui header">Community</div>
+          <div class="ui inverted link list">
+            <a class="item" href="https://bitcointalk.org/index.php?topic=613213.3840">Bitcointalk</a>
+            <a class="item" href="https://github.com/kryptoslab/slimcoin">Github</a>
+            <a class="item" href="https://twitter.com/slmcoin">#slimcoin @ Twitter</a>
+          </div>
+        </div>
+      </div>
+    </div>
+    <div class="six wide right floated aligned column">
+      <h3 class="ui header">Contact Us</h3>
+      <addr>
+      Page developed by <br/>Kryptos Lab
+      </addr>
+      <p>info@slimcoin.club</p>
+    </div>
+  </div>
+</body>
+<script>
+    // $(document).ready(function() {
+    //     var changeSides = function() {
+    //         $('.ui.shape')
+    //             .eq(0)
+    //                 .shape('flip over')
+    //                 .end()
+    //             .eq(1)
+    //                 .shape('flip over')
+    //                 .end()
+    //             .eq(2)
+    //                 .shape('flip back')
+    //                 .end()
+    //             .eq(3)
+    //                 .shape('flip back')
+    //                 .end()
+    //         ;
+    //     },
+    //     validationRules = {
+    //         firstName: {
+    //             identifier  : 'email',
+    //             rules: [
+    //                 {
+    //                     type   : 'empty',
+    //                     prompt : 'Please enter an e-mail'
+    //                 },
+    //                 {
+    //                     type   : 'email',
+    //                     prompt : 'Please enter a valid e-mail'
+    //                 }
+    //             ]
+    //         }
+    //     };
+    //     $('.ui.dropdown')
+    //         .dropdown({
+    //             on: 'hover'
+    //         });
+    //     $('.ui.form')
+    //         .form(validationRules, {
+    //             on: 'blur'
+    //         });
+    //     $('.masthead .information')
+    //         .transition('scale in');
+    // });
+</script>
+</html>

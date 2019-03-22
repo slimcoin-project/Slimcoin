@@ -4,11 +4,11 @@
 
 # Changing to be in line with the Gitian build locations
 ifndef DEPSDIR
-  DEPSDIR=$(HOME)/staging
+  DEPSDIR=/mnt/xcomp
 endif
 
 ifndef HOST
-  HOST=i586-mingw32msvc
+  HOST=x86_64-w64-mingw32
 endif
 
 GPP=$(HOST)-g++
@@ -17,11 +17,12 @@ GPP=$(HOST)-g++
 USE_UPNP:=0
 
 INCLUDEPATHS= \
- -I"$(DEPSDIR)/include" \
+ -I"/usr/i686-w64-mingw32/sys-root/mingw/include" \
  -I"$(DEPSDIR)/include/boost" \
- -I"$(DEPSDIR)/include/libpng16" \
- -I"$(DEPSDIR)/include/miniupnpc" \
- -I"$(DEPSDIR)/include/openssl" \
+ -I"$(DEPSDIR)/libpng16/include" \
+ -I"$(DEPSDIR)/miniupnpc/include" \
+ -I"$(DEPSDIR)/qrencode/include" \
+ -I"$(DEPSDIR)/openssl/include" \
  -I"obj"  # required to find 'build.h'
 
 LIBPATHS= -L"$(DEPSDIR)/lib"

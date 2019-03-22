@@ -7,20 +7,24 @@
 #ifndef H_BITCOIN_SCRIPT
 #define H_BITCOIN_SCRIPT
 
-#include "base58.h"
-
 #include <string>
 #include <vector>
 
 #include <boost/foreach.hpp>
+#include <boost/variant.hpp>
+
+#include "keystore.h"
+#include "bignum.h"
+/* FIXME: ASSUME REDUNDANT
+#include "base58.h"
+*/
 
 typedef std::vector<unsigned char> valtype;
 
 class CTransaction;
-class CKeyStore;
-class CScript;
 
-static const unsigned int MAX_OP_RETURN_RELAY = 120;      // bytes
+static const unsigned int MAX_SCRIPT_ELEMENT_SIZE = 520; // bytes
+static const unsigned int MAX_OP_RETURN_RELAY = 100;      // bytes
 
 /** Signature hash types/flags */
 enum
@@ -30,7 +34,6 @@ enum
     SIGHASH_SINGLE = 3,
     SIGHASH_ANYONECANPAY = 0x80,
 };
-
 
 enum txnouttype
 {
@@ -42,6 +45,20 @@ enum txnouttype
     TX_MULTISIG,
     TX_NULL_DATA,
 };
+
+class CNoDestination {
+public:
+    friend bool operator==(const CNoDestination &a, const CNoDestination &b) { return true; }
+    friend bool operator<(const CNoDestination &a, const CNoDestination &b) { return true; }
+};
+
+/** A txout script template with a specific destination. It is either:
+ *  * CNoDestination: no destination set
+ *  * CKeyID: TX_PUBKEYHASH destination
+ *  * CScriptID: TX_SCRIPTHASH destination
+ *  A CTxDestination is the internal data type encoded in a CBitcoinAddress
+ */
+typedef boost::variant<CNoDestination, CKeyID, CScriptID> CTxDestination;
 
 const char* GetTxnOutputType(txnouttype t);
 
@@ -193,7 +210,7 @@ enum opcodetype
 };
 
 const char* GetOpName(opcodetype opcode);
-bool ExtractAddress(const CScript &scriptPubKey, CBitcoinAddress &addressRet);
+bool ExtractDestination(const CScript& scriptPubKey, CTxDestination& addressRet);
 bool Solver(const CScript& scriptPubKey, txnouttype& typeRet, std::vector<std::vector<unsigned char> >& vSolutionsRet);
 
 
@@ -258,10 +275,10 @@ protected:
 
 public:
     CScript() { }
-CScript(const CScript& b) : std::vector<unsigned char>(b.begin(), b.end()) { }
-CScript(const_iterator pbegin, const_iterator pend) : std::vector<unsigned char>(pbegin, pend) { }
+    CScript(const CScript& b) : std::vector<unsigned char>(b.begin(), b.end()) { }
+    CScript(const_iterator pbegin, const_iterator pend) : std::vector<unsigned char>(pbegin, pend) { }
 #ifndef _MSC_VER
-CScript(const unsigned char* pbegin, const unsigned char* pend) : std::vector<unsigned char>(pbegin, pend) { }
+    CScript(const unsigned char* pbegin, const unsigned char* pend) : std::vector<unsigned char>(pbegin, pend) { }
 #endif
 
     CScript& operator+=(const CScript& b)
@@ -330,6 +347,12 @@ CScript(const unsigned char* pbegin, const unsigned char* pend) : std::vector<un
         return *this;
     }
 
+    CScript& operator<<(const CPubKey& key)
+    {
+        std::vector<unsigned char> vchKey = key.Raw();
+        return (*this) << vchKey;
+    }
+
     CScript& operator<<(const CBigNum& b)
     {
         *this << b.getvch();
@@ -367,7 +390,7 @@ CScript(const unsigned char* pbegin, const unsigned char* pend) : std::vector<un
     {
         // I'm not sure if this should push the script or concatenate scripts.
         // If there's ever a use for pushing a script onto a script, delete this member fn
-        assert(!"warning: pushing a CScript onto a CScript with << is probably not intended, use + to concatenate");
+        assert(!"Warning: Pushing a CScript onto a CScript with << is probably not intended, use + to concatenate!");
         return *this;
     }
 
@@ -441,7 +464,7 @@ CScript(const unsigned char* pbegin, const unsigned char* pend) : std::vector<un
                 memcpy(&nSize, &pc[0], 4);
                 pc += 4;
             }
-            if (end() - pc < nSize)
+            if (end() - pc < 0 || (unsigned int)(end() - pc) < nSize)
                 return false;
             if (pvchRet)
                 pvchRet->assign(pc, pc + nSize);
@@ -501,7 +524,7 @@ CScript(const unsigned char* pbegin, const unsigned char* pend) : std::vector<un
         //Get the solutions for this CScript
         std::vector<valtype> vSolutionsThis;
         txnouttype whichTypeThis;
-        if (!Solver(*this, whichTypeThis, vSolutionsThis))
+        if (!::Solver(*this, whichTypeThis, vSolutionsThis))
             return false;
 
         //This CScript must be a TX_PUBKEY
@@ -511,23 +534,23 @@ CScript(const unsigned char* pbegin, const unsigned char* pend) : std::vector<un
         //Get the solutions for the testing CScript
         std::vector<valtype> vSolutionsTesting;
         txnouttype whichTypeTesting;
-        if (!Solver(scriptPubKey, whichTypeTesting, vSolutionsTesting))
+        if (!::Solver(scriptPubKey, whichTypeTesting, vSolutionsTesting))
             return false;
 
         //The testing pubkey can be either a TX_PUBKEY or TX_PUBKEYHASH
         if (whichTypeTesting == TX_PUBKEY || whichTypeTesting == TX_PUBKEYHASH)
         {
-            CBitcoinAddress thisAddr, testingAddr;
-            if (!ExtractAddress(*this, thisAddr))
+            CTxDestination thisAddr, testingAddr;
+            if (!ExtractDestination(*this, thisAddr))
                 return false;
-            if (!ExtractAddress(scriptPubKey, testingAddr))
+            if (!ExtractDestination(scriptPubKey, testingAddr))
                 return false;
 
             // the testing is a hash, so hash this and compare
             return thisAddr == testingAddr;
         }else
             return false;
-
+        return false;
     }
 
     // Pre-version-0.6, Bitcoin always counted CHECKMULTISIGs
@@ -559,14 +582,8 @@ CScript(const unsigned char* pbegin, const unsigned char* pend) : std::vector<un
     }
 
 
-    void SetBitcoinAddress(const CBitcoinAddress& address);
-    void SetBitcoinAddress(const std::vector<unsigned char>& vchPubKey)
-    {
-        SetBitcoinAddress(CBitcoinAddress(vchPubKey));
-    }
-
-    void SetMultisig(int nRequired, const std::vector<CKey>& keys);
-    void SetPayToScriptHash(const CScript& subscript);
+    void SetDestination(const CTxDestination& address);
+    void SetMultisig(int nRequired, const std::vector<CPubKey>& keys);
 
 
     void PrintHex() const
@@ -601,22 +618,30 @@ CScript(const unsigned char* pbegin, const unsigned char* pend) : std::vector<un
     {
         printf("%s\n", ToString().c_str());
     }
+
+    CScriptID GetID() const
+    {
+        return CScriptID(Hash160(*this));
+    }
 };
 
 
+bool IsCanonicalPubKey(const std::vector<unsigned char> &vchPubKey);
+bool IsCanonicalSignature(const std::vector<unsigned char> &vchSig);
 
+bool EvalScript(std::vector<std::vector<unsigned char> >& stack, const CScript& script, const CTransaction& txTo, unsigned int nIn, int nHashType);
+int ScriptSigArgsExpected(txnouttype t, const std::vector<std::vector<unsigned char> >& vSolutions);
+bool IsStandard(const CScript& scriptPubKey, txnouttype& whichType);
+bool IsMine(const CKeyStore& keystore, const CScript& scriptPubKey);
+bool IsMine(const CKeyStore& keystore, const CTxDestination &dest);
+bool ExtractDestinations(const CScript& scriptPubKey, txnouttype& typeRet, std::vector<CTxDestination>& addressRet, int& nRequiredRet);
+bool SignSignature(const CKeyStore& keystore, const CScript& fromPubKey, CTransaction& txTo, unsigned int nIn, int nHashType=SIGHASH_ALL);
+bool SignSignature(const CKeyStore& keystore, const CTransaction& txFrom, CTransaction& txTo, unsigned int nIn, int nHashType=SIGHASH_ALL);
+bool VerifySignature(const CTransaction& txFrom, const CTransaction& txTo, unsigned int nIn, bool fValidatePayToScriptHash, int nHashType);
+bool VerifyScript(const CScript& scriptSig, const CScript& scriptPubKey, const CTransaction& txTo, unsigned int nIn, bool fValidatePayToScriptHash, int nHashType);
 
-
-bool EvalScript(std::vector<std::vector<unsigned char> > &stack, const CScript &script, const CTransaction &txTo, unsigned int nIn, int nHashType);
-int ScriptSigArgsExpected(txnouttype t, const std::vector<std::vector<unsigned char> > &vSolutions);
-bool IsStandard(const CScript &scriptPubKey);
-bool IsMine(const CKeyStore &keystore, const CScript &scriptPubKey);
-bool ExtractAddresses(const CScript &scriptPubKey, txnouttype &typeRet, std::vector<CBitcoinAddress> &addressRet, int &nRequiredRet);
-bool SignSignature(const CKeyStore &keystore, const CScript &fromPubKey, CTransaction& txTo, unsigned int nIn, int nHashType);
-bool SignSignature(const CKeyStore &keystore, const CTransaction &txFrom, CTransaction &txTo, unsigned int nIn, int nHashType=SIGHASH_ALL);
-bool VerifySignature(const CTransaction &txFrom, const CTransaction &txTo, unsigned int nIn, bool fValidatePayToScriptHash, int nHashType);
-bool VerifyScript(const CScript &scriptSig, const CScript &scriptPubKey, const CTransaction &txTo, unsigned int nIn, bool fValidatePayToScriptHash, int nHashType);
+// Given two sets of signatures for scriptPubKey, possibly with OP_0 placeholders,
+// combine them intelligently and return the result.
 CScript CombineSignatures(CScript scriptPubKey, const CTransaction& txTo, unsigned int nIn, const CScript& scriptSig1, const CScript& scriptSig2);
-
 
 #endif

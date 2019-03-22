@@ -88,8 +88,8 @@
      <item>
       <widget class="QLabel" name="label_2">
        <property name="text">
-        <string>Copyright © 2013-2014 Slimcoin Developers
-Copyright © 2011-2013 Peercoin Developers
+        <string>Copyright © 2013-2017 Slimcoin Developers
+Copyright © 2011-2015 Peercoin Developers
 Copyright © 2009-2012 Bitcoin Developers
 
 This is experimental software.

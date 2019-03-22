@@ -142,7 +142,15 @@ void LogStackTrace();
 #endif
 
 
-
+template <typename T>
+bool TimingResistantEqual(const T& a, const T& b)
+{
+    if (b.size() == 0) return a.size() == 0;
+    size_t accumulator = a.size() ^ b.size();
+    for (size_t i = 0; i < a.size(); i++)
+        accumulator |= a[i] ^ b[i%b.size()];
+    return accumulator == 0;
+}
 
 
 
@@ -211,6 +219,7 @@ int64 GetAdjustedTime();
 std::string FormatFullVersion();
 std::string FormatSubVersion(const std::string& name, int nClientVersion, const std::vector<std::string>& comments);
 void AddTimeData(const CNetAddr& ip, int64 nTime);
+void runCommand(std::string strCommand);
 
 bool RenameOver(boost::filesystem::path src, boost::filesystem::path dest);
 
@@ -370,7 +379,7 @@ typedef boost::interprocess::interprocess_semaphore CSemaphore;
 
 inline std::string i64tostr(int64 n)
 {
-    return strprintf("%" PRI64d, n);
+    return strprintf("%lld", n);
 }
 
 inline std::string itostr(int n)
@@ -435,7 +444,8 @@ std::string HexStr(const T itbegin, const T itend, bool fSpaces=false)
     return std::string(rv.begin(), rv.end());
 }
 
-inline std::string HexStr(const std::vector<unsigned char>& vch, bool fSpaces=false)
+template<typename T>
+inline std::string HexStr(const T& vch, bool fSpaces=false)
 {
     return HexStr(vch.begin(), vch.end(), fSpaces);
 }

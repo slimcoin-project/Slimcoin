@@ -105,6 +105,7 @@ int64 nHPSTimerStart;
 
 // Settings
 int64 nTransactionFee = MIN_TX_FEE;
+int64 nReserveBalance;
 
 // Dcrypt hash scanner
 static u32int ScanDcryptHash(CBlock *pblock, u32int *nHashesDone, uint256 *phash);
@@ -164,15 +165,32 @@ bool GetTransaction(const uint256 &hash, CTransaction &tx, uint256 &hashBlock)
                 return true;
             }
         }
-
         CTxDB txdb("r");
         CTxIndex txindex;
-        if (tx.ReadFromDisk(txdb, COutPoint(hash, 0), txindex))
+        if (tx.ReadFromDisk(txdb, hash, txindex))
         {
             CBlock block;
             if (block.ReadFromDisk(txindex.pos.nFile, txindex.pos.nBlockPos, false))
                 hashBlock = block.GetHash();
             return true;
+        }
+        // look for transaction in disconnected blocks to find orphaned CoinBase and CoinStake transactions
+        BOOST_FOREACH(PAIRTYPE(const uint256, CBlockIndex*)& item, mapBlockIndex)
+        {
+            CBlockIndex* pindex = item.second;
+            if (pindex == pindexBest || pindex->pnext != 0)
+                continue;
+            CBlock block;
+            if (!block.ReadFromDisk(pindex))
+                continue;
+            BOOST_FOREACH(const CTransaction& txOrphan, block.vtx)
+            {
+                if (txOrphan.GetHash() == hash)
+                {
+                    tx = txOrphan;
+                    return true;
+                }
+            }
         }
     }
     return false;
@@ -327,12 +345,19 @@ unsigned int LimitOrphanTxSize(unsigned int nMaxOrphans)
 // CTransaction and CTxIndex
 //
 
-bool CTransaction::ReadFromDisk(CTxDB& txdb, COutPoint prevout, CTxIndex& txindexRet)
+bool CTransaction::ReadFromDisk(CTxDB& txdb, const uint256& hash, CTxIndex& txindexRet)
 {
     SetNull();
-    if (!txdb.ReadTxIndex(prevout.hash, txindexRet))
-        return false;
+    if (!txdb.ReadTxIndex(hash, txindexRet))
+         return false;
     if (!ReadFromDisk(txindexRet.pos))
+         return false;
+    return true;
+}
+
+bool CTransaction::ReadFromDisk(CTxDB& txdb, COutPoint prevout, CTxIndex& txindexRet)
+{
+    if (!ReadFromDisk(txdb, prevout.hash, txindexRet))
         return false;
     if (prevout.n >= vout.size())
     {
@@ -421,9 +446,22 @@ bool CTransaction::IsStandard() const
         if (!txin.scriptSig.IsPushOnly())
             return false;
     }
-    BOOST_FOREACH(const CTxOut& txout, vout)
-        if (!::IsStandard(txout.scriptPubKey))
+
+    unsigned int nDataOut = 0;
+    txnouttype whichType;
+    BOOST_FOREACH(const CTxOut& txout, vout) {
+        if (!::IsStandard(txout.scriptPubKey, whichType)) {
             return false;
+        }
+        if (whichType == TX_NULL_DATA)
+            nDataOut++;
+    }
+
+    // only one OP_RETURN txout is permitted
+    if (nDataOut > 1) {
+        return false;
+    }
+
     return true;
 }
 
@@ -572,6 +610,9 @@ bool CTransaction::CheckTransaction() const
         return DoS(10, error("CTransaction::CheckTransaction() : vin empty"));
     if (vout.empty())
         return DoS(10, error("CTransaction::CheckTransaction() : vout empty"));
+    // Time (prevent mempool memory exhaustion attack)
+    if (nTime > GetAdjustedTime() + nMaxClockDrift)
+        return DoS(10, error("CTransaction::CheckTransaction() : timestamp is too far into the future"));
     // Size limits
     if (::GetSerializeSize(*this, SER_NETWORK, PROTOCOL_VERSION) > MAX_BLOCK_SIZE)
         return DoS(100, error("CTransaction::CheckTransaction() : size limits failed"));
@@ -584,10 +625,10 @@ bool CTransaction::CheckTransaction() const
         if (txout.IsEmpty() && (!IsCoinBase()) && (!IsCoinStake()))
             return DoS(100, error("CTransaction::CheckTransaction() : txout empty for user transaction"));
         // ppcoin: enforce minimum output amount
-        // if ((!txout.IsEmpty()) && txout.nValue < MIN_TXOUT_AMOUNT)
-        //    return DoS(100, error("CTransaction::CheckTransaction() : txout.nValue below minimum"));
-        if ((!txout.IsEmpty()) && txout.nValue < 0)
-            return DoS(100, error("CTransaction::CheckTransaction() : txout.nValue negative"));
+        // v0.5 protocol: zero amount allowed
+        if ((!txout.IsEmpty()) && txout.nValue < MIN_TXOUT_AMOUNT &&
+            !(IsProtocolV05(nTime) && (txout.nValue == 0)))
+            return DoS(100, error("CTransaction::CheckTransaction() : txout.nValue below minimum"));
         if (txout.nValue > MAX_MONEY)
             return DoS(100, error("CTransaction::CheckTransaction() : txout.nValue too high"));
         nValueOut += txout.nValue;
@@ -621,6 +662,83 @@ bool CTransaction::CheckTransaction() const
 
     return true;
 }
+
+/*
+int64 CTransaction::GetMinFee(unsigned int nBlockSize, bool fAllowFree,
+                              enum GetMinFee_mode mode, unsigned int nBytes) const
+{
+    // Base fee is either MIN_TX_FEE or MIN_RELAY_TX_FEE
+    int64 nBaseFee = (mode == GMF_RELAY) ? MIN_RELAY_TX_FEE : MIN_TX_FEE;
+    unsigned int nNewBlockSize = nBlockSize + nBytes;
+    int64 nMinFee = (1 + (int64)nBytes / 1000) * nBaseFee;
+    // To limit dust spam, require MIN_TX_FEE/MIN_RELAY_TX_FEE if any output is less than 0.01
+    if (nMinFee < nBaseFee)
+    {
+        BOOST_FOREACH(const CTxOut& txout, vout)
+            if (txout.nValue < CENT)
+                nMinFee = nBaseFee;
+    }
+    // Raise the price as the block approaches full
+    if (nBlockSize != 1 && nNewBlockSize >= MAX_BLOCK_SIZE_GEN/2)
+    {
+        if (nNewBlockSize >= MAX_BLOCK_SIZE_GEN)
+            return MAX_MONEY;
+        nMinFee *= MAX_BLOCK_SIZE_GEN / (MAX_BLOCK_SIZE_GEN - nNewBlockSize);
+    }
+    if (!MoneyRange(nMinFee))
+        nMinFee = MAX_MONEY;
+    return nMinFee;
+}
+*/
+int64 CTransaction::GetMinFee(unsigned int nBlockSize, bool fAllowFree,
+                              enum GetMinFee_mode mode, unsigned int nBytes) const
+{
+    // Base fee is either MIN_TX_FEE or MIN_RELAY_TX_FEE
+    int64 nBaseFee = (mode == GMF_RELAY) ? MIN_RELAY_TX_FEE : MIN_TX_FEE;
+    /* Obsoleted by integration of coincontrol, now passed in as arg
+    unsigned int nBytes = ::GetSerializeSize(*this, SER_NETWORK, PROTOCOL_VERSION);
+    */
+    unsigned int nNewBlockSize = nBlockSize + nBytes;
+    int64 nMinFee = (1 + (int64)nBytes / 1000) * nBaseFee;
+
+    if (fAllowFree)
+    {
+        if (nBlockSize == 1)
+        {
+            // Transactions under 10K are free
+            // (about 4500bc if made of 50bc inputs)
+            if (nBytes < 10000)
+                nMinFee = 0;
+        }
+        else
+        {
+            // Free transaction area
+            if (nNewBlockSize < 27000)
+                nMinFee = 0;
+        }
+    }
+
+    // To limit dust spam, require MIN_TX_FEE/MIN_RELAY_TX_FEE if any output is less than 0.01
+    if (nMinFee < nBaseFee)
+    {
+        BOOST_FOREACH(const CTxOut& txout, vout)
+            if (txout.nValue < CENT)
+                nMinFee = nBaseFee;
+    }
+
+    // Raise the price as the block approaches full
+    if (nBlockSize != 1 && nNewBlockSize >= MAX_BLOCK_SIZE_GEN/2)
+    {
+        if (nNewBlockSize >= MAX_BLOCK_SIZE_GEN)
+            return MAX_MONEY;
+        nMinFee *= MAX_BLOCK_SIZE_GEN / (MAX_BLOCK_SIZE_GEN - nNewBlockSize);
+    }
+
+    if (!MoneyRange(nMinFee))
+        nMinFee = MAX_MONEY;
+    return nMinFee;
+}
+
 
 bool CTxMemPool::accept(CTxDB& txdb, CTransaction &tx, bool fCheckInputs,
                         bool* pfMissingInputs)
@@ -807,6 +925,18 @@ bool CTxMemPool::remove(CTransaction &tx)
 }
 
 
+void CTxMemPool::queryHashes(std::vector<uint256>& vtxid)
+{
+    vtxid.clear();
+
+    LOCK(cs);
+    vtxid.reserve(mapTx.size());
+    for (map<uint256, CTransaction>::iterator mi = mapTx.begin(); mi != mapTx.end(); ++mi)
+        vtxid.push_back((*mi).first);
+}
+
+
+
 
 
 
@@ -925,15 +1055,6 @@ int CTxIndex::GetDepthInMainChain() const
     return 1 + nBestHeight - pindex->nHeight;
 }
 
-
-
-
-
-
-
-
-
-
 //////////////////////////////////////////////////////////////////////////////
 //
 // CBlock and CBlockIndex
@@ -1031,7 +1152,7 @@ int64 GetProofOfWorkReward(u32int nBits, bool fProofOfBurn)
     {
         CBigNum bnMidValue = (bnLowerBound + bnUpperBound) / 2;
         if (fDebug && GetBoolArg("-printcreation"))
-            printf("GetProofOfWorkReward() : lower = %" PRI64d ", upper = %" PRI64d ", mid = %" PRI64d "\n", bnLowerBound.getuint64(), bnUpperBound.getuint64(), bnMidValue.getuint64());
+            printf("GetProofOfWorkReward() : lower = %lld, upper = %lld, mid = %lld\n", bnLowerBound.getuint64(), bnUpperBound.getuint64(), bnMidValue.getuint64());
 
         if (bnMidValue * bnMidValue * bnMidValue * bnMidValue * bnTargetLimit > bnSubsidyLimit * bnSubsidyLimit * bnSubsidyLimit * bnSubsidyLimit * bnTarget)
             bnUpperBound = bnMidValue;
@@ -1043,7 +1164,7 @@ int64 GetProofOfWorkReward(u32int nBits, bool fProofOfBurn)
     nSubsidy = (nSubsidy / CENT) * CENT;
 
     if (fDebug && GetBoolArg("-printcreation"))
-        printf("GetProofOfWorkReward() : create = %s nBits = 0x%08x nSubsidy = %" PRI64d " return = %" PRI64d "\n", FormatMoney(nSubsidy).c_str(), nBits, nSubsidy, min(nSubsidy, maxSubsidy));
+        printf("GetProofOfWorkReward() : create = %s nBits = 0x%08x nSubsidy = %lld return = %lld\n", FormatMoney(nSubsidy).c_str(), nBits, nSubsidy, min(nSubsidy, maxSubsidy));
 
     return min(nSubsidy, maxSubsidy);
 }
@@ -1056,7 +1177,7 @@ int64 GetProofOfStakeReward(int64 nCoinAge, u32int nTime)
     int64 nSubsidy = nCoinAge * nRewardCoinYear * 33 / (365 * 33 + 8);
 
     if (fDebug && GetBoolArg("-printcreation"))
-        printf("GetProofOfStakeReward(): create = %s nCoinAge = %" PRI64d "\n", FormatMoney(nSubsidy).c_str(), nCoinAge);
+        printf("GetProofOfStakeReward(): create = %s nCoinAge = %lld\n", FormatMoney(nSubsidy).c_str(), nCoinAge);
     return nSubsidy;
 }
 
@@ -1398,6 +1519,23 @@ void CBlock::UpdateTime(const CBlockIndex* pindexPrev)
     nTime = max(GetBlockTime(), GetAdjustedTime());
 }
 
+static CBlockIndex* pblockindexFBBHLast;
+CBlockIndex* FindBlockByHeight(int nHeight)
+{
+    CBlockIndex *pblockindex;
+    if (nHeight < nBestHeight / 2)
+        pblockindex = pindexGenesisBlock;
+    else
+        pblockindex = pindexBest;
+    if (pblockindexFBBHLast && abs(nHeight - pblockindex->nHeight) > abs(nHeight - pblockindexFBBHLast->nHeight))
+        pblockindex = pblockindexFBBHLast;
+    while (pblockindex->nHeight > nHeight)
+        pblockindex = pblockindex->pprev;
+    while (pblockindex->nHeight < nHeight)
+        pblockindex = pblockindex->pnext;
+    pblockindexFBBHLast = pblockindex;
+    return pblockindex;
+}
 
 
 
@@ -1848,7 +1986,7 @@ bool CBlock::ConnectBlock(CTxDB& txdb, CBlockIndex* pindex)
     // ppcoin: fees are not collected by miners as in bitcoin
     // ppcoin: fees are destroyed to compensate the entire network
     if (fDebug && GetBoolArg("-printcreation"))
-        printf("ConnectBlock() : destroy=%s nFees=%" PRI64d "\n", FormatMoney(nFees).c_str(), nFees);
+        printf("ConnectBlock() : destroy=%s nFees=%d\n", FormatMoney(nFees).c_str(), nFees);
 
     // Update block index on disk without changing it in memory.
     // The memory index structure will be changed after the db commits.
@@ -1965,14 +2103,6 @@ bool Reorganize(CTxDB& txdb, CBlockIndex* pindexNew)
     return true;
 }
 
-
-static void
-runCommand(std::string strCommand)
-{
-    int nErr = ::system(strCommand.c_str());
-    if (nErr)
-        printf("runCommand error: system(%s) returned %d\n", strCommand.c_str(), nErr);
-}
 
 // Called from inside SetBestChain: attaches a block to the new best chain being built
 bool CBlock::SetBestChainInner(CTxDB& txdb, CBlockIndex *pindexNew)
@@ -2158,7 +2288,7 @@ bool CBlock::GetCoinAge(uint64& nCoinAge) const
         nCoinAge = 1;
 
     if (fDebug && GetBoolArg("-printcoinage"))
-        printf("block coin age total nCoinDays=%" PRI64d "\n", nCoinAge);
+        printf("block coin age total nCoinDays=%lld\n", nCoinAge);
 
     return true;
 }
@@ -2170,7 +2300,7 @@ bool CBlock::GetCoinAge(uint64& nCoinAge) const
 //Also, do not forget to change timestamps for new update!!
 //
 
-bool CBlock::AddToBlockIndex(unsigned int nFile, unsigned int nBlockPos)
+bool CBlock::AddToBlockIndex(unsigned int nFile, unsigned int nBlockPos, int64 burnt)
 {
     // Check for duplicate
     uint256 hash = GetHash();
@@ -2208,12 +2338,12 @@ bool CBlock::AddToBlockIndex(unsigned int nFile, unsigned int nBlockPos)
     // ppcoin: compute stake modifier
     uint64 nStakeModifier = 0;
     bool fGeneratedStakeModifier = false;
-    if (!ComputeNextStakeModifier(pindexNew->pprev, nStakeModifier, fGeneratedStakeModifier))
+    if (!ComputeNextStakeModifier(pindexNew, nStakeModifier, fGeneratedStakeModifier))
         return error("AddToBlockIndex() : ComputeNextStakeModifier() failed");
     pindexNew->SetStakeModifier(nStakeModifier, fGeneratedStakeModifier);
     pindexNew->nStakeModifierChecksum = GetStakeModifierChecksum(pindexNew);
     if (!CheckStakeModifierCheckpoints(pindexNew->nHeight, pindexNew->nStakeModifierChecksum))
-        return error("AddToBlockIndex() : Rejected by stake modifier checkpoint height=%d, modifier=0x%016" PRI64x ", modifierChecksum 0x%09x", pindexNew->nHeight, nStakeModifier, pindexNew->nStakeModifierChecksum);
+        return error("AddToBlockIndex() : Rejected by stake modifier checkpoint height=%d, modifier=0x%016llx, modifierChecksum 0x%09x", pindexNew->nHeight, nStakeModifier, pindexNew->nStakeModifierChecksum);
 
     // Add to mapBlockIndex
     map<uint256, CBlockIndex*>::iterator mi = mapBlockIndex.insert(make_pair(hash, pindexNew)).first;
@@ -2222,6 +2352,7 @@ bool CBlock::AddToBlockIndex(unsigned int nFile, unsigned int nBlockPos)
     else if (pindexNew->IsProofOfBurn())
         setBurnSeen.insert(pindexNew->GetProofOfBurn());
     pindexNew->phashBlock = &((*mi).first);
+    pindexNew->burnt = burnt;
 
     // Write to disk block index
     CTxDB txdb;
@@ -2369,8 +2500,9 @@ bool CBlock::AcceptBlock()
 
     // The effective burn coins have to match, regardless of what block type it is
     int64 calcEffCoins = 0;
-    if (!CheckBurnEffectiveCoins(&calcEffCoins))
-        return DoS(50, error("AcceptBlock() : Effective burn coins calculation failed: blk %" PRI64d " != calc %" PRI64d,
+    int64 calcNetCoins = 0;
+    if (!CheckBurnEffectiveCoins(&calcEffCoins, &calcNetCoins))
+        return DoS(50, error("AcceptBlock() : Effective burn coins calculation failed: blk %lld != calc %lld",
                                                  nEffectiveBurnCoins, calcEffCoins));
 
     CBlockIndex* pindexPrev = (*mi).second;
@@ -2409,7 +2541,8 @@ bool CBlock::AcceptBlock()
     if (!WriteToDisk(nFile, nBlockPos))
         return error("AcceptBlock() : WriteToDisk failed");
 
-    if (!AddToBlockIndex(nFile, nBlockPos))
+    calcNetCoins += pindexPrev->burnt;
+    if (!AddToBlockIndex(nFile, nBlockPos, calcNetCoins))
         return error("AcceptBlock() : AddToBlockIndex failed");
 
     // Relay inventory, but don't relay old inventory during initial block download
@@ -2765,7 +2898,7 @@ bool CBlock::CheckBlockSignature() const
     return false;
 }
 
-bool CBlock::CheckBurnEffectiveCoins(int64 *calcEffCoinsRet) const
+bool CBlock::CheckBurnEffectiveCoins(int64 *calcEffCoinsRet, int64 *calcNetCoinsRet) const
 {
     //Genesis Block
     if (!hashPrevBlock)
@@ -2788,6 +2921,9 @@ bool CBlock::CheckBurnEffectiveCoins(int64 *calcEffCoinsRet) const
         if (burnOutTxIndex != -1) //this is a burn transaction
             nBurnedCoins += tx.vout[burnOutTxIndex].nValue;
     }
+
+    // Also make nBurnedCoins available
+    *calcNetCoinsRet = nBurnedCoins;
 
     int64 calcEffCoins;
 
@@ -2949,6 +3085,8 @@ bool LoadBlockIndex(bool fAllowNew)
         printf("hashGenesisBlock = %s\n", hashGenesisBlock.ToString().c_str());
         printf("block.hashMerkleRoot = %s\n", block.hashMerkleRoot.ToString().c_str());
 
+        block.print();
+
         if (fTestNet)
             assert(block.hashMerkleRoot == uint256("0xce86aa96a71e5c74ea535ed5f23d5b1b6ca279ad16cac3cb95e123d80027f014"));
         else
@@ -3015,14 +3153,28 @@ bool LoadBlockIndex(bool fAllowNew)
         unsigned int nBlockPos;
         if (!block.WriteToDisk(nFile, nBlockPos))
             return error("LoadBlockIndex() : writing genesis block to disk failed");
-        if (!block.AddToBlockIndex(nFile, nBlockPos))
+        if (!block.AddToBlockIndex(nFile, nBlockPos, 0))
             return error("LoadBlockIndex() : genesis block not accepted");
 
         // ppcoin: initialize synchronized checkpoint
         if (!Checkpoints::WriteSyncCheckpoint(hashGenesisBlock))
             return error("LoadBlockIndex() : failed to init sync checkpoint");
+
+        // ppcoin: upgrade time set to zero if txdb initialized
+        /* FIXME: ppcoin-specific, expungable
+        {
+            CTxDB txdb;
+            if (!txdb.WriteV04UpgradeTime(0))
+                return error("LoadBlockIndex() : failed to init upgrade info");
+            if (!txdb.WriteV05UpgradeTime(0))
+                return error("LoadBlockIndex() : failed to init upgrade info");
+            printf(" Upgrade Info: v0.5+ txdb initialization\n");
+            txdb.Close();
+        }
+        */
     }
 
+    /* FIXME: ppcoin-specific, expungable
     // ppcoin: if checkpoint master key changed must reset sync-checkpoint
     {
         CTxDB txdb;
@@ -3040,11 +3192,53 @@ bool LoadBlockIndex(bool fAllowNew)
         }
         txdb.Close();
     }
-
+    */
+    /* FIXME: ppcoin-specific, expungable
+    // ppcoin: upgrade time set to zero if txdb initialized
+    {
+        CTxDB txdb;
+        if (txdb.ReadV04UpgradeTime(nProtocolV04UpgradeTime))
+        {
+            if (nProtocolV04UpgradeTime)
+                printf(" Upgrade Info: txdb upgrade v0.3->v0.4 detected at timestamp %d\n", nProtocolV04UpgradeTime);
+            else
+                printf(" Upgrade Info: no txdb upgrade v0.3->v0.4 detected.\n");
+        }
+        else
+        {
+            nProtocolV04UpgradeTime = GetTime();
+            printf(" Upgrade Info: upgrading txdb from v0.3->v0.5 at timestamp %u\n", nProtocolV04UpgradeTime);
+            if (!txdb.WriteV04UpgradeTime(nProtocolV04UpgradeTime))
+                return error("LoadBlockIndex() : failed to write upgrade info");
+        }
+        txdb.Close();
+    }
+    */
+    /* FIXME: ppcoin-specific, expungable
+    {
+        CTxDB txdb;
+        if (txdb.ReadV05UpgradeTime(nProtocolV05UpgradeTime))
+        {
+            if (nProtocolV05UpgradeTime)
+                printf(" Upgrade Info: txdb upgrade to v0.5 detected at timestamp %d\n", nProtocolV05UpgradeTime);
+            else
+                printf(" Upgrade Info: v0.5+ no txdb upgrade detected.\n");
+        }
+        else
+        {
+            nProtocolV05UpgradeTime = GetTime();
+            printf(" Upgrade Info: upgrading txdb to v0.5 at timestamp %u\n", nProtocolV05UpgradeTime);
+            if (!txdb.WriteV05UpgradeTime(nProtocolV05UpgradeTime))
+                return error("LoadBlockIndex() : failed to write upgrade info");
+        }
+        txdb.Close();
+    }
+    */
     return true;
 }
 
 
+static const char* strFormat = "%Y-%m-%dT%H:%M:%SZ";
 
 void PrintBlockTree()
 {
@@ -3091,15 +3285,16 @@ void PrintBlockTree()
         // print item
         CBlock block;
         block.ReadFromDisk(pindex, true, false);
-        printf("%d (%u,%u) %s  %08lx  %s  mint %7s  tx %d",
+        printf("%d,(%u,%u),%s,%08lx,%s,%s,%d,%d\n",
             pindex->nHeight,
             pindex->nFile,
             pindex->nBlockPos,
             block.GetHash().ToString().c_str(),
             block.nBits,
-            DateTimeStrFormat(block.GetBlockTime()).c_str(),
+            DateTimeStrFormat(strFormat, block.GetBlockTime()).c_str(),
             FormatMoney(pindex->nMint).c_str(),
-            block.vtx.size());
+            block.vtx.size(),
+            nCol);
 
         PrintWallets(block);
 
@@ -3120,8 +3315,84 @@ void PrintBlockTree()
     }
 }
 
+bool LoadExternalBlockFile(FILE* fileIn)
+{
+    unsigned int tempcount=0;
+    unsigned int steptemp=0;
+    char pString[256];
+    string tempmess;
+    int64_t nStart = GetTimeMillis();
+    static unsigned char pchMessageStart[4] = { 0x6e, 0x8b, 0x92, 0xa5 };
 
+    int nLoaded = 0;
+    {
+        LOCK(cs_main);
+        try {
+            CAutoFile blkdat(fileIn, SER_DISK, CLIENT_VERSION);
+            unsigned int nPos = 0;
+            while (nPos != (unsigned int)-1 && blkdat.good() && !fRequestShutdown)
+            {
+                unsigned char pchData[65536];
+                do {
+                    fseek(blkdat, nPos, SEEK_SET);
+                    int nRead = fread(pchData, 1, sizeof(pchData), blkdat);
+                    if (nRead <= 8)
+                    {
+                        nPos = (unsigned int)-1;
+                        break;
+                    }
+                    void* nFind = memchr(pchData, pchMessageStart[0], nRead+1-sizeof(pchMessageStart));
+                    if (nFind)
+                    {
+                        if (memcmp(nFind, pchMessageStart, sizeof(pchMessageStart))==0)
+                        {
+                            nPos += ((unsigned char*)nFind - pchData) + sizeof(pchMessageStart);
+                            break;
+                        }
+                        nPos += ((unsigned char*)nFind - pchData) + 1;
+                    }
+                    else
+                        nPos += sizeof(pchData) - sizeof(pchMessageStart) + 1;
+		            tempcount ++;
+		            if(tempcount>=1000)
+		            {
+		              steptemp ++;
+		              // tempmess=mess+ boost::to_string(steptemp * 1000);
+		              sprintf(pString, _("bootstrap loading %d").c_str(), steptemp * 1000);
+		              InitMessage(pString);
+		              tempcount=0;
+		            }
+                } while(!fRequestShutdown);
+                if (nPos == (unsigned int)-1)
+                    break;
+                fseek(blkdat, nPos, SEEK_SET);
+                unsigned int nSize;
+                blkdat >> nSize;
+                if (nSize > 0 && nSize <= MAX_BLOCK_SIZE)
+                {
+                    CBlock block;
+                    blkdat >> block;
+                    if (ProcessBlock(NULL,&block))
+                    {
+                        nLoaded++;
+                        nPos += 4 + nSize;
+                    }
+                }
+            }
+        }
+        catch (std::exception &e) {
+            printf("%s() : Deserialize or I/O error caught during load\n",
+                   __PRETTY_FUNCTION__);
+        }
+    }
+    steptemp=steptemp*1000 +tempcount;
+    // tempmess=mess+ boost::to_string(steptemp);
+    sprintf(pString, _("%d").c_str(), steptemp);
+    InitMessage(pString);
 
+    printf("Loaded %i blocks from external file in %lld ms\n", nLoaded, GetTimeMillis() - nStart);
+    return nLoaded > 0;
+}
 
 
 
@@ -3179,6 +3450,24 @@ string GetWarnings(string strFor)
         nPriority = 3000;
         strStatusBar = strRPC = "WARNING: Invalid checkpoint found! Displayed transactions may not be correct! You may need to upgrade, or notify developers of the issue.";
     }
+
+    /* FIXME: ppcoin-specific, expungable
+    // ppcoin: if detected unmet upgrade requirement enter safe mode
+    // Note: v0.4 upgrade requires blockchain redownload if past protocol switch
+    if (IsProtocolV04(nProtocolV04UpgradeTime + 60*60*24)) // 1 day margin
+    {
+        nPriority = 5000;
+        strStatusBar = strRPC = "WARNING: Blockchain redownload required upgrading from pre v0.4 wallet.";
+    }
+    else if (IsProtocolV05(nProtocolV05UpgradeTime + 60*60*24)) // 1 day margin
+    {
+        // v0.5 protocol does not change modifier computation from v0.4.
+        // So redownload of blockchain is not required for late upgrades, 
+        // but still recommended.
+        nPriority = 200;
+        strStatusBar = strRPC = "WARNING: Blockchain redownload recommended approaching or past v0.5 upgrade deadline.";
+    }
+    */
 
     // Alerts
     {
@@ -3293,7 +3582,7 @@ bool static AlreadyHave(CTxDB& txdb, const CInv& inv)
 
 bool static ProcessMessage(CNode* pfrom, string strCommand, CDataStream& vRecv)
 {
-    static map<CService, vector<unsigned char> > mapReuseKey;
+    static map<CService, CPubKey> mapReuseKey;
     RandAddSeedPerfmon();
     if (fDebug) {
         printf("%s ", DateTimeStrFormat(GetTime()).c_str());
@@ -3940,7 +4229,7 @@ bool ProcessMessages(CNode* pfrom)
     {
         string strMessageStart((const char *)pchMessageStart, sizeof(pchMessageStart));
         vector<unsigned char> vchMessageStart(strMessageStart.begin(), strMessageStart.end());
-        printf("ProcessMessages : AdjustedTime=%" PRI64d " MessageStart=%s\n", GetAdjustedTime(), HexStr(vchMessageStart).c_str());
+        printf("ProcessMessages : AdjustedTime=%lld MessageStart=%s\n", GetAdjustedTime(), HexStr(vchMessageStart).c_str());
         nTimeLastPrintMessageStart = GetAdjustedTime();
     }
 
@@ -4500,16 +4789,17 @@ bool GetBurnHash(uint256 hashPrevBlock, s32int burnBlkHeight, s32int burnCTx,
     CBurnAddress burnAddress;
 
     //check if the out transaction went to a burn address
-    CBitcoinAddress address;
-    if (!ExtractAddress(burnTxOut.scriptPubKey, address))
+    CTxDestination address;
+    if (!ExtractDestination(burnTxOut.scriptPubKey, address))
         return error("GetBurnHash(): ExtractAddress failed");
 
-    if (address != burnAddress)
+#if BOOST_VERSION >= 158000
+    if (address != burnAddress.Get())
         return error("GetBurnHash(): TxOut's address is not a valid burn address");
-
-    if (!address.IsValid())
-        return error("GetBurnHash(): TxOut's address is invalid");
-
+#else
+    if (!(address == burnAddress.Get()))
+        return error("GetBurnHash(): TxOut's address is not a valid burn address");
+#endif
     if (!burnTxOut.nValue)
         return error("GetBurnHash(): Burn transaction's value is 0");
 
@@ -4660,8 +4950,8 @@ CBlock *CreateNewBlock(CWallet* pwallet, bool fProofOfStake, const CWalletTx *bu
     CReserveKey *reservekey = resKey ? resKey : &tmpResKey;
 
     // Create new block
-    // FIXME: schedule refactor
-    auto_ptr<CBlock> pblock(new CBlock());
+    /* FIXME: boost::movelib::unique_ptr<CBlock> pblock(new CBlock()); */
+    unique_ptr<CBlock> pblock(new CBlock());
     if (!pblock.get())
         return NULL;
 
@@ -4790,7 +5080,7 @@ CBlock *CreateNewBlock(CWallet* pwallet, bool fProofOfStake, const CWalletTx *bu
                 dPriority += (double)nValueIn * nConf;
 
                 if (fDebug && GetBoolArg("-printpriority"))
-                    printf("priority     nValueIn=%-12" PRI64d " nConf=%-5d dPriority=%-20.1f\n", nValueIn, nConf, dPriority);
+                    printf("priority     nValueIn=%-12lld nConf=%-5d dPriority=%-20.1f\n", nValueIn, nConf, dPriority);
             }
 
             // Priority is sum(valuein * age) / txsize
@@ -5082,7 +5372,7 @@ void SlimCoinMiner(CWallet *pwallet, bool fProofOfStake)
         if (fShutdown)
             return;
 
-        while (vNodes.empty() || IsInitialBlockDownload())
+        while (vNodes.empty() /*|| vNodes.size() < 3 */ /* (undocumented change) */ || IsInitialBlockDownload())
         {
             Sleep(1000);
             if (fShutdown)
@@ -5103,8 +5393,8 @@ void SlimCoinMiner(CWallet *pwallet, bool fProofOfStake)
         //
         unsigned int nTransactionsUpdatedLast = nTransactionsUpdated;
         CBlockIndex* pindexPrev = pindexBest;
-        // FIXME: schedule refactor
-        auto_ptr<CBlock> pblock(CreateNewBlock(pwallet, fProofOfStake));
+        /* FIXME: boost::movelib::unique_ptr<CBlock> pblock(CreateNewBlock(pwallet, fProofOfStake)); */
+        unique_ptr<CBlock> pblock(CreateNewBlock(pwallet, fProofOfStake));
         if (!pblock.get())
             return;
 
@@ -5291,11 +5581,8 @@ void SlimCoinAfterBurner(CWallet *pwallet)
             //
             // Create new block
             //
-            /* FIXME: refactor?
+            /* FIXME: boost::movelib::unique_ptr<CBlock> pblock(CreateNewBlock(pwallet, false, &smallestWTx)); */
             unique_ptr<CBlock> pblock(CreateNewBlock(pwallet, false, &smallestWTx));
-            auto_ptr<CBlock> pblock(CreateNewBlock(reservekey, pwallet, false, &smallestWTx));
-            */
-            auto_ptr<CBlock> pblock(CreateNewBlock(pwallet, false, &smallestWTx));
             if (!pblock.get())
                 continue;
 
@@ -5310,8 +5597,8 @@ void SlimCoinAfterBurner(CWallet *pwallet)
             printf("\twith Block height %d, transaction depth %d, vout depth %d\n", 
                          mapBlockIndex.at(smallestWTx.hashBlock)->nHeight, 
                          smallestWTx.nIndex, smallestWTx.GetBurnOutTxIndex());
-            printf("\tPoB Tartget is %s\n", hashTarget.ToString().c_str());
-            printf("\tnBurnBits=%08x, nEffectiveBurnCoins=%" PRI64u " (formatted %s)\n",
+            printf("\tPoB Target is %s\n", hashTarget.ToString().c_str());
+            printf("\tnBurnBits=%08x, nEffectiveBurnCoins=%llu (formatted %s)\n",
                                             pblock->nBurnBits, pblock->nEffectiveBurnCoins, 
                                             FormatMoney(pblock->nEffectiveBurnCoins).c_str());
 

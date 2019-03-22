@@ -604,6 +604,7 @@ bool CTxDB::LoadBlockIndex()
             pindexNew->burnCTxOut     = diskindex.burnCTxOut;
             pindexNew->nEffectiveBurnCoins = diskindex.nEffectiveBurnCoins;
             pindexNew->nBurnBits      = diskindex.nBurnBits;
+            pindexNew->burnt          = diskindex.burnt;
 
             // Watch for genesis block
             if (pindexGenesisBlock == NULL && blockHash == hashGenesisBlock)
@@ -648,7 +649,7 @@ bool CTxDB::LoadBlockIndex()
         // ppcoin: calculate stake modifier checksum
         pindex->nStakeModifierChecksum = GetStakeModifierChecksum(pindex);
         if (!CheckStakeModifierCheckpoints(pindex->nHeight, pindex->nStakeModifierChecksum))
-            return error("CTxDB::LoadBlockIndex() : Failed stake modifier checkpoint height=%d, modifier=0x%016" PRI64x, pindex->nHeight, pindex->nStakeModifier);
+            return error("CTxDB::LoadBlockIndex() : Failed stake modifier checkpoint height=%d, modifier=0x%016llx", pindex->nHeight, pindex->nStakeModifier);
     }
 
     // Load hashBestChain pointer to end of best chain

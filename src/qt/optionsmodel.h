@@ -24,9 +24,11 @@ public:
         ProxyIP, // QString
         ProxyPort, // QString
         Fee, // qint64
+        ReserveBalance, // qint64
         DisplayUnit, // BitcoinUnits::Unit
         DisplayAddresses, // bool
         DetachDatabases, // bool
+        CoinControlFeatures, //bool
         OptionIDRowCount,
     };
 
@@ -41,20 +43,27 @@ public:
 
     /* Explicit getters */
     qint64 getTransactionFee();
+    qint64 getReserveBalance();
     bool getMinimizeToTray();
     bool getMinimizeOnClose();
     int getDisplayUnit();
     bool getDisplayAddresses();
+    bool getCoinControlFeatures();
+
 private:
     int nDisplayUnit;
     bool bDisplayAddresses;
     bool fMinimizeToTray;
     bool fMinimizeOnClose;
+    bool fCoinControlFeatures;
+
 signals:
     void displayUnitChanged(int unit);
+    void transactionFeeChanged(qint64);
+    void reserveBalanceChanged(qint64 resbal);
+    void coinControlFeaturesChanged(bool);
 
-public slots:
-
+// public slots:
 };
 
 #endif // OPTIONSMODEL_H

@@ -12,7 +12,7 @@ MXE_PATH=/usr/lib/mxe
 MXE_INCLUDE_PATH=/usr/lib/mxe/usr/i686-w64-mingw32.static/include
 MXE_LIB_PATH=/usr/lib/mxe/usr/i686-w64-mingw32.static/lib
 # Belt and braces
-CXXFLAGS="-std=gnu++11 -march=i686"
+CXXFLAGS="-std=c++11 -march=i686"
 LDFLAGS="-march=i686"
 target="i686-w64-mingw32.static"
 
@@ -27,6 +27,8 @@ export BDB_INCLUDE_PATH=${MXE_INCLUDE_PATH}
 export BDB_LIB_PATH=${MXE_LIB_PATH}
 export MINIUPNPC_INCLUDE_PATH=${MXE_INCLUDE_PATH}
 export MINIUPNPC_LIB_PATH=${MXE_LIB_PATH}
+export QRENCODE_INCLUDE_PATH=${MXE_INCLUDE_PATH}
+export QRENCODE_LIB_PATH=${MXE_LIB_PATH}
 export QMAKE_LRELEASE=${MXE_PATH}/usr/${target}/qt5/bin/lrelease
 
 # Call qmake to create Makefile.[Release|Debug]
@@ -47,7 +49,9 @@ ${target}-qmake-qt5 \
     BDB_LIB_PATH=${BDB_LIB_PATH} \
     MINIUPNPC_INCLUDE_PATH=${MINIUPNPC_INCLUDE_PATH} \
     MINIUPNPC_LIB_PATH=${MINIUPNPC_LIB_PATH} \
+    QRENCODE_INCLUDE_PATH=${QRENCODE_INCLUDE_PATH} \
+    QRENCODE_LIB_PATH=${QRENCODE_LIB_PATH} \
     QMAKE_LRELEASE=${QMAKE_LRELEASE} slimcoin-qt.pro
 
 # Go for it. If successful, Windows binary will be written out to ./release/slimcoin-qt.exe
-make -f Makefile.Release CXXFLAGS="-DQT_GUI -DQT_NO_PRINTER -std=gnu++11 -march=i686" LDFLAGS="-march=i686"
+make -f Makefile.Release CXXFLAGS="-DWIN32 -DQT_GUI -DQT_NO_PRINTER -std=c++11 -march=i686" LDFLAGS="-march=i686"

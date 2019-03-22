@@ -3,6 +3,7 @@
 #include <QSettings>
 
 #include "init.h"
+#include "util.h"
 #include "walletdb.h"
 
 OptionsModel::OptionsModel(QObject *parent) :
@@ -21,13 +22,34 @@ void OptionsModel::Init()
     fMinimizeToTray = settings.value("fMinimizeToTray", false).toBool();
     fMinimizeOnClose = settings.value("fMinimizeOnClose", false).toBool();
     nTransactionFee = settings.value("nTransactionFee").toLongLong();
+    nReserveBalance = settings.value("nReserveBalance").toLongLong();
+    fCoinControlFeatures = settings.value("fCoinControlFeatures").toBool();
 
+    int64 nreservebalance = 0;
+    if (mapArgs.count("-reservebalance") && !ParseMoney(mapArgs["-reservebalance"], nreservebalance))
+        nreservebalance = 1000000; // Failsafe
+    printf("nreservebalance read as: %llu.\n", nreservebalance);
     // These are shared with core bitcoin; we want
     // command-line options to override the GUI settings:
     if(settings.contains("fUseUPnP"))
         SoftSetBoolArg("-upnp", settings.value("fUseUPnP").toBool());
     if(settings.contains("addrProxy") && settings.value("fUseProxy").toBool())
         SoftSetArg("-proxy", settings.value("addrProxy").toString().toStdString());
+    // if(settings.contains("reserveBalance") && settings.value("fReserveBalance").toBool())
+    if(settings.contains("nReserveBalance"))
+    {
+        if (nreservebalance > 0) {
+            SoftSetArg("-reservebalance", BitcoinUnits::formatWithUnit(BitcoinUnits::BTC, nreservebalance).toStdString());
+            settings.setValue("nReserveBalance", nreservebalance);
+            printf("nreservebalance set to %s", settings.value("nReserveBalance").toString().toStdString().c_str());
+            // printf("nreservebalance set to %u.\n", settings.value("nReserveBalance"));
+        }
+        else {
+            SoftSetArg("-reservebalance", settings.value("nReserveBalance").toString().toStdString());
+            printf("nReserveBalance set to %s", settings.value("nReserveBalance").toString().toStdString().c_str());
+            // printf("nReserveBalance set to %u.\n", settings.value("nReserveBalance"));
+        }
+    }
     if(settings.contains("detachDB"))
         SoftSetBoolArg("-detachdb", settings.value("detachDB").toBool());
 }
@@ -45,7 +67,7 @@ bool OptionsModel::Upgrade()
     CWalletDB walletdb("wallet.dat");
 
     QList<QString> intOptions;
-    intOptions << "nDisplayUnit" << "nTransactionFee";
+    intOptions << "nDisplayUnit" << "nTransactionFee" << "nReserveBalance";
     foreach(QString key, intOptions)
     {
         int value = 0;
@@ -119,12 +141,16 @@ QVariant OptionsModel::data(const QModelIndex & index, int role) const
             return QVariant(addrProxy.GetPort());
         case Fee:
             return QVariant(nTransactionFee);
+        case ReserveBalance:
+            return QVariant(nReserveBalance);
         case DisplayUnit:
             return QVariant(nDisplayUnit);
         case DisplayAddresses:
             return QVariant(bDisplayAddresses);
         case DetachDatabases:
             return QVariant(fDetachDB);
+          case CoinControlFeatures:
+            return QVariant(fCoinControlFeatures);
         default:
             return QVariant();
         }
@@ -179,11 +205,8 @@ bool OptionsModel::setData(const QModelIndex & index, const QVariant & value, in
             break;
         case ProxyPort:
             {
-#if QT_VERSION < 0x050000
-                int nPort = atoi(value.toString().toAscii().data());
-#else
                 int nPort = atoi(value.toString().toLatin1().data());
-#endif
+
                 if(nPort > 0 && nPort < std::numeric_limits<unsigned short>::max())
                 {
                     addrProxy.SetPort(nPort);
@@ -198,6 +221,13 @@ bool OptionsModel::setData(const QModelIndex & index, const QVariant & value, in
         case Fee: {
             nTransactionFee = value.toLongLong();
             settings.setValue("nTransactionFee", nTransactionFee);
+            emit transactionFeeChanged(nTransactionFee);
+            }
+            break;
+        case ReserveBalance: {
+            nReserveBalance = value.toLongLong();
+            settings.setValue("nReserveBalance", nReserveBalance);
+            emit reserveBalanceChanged(nReserveBalance);
             }
             break;
         case DisplayUnit: {
@@ -217,6 +247,13 @@ bool OptionsModel::setData(const QModelIndex & index, const QVariant & value, in
             settings.setValue("detachDB", fDetachDB);
             }
             break;
+        case CoinControlFeatures:
+            {
+              fCoinControlFeatures = value.toBool();
+              settings.setValue("fCoinControlFeatures", fCoinControlFeatures);
+              emit coinControlFeaturesChanged(fCoinControlFeatures);
+            }
+            break;
         default:
             break;
         }
@@ -229,6 +266,16 @@ bool OptionsModel::setData(const QModelIndex & index, const QVariant & value, in
 qint64 OptionsModel::getTransactionFee()
 {
     return nTransactionFee;
+}
+
+qint64 OptionsModel::getReserveBalance()
+{
+    return nReserveBalance;
+}
+
+bool OptionsModel::getCoinControlFeatures()
+{
+        return fCoinControlFeatures;
 }
 
 bool OptionsModel::getMinimizeToTray()

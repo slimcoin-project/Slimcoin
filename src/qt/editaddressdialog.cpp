@@ -19,6 +19,7 @@ EditAddressDialog::EditAddressDialog(Mode mode, QWidget *parent) :
     case NewReceivingAddress:
         setWindowTitle(tr("New receiving address"));
         ui->addressEdit->setEnabled(false);
+        ui->addressEdit->setVisible(false);
         break;
     case NewSendingAddress:
         setWindowTitle(tr("New sending address"));
@@ -44,6 +45,9 @@ EditAddressDialog::~EditAddressDialog()
 void EditAddressDialog::setModel(AddressTableModel *model)
 {
     this->model = model;
+    if(!model)
+        return;
+
     mapper->setModel(model);
     mapper->addMapping(ui->labelEdit, AddressTableModel::Label);
     mapper->addMapping(ui->addressEdit, AddressTableModel::Address);
@@ -62,10 +66,12 @@ bool EditAddressDialog::saveCurrentRow()
     {
     case NewReceivingAddress:
     case NewSendingAddress:
+        {
         address = model->addRow(
                 mode == NewSendingAddress ? AddressTableModel::Send : AddressTableModel::Receive,
                 ui->labelEdit->text(),
                 ui->addressEdit->text());
+        }
         break;
     case EditReceivingAddress:
     case EditSendingAddress:
@@ -86,6 +92,9 @@ void EditAddressDialog::accept()
     {
         switch(model->getEditStatus())
         {
+        case AddressTableModel::NO_CHANGES:
+            // No actual changes
+            break;
         case AddressTableModel::DUPLICATE_ADDRESS:
             QMessageBox::warning(this, windowTitle(),
                 tr("The entered address \"%1\" is already in the address book.").arg(ui->addressEdit->text()),

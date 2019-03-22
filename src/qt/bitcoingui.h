@@ -4,22 +4,25 @@
 #include <QMainWindow>
 #include <QSystemTrayIcon>
 #include "blockbrowser.h"
-
 #include "init.h"
+
 class TransactionTableModel;
 class ClientModel;
 class WalletModel;
 class TransactionView;
 class OverviewPage;
-class MiningPage;
 class AddressBookPage;
+class ReportView;
 class SendCoinsDialog;
+class BlockBrowser;
 class BurnCoinsDialog;
 class InscriptionDialog;
-class MessagePage;
+class MultisigDialog;
+class SignVerifyMessageDialog;
+class InscriptionPage;
+class ChatWindow;
 class Notificator;
 class RPCConsole;
-class BlockBrowser;
 
 QT_BEGIN_NAMESPACE
 class QLabel;
@@ -53,7 +56,7 @@ public:
         functionality.
     */
     void setWalletModel(WalletModel *walletModel);
-    
+
 protected:
     void changeEvent(QEvent *e);
     void closeEvent(QCloseEvent *event);
@@ -63,17 +66,26 @@ protected:
 private:
     ClientModel *clientModel;
     WalletModel *walletModel;
-    BlockBrowser *blockBrowser;
     QStackedWidget *centralWidget;
 
+    QSystemTrayIcon *trayIcon;
+    TransactionView *transactionView;
+    RPCConsole *rpcConsole;
+
     OverviewPage *overviewPage;
-    MiningPage *miningPage;
     QWidget *transactionsPage;
     AddressBookPage *addressBookPage;
     AddressBookPage *receiveCoinsPage;
     SendCoinsDialog *sendCoinsPage;
+    BlockBrowser *blockBrowser;
+    ReportView *accountReportPage;
     BurnCoinsDialog *burnCoinsPage;
-    MessagePage *messagePage;
+    InscriptionDialog *inscriptionPage;
+    MultisigDialog *multisigPage;
+    SignVerifyMessageDialog *messagePage;
+    InscriptionPage *inscriptionsPage;
+	ChatWindow *chatPage;
+    Notificator *notificator;
 
     QLabel *labelEncryptionIcon;
     QLabel *labelMiningIcon;
@@ -84,12 +96,9 @@ private:
 
     QMenuBar *appMenuBar;
     QAction *overviewAction;
-    QAction *miningAction;
     QAction *historyAction;
     QAction *quitAction;
     QAction *sendCoinsAction;
-    QAction *burnCoinsAction;
-    QAction *inscribeAction;
     QAction *addressBookAction;
     QAction *messageAction;
     QAction *aboutAction;
@@ -98,17 +107,21 @@ private:
     QAction *toggleHideAction;
     QAction *exportAction;
     QAction *encryptWalletAction;
+    QAction *checkWalletAction;
+    QAction *repairWalletAction;
+    QAction *zapWalletAction;
     QAction *backupWalletAction;
     QAction *changePassphraseAction;
     QAction *aboutQtAction;
     QAction *openRPCConsoleAction;
 
     QAction *blockAction;
-    QSystemTrayIcon *trayIcon;
-    Notificator *notificator;
-    TransactionView *transactionView;
-    InscriptionDialog *inscriptionPage;
-    RPCConsole *rpcConsole;
+    QAction *burnCoinsAction;
+    QAction *inscribeAction;
+    QAction *multisigAction;
+    QAction *inscriptionsPageAction;
+    QAction *chatPageAction;
+    QAction *accountReportAction;
 
     QMovie *syncIconMovie;
 
@@ -120,6 +133,8 @@ private:
     void createToolBars();
     /** Create system tray (notification) icon */
     void createTrayIcon();
+
+  void splashMessage(const std::string &message);
 
 public slots:
     /** Set number of connections shown in the UI */
@@ -165,8 +180,16 @@ private slots:
     void gotoBurnCoinsPage();
     /** Switch to block browser page */
     void gotoBlockBrowser();
-    /** Switch to mining page */
-    void gotoMiningPage();
+    /** Switch to account report page */
+    void gotoAccountReportPage();
+    /** switch to multisig page*/
+    void gotoMultisigPage();
+    /** switch to inscription page*/
+    void gotoInscriptionPage();
+    /** Switch to inscription page */
+    void gotoInscriptionsPage();
+    /** Switch to chat page */
+    void gotoChatPage();
     /** Show configuration dialog */
     void optionsClicked();
     /** Show about dialog */
@@ -182,6 +205,14 @@ private slots:
     void incomingTransaction(const QModelIndex & parent, int start, int end);
     /** Encrypt the wallet */
     void encryptWallet(bool status);
+
+    /** Check the wallet */
+    void checkWallet();
+    /** Repair the wallet */
+    void repairWallet();
+    /** zap the wallet */
+    void zapWallet();
+
     /** Backup the wallet */
     void backupWallet();
     /** Change encrypted wallet passphrase */

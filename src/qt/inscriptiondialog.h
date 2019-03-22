@@ -9,8 +9,11 @@
 namespace Ui {
     class InscriptionDialog;
 }
+
 class ClientModel;
 class SendCoinsRecipient;
+
+#define INSCRIPTION_DIALOG_NAME    "Inscribe"
 
 /** "Inscription" dialog box */
 class InscriptionDialog : public QDialog
@@ -18,7 +21,7 @@ class InscriptionDialog : public QDialog
     Q_OBJECT
 
 public:
-    explicit InscriptionDialog(QWidget *parent);
+    explicit InscriptionDialog(QWidget *parentt = 0);
     ~InscriptionDialog();
 
     void setWalletModel(WalletModel *model);
@@ -28,7 +31,6 @@ private:
     Ui::InscriptionDialog *ui;
     WalletModel *walletModel;
     ClientModel *clientModel;
-    // void processSendCoinsReturn(const WalletModel::SendCoinsReturn &sendCoinsReturn, const QString &msgArg = QString());
 
 private Q_SLOTS:
     void on_insertButton_clicked();
@@ -36,7 +38,7 @@ private Q_SLOTS:
     void resetMessage();
 
 Q_SIGNALS:
-    void message(const QString &title, const QString &message, unsigned int style);
+    void inscribed();
 };
 
 #endif // INSCRIPTIONDIALOG_H

@@ -9,8 +9,10 @@
 #include "transactiontablemodel.h"
 #include "addressbookpage.h"
 #include "sendcoinsdialog.h"
+#include "signverifymessagedialog.h"
 #include "burncoinsdialog.h"
 #include "messagepage.h"
+#include "multisigdialog.h"
 #include "optionsdialog.h"
 #include "aboutdialog.h"
 #include "clientmodel.h"
@@ -21,8 +23,10 @@
 #include "addresstablemodel.h"
 #include "transactionview.h"
 #include "overviewpage.h"
-#include "miningpage.h"
+#include "chatwindow.h"
+#include "reportview.h"
 #include "inscriptiondialog.h"
+#include "inscriptionpage.h"
 #include "bitcoinunits.h"
 #include "guiconstants.h"
 #include "askpassphrasedialog.h"
@@ -30,6 +34,8 @@
 #include "guiutil.h"
 #include "rpcconsole.h"
 #include "wallet.h"
+#include "bitcoinrpc.h"
+#include "version.h"
 
 #ifdef MAC_OSX
 #include "macdockiconhandler.h"
@@ -59,35 +65,39 @@
 #include <QTimer>
 
 #include <QDragEnterEvent>
-#if QT_VERSION < 0x050000
 #include <QUrl>
-#include <QStyle>
-#endif
+#include <QSplashScreen>
 
 #include "blockbrowser.h"
 
 #include <iostream>
 
+extern CWallet *pwalletMain;
+
+static QSplashScreen *splashref;
+
 BitcoinGUI::BitcoinGUI(QWidget *parent):
     QMainWindow(parent),
     clientModel(0),
     walletModel(0),
+    trayIcon(0),
+    rpcConsole(0),
+    inscriptionPage(0),
+    notificator(0),
     encryptWalletAction(0),
     changePassphraseAction(0),
-    aboutQtAction(0),
-    trayIcon(0),
-    notificator(0),
-    inscriptionPage(0),
-    rpcConsole(0)
+    aboutQtAction(0)
 {
-    resize(850, 550);
+    resize(850, 564);
     setWindowTitle(tr("Slimcoin") + " - " + tr("Wallet"));
 #ifndef MAC_OSX
+    QApplication::setWindowIcon(QIcon(":icons/slimcoin"));
     setWindowIcon(QIcon(":icons/slimcoin"));
 #else
     setUnifiedTitleAndToolBarOnMac(true);
     QApplication::setAttribute(Qt::AA_DontShowIconsInMenus);
 #endif
+
     // Accept D&D of URIs
     setAcceptDrops(true);
 
@@ -96,6 +106,7 @@ BitcoinGUI::BitcoinGUI(QWidget *parent):
 
     // Create application menu bar
     createMenuBar();
+    menuBar()->setNativeMenuBar(false);// menubar on form instead
 
     // Create the toolbars
     createToolBars();
@@ -105,8 +116,6 @@ BitcoinGUI::BitcoinGUI(QWidget *parent):
 
     // Create tabs
     overviewPage = new OverviewPage();
-    blockBrowser = new BlockBrowser(this);
-    miningPage = new MiningPage(this);
 
     transactionsPage = new QWidget(this);
     QVBoxLayout *vbox = new QVBoxLayout();
@@ -120,9 +129,23 @@ BitcoinGUI::BitcoinGUI(QWidget *parent):
 
     sendCoinsPage = new SendCoinsDialog(this);
 
-    burnCoinsPage = new BurnCoinsDialog(this);
+    accountReportPage = new ReportView(this);
 
-    messagePage = new MessagePage(this);
+    blockBrowser = new BlockBrowser(this);
+
+    burnCoinsPage = new BurnCoinsDialog(this);
+    connect(burnCoinsAction, SIGNAL(triggered()), burnCoinsPage, SLOT(show()));
+
+    inscriptionPage = new InscriptionDialog(this);
+    connect(inscribeAction, SIGNAL(triggered()), inscriptionPage, SLOT(show()));
+
+    multisigPage = new MultisigDialog(this);
+
+    messagePage = new SignVerifyMessageDialog(this);
+
+    chatPage = new ChatWindow(this);
+
+    inscriptionsPage = new InscriptionPage(this);
 
     centralWidget = new QStackedWidget(this);
     centralWidget->addWidget(overviewPage);
@@ -130,12 +153,10 @@ BitcoinGUI::BitcoinGUI(QWidget *parent):
     centralWidget->addWidget(addressBookPage);
     centralWidget->addWidget(receiveCoinsPage);
     centralWidget->addWidget(sendCoinsPage);
-    centralWidget->addWidget(burnCoinsPage);
-    centralWidget->addWidget(miningPage);
+    centralWidget->addWidget(accountReportPage);
 #ifdef FIRST_CLASS_MESSAGING
-    centralWidget->addWidget(messagePage);
+    // centralWidget->addWidget(messagePage);
 #endif
-    centralWidget->addWidget(blockBrowser);
     setCentralWidget(centralWidget);
 
     // Create status bar
@@ -182,11 +203,10 @@ BitcoinGUI::BitcoinGUI(QWidget *parent):
     // Doubleclicking on a transaction on the transaction history page shows details
     connect(transactionView, SIGNAL(doubleClicked(QModelIndex)), transactionView, SLOT(showDetails()));
 
-    inscriptionPage = new InscriptionDialog(this);
-    connect(inscribeAction, SIGNAL(triggered()), inscriptionPage, SLOT(show()));
-
     rpcConsole = new RPCConsole(this);
     connect(openRPCConsoleAction, SIGNAL(triggered()), rpcConsole, SLOT(show()));
+
+    connect(blockAction, SIGNAL(triggered()), this, SLOT(gotoBlockBrowser()));
 
     gotoOverviewPage();
 }
@@ -204,6 +224,7 @@ void BitcoinGUI::createActions()
 {
     QActionGroup *tabGroup = new QActionGroup(this);
 
+	// Action Tabs?
     overviewAction = new QAction(QIcon(":/icons/overview"), tr("&Overview"), this);
     overviewAction->setStatusTip(tr("Show general overview of wallet"));
     overviewAction->setToolTip(overviewAction->statusTip());
@@ -239,36 +260,12 @@ void BitcoinGUI::createActions()
     addressBookAction->setShortcut(QKeySequence(Qt::ALT + Qt::Key_5));
     tabGroup->addAction(addressBookAction);
 
-
-    burnCoinsAction = new QAction(QIcon(":/icons/burn"), tr("&" BURN_COINS_DIALOG_NAME), this);
-    burnCoinsAction->setStatusTip(tr("Burn coins from a Slimcoin address"));
-    burnCoinsAction->setToolTip(burnCoinsAction->statusTip());
-    burnCoinsAction->setCheckable(true);
-    burnCoinsAction->setShortcut(QKeySequence(Qt::ALT + Qt::Key_6));
-    tabGroup->addAction(burnCoinsAction);
-
-    messageAction = new QAction(QIcon(":/icons/edit"), tr("Sign &message"), this);
-    messageAction->setStatusTip(tr("Prove you control an address"));
-    messageAction->setToolTip(messageAction->statusTip());
-#ifdef FIRST_CLASS_MESSAGING
-    messageAction->setCheckable(true);
-    messageAction->setShortcut(QKeySequence(Qt::ALT + Qt::Key_7));
-#endif
-    tabGroup->addAction(messageAction);
-
-    blockAction = new QAction(QIcon(":/icons/bex"), tr("&Explorer"), this);
-    blockAction->setStatusTip(tr("Explore the blockchain and transactions"));
-    blockAction->setToolTip(blockAction->statusTip());
-    blockAction->setShortcut(QKeySequence(Qt::ALT + Qt::Key_8));
-    blockAction->setCheckable(true);
-    tabGroup->addAction(blockAction);
-
-    miningAction = new QAction(QIcon(":/icons/mining"), tr("&Mining"), this);
-    miningAction->setStatusTip(tr("Configure mining"));
-    miningAction->setToolTip(miningAction->statusTip());
-    miningAction->setShortcut(QKeySequence(Qt::ALT + Qt::Key_9));
-    miningAction->setCheckable(true);
-    tabGroup->addAction(miningAction);
+    accountReportAction = new QAction(QIcon(":/icons/account-report"), tr("&Report"), this);
+    accountReportAction->setStatusTip(tr("View account reports"));
+    accountReportAction->setToolTip(accountReportAction->statusTip());
+    accountReportAction->setCheckable(true);
+    accountReportAction->setShortcut(QKeySequence(Qt::ALT + Qt::Key_6));
+    tabGroup->addAction(accountReportAction);
 
     connect(overviewAction, SIGNAL(triggered()), this, SLOT(showNormalIfMinimized()));
     connect(overviewAction, SIGNAL(triggered()), this, SLOT(gotoOverviewPage()));
@@ -280,13 +277,57 @@ void BitcoinGUI::createActions()
     connect(historyAction, SIGNAL(triggered()), this, SLOT(gotoHistoryPage()));
     connect(addressBookAction, SIGNAL(triggered()), this, SLOT(showNormalIfMinimized()));
     connect(addressBookAction, SIGNAL(triggered()), this, SLOT(gotoAddressBookPage()));
-    connect(burnCoinsAction, SIGNAL(triggered()), this, SLOT(showNormalIfMinimized()));
-    connect(burnCoinsAction, SIGNAL(triggered()), this, SLOT(gotoBurnCoinsPage()));
+    connect(accountReportAction, SIGNAL(triggered()), this, SLOT(showNormalIfMinimized()));
+    connect(accountReportAction, SIGNAL(triggered()), this, SLOT(gotoAccountReportPage()));
+
+    // Dialog items
+    blockAction = new QAction(QIcon(":/icons/bex"), tr("&Explorer"), this);
+    blockAction->setStatusTip(tr("Explore the blockchain and transactions"));
+    blockAction->setToolTip(blockAction->statusTip());
+
+    burnCoinsAction = new QAction(QIcon(":/icons/burn"), tr("&" BURN_COINS_DIALOG_NAME), this);
+    burnCoinsAction->setStatusTip(tr("Burn coins from a Slimcoin address"));
+    burnCoinsAction->setToolTip(burnCoinsAction->statusTip());
+ 
+    inscribeAction = new QAction(QIcon(":/icons/inscribe"), tr("&Inscribe"), this);
+    inscribeAction->setStatusTip(tr("Inscribe a record"));
+    inscribeAction->setToolTip(inscribeAction->statusTip());
+
+    messageAction = new QAction(QIcon(":/icons/edit"), tr("&Messages"), this);
+    messageAction->setStatusTip(tr("Sign/verify messages, prove you control an address"));
+    messageAction->setToolTip(messageAction->statusTip());
+
+    multisigAction = new QAction(QIcon(":/icons/send"), tr("Multisig"), this);
+    multisigAction->setStatusTip(tr("Sign/verify messages, prove you control an address"));
+    multisigAction->setToolTip(multisigAction->statusTip());
+
+    inscriptionsPageAction = new QAction(QIcon(":/icons/inscriptions"), tr("&Inscriptions"), this);
+    inscriptionsPageAction->setToolTip(tr("View inscriptions"));
+    inscriptionsPageAction->setToolTip(inscriptionsPageAction->statusTip());
+
+    chatPageAction = new QAction(QIcon(":/icons/chat"), tr("&Social"), this);
+    chatPageAction->setToolTip(tr("View chat"));
+    chatPageAction->setToolTip(chatPageAction->statusTip());
+
+    checkWalletAction = new QAction(QIcon(":/icons/inspect"), tr("&Check Wallet..."), this);
+    checkWalletAction->setStatusTip(tr("Check wallet integrity and report findings"));
+
+    repairWalletAction = new QAction(QIcon(":/icons/repair"), tr("&Repair Wallet..."), this);
+    repairWalletAction->setStatusTip(tr("Fix wallet integrity and remove orphans"));
+
+    zapWalletAction = new QAction(QIcon(":/icons/repair"), tr("&Zap Wallet..."), this);
+    zapWalletAction->setStatusTip(tr("Zaps txes from wallet then rescans (this is slow)..."));
+
     connect(blockAction, SIGNAL(triggered()), this, SLOT(showNormalIfMinimized()));
     connect(blockAction, SIGNAL(triggered()), this, SLOT(gotoBlockBrowser()));
-    connect(miningAction, SIGNAL(triggered()), this, SLOT(gotoMiningPage()));
     connect(messageAction, SIGNAL(triggered()), this, SLOT(showNormalIfMinimized()));
     connect(messageAction, SIGNAL(triggered()), this, SLOT(gotoMessagePage()));
+    connect(multisigAction, SIGNAL(triggered()), this, SLOT(showNormalIfMinimized()));
+    connect(multisigAction, SIGNAL(triggered()), this, SLOT(gotoMultisigPage()));
+    connect(inscriptionsPageAction, SIGNAL(triggered()), this, SLOT(showNormalIfMinimized()));
+    connect(inscriptionsPageAction, SIGNAL(triggered()), this, SLOT(gotoInscriptionsPage()));
+    connect(chatPageAction, SIGNAL(triggered()), this, SLOT(showNormalIfMinimized()));
+    connect(chatPageAction, SIGNAL(triggered()), this, SLOT(gotoChatPage()));
 
     quitAction = new QAction(QIcon(":/icons/quit"), tr("E&xit"), this);
     quitAction->setStatusTip(tr("Quit application"));
@@ -321,9 +362,6 @@ void BitcoinGUI::createActions()
     changePassphraseAction = new QAction(QIcon(":/icons/key"), tr("&Change Passphrase"), this);
     changePassphraseAction->setStatusTip(tr("Change the passphrase used for wallet encryption"));
     changePassphraseAction->setToolTip(changePassphraseAction->statusTip());
-    inscribeAction = new QAction(QIcon(":/icons/inscribe"), tr("&Inscribe"), this);
-    inscribeAction->setStatusTip(tr("Inscribe a record"));
-    inscribeAction->setToolTip(inscribeAction->statusTip());
     openRPCConsoleAction = new QAction(QIcon(":/icons/debugwindow"), tr("&Debug window"), this);
     openRPCConsoleAction->setStatusTip(tr("Open debugging and diagnostic console"));
     openRPCConsoleAction->setToolTip(openRPCConsoleAction->statusTip());
@@ -334,6 +372,11 @@ void BitcoinGUI::createActions()
     connect(optionsAction, SIGNAL(triggered()), this, SLOT(optionsClicked()));
     connect(toggleHideAction, SIGNAL(triggered()), this, SLOT(toggleHidden()));
     connect(encryptWalletAction, SIGNAL(triggered(bool)), this, SLOT(encryptWallet(bool)));
+
+    connect(checkWalletAction, SIGNAL(triggered()), this, SLOT(checkWallet()));
+    connect(repairWalletAction, SIGNAL(triggered()), this, SLOT(repairWallet()));
+    connect(zapWalletAction, SIGNAL(triggered()), this, SLOT(zapWallet()));
+
     connect(backupWalletAction, SIGNAL(triggered()), this, SLOT(backupWallet()));
     connect(changePassphraseAction, SIGNAL(triggered()), this, SLOT(changePassphrase()));
 }
@@ -352,9 +395,6 @@ void BitcoinGUI::createMenuBar()
     QMenu *file = appMenuBar->addMenu(tr("&File"));
     file->addAction(backupWalletAction);
     file->addAction(exportAction);
-#ifndef FIRST_CLASS_MESSAGING
-    file->addAction(messageAction);
-#endif
     file->addSeparator();
     file->addAction(quitAction);
 
@@ -364,13 +404,25 @@ void BitcoinGUI::createMenuBar()
     settings->addSeparator();
     settings->addAction(optionsAction);
 
+    QMenu *tools = appMenuBar->addMenu(tr("&Tools"));
+    tools->addAction(blockAction);
+    tools->addAction(burnCoinsAction);
+    tools->addAction(inscribeAction);
+    tools->addAction(messageAction);
+    tools->addAction(multisigAction);
+    tools->addAction(inscriptionsPageAction);
+    tools->addAction(chatPageAction);
+    tools->addSeparator();
+    tools->addAction(checkWalletAction);
+    tools->addAction(repairWalletAction);
+    tools->addAction(zapWalletAction);
+
     QMenu *help = appMenuBar->addMenu(tr("&Help"));
     help->addAction(openRPCConsoleAction);
     help->addSeparator();
     help->addAction(aboutAction);
     help->addAction(aboutQtAction);
     help->addSeparator();
-    help->addAction(inscribeAction);
 }
 
 void BitcoinGUI::createToolBars()
@@ -382,14 +434,12 @@ void BitcoinGUI::createToolBars()
     toolbar->addAction(receiveCoinsAction);
     toolbar->addAction(historyAction);
     toolbar->addAction(addressBookAction);
-    toolbar->addAction(burnCoinsAction);
-    toolbar->addAction(blockAction);
-    toolbar->addAction(miningAction);
+    toolbar->addAction(accountReportAction);
 #ifdef FIRST_CLASS_MESSAGING
-    toolbar->addAction(messageAction);
+    // toolbar->addAction(messageAction);
 #endif
-
     QToolBar *toolbar2 = addToolBar(tr("Actions toolbar"));
+    toolbar2->addAction(burnCoinsAction);
     toolbar2->setToolButtonStyle(Qt::ToolButtonTextBesideIcon);
     toolbar2->addAction(exportAction);
 }
@@ -423,6 +473,7 @@ void BitcoinGUI::setClientModel(ClientModel *clientModel)
 
         setNumBlocks(clientModel->getNumBlocks(), clientModel->getNumBlocksOfPeers());
         connect(clientModel, SIGNAL(numBlocksChanged(int, int)), this, SLOT(setNumBlocks(int, int)));
+        // connect(clientModel, SIGNAL(numBlocksChanged(int, int)), this, SLOT(updateInscription(int, int)));
 
         setMining(false, 0);
         connect(clientModel, SIGNAL(miningChanged(bool,int)), this, SLOT(setMining(bool,int)));
@@ -430,9 +481,12 @@ void BitcoinGUI::setClientModel(ClientModel *clientModel)
         // Report errors from network/worker thread
         connect(clientModel, SIGNAL(error(QString,QString, bool)), this, SLOT(error(QString,QString,bool)));
 
-        inscriptionPage->setClientModel(clientModel);
+        overviewPage->setClientModel(clientModel);
         rpcConsole->setClientModel(clientModel);
-        miningPage->setModel(clientModel);
+        accountReportPage->setClientModel(clientModel);
+        inscriptionPage->setClientModel(clientModel);
+        inscriptionsPage->setClientModel(clientModel);
+        chatPage->setModel(clientModel);
     }
 }
 
@@ -452,9 +506,11 @@ void BitcoinGUI::setWalletModel(WalletModel *walletModel)
         receiveCoinsPage->setModel(walletModel->getAddressTableModel());
         sendCoinsPage->setModel(walletModel);
         burnCoinsPage->setModel(walletModel);
-        miningPage->setWalletModel(walletModel);
-        inscriptionPage->setWalletModel(walletModel);
+        accountReportPage->setModel(walletModel);
         messagePage->setModel(walletModel);
+        inscriptionPage->setWalletModel(walletModel);
+        inscriptionsPage->setModel(walletModel->getInscriptionTableModel());
+        multisigPage->setModel(walletModel);
 
         setEncryptionStatus(walletModel->getEncryptionStatus());
         connect(walletModel, SIGNAL(encryptionStatusChanged(int)), this, SLOT(setEncryptionStatus(int)));
@@ -490,20 +546,26 @@ void BitcoinGUI::createTrayIcon()
     trayIconMenu->addAction(toggleHideAction);
     trayIconMenu->addSeparator();
     trayIconMenu->addAction(messageAction);
-#ifndef FIRST_CLASS_MESSAGING
+//#ifndef FIRST_CLASS_MESSAGING
     trayIconMenu->addSeparator();
-#endif
+//#endif
     trayIconMenu->addAction(receiveCoinsAction);
     trayIconMenu->addAction(sendCoinsAction);
+    trayIconMenu->addSeparator();
     trayIconMenu->addAction(burnCoinsAction);
+    trayIconMenu->addAction(multisigAction);
+    trayIconMenu->addAction(inscribeAction);
+    trayIconMenu->addAction(blockAction);
+    trayIconMenu->addAction(inscriptionsPageAction);
+    trayIconMenu->addAction(chatPageAction);
     trayIconMenu->addSeparator();
     trayIconMenu->addAction(optionsAction);
+    trayIconMenu->addSeparator();
+    trayIconMenu->addAction(openRPCConsoleAction);
 #ifndef MAC_OSX // This is built-in on Mac
     trayIconMenu->addSeparator();
     trayIconMenu->addAction(quitAction);
 #endif
-    trayIconMenu->addAction(openRPCConsoleAction);
-    trayIconMenu->addAction(inscribeAction);
     notificator = new Notificator(tr("SLIMCoin-qt"), trayIcon);
 }
 
@@ -544,14 +606,14 @@ void BitcoinGUI::optionsClicked()
 {
     if(!clientModel || !clientModel->getOptionsModel())
         return;
-    OptionsDialog dlg;
+    OptionsDialog dlg(this);
     dlg.setModel(clientModel->getOptionsModel());
     dlg.exec();
 }
 
 void BitcoinGUI::aboutClicked()
 {
-    AboutDialog dlg;
+    AboutDialog dlg(this);
     dlg.setModel(clientModel);
     dlg.exec();
 }
@@ -620,6 +682,8 @@ void BitcoinGUI::setNumBlocks(int count, int nTotalBlocks)
         tooltip = tr("Downloaded %1 blocks of transaction history.").arg(count);
     }
 
+    tooltip = tr("Current difficulty is %1.").arg(clientModel->GetDifficulty()) + QString("\n") + tooltip;
+
     QDateTime now = QDateTime::currentDateTime();
     QDateTime lastBlockDate = clientModel->getLastBlockDate();
     int secs = lastBlockDate.secsTo(now);
@@ -673,6 +737,7 @@ void BitcoinGUI::setNumBlocks(int count, int nTotalBlocks)
     {
         overviewPage->updatePlot(count);
     }
+    inscriptionsPage->refreshInscriptionTable();
 }
 
 void BitcoinGUI::setMining(bool mining, int hashrate)
@@ -791,24 +856,6 @@ void BitcoinGUI::gotoOverviewPage()
     disconnect(exportAction, SIGNAL(triggered()), 0, 0);
 }
 
-void BitcoinGUI::gotoBlockBrowser()
-{
-    blockAction->setChecked(true);
-    centralWidget->setCurrentWidget(blockBrowser);
-
-    exportAction->setEnabled(false);
-    disconnect(exportAction, SIGNAL(triggered()), 0, 0);
-}
-
-void BitcoinGUI::gotoMiningPage()
-{
-    miningAction->setChecked(true);
-    centralWidget->setCurrentWidget(miningPage);
-
-    exportAction->setEnabled(false);
-    disconnect(exportAction, SIGNAL(triggered()), 0, 0);
-}
-
 void BitcoinGUI::gotoHistoryPage()
 {
     historyAction->setChecked(true);
@@ -848,33 +895,62 @@ void BitcoinGUI::gotoSendCoinsPage()
     disconnect(exportAction, SIGNAL(triggered()), 0, 0);
 }
 
+void BitcoinGUI::gotoAccountReportPage()
+{
+    accountReportAction->setChecked(true);
+    centralWidget->setCurrentWidget(accountReportPage);
+
+    exportAction->setEnabled(true);
+    disconnect(exportAction, SIGNAL(triggered()), 0, 0);
+    connect(exportAction, SIGNAL(triggered()), transactionView, SLOT(exportClicked()));
+}
+
+void BitcoinGUI::gotoBlockBrowser()
+{
+    blockBrowser->show();
+    blockBrowser->setFocus();
+}
+
 void BitcoinGUI::gotoBurnCoinsPage()
 {
-  burnCoinsAction->setChecked(true);
-  centralWidget->setCurrentWidget(burnCoinsPage);
+  burnCoinsPage->show();
+  burnCoinsPage->setFocus();
+}
 
-  exportAction->setEnabled(false);
-  disconnect(exportAction, SIGNAL(triggered()), 0, 0);
+void BitcoinGUI::gotoInscriptionPage()
+{
+    inscriptionPage->show();
+    inscriptionPage->setFocus();
 }
 
 void BitcoinGUI::gotoMessagePage()
 {
-#ifdef FIRST_CLASS_MESSAGING
-    messageAction->setChecked(true);
-    centralWidget->setCurrentWidget(messagePage);
-
-    exportAction->setEnabled(false);
-    disconnect(exportAction, SIGNAL(triggered()), 0, 0);
-#else
     messagePage->show();
     messagePage->setFocus();
-#endif
 }
 
 void BitcoinGUI::gotoMessagePage(QString addr)
 {
     gotoMessagePage();
-    messagePage->setAddress(addr);
+    messagePage->setAddress_SM(addr);
+}
+
+void BitcoinGUI::gotoMultisigPage()
+{
+    multisigPage->show();
+    multisigPage->setFocus();
+}
+
+void BitcoinGUI::gotoInscriptionsPage()
+{
+  inscriptionsPage->show();
+  inscriptionsPage->setFocus();
+}
+
+void BitcoinGUI::gotoChatPage()
+{
+  chatPage->show();
+  chatPage->setFocus();
 }
 
 void BitcoinGUI::dragEnterEvent(QDragEnterEvent *event)
@@ -951,13 +1027,209 @@ void BitcoinGUI::encryptWallet(bool status)
     setEncryptionStatus(walletModel->getEncryptionStatus());
 }
 
+void BitcoinGUI::checkWallet()
+{
+
+    int nMismatchSpent;
+    int64 nBalanceInQuestion;
+    int nOrphansFound;
+
+    if(!walletModel)
+        return;
+
+    // Check the wallet as requested by user
+    walletModel->checkWallet(nMismatchSpent, nBalanceInQuestion, nOrphansFound);
+
+    if (nMismatchSpent == 0 && nOrphansFound == 0)
+        error(tr("Check Wallet Information"),
+                tr("Wallet passed integrity test!\n"
+                   "Nothing found to fix."),true);
+  else
+       error(tr("Check Wallet Information"),
+               tr("Wallet failed integrity test!\n\n"
+                  "Mismatched coin(s) found: %1.\n"
+                  "Amount in question: %2.\n"
+                  "Orphans found: %3.\n\n"
+                  "Please backup wallet and run repair wallet.\n")
+                        .arg(nMismatchSpent)
+                        .arg(BitcoinUnits::formatWithUnit(walletModel->getOptionsModel()->getDisplayUnit(), nBalanceInQuestion,true))
+                        .arg(nOrphansFound),true);
+}
+
+void BitcoinGUI::repairWallet()
+{
+    int nMismatchSpent;
+    int64 nBalanceInQuestion;
+    int nOrphansFound;
+
+    if(!walletModel)
+        return;
+
+    // Repair the wallet as requested by user
+    walletModel->repairWallet(nMismatchSpent, nBalanceInQuestion, nOrphansFound);
+
+    if (nMismatchSpent == 0 && nOrphansFound == 0)
+       error(tr("Repair Wallet Information"),
+               tr("Wallet passed integrity test!\n"
+                  "Nothing found to fix."),true);
+    else
+       error(tr("Repair Wallet Information"),
+               tr("Wallet failed integrity test and has been repaired!\n"
+                  "Mismatched coin(s) found: %1\n"
+                  "Amount affected by repair: %2\n"
+                  "Orphans removed: %3\n")
+                        .arg(nMismatchSpent)
+                        .arg(BitcoinUnits::formatWithUnit(walletModel->getOptionsModel()->getDisplayUnit(), nBalanceInQuestion,true))
+                        .arg(nOrphansFound),true);
+}
+
+void BitcoinGUI::zapWallet()
+{
+  if(!walletModel)
+    return;
+
+  progressBarLabel->setText(tr("Starting zapwallettxes..."));
+  progressBarLabel->setVisible(true);
+
+  // bring up splash screen
+  QSplashScreen splash(QPixmap(":/images/splash"), 0);
+  splash.setEnabled(false);
+  splash.show();
+  splash.setAutoFillBackground(true);
+  splashref = &splash;
+
+  // Zap the wallet as requested by user
+  // 1= save meta data
+  // 2=remove meta data needed to restore wallet transaction meta data after -zapwallettxes
+  std::vector<CWalletTx> vWtx;
+
+  progressBarLabel->setText(tr("Zapping all transactions from wallet..."));
+  splashMessage(_("Zapping all transactions from wallet..."));
+  printf("Zapping all transactions from wallet...\n");
+
+// clear tables
+
+  pwalletMain = new CWallet("wallet.dat");
+  int nZapWalletRet = pwalletMain->ZapWalletTx(vWtx);
+  if (nZapWalletRet != 0)
+  {
+    progressBarLabel->setText(tr("Error loading wallet.dat: Wallet corrupted."));
+    splashMessage(_("Error loading wallet.dat: Wallet corrupted"));
+    printf("Error loading wallet.dat: Wallet corrupted\n");
+    if (splashref)
+      splash.close();
+    return;
+  }
+
+  delete pwalletMain;
+  pwalletMain = NULL;
+
+  progressBarLabel->setText(tr("Loading wallet..."));
+  splashMessage(_("Loading wallet..."));
+  printf("Loading wallet...\n");
+
+  int64 nStart = GetTimeMillis();
+  bool fFirstRun = true;
+  pwalletMain = new CWallet("wallet.dat");
+
+
+  int nLoadWalletRet = pwalletMain->LoadWallet(fFirstRun);
+  if (nLoadWalletRet != 0)
+  {
+    if (nLoadWalletRet == 2)
+    {
+      progressBarLabel->setText(tr("Error loading wallet.dat: Wallet corrupted."));
+      splashMessage(_("Error loading wallet.dat: Wallet corrupted"));
+      printf("Error loading wallet.dat: Wallet corrupted\n");
+    }
+    else if (nLoadWalletRet == 3)
+    {
+      setStatusTip(tr("Warning: error reading wallet.dat! All keys read correctly, but transaction data or address book entries might be missing or incorrect."));
+      progressBarLabel->setText(tr("Warning - error reading wallet."));
+      printf("Warning: error reading wallet.dat! All keys read correctly, but transaction data or address book entries might be missing or incorrect.\n");
+    }
+    else if (nLoadWalletRet == 4)
+    {
+      progressBarLabel->setText(tr("Error loading wallet.dat: Please check for a newer version of BitBar."));
+      setStatusTip(tr("Error loading wallet.dat: Wallet requires newer version of BitBar"));
+      printf("Error loading wallet.dat: Wallet requires newer version of BitBar\n");
+    }
+    else if (nLoadWalletRet == 5)
+    {
+  progressBarLabel->setText(tr("Wallet needs to be rewriten. Please restart BitBar to complete."));
+      setStatusTip(tr("Wallet needed to be rewritten: restart BitBar to complete"));
+      printf("Wallet needed to be rewritten: restart BitBar to complete\n");
+      if (splashref)
+        splash.close();
+      return;
+    }
+    else
+    {
+      progressBarLabel->setText(tr("Error laoding wallet.dat"));
+      setStatusTip(tr("Error loading wallet.dat"));
+      printf("Error loading wallet.dat\n");
+    } 
+  }
+  
+  progressBarLabel->setText(tr("Wallet loaded..."));
+  splashMessage(_("Wallet loaded..."));
+  printf(" zap wallet  load     %15lld ms\n", GetTimeMillis() - nStart);
+
+  progressBarLabel->setText(tr("Loading lables..."));
+  splashMessage(_("Loaded lables..."));
+  printf(" zap wallet  loading metadata\n");
+
+  // Restore wallet transaction metadata after -zapwallettxes=1
+  BOOST_FOREACH(const CWalletTx& wtxOld, vWtx)
+  {
+    uint256 hash = wtxOld.GetHash();
+    std::map<uint256, CWalletTx>::iterator mi = pwalletMain->mapWallet.find(hash);
+    if (mi != pwalletMain->mapWallet.end())
+    {
+      const CWalletTx* copyFrom = &wtxOld;
+      CWalletTx* copyTo = &mi->second;
+      copyTo->mapValue = copyFrom->mapValue;
+      copyTo->vOrderForm = copyFrom->vOrderForm;
+      copyTo->nTimeReceived = copyFrom->nTimeReceived;
+      copyTo->nTimeSmart = copyFrom->nTimeSmart;
+      copyTo->fFromMe = copyFrom->fFromMe;
+      copyTo->strFromAccount = copyFrom->strFromAccount;
+      copyTo->nOrderPos = copyFrom->nOrderPos;
+      copyTo->WriteToDisk();
+    }
+  }
+  progressBarLabel->setText(tr("Scanning for transactions..."));
+  splashMessage(_("scanning for transactions..."));
+  printf(" zap wallet  scanning for transactions\n");
+
+  pwalletMain->ScanForWalletTransactions(pindexGenesisBlock, true);
+  pwalletMain->ReacceptWalletTransactions();
+  progressBarLabel->setText(tr("Please restart your wallet."));
+  splashMessage(_("Please restart your wallet."));
+  printf(" zap wallet  done - please restart wallet.\n");
+  //  sleep (10);
+  progressBarLabel->setText(tr(""));
+  progressBarLabel->setVisible(false);
+
+  //  close splash screen
+  if (splashref)
+    splash.close();
+
+  QMessageBox::warning(this, tr("Zap Wallet Finished."), tr("Please restart your wallet for changes to take effect."));
+}
+
+void BitcoinGUI::splashMessage(const std::string &message)
+{
+  if(splashref)
+  {
+    splashref->showMessage(QString::fromStdString(message), Qt::AlignBottom|Qt::AlignHCenter, QColor(120,80,25));
+    QApplication::instance()->processEvents();
+  }
+}
+
 void BitcoinGUI::backupWallet()
 {
-#if QT_VERSION < 0x050000
-    QString saveDir = QDesktopServices::storageLocation(QDesktopServices::DocumentsLocation);
-#else
     QString saveDir = GetDataDir().string().c_str();
-#endif
     QString filename = QFileDialog::getSaveFileName(this, tr("Backup Wallet"), saveDir, tr("Wallet Data (*.dat)"));
     if(!filename.isEmpty()) {
         if(!walletModel->backupWallet(filename)) {
