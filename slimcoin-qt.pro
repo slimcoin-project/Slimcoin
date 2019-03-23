@@ -359,11 +359,6 @@ HEADERS += src/addrman.h \
     src/qt/transactionrecord.h \
     src/qt/transactiontablemodel.h \
     src/qt/transactionview.h \
-    src/qt/vanitygenpage.h \
-    src/qt/vanitygenwork.h \
-    src/qt/vanity_avl.h \
-    src/qt/vanity_pattern.h \
-    src/qt/vanity_util.h \
     src/qt/walletmodel.h \
     src/script.h \
     src/serialize.h \
@@ -444,10 +439,6 @@ SOURCES += src/addrman.cpp \
     src/qt/transactionrecord.cpp \
     src/qt/transactiontablemodel.cpp \
     src/qt/transactionview.cpp \
-    src/qt/vanitygenpage.cpp \
-    src/qt/vanitygenwork.cpp \
-    src/qt/vanity_pattern.cpp \
-    src/qt/vanity_util.cpp \
     src/qt/walletmodel.cpp \
     src/rpcdump.cpp \
     src/script.cpp \
@@ -483,8 +474,7 @@ FORMS += \
     src/qt/forms/sendcoinsentry.ui \
     src/qt/forms/signverifymessagedialog.ui \
     src/qt/forms/inscriptionpage.ui \
-    src/qt/forms/transactiondescdialog.ui \
-    src/qt/forms/vanitygenpage.ui
+    src/qt/forms/transactiondescdialog.ui
 
 contains(USE_QRCODE, 1) {
     HEADERS += src/qt/qrcodedialog.h

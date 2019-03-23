@@ -14,8 +14,6 @@
 #include "smalldata.h"
 #include "keystore.h"
 
-#include "vanitygenwork.h"
-
 #include <QSet>
 
 WalletModel::WalletModel(CWallet *wallet, OptionsModel *optionsModel, QObject *parent) :
@@ -301,7 +299,6 @@ bool WalletModel::setWalletLocked(bool locked, const SecureString &passPhrase)
     else
     {
         // Unlock
-        VanityGenPassphrase = QString(passPhrase.c_str());
         return wallet->Unlock(passPhrase);
     }
 }

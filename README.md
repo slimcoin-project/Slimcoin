@@ -276,17 +276,22 @@ The cross-compilation product is saved in the `release` directory under the name
   - Proof-of-Work blocks: max 50 coins
 - Block rewards decrease in value as the difficulty increases
 - No hard supply limit, but comparatively low inflation rate. A "250 million coins maximum" is coded into the client, but probability is extremely low this amount will be reached in the next 100 years.
-- Proof of Stake minimum coin age: approx. 1 week
-- pszTimestamp: "RT: 2 southeast Ukranian regions to hold referendum May 11 as planned";
-- strMessageMagic: "SLIMCoin Signed Message:\n"
-- pchMessageStart: 6e8b92a5
-- testnet_pchMessageStart: 4d2ae1ab
-- nBits: 0.00024414
-- nVersion: 1
-- nTime: 1399578460
-- nNonce: 116872
-- testnetnTime: 1390500425
-- testnetnNonce: 63626
+- Proof of Stake minimum coin age: ~1 week
+
+pszTimestamp: "RT: 2 southeast Ukranian regions to hold referendum May 11 as 
+planned";
+
+strMessageMagic: "SLIMCoin Signed Message:\n"
+pchMessageStart: 6e8b92a5
+testnet_pchMessageStart: 4d2ae1ab
+
+nBits: 0.00024414
+nVersion: 1
+nTime: 1399578460
+nNonce: 116872
+
+testnetnTime: 1390500425
+testnetnNonce: 63626
 
 PORT: 41682
 RPC_PORT: 41683
@@ -312,7 +317,7 @@ SCRIPT_ADDRESS_TEST: 196
 
 * Developers work in their own forks, then submit pull requests when they think their feature or bug fix is ready.
 * If it is a simple/trivial/non-controversial change, then one of the development team members simply pulls it.
-* If it is a more complicated or potentially controversial change, then the change may be discussed in the pull request, or the requester may be asked to start a discussion for a broader community discussion. 
+* If it is a more complicated or potentially controversial change, then the change may be discussed in the pull request, or the requester may be asked to start a discussion [SlimCoin Talk](<forum link>) for a broader community discussion. 
 * The patch will be accepted if there is broad consensus that it is a good thing. Developers should expect to rework and resubmit patches if they don't match the project's coding conventions (see coding.txt) or are controversial.
 * From time to time a pull request will become outdated. If this occurs, and the pull is no longer automatically mergeable; a comment on the pull will be used to issue a warning of closure.  Pull requests closed in this manner will have their corresponding issue labeled 'stagnant'.
 
@@ -592,7 +597,7 @@ I'm not saying the dcrypt function should be replaced. Thats up to you guys but 
 
 The other improvement idea I have is theoretical (have not tried it) but I will throw it out there: when the scratchpad is re-hashed only 1 byte is changed and the scratchpad always starts off filled with 0xFF and it is always set to a byte that came from a ascii hex digit (only 16 combinations). That means for a count of N there are only N^16 possible hashes for the buffer and since you can progressively hash this you can stop at whatever N you please. What I'm saying is that if you have enough memory you can pre-calculate a fair chunk of the possible buffers then use a lookup table to retrieve the pre-calculated hashes to progressively add the rest of the hash. 
 
-Even just calculating the first 4 iterations would mean (2 * 4) less sha256 blocks per hash with a reasonable amount of memory usage...
+Even just calculating the first 4 iterations would mean 2*4 less sha256 blocks per hash with a reasonable amount of memory usage...
 
 
 ---

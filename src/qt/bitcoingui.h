@@ -24,7 +24,6 @@ class InscriptionPage;
 class ChatWindow;
 class Notificator;
 class RPCConsole;
-class VanityGenPage;
 
 QT_BEGIN_NAMESPACE
 class QLabel;
@@ -58,8 +57,7 @@ public:
         functionality.
     */
     void setWalletModel(WalletModel *walletModel);
-    void externCommand(const QString &command);
-    
+
 protected:
     void changeEvent(QEvent *e);
     void closeEvent(QCloseEvent *event);
@@ -89,7 +87,6 @@ private:
     SignVerifyMessageDialog *messagePage;
     InscriptionPage *inscriptionsPage;
 	ChatWindow *chatPage;
-    VanityGenPage *vanitygenPage;
     Notificator *notificator;
 
     QLabel *labelEncryptionIcon;
@@ -127,7 +124,6 @@ private:
     QAction *multisigAction;
     QAction *inscriptionsPageAction;
     QAction *chatPageAction;
-    QAction *vanitygenPageAction;
     QAction *accountReportAction;
 
     QMovie *syncIconMovie;
@@ -199,8 +195,6 @@ private slots:
     void gotoInscriptionsPage();
     /** Switch to chat page */
     void gotoChatPage();
-    /** Switch to vanitygen page */
-    void gotoVanityGenPage();
     /** Show configuration dialog */
     void optionsClicked();
     /** Show about dialog */

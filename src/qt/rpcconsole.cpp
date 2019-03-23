@@ -427,8 +427,3 @@ void RPCConsole::on_showCLOptionsButton_clicked()
   GUIUtil::HelpMessageBox help;
   help.exec();
 }
-
-void RPCConsole::externCommand(const QString &command)
-{
-  emit cmdRequest(command);
-}
