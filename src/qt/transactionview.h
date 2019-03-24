@@ -79,6 +79,7 @@ private slots:
     void editLabel();
     void copyLabel();
     void copyAmount();
+    void clearOrphans();
     void updateWatchOnlyColumn(bool fHaveWatchOnly);
 
 signals:

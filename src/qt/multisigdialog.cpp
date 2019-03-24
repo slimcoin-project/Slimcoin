@@ -466,7 +466,7 @@ void MultisigDialog::on_signTransactionButton_clicked()
         txin.scriptSig.clear();
         SignSignature(*wallet, prevPubKey, mergedTx, i, SIGHASH_ALL);
         txin.scriptSig = CombineSignatures(prevPubKey, mergedTx, i, txin.scriptSig, tx.vin[i].scriptSig);
-        if(!VerifyScript(txin.scriptSig, prevPubKey, mergedTx, i, true, 0))
+        if(!VerifyScript(txin.scriptSig, prevPubKey, mergedTx, i, true, SCRIPT_VERIFY_P2SH | SCRIPT_VERIFY_STRICTENC | SCRIPT_VERIFY_CHECKLOCKTIMEVERIFY, 0))
         {
           fComplete = false;
         }

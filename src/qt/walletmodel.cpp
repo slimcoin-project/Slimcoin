@@ -473,4 +473,10 @@ void WalletModel::listCoins(std::map<QString, std::vector<COutput> >& mapCoins) 
         if(!ExtractDestination(cout.tx->vout[cout.i].scriptPubKey, address)) continue;
         mapCoins[CBitcoinAddress(address).ToString().c_str()].push_back(out);
     }
+
+}
+
+void WalletModel::clearOrphans()
+{
+    wallet->ClearOrphans();
 }
