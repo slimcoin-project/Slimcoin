@@ -430,13 +430,15 @@ QString TransactionTableModel::formatTxToAddress(const TransactionRecord *wtx, b
         return QString::fromStdString(wtx->address);
     case TransactionRecord::RecvWithAddress:
     case TransactionRecord::SendToAddress:
+    case TransactionRecord::Generated:
+    case TransactionRecord::StakeMint:
         return lookupAddress(wtx->address, tooltip);
     case TransactionRecord::SendToOther:
+    case TransactionRecord::BurnMint:
         return QString::fromStdString(wtx->address);
     case TransactionRecord::Burned:
         return QString(fTestNet ? "Testnet Burn Address" : "Burn Address");
     case TransactionRecord::SendToSelf:
-    case TransactionRecord::Generated:
     default:
         return tr("(n/a)");
     }
@@ -449,13 +451,15 @@ QVariant TransactionTableModel::addressColor(const TransactionRecord *wtx) const
     {
     case TransactionRecord::RecvWithAddress:
     case TransactionRecord::SendToAddress:
+    case TransactionRecord::StakeMint:
+    case TransactionRecord::BurnMint:
+    case TransactionRecord::Generated:
         {
         QString label = walletModel->getAddressTableModel()->labelForAddress(QString::fromStdString(wtx->address));
         if(label.isEmpty())
             return COLOR_BAREADDRESS;
         } break;
     case TransactionRecord::SendToSelf:
-    case TransactionRecord::Generated:
         return COLOR_BAREADDRESS;
     default:
         break;
