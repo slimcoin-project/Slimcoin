@@ -1388,11 +1388,16 @@ public:
 
 isminetype IsMine(const CKeyStore &keystore, const CTxDestination& dest)
 {
-    CScript script;
-    script.SetDestination(dest);
+    // CScript script;
+    // script.SetDestination(dest);
+    // if (keystore.HaveWatchOnly(dest))
+    //     return MINE_WATCH_ONLY;
+    // return IsMine(keystore, script);
+    if (boost::apply_visitor(CKeyStoreIsMineVisitor(&keystore), dest))
+        return MINE_SPENDABLE;
     if (keystore.HaveWatchOnly(dest))
         return MINE_WATCH_ONLY;
-    return IsMine(keystore, script);
+    return MINE_NO;
 }
 
 isminetype IsMine(const CKeyStore &keystore, const CScript& scriptPubKey)
@@ -1400,7 +1405,7 @@ isminetype IsMine(const CKeyStore &keystore, const CScript& scriptPubKey)
     vector<valtype> vSolutions;
     txnouttype whichType;
     if (!Solver(scriptPubKey, whichType, vSolutions)) {
-        if (keystore.HaveWatchOnly(scriptPubKey))
+        if (keystore.HaveWatchOnly(scriptPubKey.GetID()))
             return MINE_WATCH_ONLY;
         return MINE_NO;
     }
@@ -1408,52 +1413,54 @@ isminetype IsMine(const CKeyStore &keystore, const CScript& scriptPubKey)
     CKeyID keyID;
     switch (whichType)
     {
-    case TX_NONSTANDARD:
-    case TX_NULL_DATA:
-        break;
-    case TX_PUBKEY:
-        keyID = CPubKey(vSolutions[0]).GetID();
-        if (keystore.HaveKey(keyID))
-            return MINE_SPENDABLE;
-        if (keystore.HaveWatchOnly(keyID))
-            return MINE_WATCH_ONLY;
-        break;
-    case TX_PUBKEYHASH:
-        keyID = CKeyID(uint160(vSolutions[0]));
-        if (keystore.HaveKey(keyID))
-            return MINE_SPENDABLE;
-        if (keystore.HaveWatchOnly(keyID))
-            return MINE_WATCH_ONLY;
-        break;
-    case TX_SCRIPTHASH:
-    {
-        CScriptID scriptID = CScriptID(uint160(vSolutions[0]));
-        CScript subscript;
-        if (keystore.GetCScript(scriptID, subscript)) {
-            isminetype ret = IsMine(keystore, subscript);
-            if (ret == MINE_SPENDABLE)
-                return ret;
-        }
-        if (keystore.HaveWatchOnly(scriptID))
-            return MINE_WATCH_ONLY;
-        break;
-    }
-    case TX_MULTISIG:
-    {
-        // Only consider transactions "mine" if we own ALL the
-        // keys involved. multi-signature transactions that are
-        // partially owned (somebody else has a key that can spend
-        // them) enable spend-out-from-under-you attacks, especially
-        // in shared-wallet situations.
-        vector<valtype> keys(vSolutions.begin()+1, vSolutions.begin()+vSolutions.size()-1);
-        if (HaveKeys(keys, keystore) == keys.size())
-            return MINE_SPENDABLE;
-        break;
-    }
-    }
+        case TX_NONSTANDARD:
+            break;
 
-    if (keystore.HaveWatchOnly(scriptPubKey))
+        case TX_NULL_DATA:
+            break;
+
+        case TX_PUBKEY:
+            keyID = CPubKey(vSolutions[0]).GetID();
+            if (keystore.HaveKey(keyID))
+              return MINE_SPENDABLE;
+            break;
+
+        case TX_PUBKEYHASH:
+            keyID = CKeyID(uint160(vSolutions[0]));
+            if (keystore.HaveKey(keyID))
+              return MINE_SPENDABLE;
+            break;
+
+        case TX_SCRIPTHASH: {
+            CScriptID scriptID = CScriptID(uint160(vSolutions[0]));
+            CScript subscript;
+
+            if(keystore.GetCScript(scriptID, subscript)) {
+                isminetype ret;
+                ret = IsMine(keystore, subscript);
+                if(ret == MINE_SPENDABLE)
+                  return ret;
+            }
+            break;
+        }
+
+        case TX_MULTISIG: {
+            // Only consider transactions "mine" if we own ALL the
+            // keys involved. multi-signature transactions that are
+            // partially owned (somebody else has a key that can spend
+            // them) enable spend-out-from-under-you attacks, especially
+            // in shared-wallet situations.
+            vector<valtype> keys(vSolutions.begin() + 1, vSolutions.begin() + vSolutions.size() - 1);
+            if (HaveKeys(keys, keystore) == keys.size())
+              return MINE_SPENDABLE;
+            break;
+        }
+
+     }
+
+     if (keystore.HaveWatchOnly(scriptPubKey.GetID()))
         return MINE_WATCH_ONLY;
+
     return MINE_NO;
 }
 
@@ -1837,3 +1844,13 @@ void CScript::SetMultisig(int nRequired, const std::vector<CPubKey>& keys)
         *this << key;
     *this << EncodeOP_N(keys.size()) << OP_CHECKMULTISIG;
 }
+/* Produces a P2PKH pubkey script using a pubkey hash */
+CScript GetScriptForPubKeyHash(const CKeyID &keyID) {
+    CScript script;
+
+    script.clear();
+    script << OP_DUP << OP_HASH160 << keyID << OP_EQUALVERIFY << OP_CHECKSIG;
+
+    return(script);
+}
+

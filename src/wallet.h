@@ -202,12 +202,16 @@ public:
     int64 GetOldestKeyPoolTime();
     // Adds a watch-only address to the store, and saves it to disk.
     bool AddWatchOnly(const CTxDestination &dest);
+    // Removes a watch only address from the store and erases it from disk
+    bool RemoveWatchOnly(const CTxDestination &dest);
     // Adds a watch-only address to the store, without saving it to disk (used by LoadWallet)
     bool LoadWatchOnly(const CTxDestination &dest);
     bool IsSpent(const uint256& hash, unsigned int n) const;
+    std::map<CTxDestination, int64_t> GetAddressBalances();
 
     void GetAllReserveKeys(std::set<CKeyID>& setAddress);
     isminetype IsMine(const CTxIn& txin) const;
+    int64 GetDebit(const CTxIn& txin) const;
     int64 GetDebit(const CTxIn& txin, const isminefilter& filter) const;
     isminetype IsMine(const CTxOut& txout) const
     {
@@ -247,6 +251,28 @@ public:
                 throw std::runtime_error("CWallet::GetDebit() : value out of range");
         }
         return nDebit;
+    }
+    int64 GetDebit(const CTransaction& tx, const isminefilter& filter) const
+    {
+        int64 nDebit = 0;
+        BOOST_FOREACH(const CTxIn& txin, tx.vin)
+        {
+            nDebit += GetDebit(txin, filter);
+            if (!MoneyRange(nDebit))
+                throw std::runtime_error("CWallet::GetDebit() : value out of range");
+        }
+        return nDebit;
+    }
+    int64 GetCredit(const CTransaction& tx) const
+    {
+        int64 nCredit = 0;
+        BOOST_FOREACH(const CTxOut& txout, tx.vout)
+        {
+            nCredit += GetCredit(txout, MINE_SPENDABLE|MINE_WATCH_ONLY);
+            if (!MoneyRange(nCredit))
+                throw std::runtime_error("CWallet::GetCredit() : value out of range");
+        }
+        return nCredit;
     }
     int64 GetCredit(const CTransaction& tx, const isminefilter& filter) const
     {
@@ -554,8 +580,8 @@ CWalletTx(const CWallet* pwalletIn, const CTransaction& txIn) : CMerkleTx(txIn)
         return (!!vfSpent[nOut]);
     }
 
-    int64_t GetDebit(const isminefilter& filter) const;
-    int64_t GetCredit(const isminefilter& filter) const;
+    int64 GetDebit(const isminefilter& filter) const;
+    int64 GetCredit(const isminefilter& filter) const;
 
     int64 GetDebit() const
     {
@@ -609,7 +635,7 @@ CWalletTx(const CWallet* pwalletIn, const CTransaction& txIn) : CMerkleTx(txIn)
     }
 
 
-    int64_t GetImmatureWatchOnlyCredit(const bool& fUseCache=true) const
+    int64 GetImmatureWatchOnlyCredit(const bool& fUseCache=true) const
     {
         if (IsCoinBase() && GetBlocksToMaturity() > 0 && IsInMainChain())
         {
@@ -623,7 +649,7 @@ CWalletTx(const CWallet* pwalletIn, const CTransaction& txIn) : CMerkleTx(txIn)
         return 0;
     }
 
-    int64_t GetAvailableWatchOnlyCredit(const bool& fUseCache=true) const
+    int64 GetAvailableWatchOnlyCredit(const bool& fUseCache=true) const
     {
         if (pwallet == 0)
             return 0;

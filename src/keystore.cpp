@@ -60,19 +60,19 @@ bool CBasicKeyStore::GetCScript(const CScriptID &hash, CScript& redeemScriptOut)
   return false;
 }
 
-bool CBasicKeyStore::AddWatchOnly(const CScript &dest) {
+bool CBasicKeyStore::AddWatchOnly(const CTxDestination &dest) {
     LOCK(cs_KeyStore);
     setWatchOnly.insert(dest);
     return(true);
 }
 
-bool CBasicKeyStore::RemoveWatchOnly(const CScript &dest) {
+bool CBasicKeyStore::RemoveWatchOnly(const CTxDestination &dest) {
     LOCK(cs_KeyStore);
     setWatchOnly.erase(dest);
     return(true);
 }
 
-bool CBasicKeyStore::HaveWatchOnly(const CScript &dest) const {
+bool CBasicKeyStore::HaveWatchOnly(const CTxDestination &dest) const {
     LOCK(cs_KeyStore);
     return(setWatchOnly.count(dest) > 0);
 }

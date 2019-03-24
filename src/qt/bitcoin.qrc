@@ -15,6 +15,9 @@
         <file alias="editcopy">res/icons/editcopy.png</file>
         <file alias="editpaste">res/icons/editpaste.png</file>
         <file alias="export">res/icons/export.png</file>
+        <file alias="eye">res/icons/eye.png</file>
+        <file alias="eye_minus">res/icons/eye_minus.png</file>
+        <file alias="eye_plus">res/icons/eye_plus.png</file>
         <file alias="filesave">res/icons/filesave.png</file>
         <file alias="history">res/icons/history.png</file>
         <file alias="inscribe">res/icons/inscribe.png</file>

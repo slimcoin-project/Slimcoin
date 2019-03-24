@@ -125,28 +125,28 @@
           </property>
          </widget>
         </item>
-        <item row="5" column="1">
+        <item row="6" column="1">
          <widget class="QLabel" name="labelNumTransactions">
           <property name="text">
            <string notr="true">0</string>
           </property>
          </widget>
         </item>
-        <item row="6" column="0">
+        <item row="7" column="0">
          <widget class="QLabel" name="label_2a">
           <property name="text">
            <string>Reserve Balance:</string>
           </property>
          </widget>
         </item>
-        <item row="6" column="1">
+        <item row="7" column="1">
          <widget class="QLabel" name="labelReserveBalance">
           <property name="text">
            <string notr="true">0</string>
           </property>
          </widget>
         </item>
-        <item row="7" column="1">
+        <item row="8" column="0">
          <spacer name="verticalSpacer_3">
           <property name="orientation">
            <enum>Qt::Vertical</enum>
@@ -157,12 +157,28 @@
           <property name="sizeHint" stdset="0">
            <size>
             <width>20</width>
-            <height>40</height>
+            <height>10</height>
            </size>
           </property>
          </spacer>
         </item>
-        <item row="8" column="0">
+        <item row="8" column="1">
+         <spacer name="verticalSpacer_3a">
+          <property name="orientation">
+           <enum>Qt::Vertical</enum>
+          </property>
+          <property name="sizeType">
+           <enum>QSizePolicy::Expanding</enum>
+          </property>
+          <property name="sizeHint" stdset="0">
+           <size>
+            <width>20</width>
+            <height>10</height>
+           </size>
+          </property>
+         </spacer>
+        </item>
+        <item row="9" column="0">
          <widget class="QLabel" name="label_7">
           <property name="toolTip">
            <string/>
@@ -172,14 +188,14 @@
           </property>
          </widget>
         </item>
-        <item row="8" column="1">
+        <item row="9" column="1">
          <widget class="QLabel" name="labelNetBurnCoins">
           <property name="text">
            <string>0 SLM</string>
           </property>
          </widget>
         </item>
-        <item row="9" column="0">
+        <item row="10" column="0">
          <widget class="QLabel" name="label_8">
           <property name="toolTip">
            <string/>
@@ -189,14 +205,14 @@
           </property>
          </widget>
         </item>
-        <item row="9" column="1">
+        <item row="10" column="1">
          <widget class="QLabel" name="labelEffBurnCoins">
           <property name="text">
            <string>0 SLM</string>
           </property>
          </widget>
         </item>
-        <item row="10" column="0">
+        <item row="11" column="0">
          <widget class="QLabel" name="label_10">
           <property name="toolTip">
            <string/>
@@ -206,14 +222,14 @@
           </property>
          </widget>
         </item>
-        <item row="10" column="1">
+        <item row="11" column="1">
          <widget class="QLabel" name="labelImmBurnCoins">
           <property name="text">
            <string>0 SLM</string>
           </property>
          </widget>
         </item>
-        <item row="11" column="0">
+        <item row="12" column="0">
          <widget class="QLabel" name="label_12">
           <property name="toolTip">
            <string/>
@@ -223,14 +239,14 @@
           </property>
          </widget>
         </item>
-        <item row="11" column="1">
+        <item row="12" column="1">
          <widget class="QLabel" name="labelDecayBurnCoins">
           <property name="text">
            <string>0 SLM</string>
           </property>
          </widget>
         </item>
-        <item row="12" column="1">
+        <item row="13" column="0">
          <spacer name="verticalSpacer_3">
           <property name="orientation">
            <enum>Qt::Vertical</enum>
@@ -241,12 +257,28 @@
           <property name="sizeHint" stdset="0">
            <size>
             <width>20</width>
-            <height>40</height>
+            <height>10</height>
            </size>
           </property>
          </spacer>
         </item>
-        <item row="13" column="0">
+        <item row="13" column="1">
+         <spacer name="verticalSpacer_3">
+          <property name="orientation">
+           <enum>Qt::Vertical</enum>
+          </property>
+          <property name="sizeType">
+           <enum>QSizePolicy::Expanding</enum>
+          </property>
+          <property name="sizeHint" stdset="0">
+           <size>
+            <width>20</width>
+            <height>10</height>
+           </size>
+          </property>
+         </spacer>
+        </item>
+        <item row="14" column="0">
          <widget class="QLabel" name="labelWatchAvailable">
           <property name="toolTip">
            <string>Current balance in watchonly addresses</string>
@@ -256,14 +288,14 @@
           </property>
          </widget>
         </item>
-        <item row="13" column="1">
+        <item row="14" column="1">
          <widget class="QLabel" name="watchAvailable">
           <property name="text">
            <string>0.00 SLM</string>
           </property>
          </widget>
         </item>
-        <item row="14" column="0">
+        <item row="15" column="0">
          <widget class="QLabel" name="labelWatchPending">
           <property name="toolTip">
            <string>Unconfirmed transactions to watchonly addresses</string>
@@ -273,14 +305,14 @@
           </property>
          </widget>
         </item>
-        <item row="14" column="1">
+        <item row="15" column="1">
          <widget class="QLabel" name="watchPending">
           <property name="text">
            <string>0.00 SLM</string>
           </property>
          </widget>
         </item>
-        <item row="15" column="0">
+        <item row="16" column="0">
          <widget class="QLabel" name="labelWatchImmature">
           <property name="toolTip">
            <string>Mined balance in watchonly addresses that has not yet matured</string>
@@ -290,14 +322,14 @@
           </property>
          </widget>
         </item>
-        <item row="15" column="1">
+        <item row="16" column="1">
          <widget class="QLabel" name="labelWatchTotal">
           <property name="text">
            <string>0.00 SLM</string>
           </property>
          </widget>
         </item>
-        <item row="16" column="0">
+        <item row="17" column="0">
          <widget class="QLabel" name="label_12">
           <property name="toolTip">
            <string/>
@@ -307,7 +339,7 @@
           </property>
          </widget>
         </item>
-        <item row="16" column="1">
+        <item row="17" column="1">
          <widget class="QLabel" name="watchImmature">
           <property name="text">
            <string>0.00 SLM</string>

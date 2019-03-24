@@ -113,10 +113,11 @@ QString TransactionDesc::toHTML(CWallet *wallet, CWalletTx &wtx)
         //
         // To
         //
+        string strAddress;
         if(!wtx.mapValue["to"].empty())
         {
             // Online transaction
-            std::string strAddress = wtx.mapValue["to"];
+            strAddress = wtx.mapValue["to"];
             strHTML += "<b>" + tr("To") + ":</b> ";
             CTxDestination dest = CBitcoinAddress(strAddress).Get();
             if (wallet->mapAddressBook.count(dest) && !wallet->mapAddressBook[dest].empty())
@@ -181,11 +182,11 @@ QString TransactionDesc::toHTML(CWallet *wallet, CWalletTx &wtx)
                 //
                 BOOST_FOREACH(const CTxOut& txout, wtx.vout)
                 {
-                    if(wallet->IsMine(txout))
-                    // Ignore change
                     isminetype toSelf = wallet->IsMine(txout);
-                    if ((toSelf == MINE_SPENDABLE) && (fAllFromMe == MINE_SPENDABLE))
-                        continue;
+                    if(toSelf) {
+                        if ((toSelf == MINE_SPENDABLE) && (fAllFromMe == MINE_SPENDABLE))
+                            continue; // Ignore change
+                    }
 
                     if(wtx.mapValue["to"].empty())
                     {
@@ -207,7 +208,7 @@ QString TransactionDesc::toHTML(CWallet *wallet, CWalletTx &wtx)
 
                     strHTML += tr("<b>Debit:</b> ") + BitcoinUnits::formatWithUnit(BitcoinUnits::BTC, -txout.nValue) + "<br>";
                     if(toSelf)
-                        strHTML += "<b>" + tr("Credit") + ":</b> " + BitcoinUnits::formatWithUnit(unit, txout.nValue) + "<br>";
+                        strHTML += "<b>" + tr("Credit") + ":</b> " + BitcoinUnits::formatWithUnit(BitcoinUnits::BTC, txout.nValue) + "<br>";
 
                 }
 

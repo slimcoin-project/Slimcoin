@@ -101,6 +101,7 @@ public:
   qint64 getReserveBalance() const;
   qint64 getStake() const;
   qint64 getUnconfirmedBalance() const;
+  bool haveWatchOnly() const;
   qint64 getWatchBalance() const;
   qint64 getWatchUnconfirmedBalance() const;
   qint64 getWatchImmatureBalance() const;
@@ -168,6 +169,7 @@ public:
 
 private:
   CWallet *wallet;
+    bool fHaveWatchOnly;
 
   // Wallet has an options model for wallet-specific options
   // (transaction fee, for example)
@@ -191,7 +193,7 @@ private:
 
 signals:
   // Signal that balance in wallet changed
-  void balanceChanged(qint64 balance, qint64 stake, qint64 unconfirmedBalance, qint64 immatureBalance, qint64 reserveBalance, BurnCoinsBalances cachedBurnCoinsBalances, qint64 watchOnlyBalance, qint64 watchUnconfBalance, qint64 watchImmatureBalance);
+  void balanceChanged(qint64 balance, qint64 stake, qint64 unconfirmedBalance, qint64 immatureBalance, qint64 watchOnlyBalance, qint64 watchUnconfBalance, qint64 watchImmatureBalance, qint64 reserveBalance, BurnCoinsBalances cachedBurnCoinsBalances);
 
   // Number of transactions in wallet changed
   void numTransactionsChanged(int count);
@@ -210,9 +212,14 @@ signals:
   // Asynchronous error notification
   void error(const QString &title, const QString &message, bool modal);
 
+  // Watch-only address added
+  void notifyWatchonlyChanged(bool fHaveWatchonly);
+
   public slots:
     void update();
     void updateAddressList();
+    /* Watch-only added */
+    void updateWatchOnlyFlag(bool fHaveWatchonly);
 };
 
 

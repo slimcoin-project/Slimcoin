@@ -60,6 +60,12 @@ bool CWalletDB::WriteWatchOnly(const CTxDestination &dest)
     return Write(std::make_pair(std::string("watch"), CBitcoinAddress(dest).ToString()), '1');
 }
 
+bool CWalletDB::EraseWatchOnly(const CTxDestination &dest)
+{
+    nWalletDBUpdated++;
+    return Erase(make_pair(std::string("watch"), CBitcoinAddress(dest).ToString()));
+}
+
 int64 CWalletDB::GetAccountCreditDebit(const string& strAccount)
 {
   list<CAccountingEntry> entries;

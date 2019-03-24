@@ -26,7 +26,8 @@ public:
  *   CNoDestination: no destination set
  *   CKeyID: TX_PUBKEYHASH destination
  *   CScriptID: TX_SCRIPTHASH destination
- * A CTxDestination is the internal data type encoded in a CBitcoinAddress */
+ * A CTxDestination is the internal data type encoded in a CBitcoinAddress
+ */
 typedef boost::variant<CNoDestination, CKeyID, CScriptID> CTxDestination;
 
 /** A virtual base class for key stores */
@@ -53,9 +54,9 @@ public:
     virtual bool GetCScript(const CScriptID &hash, CScript& redeemScriptOut) const =0;
 
     /* Support for watch only addresses */
-    virtual bool AddWatchOnly(const CScript &dest) = 0;
-    virtual bool RemoveWatchOnly(const CScript &dest) = 0;
-    virtual bool HaveWatchOnly(const CScript &dest) const = 0;
+    virtual bool AddWatchOnly(const CTxDestination &dest) = 0;
+    virtual bool RemoveWatchOnly(const CTxDestination &dest) = 0;
+    virtual bool HaveWatchOnly(const CTxDestination &dest) const = 0;
     virtual bool HaveWatchOnly() const = 0;
 
     virtual bool GetSecret(const CKeyID &address, CSecret& vchSecret, bool &fCompressed) const
@@ -70,7 +71,7 @@ public:
 
 typedef std::map<CKeyID, std::pair<CSecret, bool> > KeyMap;
 typedef std::map<CScriptID, CScript > ScriptMap;
-typedef std::set<CScript> WatchOnlySet;
+typedef std::set<CTxDestination> WatchOnlySet;
 
 /** Basic key store, that keeps keys in an address->secret map */
 class CBasicKeyStore : public CKeyStore
@@ -136,9 +137,9 @@ public:
     virtual bool HaveCScript(const CScriptID &hash) const;
     virtual bool GetCScript(const CScriptID &hash, CScript& redeemScriptOut) const;
 
-    virtual bool AddWatchOnly(const CScript &dest);
-    virtual bool RemoveWatchOnly(const CScript &dest);
-    virtual bool HaveWatchOnly(const CScript &dest) const;
+    virtual bool AddWatchOnly(const CTxDestination &dest);
+    virtual bool RemoveWatchOnly(const CTxDestination &dest);
+    virtual bool HaveWatchOnly(const CTxDestination &dest) const;
     virtual bool HaveWatchOnly() const;
 };
 

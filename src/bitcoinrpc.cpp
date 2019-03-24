@@ -59,6 +59,7 @@ extern Value dumpprivkey(const Array& params, bool fHelp);
 extern Value importprivkey(const Array& params, bool fHelp);
 extern Value importpassphrase(const Array& params, bool fHelp);
 extern Value importaddress(const Array& params, bool fHelp);
+extern Value ignoreaddress(const Array& params, bool fHelp);
 extern int64 GetBurnTxTotal();
 Object JSONRPCError(int code, const string& message)
 {
@@ -4279,6 +4280,7 @@ static const CRPCCommand vRPCCommands[] =
     { "importprivkey",            &importprivkey,          false  },
     { "importpassphrase",         &importpassphrase,       false  },
     { "importaddress",            &importaddress,          true   },
+    { "ignoreaddress",            &ignoreaddress,          true   },
     { "getcheckpoint",            &getcheckpoint,          true   },
     { "reservebalance",           &reservebalance,         false  },
     { "dumpbootstrap",            &dumpbootstrap,          false  },
@@ -5037,6 +5039,7 @@ Array RPCConvertValues(const std::string &strMethod, const std::vector<std::stri
     if (strMethod == "signrawtransaction"     && n > 2) ConvertTo<Array>(params[2], true);
 
     if (strMethod == "importaddress"          && n > 2) ConvertTo<bool>(params[2]);
+    if (strMethod == "ignoreaddress"          && n > 2) ConvertTo<bool>(params[1]);
     return params;
 }
 

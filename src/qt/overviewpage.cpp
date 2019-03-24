@@ -100,10 +100,10 @@ OverviewPage::OverviewPage(QWidget *parent) :
     currentStake(0),
     currentReserveBalance(0),
     currentUnconfirmedBalance(-1),
+    currentImmatureBalance(-1),
     currentWatchOnlyBalance(-1),
     currentWatchUnconfBalance(-1),
     currentWatchImmatureBalance(-1),
-    currentImmatureBalance(-1),
     txdelegate(new TxViewDelegate())
 {
     ui->setupUi(this);
@@ -230,11 +230,16 @@ void OverviewPage::setBalance(qint64 balance, qint64 stake, qint64 unconfirmedBa
     ui->labelImmBurnCoins->setText(BitcoinUnits::formatWithUnit(unit, burnBalances.nImmatureBurnCoins));
     ui->labelDecayBurnCoins->setText(BitcoinUnits::formatWithUnit(unit, burnBalances.nDecayedBurnCoins));
 
+    // only show immature (newly mined) balance if it's non-zero, so as not to complicate things
+    // for the non-mining users
+    bool showImmature = immatureBalance != 0;
+    ui->labelImmature->setVisible(showImmature);
+    ui->labelImmatureText->setVisible(showImmature);
+
     ui->labelWatchAvailable->setText(BitcoinUnits::formatWithUnit(unit, watchOnlyBalance));
     ui->labelWatchPending->setText(BitcoinUnits::formatWithUnit(unit, watchUnconfBalance));
     ui->labelWatchImmature->setText(BitcoinUnits::formatWithUnit(unit, watchImmatureBalance));
     ui->labelWatchTotal->setText(BitcoinUnits::formatWithUnit(unit, watchOnlyBalance + watchUnconfBalance + watchImmatureBalance));
-
 
     bool showWatchOnlyImmature = watchImmatureBalance != 0;
     bool showWatchOnly = (watchOnlyBalance != 0 || watchUnconfBalance != 0 || showWatchOnlyImmature);
@@ -242,18 +247,12 @@ void OverviewPage::setBalance(qint64 balance, qint64 stake, qint64 unconfirmedBa
     // for symmetry reasons also show immature label when the watchonly one is shown
     // ui->labelImmature->setVisible(showImmature || showWatchOnlyImmature);
     // ui->labelImmatureText->setVisible(showImmature || showWatchOnlyImmature);
-    ui->labelWatchonly->setVisible(showWatchOnly);              // show Watchonly label
-    ui->lineWatchBalance->setVisible(showWatchOnly);            // show watchonly balance separator line
+    // ui->labelWatchOnly->setVisible(showWatchOnly);              // show Watchonly label
+    // ui->labelWatchBalance->setVisible(showWatchOnly);           // show watchonly balance separator line
     ui->labelWatchAvailable->setVisible(showWatchOnly);         // show watchonly available balance
     ui->labelWatchImmature->setVisible(showWatchOnlyImmature);  // show watchonly immature balance
     ui->labelWatchPending->setVisible(showWatchOnly);           // show watchonly pending balance
     ui->labelWatchTotal->setVisible(showWatchOnly);             // show watchonly total balance
-
-    // only show immature (newly mined) balance if it's non-zero, so as not to complicate things
-    // for the non-mining users
-    bool showImmature = immatureBalance != 0;
-    ui->labelImmature->setVisible(showImmature);
-    ui->labelImmatureText->setVisible(showImmature);
 }
 
 void OverviewPage::setNumTransactions(int count)
@@ -310,7 +309,7 @@ void OverviewPage::displayUnitChanged()
     if(!model || !model->getOptionsModel())
         return;
     if(currentBalance != -1)
-        setBalance(currentBalance, currentStake, currentUnconfirmedBalance, currentImmatureBalance, currentReserveBalance, BurnCoinsBalances(currentNetBurnCoins, currentEffectiveBurnCoins, currentImmatureBurnCoins, currentWatchOnlyBalance, currentWatchUnconfBalance, currentWatchImmatureBalance));
+        setBalance(currentBalance, currentStake, currentUnconfirmedBalance, currentImmatureBalance, currentReserveBalance, BurnCoinsBalances(currentNetBurnCoins, currentEffectiveBurnCoins, currentImmatureBurnCoins), currentWatchOnlyBalance, currentWatchUnconfBalance, currentWatchImmatureBalance);
     txdelegate->unit = model->getOptionsModel()->getDisplayUnit();
     ui->listTransactions->update();
 }
@@ -320,7 +319,7 @@ void OverviewPage::reserveBalanceChanged()
     if(!model || !model->getOptionsModel())
         return;
     if(currentBalance != -1)
-        setBalance(currentBalance, currentStake, currentUnconfirmedBalance, currentImmatureBalance, currentReserveBalance, BurnCoinsBalances(currentNetBurnCoins, currentEffectiveBurnCoins, currentImmatureBurnCoins, currentWatchOnlyBalance, currentWatchUnconfBalance, currentWatchImmatureBalance));
+        setBalance(currentBalance, currentStake, currentUnconfirmedBalance, currentImmatureBalance, currentReserveBalance, BurnCoinsBalances(currentNetBurnCoins, currentEffectiveBurnCoins, currentImmatureBurnCoins), currentWatchOnlyBalance, currentWatchUnconfBalance, currentWatchImmatureBalance);
 
     /*
     int unit = model->getOptionsModel()->getDisplayUnit();

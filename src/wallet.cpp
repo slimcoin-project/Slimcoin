@@ -129,17 +129,42 @@ bool fWalletUnlockMintOnly = false;
 
 bool CWallet::AddWatchOnly(const CTxDestination &dest)
 {
+    // CScript script;
+    // script.SetDestination(dest);
+
     if (!CCryptoKeyStore::AddWatchOnly(dest))
         return false;
     // nTimeFirstKey = 1; // No birthday information for watch-only keys.
+
     if (!fFileBacked)
         return true;
+
     return CWalletDB(strWalletFile).WriteWatchOnly(dest);
+}
+
+bool CWallet::RemoveWatchOnly(const CTxDestination &dest) {
+
+    // CScript script;
+    // script.SetDestination(dest);
+
+    LOCK(cs_wallet);
+
+    if(!CCryptoKeyStore::RemoveWatchOnly(dest))
+      return(false);
+
+    if(fFileBacked) {
+        if(!CWalletDB(strWalletFile).EraseWatchOnly(dest))
+          return(false);
+    }
+
+    return(true);
 }
 
 bool CWallet::LoadWatchOnly(const CTxDestination &dest)
 {
     // LogPrintf("Loaded %s!\n", CBitcoinAddress(dest).ToString().c_str());
+    // CScript script;
+    // script.SetDestination(dest);
     return CCryptoKeyStore::AddWatchOnly(dest);
 }
 
@@ -523,8 +548,8 @@ bool CWallet::EraseFromWallet(uint256 hash)
 }
 
 
-isminetype CWallet::IsMine(const CTxIn &txin) const
-{
+isminetype CWallet::IsMine(const CTxIn &txin) const {
+
     {
         LOCK(cs_wallet);
         map<uint256, CWalletTx>::const_iterator mi = mapWallet.find(txin.prevout.hash);
@@ -535,7 +560,25 @@ isminetype CWallet::IsMine(const CTxIn &txin) const
                 return IsMine(prev.vout[txin.prevout.n]);
         }
     }
+
     return MINE_NO;
+}
+
+int64 CWallet::GetDebit(const CTxIn &txin) const
+{
+    {
+        LOCK(cs_wallet);
+        isminefilter filter = (MINE_SPENDABLE || MINE_WATCH_ONLY);
+        map<uint256, CWalletTx>::const_iterator mi = mapWallet.find(txin.prevout.hash);
+        if (mi != mapWallet.end())
+        {
+            const CWalletTx& prev = (*mi).second;
+            if (txin.prevout.n < prev.vout.size())
+                if (IsMine(prev.vout[txin.prevout.n]) & filter)
+                    return prev.vout[txin.prevout.n].nValue;
+        }
+    }
+    return 0;
 }
 
 int64 CWallet::GetDebit(const CTxIn &txin, const isminefilter& filter) const
@@ -552,6 +595,76 @@ int64 CWallet::GetDebit(const CTxIn &txin, const isminefilter& filter) const
         }
     }
     return 0;
+}
+
+int64 CWalletTx::GetDebit(const isminefilter& filter) const
+{
+    if (vin.empty())
+        return 0;
+
+    bool fWatchDebitCached = false;
+    int64 nWatchDebitCached = 0;
+
+    int64 debit = 0;
+    if(filter & MINE_SPENDABLE)
+    {
+        if (fDebitCached)
+            debit += nDebitCached;
+        else
+        {
+            nDebitCached = pwallet->GetDebit(*this, MINE_SPENDABLE);
+            fDebitCached = true;
+            debit += nDebitCached;
+        }
+    }
+    if(filter & MINE_WATCH_ONLY)
+    {
+        if(fWatchDebitCached)
+            debit += nWatchDebitCached;
+        else
+        {
+            nWatchDebitCached = pwallet->GetDebit(*this, MINE_WATCH_ONLY);
+            fWatchDebitCached = true;
+            debit += nWatchDebitCached;
+        }
+    }
+    return debit;
+}
+
+int64 CWalletTx::GetCredit(const isminefilter& filter) const
+{
+    bool fWatchCreditCached = false;
+    int64 nWatchCreditCached = 0;
+
+    // Must wait until coinbase is safely deep enough in the chain before valuing it
+    if (IsCoinBase() && GetBlocksToMaturity() > 0)
+        return 0;
+
+    int64 credit = 0;
+    if (filter & MINE_SPENDABLE)
+    {
+        // GetBalance can assume transactions in mapWallet won't change
+        if (fCreditCached)
+            credit += nCreditCached;
+        else
+        {
+            nCreditCached = pwallet->GetCredit(*this, MINE_SPENDABLE);
+            fCreditCached = true;
+            credit += nCreditCached;
+        }
+    }
+    if (filter & MINE_WATCH_ONLY)
+    {
+        if (fWatchCreditCached)
+            credit += nWatchCreditCached;
+        else
+        {
+            nWatchCreditCached = pwallet->GetCredit(*this, MINE_WATCH_ONLY);
+            fWatchCreditCached = true;
+            credit += nWatchCreditCached;
+        }
+    }
+    return credit;
 }
 
 bool CWallet::IsChange(const CTxOut& txout) const
@@ -1117,7 +1230,7 @@ int64 CWallet::GetNewMint() const
     return nTotal;
 }
 
-int64_t CWallet::GetWatchOnlyBalance() const
+int64 CWallet::GetWatchOnlyBalance() const
 {
     int64_t nTotal = 0;
     {
@@ -1125,15 +1238,16 @@ int64_t CWallet::GetWatchOnlyBalance() const
         for (map<uint256, CWalletTx>::const_iterator it = mapWallet.begin(); it != mapWallet.end(); ++it)
         {
             const CWalletTx* pcoin = &(*it).second;
-            if (pcoin->IsTrusted())
-                nTotal += pcoin->GetAvailableWatchOnlyCredit();
+            // if (pcoin->IsTrusted())
+            //    nTotal += pcoin->GetAvailableWatchOnlyCredit();
+            nTotal += pcoin->GetAvailableWatchOnlyCredit();
         }
     }
     
     return nTotal;
 }
 
-int64_t CWallet::GetUnconfirmedWatchOnlyBalance() const
+int64 CWallet::GetUnconfirmedWatchOnlyBalance() const
 {
     int64_t nTotal = 0;
     {
@@ -1141,14 +1255,15 @@ int64_t CWallet::GetUnconfirmedWatchOnlyBalance() const
         for (map<uint256, CWalletTx>::const_iterator it = mapWallet.begin(); it != mapWallet.end(); ++it)
         {
             const CWalletTx* pcoin = &(*it).second;
-            if (!IsFinalTx(*pcoin) || (!pcoin->IsTrusted() && pcoin->GetDepthInMainChain() == 0))
-                nTotal += pcoin->GetAvailableWatchOnlyCredit();
+            // if (!IsFinalTx(*pcoin) || (!pcoin->IsTrusted() && pcoin->GetDepthInMainChain() == 0))
+            //     nTotal += pcoin->GetAvailableWatchOnlyCredit();
+            nTotal += pcoin->GetAvailableWatchOnlyCredit();
         }
     }
     return nTotal;
 }
 
-int64_t CWallet::GetImmatureWatchOnlyBalance() const
+int64 CWallet::GetImmatureWatchOnlyBalance() const
 {
     int64_t nTotal = 0;
     {
@@ -1192,7 +1307,7 @@ void CWallet::AvailableCoins(unsigned int nSpendTime, vector<COutput>& vCoins, b
                     vCoins.push_back(COutput(pcoin, i, pcoin->GetDepthInMainChain()));
                 */
                 isminetype mine = IsMine(pcoin->vout[i]);
-                if (!(pcoin->IsSpent(i)) && mine != MINE_NO && pcoin->vout[i].nValue > 0)
+                if (!(pcoin->IsSpent(i)) && mine != MINE_NO && pcoin->vout[i].nValue > 0 && (!coinControl || !coinControl->HasSelected() || coinControl->IsSelected((*it).first, i)))
                     vCoins.push_back(COutput(pcoin, i, pcoin->GetDepthInMainChain(), mine == MINE_SPENDABLE));
             }
         }
@@ -2299,8 +2414,8 @@ std::map<CTxDestination, int64_t> CWallet::GetAddressBalances()
         {
             CWalletTx *pcoin = &walletEntry.second;
 
-            if (!IsFinalTx(*pcoin) || !pcoin->IsTrusted())
-                continue;
+            // if (!IsFinalTx(*pcoin) || !pcoin->IsTrusted())
+            //    continue;
 
             if (pcoin->IsCoinBase() && pcoin->GetBlocksToMaturity() > 0)
                 continue;
@@ -2327,74 +2442,4 @@ std::map<CTxDestination, int64_t> CWallet::GetAddressBalances()
     }
 
     return balances;
-}
-
-int64_t CWalletTx::GetDebit(const isminefilter& filter) const
-{
-    if (vin.empty())
-        return 0;
-
-    bool fWatchDebitCached = false;
-    int64_t nWatchDebitCached = 0;
-
-    int64_t debit = 0;
-    if(filter & MINE_SPENDABLE)
-    {
-        if (fDebitCached)
-            debit += nDebitCached;
-        else
-        {
-            nDebitCached = pwallet->GetDebit(*this, MINE_SPENDABLE);
-            fDebitCached = true;
-            debit += nDebitCached;
-        }
-    }
-    if(filter & MINE_WATCH_ONLY)
-    {
-        if(fWatchDebitCached)
-            debit += nWatchDebitCached;
-        else
-        {
-            nWatchDebitCached = pwallet->GetDebit(*this, MINE_WATCH_ONLY);
-            fWatchDebitCached = true;
-            debit += nWatchDebitCached;
-        }
-    }
-    return debit;
-}
-
-int64_t CWalletTx::GetCredit(const isminefilter& filter) const
-{
-    bool fWatchCreditCached = false;
-    int64_t nWatchCreditCached = 0;
-
-    // Must wait until coinbase is safely deep enough in the chain before valuing it
-    if (IsCoinBase() && GetBlocksToMaturity() > 0)
-        return 0;
-
-    int64_t credit = 0;
-    if (filter & MINE_SPENDABLE)
-    {
-        // GetBalance can assume transactions in mapWallet won't change
-        if (fCreditCached)
-            credit += nCreditCached;
-        else
-        {
-            nCreditCached = pwallet->GetCredit(*this, MINE_SPENDABLE);
-            fCreditCached = true;
-            credit += nCreditCached;
-        }
-    }
-    if (filter & MINE_WATCH_ONLY)
-    {
-        if (fWatchCreditCached)
-            credit += nWatchCreditCached;
-        else
-        {
-            nWatchCreditCached = pwallet->GetCredit(*this, MINE_WATCH_ONLY);
-            fWatchCreditCached = true;
-            credit += nWatchCreditCached;
-        }
-    }
-    return credit;
 }

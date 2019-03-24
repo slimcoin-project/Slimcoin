@@ -194,7 +194,7 @@ Value importaddress(const Array& params, bool fHelp)
         std::vector<unsigned char> data(ParseHex(params[0].get_str()));
         script = CScript(data.begin(), data.end());
     } else {
-        throw JSONRPCError(RPC_INVALID_ADDRESS_OR_KEY, "Invalid Bitcoin address or script");
+        throw JSONRPCError(RPC_INVALID_ADDRESS_OR_KEY, "Invalid Slimcoin address or script");
     }
 
     CTxDestination dest;
@@ -212,19 +212,18 @@ Value importaddress(const Array& params, bool fHelp)
     {
         LOCK2(cs_main, pwalletMain->cs_wallet);
 
-        // add to address book or update label
-        if (address.IsValid())
-            pwalletMain->SetAddressBook(address.Get(), strLabel, "receive");
-
         // Don't throw error in case an address is already there
-        if (pwalletMain->HaveWatchOnly(script))
+        if (pwalletMain->HaveWatchOnly(dest))
             return Value::null;
 
         pwalletMain->MarkDirty();
-        pwalletMain->SetAddressBookName(dest, strLabel);
-        // pwalletMain->SetAddressBook(dest, strLabel, "receive");
 
-        if (!pwalletMain->AddWatchOnly(script))
+         // add to address book or update label
+        if (address.IsValid())
+            // pwalletMain->SetAddressBook(address.Get(), strLabel, "receive");
+            pwalletMain->SetAddressBookName(address.Get(), strLabel);
+
+       if (!pwalletMain->AddWatchOnly(dest))
             throw JSONRPCError(RPC_WALLET_ERROR, "Error adding address to wallet");
 
         if (fRescan)
@@ -236,3 +235,179 @@ Value importaddress(const Array& params, bool fHelp)
 
     return Value::null;
 }
+
+Value ignoreaddress(const Array& params, bool fHelp)
+{
+    if(fHelp || (params.size() < 1) || (params.size() > 2))
+        throw runtime_error(
+            "ignoreaddress <address> [rescan]\n"
+            "Removes an imported watch-only address or script (in hex)."
+            "Block chain re-scanning is off (false) by default.\n");
+
+    bool fRescan = false;
+    if(params.size() > 1)
+      fRescan = params[1].get_bool();
+
+    CScript script;
+    CBitcoinAddress address(params[0].get_str());
+
+    if (address.IsValid()) {
+        script.SetDestination(address.Get());
+    } else if (IsHex(params[0].get_str())) {
+        std::vector<unsigned char> data(ParseHex(params[0].get_str()));
+        script = CScript(data.begin(), data.end());
+    } else {
+        throw JSONRPCError(RPC_INVALID_ADDRESS_OR_KEY, "Invalid Slimcoin address or script");
+    }
+
+    CTxDestination dest;
+    dest = address.Get();
+
+    {
+        LOCK2(cs_main, pwalletMain->cs_wallet);
+
+        if (pwalletMain->HaveWatchOnly(dest))
+        {
+            if (!pwalletMain->RemoveWatchOnly(dest))
+                throw JSONRPCError(RPC_WALLET_ERROR, "Error removing watch-only address from wallet");
+            pwalletMain->MarkDirty();
+
+            if (fRescan)
+            {
+                pwalletMain->ScanForWalletTransactions(pindexGenesisBlock, true);
+                pwalletMain->ReacceptWalletTransactions();
+            }
+        }
+    }
+
+    return Value::null;
+}
+
+/*
+Value importaddress(const Array &params, bool fHelp) {
+
+    if(fHelp || (params.size() < 1) || (params.size() > 3))
+      throw(runtime_error(
+        "importaddress <address> [label] [rescan]\n"
+        "Adds a watch only (unspendable) address to your wallet.\n"
+        "P2PKH pubkey script in hex may be specified instead of the address.\n"
+        "Block chain re-scanning is off (false) by default.\n"));
+
+    string strLabel = "";
+    if(params.size() > 1)
+      strLabel = params[1].get_str();
+
+    bool fRescan = false;
+    if(params.size() > 2)
+      fRescan = params[2].get_bool();
+
+    CScript script;
+    CBitcoinAddress addr;
+
+    if(IsHex(params[0].get_str())) {
+        std::vector<unsigned char> vchScriptPubKey(ParseHex(params[0].get_str()));
+        if(vchScriptPubKey.size() != 25)
+          throw(JSONRPCError(RPC_INVALID_ADDRESS_OR_KEY, "Invalid P2PKH pubkey script"));
+        script = CScript(vchScriptPubKey.begin(), vchScriptPubKey.end());
+        // Copy the public key hash
+        std::string strTemp = params[0].get_str().substr(6, 40);
+        // Insert the Base58 prefix
+        char prefix[1];
+        sprintf(prefix, "%x", fTestNet ? 0x6F : 0x73);
+        strTemp.insert(0, prefix);
+        // Convert and encode
+        std::vector<unsigned char> vchTemp(ParseHex(strTemp));
+        addr = CBitcoinAddress(EncodeBase58Check(vchTemp));
+    } else {
+        CKeyID keyID;
+        addr = CBitcoinAddress(params[0].get_str());
+        if(!addr.GetKeyID(keyID))
+          throw(JSONRPCError(RPC_INVALID_ADDRESS_OR_KEY, "Invalid address"));
+        script = GetScriptForPubKeyHash(keyID);
+    }
+
+    {
+        LOCK2(cs_main, pwalletMain->cs_wallet);
+
+        if(::IsMine(*pwalletMain, script) == MINE_SPENDABLE)
+          throw(JSONRPCError(RPC_WALLET_ERROR, "The private key is already in the wallet"));
+
+        if(pwalletMain->HaveWatchOnly(script))
+          throw(JSONRPCError(RPC_WALLET_ERROR, "The address is being watched already"));
+
+        pwalletMain->MarkDirty();
+
+        if(addr.IsValid())
+          pwalletMain->SetAddressBookName(addr.Get(), strLabel);
+
+        if(!pwalletMain->AddWatchOnly(script))
+          throw(JSONRPCError(RPC_WALLET_ERROR, "Failed to add the address to the wallet"));
+
+        if(fRescan) {
+            pwalletMain->ScanForWalletTransactions(pindexGenesisBlock, true);
+            pwalletMain->ReacceptWalletTransactions();
+        }
+
+    }
+
+    return(Value::null);
+}
+
+Value importpubkey(const Array &params, bool fHelp) {
+
+    if(fHelp || (params.size() < 1) || (params.size() > 3))
+      throw(runtime_error(
+        "importpubkey <public key> [label] [rescan]\n"
+        "Adds a watch only (unspendable) public key in hex to your wallet.\n"
+        "Block chain re-scanning is off (false) by default.\n"));
+
+    string strLabel = "";
+    if(params.size() > 1)
+      strLabel = params[1].get_str();
+
+    bool fRescan = false;
+    if(params.size() > 2)
+      fRescan = params[2].get_bool();
+
+    CScript script;
+    CBitcoinAddress addr(params[0].get_str());
+
+    if(!IsHex(params[0].get_str()))
+      throw(JSONRPCError(RPC_INVALID_ADDRESS_OR_KEY, "Hex string expected for public key"));
+
+    CPubKey pubKey(std::vector<unsigned char> (ParseHex(params[0].get_str())));
+    if(!pubKey.IsValid())
+      throw(JSONRPCError(RPC_INVALID_ADDRESS_OR_KEY, "Invalid public key"));
+
+    CKeyID keyID = pubKey.GetID();
+    addr = CBitcoinAddress(keyID);
+    script = GetScriptForPubKeyHash(keyID);
+
+    {
+        LOCK2(cs_main, pwalletMain->cs_wallet);
+
+        if(::IsMine(*pwalletMain, script) == MINE_SPENDABLE)
+          throw(JSONRPCError(RPC_WALLET_ERROR, "The private key is already in the wallet"));
+
+        if(pwalletMain->HaveWatchOnly(script))
+          throw(JSONRPCError(RPC_WALLET_ERROR, "The public key is being watched already"));
+
+        pwalletMain->MarkDirty();
+
+        if(addr.IsValid())
+          pwalletMain->SetAddressBookName(addr.Get(), strLabel);
+
+        if(!pwalletMain->AddWatchOnly(script))
+          throw(JSONRPCError(RPC_WALLET_ERROR, "Failed to add the public key to the wallet"));
+
+        if(fRescan) {
+            pwalletMain->ScanForWalletTransactions(pindexGenesisBlock, true);
+            pwalletMain->ReacceptWalletTransactions();
+        }
+
+    }
+
+    return(Value::null);
+}
+*/
+

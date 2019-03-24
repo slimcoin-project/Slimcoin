@@ -9,9 +9,9 @@
 
 #include <string>
 #include <vector>
-#include "keystore.h"
 
 #include <boost/foreach.hpp>
+#include <boost/variant.hpp>
 
 #include "keystore.h"
 #include "bignum.h"
@@ -640,5 +640,6 @@ bool VerifyScript(const CScript& scriptSig, const CScript& scriptPubKey, const C
 // Given two sets of signatures for scriptPubKey, possibly with OP_0 placeholders,
 // combine them intelligently and return the result.
 CScript CombineSignatures(CScript scriptPubKey, const CTransaction& txTo, unsigned int nIn, const CScript& scriptSig1, const CScript& scriptSig2);
+CScript GetScriptForPubKeyHash(const CKeyID &keyID);
 
 #endif

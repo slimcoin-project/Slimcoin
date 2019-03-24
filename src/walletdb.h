@@ -192,9 +192,10 @@ public:
   bool ReadAccount(const std::string& strAccount, CAccount& account);
   bool WriteAccount(const std::string& strAccount, const CAccount& account);
   bool WriteAccountingEntry(const CAccountingEntry& acentry);
+  bool WriteWatchOnly(const CTxDestination &dest);
+  bool EraseWatchOnly(const CTxDestination &dest);
   int64 GetAccountCreditDebit(const std::string& strAccount);
   void ListAccountCreditDebit(const std::string& strAccount, std::list<CAccountingEntry>& acentries);
-  bool WriteWatchOnly(const CTxDestination &dest);
 
   int LoadWallet(CWallet* pwallet);
   int FindWalletTx(CWallet* pwallet, std::vector<uint256>& vTxHash, std::vector<CWalletTx>& vWtx);
