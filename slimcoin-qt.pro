@@ -690,7 +690,7 @@ LIBS += -lssl -lcrypto -ldb_cxx$$BDB_LIB_SUFFIX
 # windows:DEFINES += WIN32
 # windows:RC_FILE = src/qt/res/bitcoin-qt.rc
 windows:LIBS += -lole32 -luuid -lgdi32 -lwsock32
-LIBS += -lboost_system$$BOOST_LIB_SUFFIX -lboost_filesystem$$BOOST_LIB_SUFFIX -lboost_program_options$$BOOST_LIB_SUFFIX -lboost_thread$$BOOST_THREAD_LIB_SUFFIX -lboost_chrono$$BOOST_THREAD_LIB_SUFFIX
+LIBS += -lboost_system$$BOOST_LIB_SUFFIX -lboost_filesystem$$BOOST_LIB_SUFFIX -lboost_program_options$$BOOST_LIB_SUFFIX -lboost_thread$$BOOST_THREAD_LIB_SUFFIX -lboost_chrono$$BOOST_LIB_SUFFIX
 
 
 # for extra security against potential buffer overflows: enable GCCs Stack Smashing Protection
@@ -706,6 +706,7 @@ windows:QMAKE_LFLAGS *= -Wl,--dynamicbase -Wl,--nxcompat
 # on Windows: enable GCC large address aware linker flag
 # hack: when compiling 64-bit, pass 64BIT=1 to qmake to avoid incompatible large-address flag
 windows:!contains(64BIT, 1) QMAKE_LFLAGS *= -Wl,--large-address-aware
+windows:contains(MXE, 1) LIBS += -lpthread
 
 macx:{
     QMAKE_RPATHDIR += @executable_path/../Frameworks
