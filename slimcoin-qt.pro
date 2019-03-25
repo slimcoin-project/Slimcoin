@@ -185,7 +185,7 @@ contains(USE_UPNP, -) {
     }
     isEmpty(MINIUPNPC_INCLUDE_PATH) {
         contains(CONFIG, brew) {
-            macx:MINIUPNPC_INCLUDE_PATH=/usr/local/Cellar/miniupnpc/2.0/include
+            macx:MINIUPNPC_INCLUDE_PATH=/usr/local/Cellar/miniupnpc/2.1/include
         }else{
             macx:MINIUPNPC_INCLUDE_PATH=/opt/local/include
         }
@@ -194,7 +194,7 @@ contains(USE_UPNP, -) {
     }
     isEmpty(MINIUPNPC_LIB_PATH) {
         contains(CONFIG, brew) {
-            macx:MINIUPNPC_LIB_PATH=/usr/local/Cellar/miniupnpc/2.0/lib
+            macx:MINIUPNPC_LIB_PATH=/usr/local/Cellar/miniupnpc/2.1/lib
         }else{
             macx:MINIUPNPC_LIB_PATH=/opt/local/lib
         }
