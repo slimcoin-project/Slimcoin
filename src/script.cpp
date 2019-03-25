@@ -28,10 +28,10 @@ static const CBigNum bnZero(0);
 static const CBigNum bnOne(1);
 static const CBigNum bnFalse(0);
 static const CBigNum bnTrue(1);
-static const size_t nMaxNumSize = 4;
+static const size_t nDefaultMaxNumSize = 4;
 
 
-CBigNum CastToBigNum(const valtype& vch)
+CBigNum CastToBigNum(const valtype& vch, const size_t nMaxNumSize = nDefaultMaxNumSize)
 {
     if (vch.size() > nMaxNumSize)
         throw runtime_error("CastToBigNum() : overflow");
@@ -1908,3 +1908,4 @@ void CScript::SetMultisig(int nRequired, const std::vector<CPubKey>& keys)
         *this << key;
     *this << EncodeOP_N(keys.size()) << OP_CHECKMULTISIG;
 }
+
