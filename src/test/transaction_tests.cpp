@@ -25,8 +25,12 @@ using namespace json_spirit;
 // using namespace boost::algorithm;
 
 struct F {
-    F() : i( 0 ) { BOOST_TEST_MESSAGE( "setup fixture" ); }
-    ~F()         { BOOST_TEST_MESSAGE( "teardown fixture" ); }
+    F() : i( 0 ) { 
+                    // BOOST_TEST_MESSAGE( "Tx fixture setup" );
+                }
+    ~F()         {
+                    // BOOST_TEST_MESSAGE( "Tx fixture teardown" );
+                }
     void setup() {
         static map<string, unsigned int> mapFlagNames = boost::assign::map_list_of
             (string("NONE"),(unsigned int)SCRIPT_VERIFY_NONE)
@@ -113,7 +117,6 @@ BOOST_AUTO_TEST_CASE(tx_valid)
                 BOOST_ERROR("Bad test: " << strTest);
                 continue;
             }
-
             map<COutPoint, CScript> mapprevOutScriptPubKeys;
             Array inputs = test[0].get_array();
             bool fValid = true;
@@ -138,31 +141,40 @@ BOOST_AUTO_TEST_CASE(tx_valid)
                 BOOST_ERROR("Bad test: " << strTest);
                 continue;
             }
-
-            string transaction = test[1].get_str();
-            CDataStream stream(ParseHex(transaction), SER_NETWORK, PROTOCOL_VERSION);
-            CTransaction tx;
-            stream >> tx;
-
-            // CValidationState state;
-            strTest = "Simple deserialized transaction should be valid.";
-            BOOST_CHECK_MESSAGE(tx.CheckTransaction(), strTest);
-            // BOOST_CHECK(state.IsValid());
-
-            for (unsigned int i = 0; i < tx.vin.size(); i++)
+            // BOOST_TEST_MESSAGE("Parsed transaction: " << strTest << " should be valid.");
+            try
             {
-                if (!mapprevOutScriptPubKeys.count(tx.vin[i].prevout))
-                {
-                    BOOST_ERROR("Bad test: " << strTest);
-                    break;
-                }
+                string transaction = test[1].get_str();
+                CDataStream stream(ParseHex(transaction), SER_NETWORK, PROTOCOL_VERSION);
+                CTransaction tx;
+                stream >> tx;
 
-                unsigned int verify_flags = ParseScriptFlags(test[2].get_str());
-                BOOST_CHECK_MESSAGE(
-                            VerifyScript(tx.vin[i].scriptSig, mapprevOutScriptPubKeys[tx.vin[i].prevout], tx, i, true, verify_flags, 0),
-                        strTest);
-                // BOOST_CHECK_MESSAGE(VerifyScript(tx.vin[i].scriptSig, mapprevOutScriptPubKeys[tx.vin[i].prevout],verify_flags, TransactionSignatureChecker(&tx, i), &err), strTest);
-                // BOOST_CHECK_MESSAGE(err == SCRIPT_ERR_OK, ScriptErrorString(err));
+                // CValidationState state;
+                strTest = "Simple deserialized transaction should be valid but isn't.";
+                BOOST_CHECK_MESSAGE(tx.CheckTransaction(), strTest);
+
+                for (unsigned int i = 0; i < tx.vin.size(); i++)
+                {
+                    if (!mapprevOutScriptPubKeys.count(tx.vin[i].prevout))
+                    {
+                        BOOST_ERROR("Bad test: " << strTest);
+                        break;
+                    }
+
+                    unsigned int verify_flags = ParseScriptFlags(test[2].get_str());
+                    BOOST_CHECK_MESSAGE(
+                                VerifyScript(tx.vin[i].scriptSig, mapprevOutScriptPubKeys[tx.vin[i].prevout], tx, i, true, verify_flags, 0),
+                            strTest);
+                    // BOOST_CHECK_MESSAGE(VerifyScript(tx.vin[i].scriptSig, mapprevOutScriptPubKeys[tx.vin[i].prevout],verify_flags, TransactionSignatureChecker(&tx, i), &err), strTest);
+                    // BOOST_CHECK_MESSAGE(err == SCRIPT_ERR_OK, ScriptErrorString(err));
+                }
+            }
+              catch (std::exception& e) {
+                  BOOST_ERROR("iostream error, bad parse of: " << test[1].get_str());
+                  break;
+            } catch (...) {
+                  BOOST_ERROR("Bad parse of: " << strTest);
+                  break;
             }
         }
     }
@@ -216,61 +228,57 @@ BOOST_AUTO_TEST_CASE(tx_invalid)
                 BOOST_ERROR("Bad test: " << strTest);
                 continue;
             }
-
-            string transaction = test[1].get_str();
-            CDataStream stream(ParseHex(transaction), SER_NETWORK, PROTOCOL_VERSION);
-            CTransaction tx;
-            stream >> tx;
-
-            // CValidationState state;
-            // fValid = tx.CheckTransaction(state) && state.IsValid();
-            fValid = tx.CheckTransaction();
-
-            for (unsigned int i = 0; i < tx.vin.size() && fValid; i++)
+            try
             {
-                if (!mapprevOutScriptPubKeys.count(tx.vin[i].prevout))
+                string transaction = test[1].get_str();
+                CDataStream stream(ParseHex(transaction), SER_NETWORK, PROTOCOL_VERSION);
+                CTransaction tx;
+                stream >> tx;
+
+                // CValidationState state;
+                // fValid = tx.CheckTransaction(state) && state.IsValid();
+                fValid = tx.CheckTransaction();
+
+                for (unsigned int i = 0; i < tx.vin.size() && fValid; i++)
                 {
-                    BOOST_ERROR("Bad test: " << strTest);
-                    break;
+                    if (!mapprevOutScriptPubKeys.count(tx.vin[i].prevout))
+                    {
+                        BOOST_ERROR("Bad test: " << strTest);
+                        break;
+                    }
+
+                    unsigned int verify_flags = ParseScriptFlags(test[2].get_str());
+                    // fValid = VerifyScript(tx.vin[i].scriptSig, mapprevOutScriptPubKeys[tx.vin[i].prevout], verify_flags, TransactionSignatureChecker(&tx, i), &err);
+                    fValid = VerifyScript(tx.vin[i].scriptSig, mapprevOutScriptPubKeys[tx.vin[i].prevout], tx, i, true, verify_flags, 0);
+                    strTest = "Unverified script";
                 }
 
-                unsigned int verify_flags = ParseScriptFlags(test[2].get_str());
-                // fValid = VerifyScript(tx.vin[i].scriptSig, mapprevOutScriptPubKeys[tx.vin[i].prevout], verify_flags, TransactionSignatureChecker(&tx, i), &err);
-                fValid = VerifyScript(tx.vin[i].scriptSig, mapprevOutScriptPubKeys[tx.vin[i].prevout], tx, i, true, verify_flags, 0);
-                strTest = "Unverified script";
+                BOOST_CHECK_MESSAGE(!fValid, strTest);
+                // BOOST_CHECK_MESSAGE(err != SCRIPT_ERR_OK, ScriptErrorString(err));
             }
-
-            BOOST_CHECK_MESSAGE(!fValid, strTest);
-            // BOOST_CHECK_MESSAGE(err != SCRIPT_ERR_OK, ScriptErrorString(err));
+              catch (std::exception& e) {
+                  BOOST_ERROR("iostream error, bad parse of: " << test[1].get_str());
+                  break;
+            } catch (...) {
+                  BOOST_ERROR("Bad parse of: " << strTest);
+                  break;
+            }
         }
     }
 }
 
 BOOST_AUTO_TEST_CASE(basic_transaction_tests)
 {
-    /*
     // Random real transaction (f505d79e4a87a1d891975a62562aa6666b0ef0488f95fa7b2a97f2b27286df61)
-    // unsigned char ch[] = {0x01, 0x00, 0x00, 0x00, 0xf1, 0x36, 0xc2, 0x58, 0x01, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0xff, 0xff, 0xff, 0xff, 0x0e, 0x04, 0xf1, 0x36, 0xc2, 0x58, 0x01, 0x01, 0x06, 0x2f, 0x50, 0x32, 0x53, 0x48, 0x2f, 0xff, 0xff, 0xff, 0xff, 0x01, 0xf0, 0xc7, 0xe7, 0x00, 0x00, 0x00, 0x00, 0x00, 0x23, 0x21, 0x03, 0xfa, 0xd5, 0x97, 0xf3, 0xea, 0x9b, 0x03, 0xa4, 0x3e, 0x48, 0xb8, 0xf8, 0x04, 0xfa, 0xce, 0x48, 0xca, 0x78, 0xf5, 0x77, 0x77, 0xfe, 0x41, 0xb9, 0xf3, 0x5e, 0x62, 0x3d, 0xbc, 0x52, 0x1b, 0x28, 0xac, 0x00, 0x00, 0x00, 0x00};
-    unsigned char ch[] = {1, 0, 0, 0, 241, 54, 194, 88, 1, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 255, 255, 255, 255, 14, 4, 241, 54, 194, 88, 1, 1, 6, 47, 80, 50, 83, 72, 47, 255, 255, 255, 255, 1, 240, 199, 231, 0, 0, 0, 0, 0, 35, 33, 3, 250, 213, 151, 243, 234, 155, 3, 164, 62, 72, 184, 248, 4, 250, 206, 72, 202, 120, 245, 119, 119, 254, 65, 185, 243, 94, 98, 61, 188, 82, 27, 40, 172, 0, 0, 0, 0};
-    vector<unsigned char> vch(ch, ch + sizeof(ch) -1);
-    try
-    {
-        CDataStream stream(vch, SER_DISK, CLIENT_VERSION);
-        CTransaction tx;
-        // fatal error in "basic_transaction_tests": std::runtime_error: CDataStream::read() : end of data: iostream error
-        stream >> tx;
-        BOOST_CHECK_MESSAGE(tx.CheckTransaction(), "Simple deserialized transaction should be valid.");
+    string transaction = "01000000f136c258010000000000000000000000000000000000000000000000000000000000000000ffffffff0e04f136c2580101062f503253482fffffffff01f0c7e70000000000232103fad597f3ea9b03a43e48b8f804face48ca78f57777fe41b9f35e623dbc521b28ac00000000";
+    CDataStream stream(ParseHex(transaction), SER_NETWORK, PROTOCOL_VERSION);
+    CTransaction tx;
+    stream >> tx;
+    BOOST_CHECK_MESSAGE(tx.CheckTransaction(), "A simple deserialized real transaction should be valid.");
 
-        // Check that duplicate txins fail
-        tx.vin.push_back(tx.vin[0]);
-        BOOST_CHECK_MESSAGE(!tx.CheckTransaction(), "Transaction with duplicate txins should be invalid.");
-    }
-      catch (std::exception& e) {
-          PrintException(&e, "basic_transaction_tests");
-    } catch (...) {
-          PrintException(NULL, "basic_transaction_tests");
-    }
-*/
+    // Check that duplicate txins fail
+    tx.vin.push_back(tx.vin[0]);
+    BOOST_CHECK_MESSAGE(!tx.CheckTransaction(), "Transaction with duplicate txins should be invalid.");
 }
 
 //
