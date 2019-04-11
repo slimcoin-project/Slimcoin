@@ -524,7 +524,7 @@ void BitcoinGUI::setWalletModel(WalletModel *walletModel)
         inscriptionPage->setWalletModel(walletModel);
         inscriptionsPage->setModel(walletModel->getInscriptionTableModel());
         multisigPage->setModel(walletModel);
-        miningPage->setModel(clientModel);
+        miningPage->setClientModel(clientModel);
 
         setEncryptionStatus(walletModel->getEncryptionStatus());
         connect(walletModel, SIGNAL(encryptionStatusChanged(int)), this, SLOT(setEncryptionStatus(int)));
@@ -656,6 +656,11 @@ void BitcoinGUI::setNumBlocks(int count, int nTotalBlocks)
         progressBar->setVisible(false);
 
         return;
+    }
+
+    if (GetBoolArg("-chart", true) && count > 0 && nTotalBlocks > 0)
+    {
+        miningPage->updatePlot();
     }
 
     QString strStatusBarWarnings = clientModel->getStatusBarWarnings();

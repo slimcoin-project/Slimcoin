@@ -177,7 +177,6 @@ int InscriptionTableModel::columnCount(const QModelIndex &parent) const
 
 void InscriptionTableModel::refreshInscriptionTable()
 {
-    /* FIXME: Use explicit check for NULL */
     if (this) {
         printf("Refreshing inscription table");
         priv->refreshTable();
