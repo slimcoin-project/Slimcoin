@@ -133,6 +133,41 @@ double GetDifficulty(const CBlockIndex* blockindex = NULL)
     return dDiff;
 }
 
+double GetNetworkGhps(const CBlockIndex* blockindex = NULL)
+{
+    // Floating point number that is a multiple of the minimum difficulty,
+    // minimum difficulty = 1.0.
+    if (blockindex == NULL)
+    {
+        if (pindexBest == NULL)
+            return 1.0;
+        else
+            blockindex = GetLastBlockIndex(pindexBest, false);
+    }
+
+    int64 nTargetSpacingWorkMin = 30;
+    int64 nTargetSpacingWork = nTargetSpacingWorkMin;
+    int64 nInterval = 72;
+    CBlockIndex* pindex = pindexGenesisBlock;
+    CBlockIndex* pindexPrevWork = pindexGenesisBlock;
+    while (pindex)
+    {
+        // Exponential moving average of recent proof-of-work block spacing
+        if (pindex->IsProofOfWork())
+        {
+            //obtain the time between the blocks
+            int64 nActualSpacingWork = pindex->GetBlockTime() - pindexPrevWork->GetBlockTime();
+            nTargetSpacingWork = ((nInterval - 1) * nTargetSpacingWork + nActualSpacingWork + nActualSpacingWork) / (nInterval + 1);
+            nTargetSpacingWork = max(nTargetSpacingWork, nTargetSpacingWorkMin);
+            pindexPrevWork = pindex;
+        }
+        pindex = pindex->pnext;
+    }
+    double dNetworkGhps = GetDifficulty() * 4.294967296 / nTargetSpacingWork; 
+    return dNetworkGhps;
+}
+
+
 int64 GetBurnTxTotal()
 {
     int blockstogoback = pindexBest->nHeight;
@@ -4178,6 +4213,7 @@ static const CRPCCommand vRPCCommands[] =
     { "getburndata",              &getburndata,            true   },
     { "getconnectioncount",       &getconnectioncount,     true   },
     { "getpeerinfo",              &getpeerinfo,            true   },
+//    { "addnode",                  &addnode,                true   },
     { "getdifficulty",            &getdifficulty,          true   },
     { "getgenerate",              &getgenerate,            true   },
     { "setgenerate",              &setgenerate,            true   },
@@ -5080,3 +5116,57 @@ int main(int argc, char *argv[])
 #endif
 
 const CRPCTable tableRPC;
+
+// Return average network hashes per second based on the last 'lookup' blocks,
+// or from the last difficulty change if 'lookup' is nonpositive.
+// If 'height' is nonnegative, compute the estimate at the time when a given block was found.
+
+double GetNetworkHashPS(int lookup, int height) {
+    CBlockIndex *pb = pindexBest;
+
+    if (height >= 0 && height < nBestHeight)
+        pb = FindBlockByHeight(height);
+
+    if (pb == NULL || !pb->nHeight)
+        return 0;
+
+    // If lookup is -1, then use blocks since last difficulty change.
+    if (lookup <= 0)
+        lookup = pb->nHeight % 2016 + 1;
+
+    // If lookup is larger than chain, then set it to chain length.
+    if (lookup > pb->nHeight)
+        lookup = pb->nHeight;
+
+    CBlockIndex *pb0 = pb;
+    int64 minTime = pb0->GetBlockTime();
+    int64 maxTime = minTime;
+    for (int i = 0; i < lookup; i++) {
+        pb0 = pb0->pprev;
+        int64 time = pb0->GetBlockTime();
+        minTime = std::min(time, minTime);
+        maxTime = std::max(time, maxTime);
+    }
+
+    // In case there's a situation where minTime == maxTime, we don't want a divide by zero exception.
+    if (minTime == maxTime)
+        return 0;
+
+    // uint256 workDiff = pb->nChainWork - pb0->nChainWork;
+    CBigNum workDiff = pb->bnChainTrust - pb0->bnChainTrust;
+    int64 timeDiff = maxTime - minTime;
+
+    return (boost::int64_t)(workDiff.getuint64() / timeDiff);
+}
+
+Value getnetworkhashps(const Array& params, bool fHelp)
+{
+    if (fHelp || params.size() > 2)
+        throw runtime_error(
+            "getnetworkhashps [blocks] [height]\n"
+            "Returns the estimated network hashes per second based on the last 120 blocks.\n"
+            "Pass in [blocks] to override # of blocks, -1 specifies since last difficulty change.\n"
+            "Pass in [height] to estimate the network speed at the time when a certain block was found.");
+
+    return GetNetworkHashPS(params.size() > 0 ? params[0].get_int() : 120, params.size() > 1 ? params[1].get_int() : -1);
+}
