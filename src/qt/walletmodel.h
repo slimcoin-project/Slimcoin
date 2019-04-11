@@ -101,7 +101,7 @@ public:
   qint64 getReserveBalance() const;
   qint64 getStake() const;
   qint64 getUnconfirmedBalance() const;
-    qint64 getImmatureBalance() const;
+  qint64 getImmatureBalance() const;
   int getNumTransactions() const;
   EncryptionStatus getEncryptionStatus() const;
   BurnCoinsBalances getBurnCoinBalances() const;
