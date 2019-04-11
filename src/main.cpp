@@ -5372,7 +5372,7 @@ void SlimCoinMiner(CWallet *pwallet, bool fProofOfStake)
         if (fShutdown)
             return;
 
-        while (vNodes.empty() || vNodes.size() < 3 || IsInitialBlockDownload())
+        while (vNodes.empty() || (!fTestNet && vNodes.size() < 3) || IsInitialBlockDownload())
         {
             Sleep(1000);
             if (fShutdown)
