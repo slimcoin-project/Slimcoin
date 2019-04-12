@@ -1252,20 +1252,26 @@ bool CWallet::SelectCoins(int64 nTargetValue, unsigned int nSpendTime, set<pair<
         }
         return (nValueRet >= nTargetValue);
     }
-    return (SelectCoinsMinConf(nTargetValue, 1, 6, vCoins, vCoinsRet, nValueRet) ||
-            SelectCoinsMinConf(nTargetValue, 1, 1, vCoins, vCoinsRet, nValueRet) ||
-            SelectCoinsMinConf(nTargetValue, 0, 1, vCoins, vCoinsRet, nValueRet));
+    // default selection algorithm without CoinControl
+    bool result = (SelectCoinsMinConf(nTargetValue, 1, 6, vCoins, vCoinsRet, nValueRet) ||
+                   SelectCoinsMinConf(nTargetValue, 1, 1, vCoins, vCoinsRet, nValueRet) ||
+                   SelectCoinsMinConf(nTargetValue, 0, 1, vCoins, vCoinsRet, nValueRet));
+
+    BOOST_FOREACH(const PAIRTYPE(const CWalletTx*,unsigned int)& c, vCoinsRet)
+    {
+        setCoinsRet.insert(c);
+    }
+    return result;
 }
 
-bool CWallet::SelectCoins(int64 nTargetValue, unsigned int nSpendTime, vector<pair<const CWalletTx*,unsigned int> >& vCoinsRet, int64& nValueRet, const CCoinControl *coinControl) const
+bool CWallet::SelectCoinsForPoS(int64 nTargetValue, unsigned int nSpendTime, vector<pair<const CWalletTx*,unsigned int> >& vCoinsRet, int64& nValueRet, const CCoinControl *coinControl) const
 {
     vector<COutput> vCoins;
     AvailableCoins(nSpendTime, vCoins, true, coinControl);
 
-    return (SelectCoinsMinConf(nTargetValue, 1, 6, vCoins, vCoinsRet, nValueRet) ||
-            SelectCoinsMinConf(nTargetValue, 1, 1, vCoins, vCoinsRet, nValueRet) ||
-            SelectCoinsMinConf(nTargetValue, 0, 1, vCoins, vCoinsRet, nValueRet));
+    return SelectCoinsMinConf(nTargetValue, 1, 1, vCoins, vCoinsRet, nValueRet);
 }
+
 
 bool CWallet::CheckStakeKernelHashWithCacheV03(unsigned int nBits, const CBlock& blockFrom, unsigned int nTxPrevOffset, const CTransaction& txPrev, const COutPoint& prevout, unsigned int nTimeTx, uint256& hashProofOfStake, bool fPrintProofOfStake)
 {
@@ -1527,7 +1533,7 @@ bool CWallet::UpdateCoinStakeCandidatesFromWallet()
             return false;
         vector<pair<const CWalletTx*,unsigned int> > vCoins;
         int64 nValueIn = 0;
-        if (!SelectCoins(nBalance - nReserveBalance, GetAdjustedTime(), vCoins, nValueIn))
+        if (!SelectCoinsForPoS(nBalance - nReserveBalance, GetAdjustedTime(), vCoins, nValueIn))
             return false;
         if (vCoins.empty())
             return false;
