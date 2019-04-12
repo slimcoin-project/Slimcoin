@@ -82,7 +82,7 @@ void WalletModel::update()
 
     BurnCoinsBalances newBurnBalances = getBurnCoinBalances();
 
-    if(cachedBalance != newBalance || cachedUnconfirmedBalance != newUnconfirmedBalance|| cachedImmatureBalance != newImmatureBalance || cachedBurnCoinsBalances != newBurnBalances)
+    if(cachedBalance != newBalance || cachedUnconfirmedBalance != newUnconfirmedBalance || cachedImmatureBalance != newImmatureBalance || cachedBurnCoinsBalances != newBurnBalances)
         emit balanceChanged(newBalance, getStake(), newUnconfirmedBalance, newImmatureBalance, newReserveBalance, newBurnBalances);
 
     if(cachedNumTransactions != newNumTransactions)
@@ -319,6 +319,16 @@ bool WalletModel::backupWallet(const QString &filename)
     return BackupWallet(*wallet, filename.toLocal8Bit().data());
 }
 
+void WalletModel::checkWallet(int& nMismatchSpent, int64& nBalanceInQuestion, int& nOrphansFound)
+{
+    wallet->Fix_SpentCoins(nMismatchSpent, nBalanceInQuestion, nOrphansFound, true);
+}
+
+void WalletModel::repairWallet(int& nMismatchSpent, int64& nBalanceInQuestion, int& nOrphansFound)
+{
+    wallet->Fix_SpentCoins(nMismatchSpent, nBalanceInQuestion, nOrphansFound);
+}
+
 // WalletModel::UnlockContext implementation
 WalletModel::UnlockContext WalletModel::requestUnlock()
 {
@@ -416,4 +426,10 @@ void WalletModel::listCoins(std::map<QString, std::vector<COutput> >& mapCoins) 
         if(!ExtractDestination(cout.tx->vout[cout.i].scriptPubKey, address)) continue;
         mapCoins[CBitcoinAddress(address).ToString().c_str()].push_back(out);
     }
+
+}
+
+void WalletModel::clearOrphans()
+{
+    wallet->ClearOrphans();
 }

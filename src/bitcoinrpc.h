@@ -10,6 +10,7 @@
 
 #include <string>
 #include <map>
+#include "wallet.h"
 
 class CReserveKey;
 class CBlockIndex;
@@ -67,8 +68,15 @@ enum RPCErrorCode
     RPC_WALLET_WRONG_ENC_STATE      = -15, // Command given in wrong wallet encryption state (encrypting an encrypted wallet etc.)
     RPC_WALLET_ENCRYPTION_FAILED    = -16, // Failed to encrypt the wallet
     RPC_WALLET_ALREADY_UNLOCKED     = -17, // Wallet is already unlocked
-
 };
+
+extern json_spirit::Value ValueFromAmount(int64 amount);
+extern json_spirit::Value checkwallet(const json_spirit::Array& params, bool fHelp);
+extern json_spirit::Value repairwallet(const json_spirit::Array& params, bool fHelp);
+extern json_spirit::Value zapwallettxes(const json_spirit::Array& params, bool fHelp);
+extern json_spirit::Value setgenerate(const json_spirit::Array& params, bool fHelp);
+extern json_spirit::Value gethashespersec(const json_spirit::Array& params, bool fHelp);
+// extern json_spirit::Value addnode(const json_spirit::Array& params, bool fHelp);
 
 void ThreadRPCServer(void* parg);
 int CommandLineRPC(int argc, char *argv[]);
@@ -128,6 +136,7 @@ extern const CRPCTable tableRPC;
 extern CReserveKey* pMiningKey;
 */
 extern double GetDifficulty(const CBlockIndex* blockindex);
+extern double GetNetworkGhps(const CBlockIndex* blockindex);
 extern int64 GetBurnTxTotal();
 
 //Gets the balance of the total amount of burned coins, the effective amount of burned coins
@@ -136,5 +145,6 @@ extern int64 GetBurnTxTotal();
 //This was made in a separate function for it to be used in the GUI walletmodel.cpp
 json_spirit::Array getBurnCoinBalances(long long &netBurnCoins, long long &nEffBurnCoins, 
                                        long long &immatureCoins);
+double GetNetworkHashPS(int lookup, int height);
 
 #endif

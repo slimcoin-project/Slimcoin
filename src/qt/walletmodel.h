@@ -101,7 +101,7 @@ public:
   qint64 getReserveBalance() const;
   qint64 getStake() const;
   qint64 getUnconfirmedBalance() const;
-    qint64 getImmatureBalance() const;
+  qint64 getImmatureBalance() const;
   int getNumTransactions() const;
   EncryptionStatus getEncryptionStatus() const;
   BurnCoinsBalances getBurnCoinBalances() const;
@@ -132,6 +132,9 @@ public:
   bool changePassphrase(const SecureString &oldPass, const SecureString &newPass);
   // Wallet backup
   bool backupWallet(const QString &filename);
+  // Wallet Repair
+  void checkWallet(int& nMismatchSpent, qint64& nBalanceInQuestion, int& nOrphansFound);
+  void repairWallet(int& nMismatchSpent, qint64& nBalanceInQuestion, int& nOrphansFound);
 
   // RAI object for unlocking wallet, returned by requestUnlock()
   class UnlockContext
@@ -159,6 +162,7 @@ public:
 	void getOutputs(const std::vector<COutPoint>& vOutpoints, std::vector<COutput>& vOutputs);
 	void listCoins(std::map<QString, std::vector<COutput> >& mapCoins) const;
   CWallet * getWallet();
+  void clearOrphans();
 
 private:
   CWallet *wallet;

@@ -28,7 +28,7 @@ void OptionsModel::Init()
     int64 nreservebalance = 0;
     if (mapArgs.count("-reservebalance") && !ParseMoney(mapArgs["-reservebalance"], nreservebalance))
         nreservebalance = 1000000; // Failsafe
-    printf("nreservebalance read as: %llu.\n", nreservebalance);
+    // printf("nreservebalance read as: %llu.\n", nreservebalance);
     // These are shared with core bitcoin; we want
     // command-line options to override the GUI settings:
     if(settings.contains("fUseUPnP"))
@@ -41,13 +41,11 @@ void OptionsModel::Init()
         if (nreservebalance > 0) {
             SoftSetArg("-reservebalance", BitcoinUnits::formatWithUnit(BitcoinUnits::BTC, nreservebalance).toStdString());
             settings.setValue("nReserveBalance", nreservebalance);
-            printf("nreservebalance set to %s", settings.value("nReserveBalance").toString().toStdString().c_str());
-            // printf("nreservebalance set to %u.\n", settings.value("nReserveBalance"));
+            // printf("nreservebalance set to %s", settings.value("nReserveBalance").toString().toStdString().c_str());
         }
         else {
             SoftSetArg("-reservebalance", settings.value("nReserveBalance").toString().toStdString());
-            printf("nReserveBalance set to %s", settings.value("nReserveBalance").toString().toStdString().c_str());
-            // printf("nReserveBalance set to %u.\n", settings.value("nReserveBalance"));
+            // printf("nReserveBalance set to %s", settings.value("nReserveBalance").toString().toStdString().c_str());
         }
     }
     if(settings.contains("detachDB"))

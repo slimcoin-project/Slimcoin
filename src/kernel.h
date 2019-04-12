@@ -34,29 +34,9 @@ bool IsProtocolV05(unsigned int nTimeTx);
 // Compute the hash modifier for proof-of-stake
 bool ComputeNextStakeModifier(const CBlockIndex* pindexCurrent, uint64& nStakeModifier, bool& fGeneratedStakeModifier);
 
-// Compute the hash modifier for a specific stake kernel
-bool GetKernelStakeModifier(uint256 hashBlockFrom, unsigned int nTimeTx, uint64& nStakeModifier, int& nStakeModifierHeight, int64& nStakeModifierTime, bool fPrintProofOfStake);
-
 // Check whether stake kernel meets hash target
 // Sets hashProofOfStake on success return
 bool CheckStakeKernelHash(unsigned int nBits, const CBlock& blockFrom, unsigned int nTxPrevOffset, const CTransaction& txPrev, const COutPoint& prevout, unsigned int nTimeTx, uint256& hashProofOfStake, bool fPrintProofOfStake=false);
-
-// Check whether stake kernel meets hash target
-// Sets hashProofOfStake on success return
-// This function does not compute the stake modifier itself but gets it from a parameter.
-bool CheckStakeKernelHashWithStakeModifier(unsigned int nBits, const CBlock& blockFrom, unsigned int nTxPrevOffset, const CTransaction& txPrev, const COutPoint& prevout, unsigned int nTimeTx, uint64 nStakeModifier, int nStakeModifierHeight, int64 nStakeModifierTime, uint256& hashProofOfStake, bool fPrintProofOfStake=false);
-
-
-bool ScanStakeKernelHashWithStakeModifier(
-        unsigned int nBits,
-        const CBlock& blockFrom,
-        unsigned int nTxPrevOffset,
-        const CTransaction& txPrev,
-        const COutPoint& prevout,
-        unsigned int nTimeTxBegin,
-        unsigned int nTimeTxRangeToScan,
-        uint64 nStakeModifier,
-        std::vector<unsigned int> &vnTimeResults);
 
 // Check kernel hash target and coinstake signature
 // Sets hashProofOfStake on success return

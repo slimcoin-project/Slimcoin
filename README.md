@@ -904,3 +904,426 @@ http://earlz.net/view/2017/07/27/1820/what-is-a-utxo-and-how-does-it
 https://en.bitcoin.it/wiki/Script#Obsolete_pay-to-pubkey_transaction
 https://en.bitcoin.it/wiki/Script#Standard_Transaction_to_Bitcoin_address_.28pay-to-pubkey-hash.29
 https://en.bitcoin.it/wiki/Script#Provably_Unspendable.2FPrunable_Outputs
+
+---
+## jonnylatte on Dcrypt
+
+While I'm on the topic of RAM, it's possible to completely eliminate the dynamic memory requirements of the dcrypt function:
+
+    #define SHA256_HEX_LEN 64
+
+    uint256 dcrypt_progressive(const uint8_t *data, size_t data_sz)
+    {
+        //if(fTestNet) return sha256d(data,data_sz);   // for testnet hashes use sha256d
+
+        SHA256_CTX  ctx;   // sha256 context
+        uint256     hash_result;    
+
+        uint32_t    index = 0;
+        uint8_t     index_values[SHA256_HEX_LEN +1]; 
+        uint8_t     scratch_pad[SHA256_HEX_LEN +1];  
+
+        SHA256_Init(&ctx);  // initialize context which will progressively hash the result as data for it is generated in scratch_pad
+
+        sha256_to_str(data, data_sz, index_values);    // initialize index_values with sha256(data) -> ascii/hex
+        memset(scratch_pad, 0xff, SHA256_HEX_LEN);     // initialize scratchpad all 0xff 
+
+        do
+        {
+            index += hex_char_to_int(index_values[index]) + 1; // increment index by the value of the hex char in index_values and add 1 so index is always increasing
+
+            if(index >= INDEX_BUFFER_LEN) // if index is past index_values size, wrap index around and scramble index_values
+            {
+                index &= 0x3f;  // wrap index around
+                sha256_to_str(index_values, INDEX_BUFFER_LEN, index_values); //rescramble with sha256(index_values) -> ascii/hex
+            }
+
+            scratch_pad[SHA256_HEX_LEN] = index_values[index]; //set a byte in scratch_pad to index_values[index]
+            sha256_to_str(scratch_pad, SHA256_HEX_LEN + 1, scratch_pad); // sha256 hash 
+
+            SHA256_Update(&ctx,scratch_pad,SHA256_HEX_LEN); // write scratch_pad to the sha256 context that will generate the resulting dcrypt hash
+        }
+        while( (index != SHA256_HEX_LEN - 1) || (index_values[SHA256_HEX_LEN - 1] != scratch_pad[SHA256_HEX_LEN - 1] )); 
+        // loop ends when index is at "SHA256_HEX_LEN - 1" and the value of index_values matches the value of scratch_pad at that location
+        // this should have a 1 in 16 chance for every time index happens to hit "SHA256_HEX_LEN - 1" 
+
+        SHA256_Update(&ctx,  (u8int*)data,data_sz); // write the original data to the sha256 context for the resulting hash
+        SHA256_Final((u8int*)hash_result, &ctx);    // finalize the hash and store the result
+
+        return hash_result; // we are done here
+    }
+
+Instead of building up a buffer and hashing it at the end, this version progressively hashes the data generated. SHA256 contexts have an internal buffer which is of fixed size. So it seems Dcrypt was never memory hard except for the fact that you can get a minor optimization with hashing by buffering the data instead of hashing progressively and then aborting if the resulting buffer gets too big. The optimization is not that you are saving memory or preventing too much memory use, it's that you are not hashing longer buffers, saving the processing of the large data. This is probably why there isn't a spectacular increase in efficiency by limiting the number of iterations (you are only really saving one SHA256 call on the larger buffer but still wasting many small calls for calculating the scratchpad and index values)
+
+In any case I think this version of Dcrypt algorithm might be better for the main client to prevent too much resource usage while we wait on the possibility of a change in hash functions.
+
+I dont think its bad that Dcrypt has fixed memory usage. I hope my code is a clear implementation that could be of help to someone writing a GPU miner which I now believe should not be too difficult to implement (the problem is now variable computation time instead of variable memory usage) If we have a GPU miner then it will be much harder for a botnet or server farm to compete and if we can do it with dcrypt then changing the hashing function is less important... 
+
+---
+
+[quote author=Slimcoin Community link=topic=1141676.msg12038461#msg12038461 date=1438574772]
+[list][center]
+[img width=800]http://i.imgur.com/4x849fh.jpg[/img]
+
+[size=14pt]
+[b]Project website[/b]
+[url=https://slimco.in]slimco.in[/url]
+[b]Github Project Site[/b]
+[url=https://github.com/slimcoin-project]github.com/slimcoin-project[/url]
+[b]Discussion forum (Reddit)[/b]
+[url=https://reddit.com/r/slimcoin]reddit.com/r/slimcoin[/url]
+[b]Other Resources[/b]
+[url=https://t.me/SlimcoinGroup]Telegram[/url] - [url=https://join.slack.com/t/slimcoinproject/invite/MjQzMDU0NTg4MTAyLTE1MDU1NTA4MjAtZmU0Nzc0MDQ0OQ?x=x-239398136118-243256178055]Slack[/url] - [url=https://discord.gg/crMHFRJ]Discord[/url] - [url=https://www.youtube.com/channel/UCUXx5ksHhkq6CQwZdlckaeQ/featured]YouTube[/url] - [url=https://www.facebook.com/slimcoin.community/]Facebook[/url]
+[b]Marketplace[/b]
+[url=https://bitcointalk.org/index.php?topic=2063259.new#new]Bitcointalk SLM Marketplace thread[/url]
+[b]Bitcointalk threads in other languages[/b]
+[url=https://bitcointalk.org/index.php?topic=2040975.0]German / Deutsch[/url] - [url=https://bitcointalk.org/index.php?topic=628902.0]Spanish / Español[/url]
+[b]Original announcement[/b]
+[url=https://bitcointalk.org/index.php?topic=613213.0]The Historic Slimcoin ANN thread[/url] (outdated)*
+[b]Exchanges[/b]
+[url=https://novaexchange.com/market/BTC_SLM/]Novaexchange[/url]
+[url=https://freiexchange.com/market/SLM/BTC]FreiExchange[/url]
+[b]Blockchain explorer[/b]
+[url=https://chainz.cryptoid.info/slm/]CryptoID[/url]
+[s][url=http://tessier.bel-epa.com:5064/]ACME[/url][/s] (experimental metadata explorer, currently being upgraded)
+[b]Mining Pool[/b]
+[s][url=http://slimcoin.bazco.in/]Bazcoin[/url][/s] (currently inactive)
+[b]Price tracking[/b]
+[url=https://coinpaprika.com/coin/slm-slimcoin/]Coinpaprika[/url]
+[url=https://www.coingecko.com/en/coins/slimcoin]Coingecko[/url]
+[/size]
+
+
+[i][size=12pt]Slimcoin is a [b]energy-saving, fast-confirming and novel cryptocurrency[/b]. It is the first cryptocurrency using [b]Proof of Burn[/b] for block generation and currency distribution - a distribution mechanism with interesting economic properties. Proof of Burn is combined with Proof of Work and Proof of Stake to increase security. Another highlight is the DCrypt algorithm, which is one of the most difficult algorithms to implement in an ASIC and suitable for CPU and GPU mining.
+
+Slimcoin is a P2P project - we have no "official dev", nor it is managed by any centralized entity or organization. There was no premine at the start. You can contribute with coding, testing, providing Slimcoin-based products & services, use it for trading of virtual or real-world goods or simply [i]hodling[/i] it. Be welcome!
+[/size][/i]
+[/center]
+
+[center][size=14pt][b]Current developments (as of Q1 2019)[/b][/size][/center]
+
+Some exciting experimental developments are currently going on:
+
+- [b]Testing of Slimcoin 0.5.2 has begun[/b]. The client got several improvements like an optimized Proof of Stake algorithm and Coin Control. Check out the [url=https://github.com/slimcoin-project/Slimcoin/tree/develop]Develop branch[/url] to test it.
+- [b]Web2Web - Easy Publishing tool:[/b] Create decentralized websites that are updated via the blockchain and [b]can be read without installing any software[/b]! The [url=https://github.com/slimcoin-project/slimweb-publisher]Slimweb Publisher[/url] has now a simple graphical interface and can also be used via the command line.
+
+[b]Coming soon:[/b]
+
+- A [b]second Web2Web node[/b] with a Webtorrent client will come online in Q1-Q2 2019. This node will provide selected Web2Web publications directly. 
+- [b]A pool could come soon:[/b] [url=http://slimcoin.bazco.in/]Bazcoin[/url] - donations (BTC): 17evPVkeVJ3H4yPEMpQ6rjyCFEC7FQpb9r  (There are some implementation problems, hopefully to be resolved soon.)
+- [b]ACME[/b], a new breed of blockchain explorer, works with [b]Semantic Web technologies[/b] and includes a Web2Web browser. Is already usable. (currently updating). You can find the previous version [url=https://github.com/gjhiggins/acme/tree/slimcoin]here[/url].
+- [b]slimvm:[/b] a small virtual machine for Ricardian contracts (currently development is private)
+
+[b]Downloads & Wallet variants[/b]
+
+Current versions from the project repository:
+
+[list]
+[li][b][url=https://github.com/slimcoin-project/slimcoin-project.github.io/raw/master/slimcoin-qt.exe]Windows 0.5.1 wallet[/b][/li]
+[li][b][url=https://github.com/slimcoin-project/Slimcoin/releases]0.5.0 executables for Windows & MacOS[/url][/b] ([url=https://minkiz.co/noodle/9]alternative source[/url])[/li]
+
+[li][b][url=https://github.com/slimcoin-project/Slimcoin]Source code repository for Linux, MacOS & Windows[/url][/b] (Github, official repository. Current [i]master[/i] branch is roughly equivalent to version 0.5.1). [b]Download the master branch as ZIP file [url=https://github.com/slimcoin-project/Slimcoin/archive/master.zip]here[/url].[/b][/li][/list]
+
+Up-to-date community contributions on other servers (Use at your own risk and scan it for security, but sources seem trustworthy.):
+
+[list]
+[li][b][url=https://drive.google.com/open?id=1IDaf4BD2SL0_RJxdp0CZNU7-4aR0EL5x]ARM binaries (Slimcoin 0.5, for ARM v5, v7 and v8)[/url][/b][/li]
+[li][b][url=https://github.com/muf18/Slimcoin-aarch64/releases/tag/v0.5]Slimcoin aarch64 wallet[/url] (0.5.1)[/b][/li]
+[li][b][url=https://mega.nz/#!YrxlDABb!nXCZD_9ZDc0TLgKzbKNhg3BJ-iYiD8yax_y4XBV2dhM]0.5.1 self-extracting archive[/url] with blockchain snapshot (Updated January 2018).[/b][/li]
+[/list]
+
+Experimental versions (still being tested, use at your own risk):
+
+[list]
+[li][url=https://minkiz.co/noodlings/slm/slimcoin-qt-v0.5.3-win32.zip]Slimcoin 0.5.3 for Windows[/url] (improved PoS algorithm & Coin control)[/li]
+[/list]
+
+Older versions:
+
+[list]
+[li][url=https://github.com/kryptoslab/slimcoin/releases/download/v0.3.2.1/slimcoin-qt.7z]Windows QT wallet 0.3.2.1[/url]. Last "stable" 0.3 .exe - Use this version if 0.5+ does not work for you.[/li]
+[li][url=https://github.com/slimcoin-project/Slimcoin/tree/fcefbc170c96cb5ee44d69f76024684861e7c112]Last 0.3.2 Source Code[/url][/li]
+[/list]
+
+Notes: 
+
+[list][li]Linux executables are not up to date. If you can't compile it yourself, you can ask for help in this thread.[/li]
+[li]Instructions on how to install via Homebrew on MacOS and how to cross-compile a Windows version via Ubuntu are [url=https://github.com/slimcoin-project/Slimcoin/tree/master]at Github[/url] (README file on the master branch).[/li]
+[li]There is a [b]nightly snapshot of the blockchain[/b] data directory, [b][url=https://minkiz.co/noodlings/slm/slm-datadir-snapshot.zip]download it here[/url][/b].[/li]
+[/list]
+
+[b]Test the bleeding-edge source code (master)[/b]
+
+Instructions for Linux/Unix:
+
+[list]
+[li]Install git, if you don't have already (For tech-laymen: Git is a version control system. It's not absolutely necessary to build Slimcoin, but it makes updating experimental versions a lot easier).[/li]
+[li]Download the source code from [url=https://github.com/slimcoin-project/Slimcoin]Github[/url].[/li]
+[li]Open a terminal. Go to the folder with the code and checkout the [b]master[/b] branch:
+[font=fixed]git checkout master[/font]
+[/li]
+[li]Compile it:
+QT graphical client (slimcoin-qt):
+[font=fixed]qmake
+make[/font]
+Command line client (slimcoind):
+[font=fixed]cd src
+make -f makefile.unix[/font]
+[/li]
+[li]Run it (preferably with a fresh wallet file). We have a testnet for experiments (-testnet option), but it should work on the main net. If not, you are welcome to report bugs.[/li]
+[/list]
+
+[center][size=14pt][b]Specifications[/b][/size][/center]
+
+[list]
+[li]Tri-Hybrid Blocks: Proof-of-Burn blocks, Proof-of-Stake blocks and Proof-of-Work blocks[/li]
+[li]PoW: Dcrypt algorithm, [b]suitable for CPU mining[/b], an algorithm made to be difficult to implement on an ASIC. See [url=https://bitcointalk.org/index.php?topic=1141676.msg13573310#msg13573310]Tutorial for solo CPU mining[/url][/li]
+[li]Block time is 1.5 minutes (90 seconds)[/li]
+[li]Difficulty re-targets continuously[/li]
+[li]Block Rewards:[list][li]Proof-of-Burn blocks: max 250 coins[/li]
+[li]Proof-of-Work blocks: max 50 coins[/li]
+[li]Proof-of-Stake blocks: 10% of the staking coins per year[/li][/list][/li]
+[li]Proof of Work block rewards decrease in value as the difficulty increases[/li]
+[li]No hard supply limit, but comparatively low inflation rate. A "250 million coins maximum" is coded into the client, but probability is extremely low this amount will be reached in the next 100 years.[/li]
+[li]Proof of Stake minimum coin age: ~1 week[/li]
+[/list]
+
+[center][size=14pt][b]What is Proof of Burn?[/b][/size][/center]
+
+Proof of burn is an energy-saving decentralized consensus mechanism that rewards long term involvement. It was [url=https://bitcointalk.org/index.php?topic=131139.0]proposed by Iain Stewart[/url] as early as 2012. Slimcoin is [b]the first cryptocurrency to implement it as a block generation method[/b] and was created in May 2014 by an pseudonymous developer (he used the name [i]slimcoin[/i] in this forum, [i]John Smith[/i] on Github and [i]P4Titan[/i] on Reddit).
+
+[b][size=12pt]How does Proof of Burn work?[/size][/b]
+
+Let's quote the original Slimcoin developer:
+
+[quote author=slimcoin link=topic=613213.msg6788942#msg6788942 date=1400369609]
+Proof-of-Burn mining is different from Proof-of-Work mining. More computers and higher computational power offers [b]no[/b] advantage over slower computers.
+
+In short, how this is achieved is: when one burns coins, that transaction can be used to calculate burn hashes. There is also a multiplier that is multiplied to the raw burn hash to calculate the final burn hash. The greater amount of coins burnt by a user, the smaller the multiplier will be and the smaller the burn hashes will be. The smaller the burn hash is, the more likely the hash will meet the difficulty target (be accepted by the network as valid). Over time, the multiplier of a single burn transaction increases slowly, lowering the effectiveness of those burn hashes, acting like "decaying burnt coins". Per transaction, only 1 burn hashes is needed to be calculated per ~90 seconds. The reason low power can mine this is because basically almost any machine can hash a few SHA256 hashes in ~90 seconds. [/quote]
+
+In short: The more coins you destroy by burning, the higher the chances you find Proof-of-Burn blocks. It's not necessary to burn all the coins together: your "score" (probability to find a block) will also rise when you burn coins periodically.
+
+[b][url=http://slimco.in/proof-of-burn-eli5/]Read our Proof of Burn ELI5 here![/url][/b]
+
+Proof of burn is explained in detail by its original author in [url=http://en.bitcoin.it/wiki/Proof_of_burn]the Proof of Burn Wiki article.[/url]
+
+[b][size=12pt]How to burn coins?[/size][/b]
+
+Short explanation to start:
+
+[b]QT client:[/b] There is a tab in the main window with the label "Burn". Simply click on it and you will be able to burn coins.
+
+[b]Command line:[/b] Enter the following command:
+
+[/list][code]slimcoind burncoins <account name> <amount>[/code]
+
+With the following command you see the PoB statistics of the wallet:
+
+[code]slimcoind getburndata[/code]
+
+For more details: [b][url=http://slimco.in/proof-of-burn-guide/]Read the Proof of Burn minting guide![/url][/b]
+
+[size=12pt][b]How many coins are burnt by the Slimcoin users?[/b][/size]
+
+Check the balance of the burn address:
+
+[b][url=https://bchain.info/SLM/addr/SfSLMCoinMainNetworkBurnAddr1DeTK5]SfSLMCoinMainNetworkBurnAddr1DeTK5[/url][/b]
+
+This amount is different from nEffectiveBurnCoins because it returns all coins that were burnt in some moment - also those who already have lost totally their "power".
+
+The number is useful to calculate the real available money supply: You deduct the balance of this address from the total money supply ("moneysupply" parameter when you type "getinfo" in the debug window or with the CLI client).
+
+[center][size=14pt][b]Developers: Bounties & Info[/b][/size][/center]
+
+After the original developer's departure, other developers have made fixes to the code and thanks to them the client is quite stable now. However, we welcome all contributions, as there still are bugs and the code should keep up to date with Bitcoin and Peercoin development.
+
+Slimcoin is unique because it is the first cryptocurrency to use the Proof of Burn consensus method. Because of this [b]first-mover-advantage[/b], Slimcoin has the potential to become one of the leading cryptocurrencies in the future, like it has ocurred with Peercoin (first PoS coin) before. Proof of burn has a [b]very interesting economic model[/b] (see below), which - in a mature market - can lead to a more stable price.
+
+As Slimcoin is based on the Bitcoin code, even [b]crypto 2.0[/b] features can be added relatively easily porting Coloured coins implementations like PeerAssets, Counterparty, OpenAssets or Omni.
+
+To speed development up, a [b]variety of bounties[/b] are offered. There was no premine or ICO and there is no centralized corporation, so these bounties come from donations from individual users.
+
+If you are interested in participating, you can [b]reply to this thread[/b] or start a thread on [b][url=https://www.reddit.com/r/slimcoin/]Reddit[/url][/b], where a more structured discussion is possible. Also Slack is an option where some community members (but not all) are active.
+
+[b]Current bounties:[/b] 
+
+[list]
+[li][b]20.000 SLM bounty[/b] for a working pool, offered by gavrilo77 [url=https://bitcointalk.org/index.php?topic=1141676.msg24645842#msg24645842]here[/url]. There may be 20.000 additional SLM which were[url=https://bitcointalk.org/index.php?topic=1141676.msg13114595#msg13114595]announced by ArchitektoR in this thread in 2016, but please confirm first.[/url][/li]
+[li][b]5.000 SLM[/b] for watch addresses (announced by aIA in this thread in September 2017).[/li]
+[li][b]10.000 SLM[/b] for bugfixes, announced by gavrilo77. Please consult with him.[/li]
+[/list]
+
+[b]Older bounties[/b] (please confirm first if they're still offered!):
+
+[list]
+[li][b]20.000 SLM bounty[/b] for an "working electrum-like wallet": [url=https://www.reddit.com/r/slimcoin/comments/3fkmpo/development_bounty_thread/ctxvr8n]announced on Reddit by 3429z781678124[/url] (offered in 2016)[/li]
+[li][b]20.000 SLM bounty[/b] for an update of the code to the current Bitcoin codebase,  [url=https://bitcointalk.org/index.php?topic=1141676.msg13114595#msg13114595]announced by ArchitektoR in this thread (in 2016).[/url][/li]
+[/list]
+
+[b]If you want to apply for a bounty, please reply to this thread.[/b] If you want to stay anonymous, [b][i]before you start development[/i][/b] you can send a PM to the user [url=https://bitcointalk.org/index.php?action=pm;sa=send;u=538351]"d5000"[/url] for more informations. Note that he is [b]not[/b] in control of the bounty amounts, the money for now remains in possession of the donators, but he will contact them and give you contact information.
+
+If you want to donate Slimcoins for development bounties, you can reply to this thread or alternatively open a thread on Reddit (the old bounty thread there was archived).
+
+[b]Resources for developers:[/b]
+
+The official source code repository is [b][url=https://github.com/slimcoin-project/Slimcoin]slimcoin-project/Slimcoin[/url][/b] at Github.
+
+[center][size=14pt][b]The magic of Proof of Burn[/b][/size][/center]
+
+Proof of burn has [b]multiple advantages over both Proof of Work and Proof of Stake[/b] and some very interesting economic implications.
+
+[b]Advantages over Proof of Work:[/b]
+
+[list]
+[li]Very low energy consumption[/li]
+[li]No need to invest in powerful hardware[/li]
+[li]No artificial price swings because of the "mining hardware" investment cycle or the influence of multipools[/li]
+[/list]
+
+[b]Advantages over Proof of Stake:[/b]
+
+[list]
+[li]No simple "rich get richer" mechanism. Proof of burn rewards entrepreneurial risk, not wealth.[/li]
+[li]While "staking" coins can be stolen hacking the private key, burnt coins cannot be "stolen". The most an attacker can get when he hacks a wallet are the PoB rewards, but incentive for this kind of attack is low as the attacker would have to wait a long time until he gets a significant amount of coins - and the legitimate owner of the key can also transfer these coins to another address.[/li]
+[/list]
+
+[b]The economic model[/b]
+
+Proof of Burn has at least three very interesting economic implications that can lead to a more stable price with less pump-and-dump bubbles.
+
+[list]
+[li][b]It rewards long-term investments:[/b] When you burn coins, you basically trade a short-term loss to a mid/long-term advantage. You will very probably get back your investment via the PoB reward mechanism (and probably even more), but you won't get it back immediately but after a certain amount of time. That means that the [i]risk[/i] to make a long-term investment is rewarded by the PoB mechanism. Short term Pump and dump scenarios are obviously possible, but long-term involvement is explicitly made more profitable than in other cryptocurrencies. A high [i]long term investor/short term investor[/i] rate should stabilize the price.[/li]
+[li][b]Burnt coins are locked and can't be sold:[/b] After you burn coins, you cannot spend them anymore. So you can't sell them in a panic event and very probably there will be less sellers in a price crash. For this reason the participants in the Proof-of-burn mechanism can be seen as "backers" of the coin price, as the burnt coins are not part of the available supply.[/li]
+[li][b]It is easier to burn coins when they are cheap.[/b] When price is low but fundamentals are sound, then the burn rate should be higher than in the times when coins are expensive, simply because it's cheaper to burn coins. Every coin burnt is rested from total supply. So supply tends to be smaller, the lower the price is - and that is a excellent condition to make the price rise again. That means that PoB probably has an inherent [i]supply-follows-demand[/i] mechanism - something very difficult to implement as a separate "supply-regulating" algorithm.[/li]
+[li][b]Proof of burn can work like an integrated "futures" market:[/b] a high burn rate is a sign for optimism.[/li]
+[/list]
+
+[size=12pt][b]Bug reports:[/b][/size]
+
+[b]Best practice is to use directly the [url=https://github.com/slimcoin-project/Slimcoin]Github repository[/url] to report bugs.[/b]
+
+[b]How to report a bug on Github:[/b]
+
+[list]
+[li]Go to https://github.com/slimcoin-project/Slimcoin. If you haven't registered yet on Github, you should register (it's free).[/li]
+[li]In the right column, you will see a menu [b]<> Code[/b] with a item called "[b]Issues[/b]". Click it.[/li]
+[li]In the new screen, look at the already posted issues. If your bug isn't reported, click [b]New Issue[/b]. Try to give the most information possible.[/li]
+[/list]
+
+If you don't want to use Github, you can use the [url=https://www.reddit.com/r/slimcoin/]Slimcoin subreddit[/url] or reply here in the Bitcointalk thread.
+
+[size=12pt][b]Nodes:[/b][/size]
+
+Add these lines to your slimcoin.conf (in your Application Data/Slimcoin or .slimcoin folder) to connect faster to the network:
+
+[url=https://github.com/slimcoin-project/Slimcoin/wiki/Slimcoin-addnodes]Slimcoin addnodes[/url] (as of 2018-08)
+
+[center][size=14pt][b]More resources[/b][/size][/center]
+
+[size=12pt][b]Technical Whitepaper:[/b][/size]
+[size=10pt]An extensive explanation of what Slimcoin has new to offer: [url=https://github.com/slimcoin-project/slimcoin-project.github.io/raw/master/whitepaperSLM.pdf]Slimcoin Whitepaper PDF[/url][/size]
+
+[size=12pt][b]Slimminer Downloads[/b][/size]
+[size=10pt][url=https://github.com/kryptoslab/slimminer]CPU miner Source Code[/url] (Kryptoslab's version)[/size]
+[size=10pt][url=https://github.com/JonnyLatte/slimminer]CPU miner Source Code[/url] (Johnnylatte's version, experimental!, see [url=https://bitcointalk.or/index.php?topic=1141676.msg12431644#msg12431644]here[/url])
+[size=10pt][url=https://github.com/JonnyLatte/slimminerGPU]GPU miner Source Code[/url] (experimental)
+[size=10pt][url=http://www37.zippyshare.com/v/42180814/file.html]Windows executable[/url] (original version, outdated)[/size]
+[size=10pt][url=https://github.com/slimcoin/slimminer]Source Code[/url] (original version, outdated)[/size]
+
+Tutorial for Linux source code compilation: [url=https://bitcointalk.org/index.php?topic=613213.msg7192912#msg7192912]https://bitcointalk.org/index.php?topic=613213.msg7192912#msg7192912[/url]
+Tutorial for Windows source code compilation: [url=https://bitcointalk.org/index.php?topic=613213.msg7090075#msg7090075]https://bitcointalk.org/index.php?topic=613213.msg7090075#msg7090075[/url]
+
+[size=12pt][b]IRC Channel[/b][/size]
+[size=10pt]#OfficialSlimcoin on freenode[/size]
+
+[b]Note:[/b] The original Slimcoin developer has not posted in this forum since the end of 2014, and he has stated that for the moment he is too busy to continue maintaining the coin. Some of the links in the release announcement are outdated and the former "official" website is offline now. So some members of the community have decided to restart the thread and build a new ecosystem.
+[/quote]
+
+---
+
+## What is coin control?
+When you send bitcoins to someone else, the bitcoin client chooses kinda randomly which of your addresses will send the coins. With coin control you can exactly choose, which of your addresses will be the sending addresses. And even more specific which of your unspent outputs will be the sending inputs.
+  
+## What is an unspent output?
+Lets say your bitcoin address is 111. Now someone sends 1 BTC to this address. Now address 111 has one unspent output. Now someone else sends 2 BTC to this address. Now address 111 has two unspent outputs and a balance of 3 BTC in total. Now lets say you want to send someone 0.1 BTC. One could say "ok, simply subtract 0.1 BTC from the first unspent output and send it". But this is not possible, because the bitcoin protocol works different. You always have to spent the whole output. This means in this case the bitcoin client would take the first unspent output, send 0.1 BTC to the other person and 0.9 BTC back to yourself. For this the client creates a new change address in the background and adds this address to your wallet. This address would then have one unspent output of 0.9 BTC. This means every wallet has kinda "hidden" change addresses. For example if you now would loose your wallet, but still know the private key of 111, you would be only able to get the 2 BTC back. The 0.9 BTC from the change address are gone, because you would have to know the private key of the change address.
+  
+## Why coin control?
+The first version of coin control was called "Patching The Bitcoin Client To Make It More Anonymous". Sometimes when you receive bitcoins, the sender or even the public knows that it is you who owns the bitcoin address. Now if you later want to make a real anonymous payment, you shouldnt use those coins. Also you get full control over your unspent outputs and can do things like choosing which address actually owns the coins, clean them up or send all change back to the origin address etc. You can also prevent the bitcoin client from creating a change address by exactly sending the amount of selected unspent outputs minus the fee. Also you get a better impression of whats going on in your wallet and get a better understanding of the bitcoin protocol.
+
+## Changes to the GUI
+
+Screenshots
+[screenshot1.png](https://a.fsdn.com/con/app/proj/bitcoincoincont/screenshots/screen_shot1.png)
+[screenshot2.png](https://a.fsdn.com/con/app/proj/bitcoincoincont/screenshots/screen_shot2.png)
+[screenshot3.png](https://a.fsdn.com/con/app/proj/bitcoincoincont/screenshots/screen_shot3.png)
+[screenshot4.png](https://a.fsdn.com/con/app/proj/bitcoincoincont/screenshots/screen_shot4.png)
+[screenshot5.png](https://a.fsdn.com/con/app/proj/bitcoincoincont/screenshots/screen_shot5.png)
+
+## Main
+Settings checkbox "Display coin control features (experts only!)" (default=no)
+
+## Tab Send coins
+Button Inputs
+click on this button opens actual coin control dialog. If no Inputs are selected "automatically selected" is shown.
+Change Checkbox
+checked -> provide custom change address
+
+## Coin Control Dialog
+
+Shows a list of all unspent outputs with two view modes
+tree mode: outputs including change are grouped by wallet address
+tree can be opened showing the actual outputs for this wallet address including change
+if change, the change bitcoin address is shown in column "address", otherwise the column "address" is empty, because its a direct output of the wallet address having the bitcoin address already shown in the parent node (same with label)
+list mode: simple list of all unspent outputs
+select outputs by checkbox -> only the checked outputs are used when sending a transaction
+if none are selected -> coin control inactive (just as normal)
+check/uncheck all by clicking on "(Un)select all"
+sort colums
+tooltip available in column list mode in column label for the change (shows from which address the change came from)
+Context menu
+Copy to clipboard (amount,label,address,transaction id,lock,unlock)
+Labels at the top
+Quantity: number of selected outputs
+Amount: sum of selected unspent outputs
+Fee:   see "Calculation of fee and transaction size" below
+minus fee: simply the amount shown is "Selected" minus the amount shown in "Fee"
+Bytes: see "Calculation of fee and transaction size" below
+Priority: priority = coinage / transactionsize. coinage = value * confirmations.  miners order transactions by priority when selecting which go into a block
+Low Output: "yes" if any recipient receives an amount < 0.01BTC
+Change: shows the change you get back
+direct right click the labels for copy amount to clipboard
+   
+
+
+## Selection
+
+In this version of coin control, all selected outputs are going into the transaction for sure!!
+Of course, if you select more than you actually send, the bitcoin core will send the rest back to you as change, just as normal.
+And of course, if you select less than you send you will get "The amount exceeds your balance".
+And as already mentioned, if none are selected, coin control is inactive, this means everything is just the same as without coin control.
+  
+## Fee
+
+If the sum of selected outputs minus the amount you are going to send is smaller than the required fee, you will probably get
+"The total exceeds your balance when the transaction fee is included"
+This is because you didnt select enough outputs to pay the fee.
+You always must select enough outputs, so that those outputs can pay the fee.
+  
+## Calculation of fee and transaction size
+
+The fee is calculated according to the fee set in the Settings menu.
+The calculation assumes 2 outputs in total. One for the destination address and one for the change.
+The formula is nBytesOutputs + (2 * 34) + 10. nBytesOutputs is the sum of selected outputs, 148 or 180 bytes per output, depending if compressed public key.
+Due to the inner workings of bitcoin the size per output is actually +/- 1 byte. Meaning the shown calculation is not always 100% correct. 
+If you send exactly "selected minus fee" then you will not have change (1 output only). The transaction will then be 34 bytes smaller as what was calculated before.
+
+## Free Transactions
+
+In order to be able to send a free transaction, you need to follow the rules:
+     - transaction size must be < 10000 bytes
+     - priority must be at least "medium"
+     - any recipient must receive at least 0.01BTC
+     - change must be either zero or at least 0.01BTC
+
+If you violate one rule you will see a min-fee and also the labels turn red: Bytes.Priority,Low Output,Change. Depending which rule you violated.  Those 4 labels also have tool tips explaining this.  Also remember that violating one of the first 2 rules means 0.0005 PER kilobyte min-fee, while violating one of the last 2 means 0.0005 min-fee only.
+

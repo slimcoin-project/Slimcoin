@@ -7,7 +7,7 @@ CONFIG += no_include_pwd
 CONFIG += thread
 CONFIG += debug # release
 CONFIG += qt_framework
-QT += core gui network
+QT += core gui network testlib
 CONFIG += link_pkgconfig
 CONFIG += moc
 
@@ -19,6 +19,7 @@ contains(QT_MAJOR_VERSION, 5):lessThan(QT_MINOR_VERSION, 4) {
     QMAKE_CXXFLAGS_CXX11 = $$replace(QMAKE_CXXFLAGS_CXX11, "std=c\+\+0x", "std=c++1y")
 } else {
      CONFIG += c++14
+     QT_WARNING_DISABLE_DEPRECATED=1
 }
 
 # Qt 4 doesn't even know about C++11.
@@ -184,7 +185,7 @@ contains(USE_UPNP, -) {
     }
     isEmpty(MINIUPNPC_INCLUDE_PATH) {
         contains(CONFIG, brew) {
-            macx:MINIUPNPC_INCLUDE_PATH=/usr/local/Cellar/miniupnpc/2.0/include
+            macx:MINIUPNPC_INCLUDE_PATH=/usr/local/Cellar/miniupnpc/2.1/include
         }else{
             macx:MINIUPNPC_INCLUDE_PATH=/opt/local/include
         }
@@ -193,7 +194,7 @@ contains(USE_UPNP, -) {
     }
     isEmpty(MINIUPNPC_LIB_PATH) {
         contains(CONFIG, brew) {
-            macx:MINIUPNPC_LIB_PATH=/usr/local/Cellar/miniupnpc/2.0/lib
+            macx:MINIUPNPC_LIB_PATH=/usr/local/Cellar/miniupnpc/2.1/lib
         }else{
             macx:MINIUPNPC_LIB_PATH=/opt/local/lib
         }
@@ -332,6 +333,7 @@ HEADERS += src/addrman.h \
     src/qt/guiutil.h \
     src/qt/inscriptiondialog.h \
     src/qt/messagepage.h \
+    src/qt/miningpage.h \
     src/qt/monitoreddatamapper.h \
     src/qt/multisigaddressentry.h \
     src/qt/multisiginputentry.h \
@@ -411,6 +413,7 @@ SOURCES += src/addrman.cpp \
     src/qt/guiutil.cpp \
     src/qt/inscriptiondialog.cpp \
     src/qt/messagepage.cpp \
+    src/qt/miningpage.cpp \
     src/qt/monitoreddatamapper.cpp \
     src/qt/multisigaddressentry.cpp \
     src/qt/multisiginputentry.cpp \
@@ -461,6 +464,7 @@ FORMS += \
     src/qt/forms/editaddressdialog.ui \
     src/qt/forms/inscriptiondialog.ui \
     src/qt/forms/messagepage.ui \
+    src/qt/forms/miningpage.ui \
     src/qt/forms/multisigaddressentry.ui \
     src/qt/forms/multisiginputentry.ui \
     src/qt/forms/multisigdialog.ui \
@@ -686,7 +690,7 @@ LIBS += -lssl -lcrypto -ldb_cxx$$BDB_LIB_SUFFIX
 # windows:DEFINES += WIN32
 # windows:RC_FILE = src/qt/res/bitcoin-qt.rc
 windows:LIBS += -lole32 -luuid -lgdi32 -lwsock32
-LIBS += -lboost_system$$BOOST_LIB_SUFFIX -lboost_filesystem$$BOOST_LIB_SUFFIX -lboost_program_options$$BOOST_LIB_SUFFIX -lboost_thread$$BOOST_THREAD_LIB_SUFFIX -lboost_chrono$$BOOST_THREAD_LIB_SUFFIX
+LIBS += -lboost_system$$BOOST_LIB_SUFFIX -lboost_filesystem$$BOOST_LIB_SUFFIX -lboost_program_options$$BOOST_LIB_SUFFIX -lboost_thread$$BOOST_THREAD_LIB_SUFFIX
 
 
 # for extra security against potential buffer overflows: enable GCCs Stack Smashing Protection
@@ -702,6 +706,7 @@ windows:QMAKE_LFLAGS *= -Wl,--dynamicbase -Wl,--nxcompat
 # on Windows: enable GCC large address aware linker flag
 # hack: when compiling 64-bit, pass 64BIT=1 to qmake to avoid incompatible large-address flag
 windows:!contains(64BIT, 1) QMAKE_LFLAGS *= -Wl,--large-address-aware
+windows:contains(MXE, 1) LIBS += -lpthread
 
 macx:{
     QMAKE_RPATHDIR += @executable_path/../Frameworks

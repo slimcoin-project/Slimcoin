@@ -136,9 +136,9 @@ BOOST_AUTO_TEST_CASE(DoS_checknbits)
 CTransaction RandomOrphan()
 {
     std::map<uint256, CDataStream*>::iterator it;
-  it = mapOrphanTransactions.lower_bound(GetRandHash());
-  if(it == mapOrphanTransactions.end())
-    it = mapOrphanTransactions.begin();
+    it = mapOrphanTransactions.lower_bound(GetRandHash());
+    if(it == mapOrphanTransactions.end())
+      it = mapOrphanTransactions.begin();
     const CDataStream* pvMsg = it->second;
     CTransaction tx;
     CDataStream(*pvMsg) >> tx;
@@ -215,10 +215,10 @@ BOOST_AUTO_TEST_CASE(DoS_mapOrphans)
     for (int j = 1; j < tx.vin.size(); j++)
         tx.vin[j].scriptSig = tx.vin[0].scriptSig;
 
-        // BOOST_CHECK(!AddOrphanTx(tx));
-        CDataStream ds(SER_DISK, CLIENT_VERSION);
-        ds << tx;
-        BOOST_CHECK(!AddOrphanTx(ds));
+    // BOOST_CHECK(!AddOrphanTx(tx));
+    CDataStream ds(SER_DISK, CLIENT_VERSION);
+    ds << tx;
+    BOOST_CHECK(!AddOrphanTx(ds));
   }
 
   // Test LimitOrphanTxSize() function:
@@ -290,7 +290,7 @@ BOOST_AUTO_TEST_CASE(DoS_checkSig)
     mst1 = boost::posix_time::microsec_clock::local_time();
     for (int i = 0; i < 5; i++)
         for (int j = 0; j < tx.vin.size(); j++)
-            BOOST_CHECK(VerifySignature(orphans[j], tx, j, true, SIGHASH_ALL));
+            BOOST_CHECK(VerifySignature(orphans[j], tx, j, true, SCRIPT_VERIFY_P2SH | SCRIPT_VERIFY_STRICTENC | SCRIPT_VERIFY_CHECKLOCKTIMEVERIFY, SIGHASH_ALL));
     mst2 = boost::posix_time::microsec_clock::local_time();
     msdiff = mst2 - mst1;
     long nManyValidate = msdiff.total_milliseconds();
@@ -301,13 +301,13 @@ BOOST_AUTO_TEST_CASE(DoS_checkSig)
     // Empty a signature, validation should fail:
     CScript save = tx.vin[0].scriptSig;
     tx.vin[0].scriptSig = CScript();
-    BOOST_CHECK(!VerifySignature(orphans[0], tx, 0, true, SIGHASH_ALL));
+    BOOST_CHECK(!VerifySignature(orphans[0], tx, 0, true, SCRIPT_VERIFY_P2SH | SCRIPT_VERIFY_STRICTENC | SCRIPT_VERIFY_CHECKLOCKTIMEVERIFY, SIGHASH_ALL));
     tx.vin[0].scriptSig = save;
 
     // Swap signatures, validation should fail:
     std::swap(tx.vin[0].scriptSig, tx.vin[1].scriptSig);
-    BOOST_CHECK(!VerifySignature(orphans[0], tx, 0, true, SIGHASH_ALL));
-    BOOST_CHECK(!VerifySignature(orphans[1], tx, 1, true, SIGHASH_ALL));
+    BOOST_CHECK(!VerifySignature(orphans[0], tx, 0, true, SCRIPT_VERIFY_P2SH | SCRIPT_VERIFY_STRICTENC | SCRIPT_VERIFY_CHECKLOCKTIMEVERIFY, SIGHASH_ALL));
+    BOOST_CHECK(!VerifySignature(orphans[1], tx, 1, true, SCRIPT_VERIFY_P2SH | SCRIPT_VERIFY_STRICTENC | SCRIPT_VERIFY_CHECKLOCKTIMEVERIFY, SIGHASH_ALL));
     std::swap(tx.vin[0].scriptSig, tx.vin[1].scriptSig);
 
     // Exercise -maxsigcachesize code:
@@ -317,7 +317,7 @@ BOOST_AUTO_TEST_CASE(DoS_checkSig)
     BOOST_CHECK(SignSignature(keystore, orphans[0], tx, 0));
     BOOST_CHECK(tx.vin[0].scriptSig != oldSig);
     for (int j = 0; j < tx.vin.size(); j++)
-        BOOST_CHECK(VerifySignature(orphans[j], tx, j, true, SIGHASH_ALL));
+        BOOST_CHECK(VerifySignature(orphans[j], tx, j, true, SCRIPT_VERIFY_P2SH | SCRIPT_VERIFY_STRICTENC | SCRIPT_VERIFY_CHECKLOCKTIMEVERIFY, SIGHASH_ALL));
     mapArgs.erase("-maxsigcachesize");
 
     LimitOrphanTxSize(0);

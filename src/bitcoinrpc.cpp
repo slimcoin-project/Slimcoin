@@ -66,6 +66,41 @@ Object JSONRPCError(int code, const string& message)
     error.push_back(Pair("message", message));
     return error;
 }
+void RPCTypeCheck(const Array& params,
+                  const list<Value_type>& typesExpected)
+{
+    unsigned int i = 0;
+    BOOST_FOREACH(Value_type t, typesExpected)
+    {
+        if (params.size() <= i)
+            break;
+
+       const Value& v = params[i];
+        if (v.type() != t)
+        {
+            string err = strprintf("Expected type %s, got %s",
+                                   Value_type_name[t], Value_type_name[v.type()]);
+            throw JSONRPCError(-3, err);
+        }
+        i++;
+    }
+}
+void RPCTypeCheck(const Object& o,
+                  const map<string, Value_type>& typesExpected)
+{
+    BOOST_FOREACH(const PAIRTYPE(string, Value_type)& t, typesExpected)
+    {
+        const Value& v = find_value(o, t.first);
+        if (v.type() == null_type)
+            throw JSONRPCError(-3, strprintf("Missing %s", t.first.c_str()));
+        if (v.type() != t.second)
+        {
+            string err = strprintf("Expected type %s for %s, got %s",
+                                   Value_type_name[t.second], t.first.c_str(), Value_type_name[v.type()]);
+            throw JSONRPCError(-3, err);
+        }
+    }
+}
 
 double GetDifficulty(const CBlockIndex* blockindex = NULL)
 {
@@ -97,6 +132,41 @@ double GetDifficulty(const CBlockIndex* blockindex = NULL)
 
     return dDiff;
 }
+
+double GetNetworkGhps(const CBlockIndex* blockindex = NULL)
+{
+    // Floating point number that is a multiple of the minimum difficulty,
+    // minimum difficulty = 1.0.
+    if (blockindex == NULL)
+    {
+        if (pindexBest == NULL)
+            return 1.0;
+        else
+            blockindex = GetLastBlockIndex(pindexBest, false);
+    }
+
+    int64 nTargetSpacingWorkMin = 30;
+    int64 nTargetSpacingWork = nTargetSpacingWorkMin;
+    int64 nInterval = 72;
+    CBlockIndex* pindex = pindexGenesisBlock;
+    CBlockIndex* pindexPrevWork = pindexGenesisBlock;
+    while (pindex)
+    {
+        // Exponential moving average of recent proof-of-work block spacing
+        if (pindex->IsProofOfWork())
+        {
+            //obtain the time between the blocks
+            int64 nActualSpacingWork = pindex->GetBlockTime() - pindexPrevWork->GetBlockTime();
+            nTargetSpacingWork = ((nInterval - 1) * nTargetSpacingWork + nActualSpacingWork + nActualSpacingWork) / (nInterval + 1);
+            nTargetSpacingWork = max(nTargetSpacingWork, nTargetSpacingWorkMin);
+            pindexPrevWork = pindex;
+        }
+        pindex = pindex->pnext;
+    }
+    double dNetworkGhps = GetDifficulty() * 4.294967296 / nTargetSpacingWork; 
+    return dNetworkGhps;
+}
+
 
 int64 GetBurnTxTotal()
 {
@@ -1720,7 +1790,7 @@ Value addmultisigaddress(const Array& params, bool fHelp)
     {
         string msg = "addmultisigaddress <nrequired> <'[\"key\",\"key\"]'> [account]\n"
             "Add a nrequired-to-sign multisignature address to the wallet\n"
-            "each key is a peercoin address or hex-encoded public key\n"
+            "each key is a Slimcoin address or hex-encoded public key\n"
             "If [account] is specified, assign address to [account].";
         throw runtime_error(msg);
     }
@@ -1750,7 +1820,7 @@ Value createmultisig(const Array& params, bool fHelp)
             "1. nrequired (numeric, required) The number of required signatures out of the n keys or addresses.\n"
             "2. \"keys\" (string, required) A json array of keys which are peercoin addresses or hex-encoded public keys\n"
             " [\n"
-            " \"key\" (string) peercoin address or hex-encoded public key\n"
+            " \"key\" (string) Slimcoin address or hex-encoded public key\n"
             " ,...\n"
             " ]\n"
 
@@ -1762,7 +1832,7 @@ Value createmultisig(const Array& params, bool fHelp)
 
             "\nExamples:\n"
             "\nCreate a multisig address from 2 addresses\n"
-            "peerunityd createmultisig 2 \"[\\\"PCHAhUGKiFKDHKW8Pgw3qrp2vMfhwWjuCo\\\",\\\"PJrhyo8CUvFZQT8j67Expre2PYLhavnHXb\\\"]\""
+            "slimcoind createmultisig 2 \"[\\\"PCHAhUGKiFKDHKW8Pgw3qrp2vMfhwWjuCo\\\",\\\"PJrhyo8CUvFZQT8j67Expre2PYLhavnHXb\\\"]\""
             "\nAs a json rpc call\n"
             "curl --user myusername --data-binary '{\"jsonrpc\": \"1.0\", \"id\": \"curltest\", \"method\": \"icreatemultisig\", \"params\": [2, \"[\\\"PCHAhUGKiFKDHKW8Pgw3qrp2vMfhwWjuCo\\\",\\\"PJrhyo8CUvFZQT8j67Expre2PYLhavnHXb\\\"]\"]} -H 'content-type: text/plain;' http://127.0.0.1:9902"
         ;
@@ -3160,45 +3230,116 @@ Value repairwallet(const Array& params, bool fHelp)
     return result;
 }
 
+// zapwallettxes
+Value zapwallettxes(const Array& params, bool fHelp)
+{
+  if (fHelp || params.size() > 0)
+    throw runtime_error("zapwallettxes\n"
+          "Delete all wallet transactions and only recover those parts of the blockchain through -rescan on startup\n");
+
+  std::vector<CWalletTx> vWtx;
+  Object result;
+
+  const char *mess="Zapping all transactions from wallet ...\n";
+  printf("%s",mess); // to debug.log
+
+  pwalletMain = new CWallet("wallet.dat");
+  int nZapWalletRet = pwalletMain->ZapWalletTx(vWtx);
+  if (nZapWalletRet != 0)
+  {
+    mess="Error loading wallet.dat: Wallet corrupted\n";
+    printf("%s",mess);
+    return(mess);
+  }
+
+  delete pwalletMain;
+  pwalletMain = NULL;
+
+  mess="Loading wallet...\n";
+  printf("%s",mess);
+
+  bool fFirstRun = true;
+  pwalletMain = new CWallet("wallet.dat");
+
+
+  int nLoadWalletRet = pwalletMain->LoadWallet(fFirstRun);
+  if (nLoadWalletRet != 0)
+  {
+    if (nLoadWalletRet == 1)
+    {
+      mess="Error loading wallet.dat: Wallet corrupted\n";
+      printf("%s",mess);
+      return(mess);
+    }
+    else if (nLoadWalletRet == 2)
+    {
+      mess="Warning: error reading wallet.dat! All keys read correctly, but transaction data or address book entries might be missing or incorrect.\n";
+      printf("%s",mess);
+    }
+    else if (nLoadWalletRet == 3)
+    {
+      mess="Error loading wallet.dat: Wallet requires newer version of Bitcoin-scrypt\n";
+      printf("%s",mess);
+      return(mess);
+    }
+    else if (nLoadWalletRet == 4)
+    {
+      mess="Wallet needed to be rewritten: restart Slimcoin to complete\n";
+      printf("%s",mess);
+      return(mess);
+    }
+    else
+    {
+      mess="Unknown error loading wallet.dat\n";
+      printf("%s",mess);
+      return(mess);
+    } 
+  }
+  
+  mess="Wallet loaded...\n";
+  printf("%s",mess);
+
+  mess="Loaded lables...\n";
+  printf("%s",mess);
+
+  // Restore wallet transaction metadata
+  BOOST_FOREACH(const CWalletTx& wtxOld, vWtx)
+  {
+    uint256 hash = wtxOld.GetHash();
+    std::map<uint256, CWalletTx>::iterator mi = pwalletMain->mapWallet.find(hash);
+    if (mi != pwalletMain->mapWallet.end())
+    {
+      const CWalletTx* copyFrom = &wtxOld;
+      CWalletTx* copyTo = &mi->second;
+      copyTo->mapValue = copyFrom->mapValue;
+      copyTo->vOrderForm = copyFrom->vOrderForm;
+      copyTo->nTimeReceived = copyFrom->nTimeReceived;
+      copyTo->nTimeSmart = copyFrom->nTimeSmart;
+      copyTo->fFromMe = copyFrom->fFromMe;
+      copyTo->strFromAccount = copyFrom->strFromAccount;
+      copyTo->nOrderPos = copyFrom->nOrderPos;
+      copyTo->WriteToDisk();
+    }
+  }
+  mess="scanning for transactions...\n";
+  printf("%s",mess);
+
+  pwalletMain->ScanForWalletTransactions(pindexGenesisBlock, true);
+  pwalletMain->ReacceptWalletTransactions();
+  mess="Please restart your wallet.\n";
+  printf("%s",mess);
+
+  mess="Zap Wallet Finished.\nPlease restart your wallet for changes to take effect.\n";
+
+  return (mess);
+}
+
 Value getsubsidy(const Array& params, bool fHelp)
 {
     static CBlock* pblock;
     pblock = CreateNewBlock(pwalletMain, false);
     return (boost::int64_t)GetProofOfWorkReward(pblock->nBits);
 }
-
-/*
-// ppcoin: make a public-private key pair
-Value makekeypair(const Array& params, bool fHelp)
-{
-    if (fHelp || params.size() > 1)
-        throw runtime_error(
-            "makekeypair [prefix]\n"
-            "Make a public/private ECC key pair.\n"
-            "[prefix] is optional preferred prefix for the public key.\n");
-
-    string strPrefix = "";
-    if (params.size() > 0)
-        strPrefix = params[0].get_str();
- 
-    CKey key;
-    int nCount = 0;
-    do
-    {
-        key.MakeNewKey(false);
-        nCount++;
-    } while (nCount < 10000 && strPrefix != HexStr(key.GetPubKey().Raw()).substr(0, strPrefix.size()));
-
-    if (strPrefix != HexStr(key.GetPubKey().Raw()).substr(0, strPrefix.size()))
-        return Value::null;
-
-    CPrivKey vchPrivKey = key.GetPrivKey();
-    Object result;
-    result.push_back(Pair("PrivateKey", HexStr<CPrivKey::iterator>(vchPrivKey.begin(), vchPrivKey.end())));
-    result.push_back(Pair("PublicKey", HexStr(key.GetPubKey().Raw())));
-    return result;
-}
-*/
 
 // ppcoin: make a public-private key pair
 Value makekeypair(const Array& params, bool fHelp)
@@ -3279,14 +3420,22 @@ Value makekeypair(const Array& params, bool fHelp)
 
 Value dumpbootstrap(const Array& params, bool fHelp)
 {
-    if (fHelp || params.size() < 1 || params.size() > 2)
+    if (fHelp || params.size() < 1 || params.size() > 3)
         throw runtime_error(
-            "dumpbootstrap <destination>\n"
-            "Creates a bootstrap format block dump of the blockchain in destination, which can be a directory or a path with filename.");
+            "dumpbootstrap <destination> <endblock> [startblock=0]\n"
+            "Creates a bootstrap format block dump of the blockchain in destination, which can be a directory or a path with filename, up to the given endblock number.\n"
+            "Optional <startblock> is the first block number to dump.");
 
     string strDest = params[0].get_str();
-    int nEndBlock = nBestHeight;
+    int nEndBlock = params[1].get_int();
+    if (nEndBlock < 0 || nEndBlock > nBestHeight)
+        throw runtime_error("End block number out of range.");
+
     int nStartBlock = 0;
+    if (params.size() > 2)
+        nStartBlock = params[2].get_int();
+    if (nStartBlock < 0 || nStartBlock > nEndBlock)
+        throw runtime_error("Start block number out of range.");
 
     boost::filesystem::path pathDest(strDest);
     if (boost::filesystem::is_directory(pathDest))
@@ -3311,6 +3460,7 @@ Value dumpbootstrap(const Array& params, bool fHelp)
             block.ReadFromDisk(pblockindex, true);
             fileout << FLATDATA(pchMessageStart) << fileout.GetSerializeSize(block) << block;
         }
+
     } catch(const boost::filesystem::filesystem_error &e) {
         throw JSONRPCError(-1, "Error: Bootstrap dump failed!");
     }
@@ -3320,14 +3470,25 @@ Value dumpbootstrap(const Array& params, bool fHelp)
 
 Value linearizehashes(const Array& params, bool fHelp)
 {
-    if (fHelp || params.size() > 1 || params.size() > 2)
+    if (fHelp || params.size() < 1 || params.size() > 3)
         throw runtime_error(
-            "linearizehashes <destination>\n"
-            "Creates a dump of linearized block hashes in destination, which can be a directory or a path with filename.");
+            "linearizehashes <destination> <endblock>  [startblock=0]\n"
+            "Creates a dump of linearized block hashes in destination, which can be a directory or a path with filename, up to the given endblock number.\n"
+            "Optional <startblock> is the first block number to dump.");
 
     string strDest = params[0].get_str();
-    int nEndBlock = nBestHeight;
+
+    int nEndBlock = 1646900; // 3rd Feb 2019
+    if (params.size() > 1)
+        nEndBlock = params[1].get_int();
+    if (nEndBlock < 0 || nEndBlock > nBestHeight)
+        throw runtime_error("End block number out of range.");
+
     int nStartBlock = 0;
+    if (params.size() > 2)
+        nStartBlock = params[2].get_int();
+    if (nStartBlock < 0 || nStartBlock > nEndBlock)
+        throw runtime_error("Start block number out of range.");
 
     boost::filesystem::path pathDest(strDest);
     if (boost::filesystem::is_directory(pathDest))
@@ -3347,7 +3508,7 @@ Value linearizehashes(const Array& params, bool fHelp)
             CBlock block;
             CBlockIndex* pblockindex = FindBlockByHeight(nHeight);
             block.ReadFromDisk(pblockindex, true);
-            std::string blockhash = block.GetHash().ToString().c_str();
+            std::string blockhash = block.GetHash().ToString();
             fileout << blockhash.append("\n");
         }
     } catch(const boost::filesystem::filesystem_error &e) {
@@ -3825,7 +3986,7 @@ Value signrawtransaction(const Array& params, bool fHelp)
         {
             txin.scriptSig = CombineSignatures(prevPubKey, mergedTx, i, txin.scriptSig, txv.vin[i].scriptSig);
         }
-        if (!VerifyScript(txin.scriptSig, prevPubKey, mergedTx, i, true, 0))
+        if (!VerifyScript(txin.scriptSig, prevPubKey, mergedTx, i, true, SCRIPT_VERIFY_P2SH | SCRIPT_VERIFY_STRICTENC | SCRIPT_VERIFY_CHECKLOCKTIMEVERIFY, 0))
             fComplete = false;
     }
 
@@ -4052,6 +4213,7 @@ static const CRPCCommand vRPCCommands[] =
     { "getburndata",              &getburndata,            true   },
     { "getconnectioncount",       &getconnectioncount,     true   },
     { "getpeerinfo",              &getpeerinfo,            true   },
+//    { "addnode",                  &addnode,                true   },
     { "getdifficulty",            &getdifficulty,          true   },
     { "getgenerate",              &getgenerate,            true   },
     { "setgenerate",              &setgenerate,            true   },
@@ -4099,8 +4261,6 @@ static const CRPCCommand vRPCCommands[] =
     { "importpassphrase",         &importpassphrase,       false  },
     { "getcheckpoint",            &getcheckpoint,          true   },
     { "reservebalance",           &reservebalance,         false  },
-    { "checkwallet",              &checkwallet,            false  },
-    { "repairwallet",             &repairwallet,           false  },
     { "dumpbootstrap",            &dumpbootstrap,          false  },
     { "linearizehashes",          &linearizehashes,        false  },
     { "makekeypair",              &makekeypair,            false  },
@@ -4117,7 +4277,9 @@ static const CRPCCommand vRPCCommands[] =
     { "getinscription",           &getinscription,         true   },
     { "getmoneysupply",           &getmoneysupply,         true   },
     { "getburnedcoins",           &getburnedcoins,         true   },
-};
+    { "checkwallet",              &checkwallet,            false  },
+    { "repairwallet",             &repairwallet,           false  },
+    { "zapwallettxes",            &zapwallettxes,          false  }};
 
 CRPCTable::CRPCTable()
 {
@@ -4642,8 +4804,8 @@ void ThreadRPCServer2(void* parg)
             } else
               throw JSONRPCError(-32600, "Top-level object parse error");
 
-                // Send reply
-              stream << HTTPReply(200, strReply) << std::flush;
+            // Send reply
+            stream << HTTPReply(200, strReply) << std::flush;
         }
         catch (Object& objError)
         {
@@ -4954,3 +5116,57 @@ int main(int argc, char *argv[])
 #endif
 
 const CRPCTable tableRPC;
+
+// Return average network hashes per second based on the last 'lookup' blocks,
+// or from the last difficulty change if 'lookup' is nonpositive.
+// If 'height' is nonnegative, compute the estimate at the time when a given block was found.
+
+double GetNetworkHashPS(int lookup, int height) {
+    CBlockIndex *pb = pindexBest;
+
+    if (height >= 0 && height < nBestHeight)
+        pb = FindBlockByHeight(height);
+
+    if (pb == NULL || !pb->nHeight)
+        return 0;
+
+    // If lookup is -1, then use blocks since last difficulty change.
+    if (lookup <= 0)
+        lookup = pb->nHeight % 2016 + 1;
+
+    // If lookup is larger than chain, then set it to chain length.
+    if (lookup > pb->nHeight)
+        lookup = pb->nHeight;
+
+    CBlockIndex *pb0 = pb;
+    int64 minTime = pb0->GetBlockTime();
+    int64 maxTime = minTime;
+    for (int i = 0; i < lookup; i++) {
+        pb0 = pb0->pprev;
+        int64 time = pb0->GetBlockTime();
+        minTime = std::min(time, minTime);
+        maxTime = std::max(time, maxTime);
+    }
+
+    // In case there's a situation where minTime == maxTime, we don't want a divide by zero exception.
+    if (minTime == maxTime)
+        return 0;
+
+    // uint256 workDiff = pb->nChainWork - pb0->nChainWork;
+    CBigNum workDiff = pb->bnChainTrust - pb0->bnChainTrust;
+    int64 timeDiff = maxTime - minTime;
+
+    return (boost::int64_t)(workDiff.getuint64() / timeDiff);
+}
+
+Value getnetworkhashps(const Array& params, bool fHelp)
+{
+    if (fHelp || params.size() > 2)
+        throw runtime_error(
+            "getnetworkhashps [blocks] [height]\n"
+            "Returns the estimated network hashes per second based on the last 120 blocks.\n"
+            "Pass in [blocks] to override # of blocks, -1 specifies since last difficulty change.\n"
+            "Pass in [height] to estimate the network speed at the time when a certain block was found.");
+
+    return GetNetworkHashPS(params.size() > 0 ? params[0].get_int() : 120, params.size() > 1 ? params[1].get_int() : -1);
+}
