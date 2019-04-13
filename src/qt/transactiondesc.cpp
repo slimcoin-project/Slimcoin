@@ -126,7 +126,8 @@ QString TransactionDesc::toHTML(CWallet *wallet, CWalletTx &wtx)
         }
 
         //
-        // Amount
+        // Amount    void updateWatchOnlyColumn(bool fHaveWatchOnly);
+
         //
         if (wtx.IsCoinBase() && nCredit == 0)
         {
@@ -309,7 +310,7 @@ QString TransactionDesc::toHTML(CWallet *wallet, CWalletTx &wtx)
                                 strHTML += QString::fromStdString(CBitcoinAddress(address).ToString());
                             }
                             strHTML = strHTML + " Amount=" + BitcoinUnits::formatWithUnit(BitcoinUnits::BTC,vout.nValue);
-                            strHTML = strHTML + " IsMine=" + (wallet->IsMine(vout) & MINE_SPENDABLE ? tr("true") : tr("false")) + "</li>";
+                            strHTML = strHTML + " IsMine=" + (wallet->IsMine(vout) & MINE_SPENDABLE ? tr("true") : tr("false"));
                             strHTML = strHTML + " IsWatchOnly=" + (wallet->IsMine(vout) & MINE_WATCH_ONLY ? tr("true") : tr("false")) + "</li>";
                         }
                     }
