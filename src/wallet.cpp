@@ -2312,29 +2312,6 @@ int CWallet::LoadWallet(bool& fFirstRunRet)
     return DB_LOAD_OK;
 }
 
-int CWallet::ZapWalletTx(std::vector<CWalletTx>& vWtx)
-{
-    if (!fFileBacked)
-        return 0;
-    int nZapWalletTxRet = CWalletDB(strWalletFile,"cr+").ZapWalletTx(this, vWtx);
-    if (nZapWalletTxRet == 5)
-    {
-        if (CDB::Rewrite(strWalletFile, "\x04pool"))
-        {
-            LOCK(cs_wallet);
-            setKeyPool.clear();
-            // Note: can't top-up keypool here, because wallet is locked.
-            // User will be prompted to unlock wallet the next operation
-            // that requires a new key.
-        }
-    }
-
-    if (nZapWalletTxRet != 0)
-        return nZapWalletTxRet;
-
-    return 0;
-}
-
 
 bool CWallet::SetAddressBookName(const CTxDestination& address, const string& strName)
 {
@@ -2560,60 +2537,6 @@ int64 CWallet::GetOldestKeyPoolTime()
     return keypool.nTime;
 }
 
-CPubKey CReserveKey::GetReservedKey()
-{
-    if (nIndex == -1)
-    {
-        CKeyPool keypool;
-        pwallet->ReserveKeyFromKeyPool(nIndex, keypool);
-        if (nIndex != -1)
-            vchPubKey = keypool.vchPubKey;
-        else
-        {
-            printf("CReserveKey::GetReservedKey(): Warning: using default key instead of a new key, top up your keypool.");
-            vchPubKey = pwallet->vchDefaultKey;
-        }
-    }
-    assert(vchPubKey.IsValid());
-    return vchPubKey;
-}
-
-void CReserveKey::KeepKey()
-{
-    if (nIndex != -1)
-        pwallet->KeepKey(nIndex);
-    nIndex = -1;
-    vchPubKey = CPubKey();
-}
-
-void CReserveKey::ReturnKey()
-{
-    if (nIndex != -1)
-        pwallet->ReturnKey(nIndex);
-    nIndex = -1;
-    vchPubKey = CPubKey();
-}
-
-void CWallet::GetAllReserveKeys(set<CKeyID>& setAddress)
-{
-    setAddress.clear();
-
-    CWalletDB walletdb(strWalletFile);
-
-    LOCK2(cs_main, cs_wallet);
-    BOOST_FOREACH(const int64& id, setKeyPool)
-    {
-        CKeyPool keypool;
-        if (!walletdb.ReadPool(id, keypool))
-            throw runtime_error("GetAllReserveKeyHashes() : read failed");
-        assert(keypool.vchPubKey.IsValid());
-        CKeyID keyID = keypool.vchPubKey.GetID();
-        if (!HaveKey(keyID))
-            throw runtime_error("GetAllReserveKeyHashes() : unknown key in key pool");
-        setAddress.insert(keyID);
-    }
-}
-
 // ppcoin: check 'spent' consistency between wallet and txindex
 // ppcoin: fix wallet spent state according to txindex
 void CWallet::FixSpentCoins(int& nMismatchFound, int64& nBalanceInQuestion, bool fCheckOnly)
@@ -2686,7 +2609,85 @@ void CWallet::DisableTransaction(const CTransaction &tx)
     }
 }
 
+CPubKey CReserveKey::GetReservedKey()
+{
+    if (nIndex == -1)
+    {
+        CKeyPool keypool;
+        pwallet->ReserveKeyFromKeyPool(nIndex, keypool);
+        if (nIndex != -1)
+            vchPubKey = keypool.vchPubKey;
+        else
+        {
+            printf("CReserveKey::GetReservedKey(): Warning: using default key instead of a new key, top up your keypool.");
+            vchPubKey = pwallet->vchDefaultKey;
+        }
+    }
+    assert(vchPubKey.IsValid());
+    return vchPubKey;
+}
+
+void CReserveKey::KeepKey()
+{
+    if (nIndex != -1)
+        pwallet->KeepKey(nIndex);
+    nIndex = -1;
+    vchPubKey = CPubKey();
+}
+
+void CReserveKey::ReturnKey()
+{
+    if (nIndex != -1)
+        pwallet->ReturnKey(nIndex);
+    nIndex = -1;
+    vchPubKey = CPubKey();
+}
+
+void CWallet::GetAllReserveKeys(set<CKeyID>& setAddress)
+{
+    setAddress.clear();
+
+    CWalletDB walletdb(strWalletFile);
+
+    LOCK2(cs_main, cs_wallet);
+    BOOST_FOREACH(const int64& id, setKeyPool)
+    {
+        CKeyPool keypool;
+        if (!walletdb.ReadPool(id, keypool))
+            throw runtime_error("GetAllReserveKeyHashes() : read failed");
+        assert(keypool.vchPubKey.IsValid());
+        CKeyID keyID = keypool.vchPubKey.GetID();
+        if (!HaveKey(keyID))
+            throw runtime_error("GetAllReserveKeyHashes() : unknown key in key pool");
+        setAddress.insert(keyID);
+    }
+}
+
 // wallet check/repair
+
+int CWallet::ZapWalletTx(std::vector<CWalletTx>& vWtx)
+{
+    if (!fFileBacked)
+        return 0;
+    int nZapWalletTxRet = CWalletDB(strWalletFile,"cr+").ZapWalletTx(this, vWtx);
+    if (nZapWalletTxRet == 5)
+    {
+        if (CDB::Rewrite(strWalletFile, "\x04pool"))
+        {
+            LOCK(cs_wallet);
+            setKeyPool.clear();
+            // Note: can't top-up keypool here, because wallet is locked.
+            // User will be prompted to unlock wallet the next operation
+            // that requires a new key.
+        }
+    }
+
+    if (nZapWalletTxRet != 0)
+        return nZapWalletTxRet;
+
+    return 0;
+}
+
 // check 'spent' consistency between wallet and txindex
 // fix wallet spent state according to txindex
 // remove orphan Coinbase and Coinstake
