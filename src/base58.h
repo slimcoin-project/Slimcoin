@@ -23,6 +23,19 @@
 #include "key.h"
 #include "script.h"
 
+/* P2PK and P2PKH addresses begin with 'S' */
+const unsigned char PUBKEY_ADDRESS_PREFIX = 0x3F;
+
+/* P2SH addresses begin with 's' */
+const unsigned char SCRIPT_ADDRESS_PREFIX = 0x7D;
+
+/* Testnet P2PK and P2PKH addresses begin with 'm' or 'n' */
+const unsigned char PUBKEY_ADDRESS_TEST_PREFIX = 0x6F;
+
+/* Testnet P2SH addresses begin with '2' */
+const unsigned char SCRIPT_ADDRESS_TEST_PREFIX = 0xC4;
+
+
 //debug flag for base58 testing
 //~ #define DEBUG_BASE58 
 
@@ -346,10 +359,10 @@ class CBitcoinAddress : public CBase58Data
 public:
     enum
     {
-        PUBKEY_ADDRESS = 63,  // slimcoin: addresses begin with 'S'
-        SCRIPT_ADDRESS = 125, // slimcoin: script addresses begin with 's'
-        PUBKEY_ADDRESS_TEST = 111,
-        SCRIPT_ADDRESS_TEST = 196,
+        PUBKEY_ADDRESS = PUBKEY_ADDRESS_PREFIX,
+        SCRIPT_ADDRESS = SCRIPT_ADDRESS_PREFIX,
+        PUBKEY_ADDRESS_TEST = PUBKEY_ADDRESS_TEST_PREFIX,
+        SCRIPT_ADDRESS_TEST = SCRIPT_ADDRESS_TEST_PREFIX,
     };
 
     bool Set(const CKeyID &id) {

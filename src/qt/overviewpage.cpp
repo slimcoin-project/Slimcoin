@@ -125,8 +125,13 @@ OverviewPage::OverviewPage(QWidget *parent) :
     ui->labelImmature->setToolTip(tr("Total of transactions that have yet to be confirmed, and do not yet count toward the current balance"));
     ui->labelImmature->setTextInteractionFlags(Qt::TextSelectableByMouse|Qt::TextSelectableByKeyboard);
 
+    ui->labelNumTransactions->setFont(QFont("Monospace", -1, QFont::Bold));
     ui->labelNumTransactions->setToolTip(tr("Total number of transactions in wallet"));
+    ui->labelNumTransactions->setTextInteractionFlags(Qt::TextSelectableByMouse|Qt::TextSelectableByKeyboard);
+
+    ui->labelReserveBalance->setFont(QFont("Monospace", -1, QFont::Bold));
     ui->labelReserveBalance->setToolTip(tr("Reserve balance of coins, excluded from staking."));
+    ui->labelReserveBalance->setTextInteractionFlags(Qt::TextSelectableByMouse|Qt::TextSelectableByKeyboard);
 
     // Recent transactions
     ui->listTransactions->setStyleSheet("QListView { background:transparent }");
@@ -161,35 +166,51 @@ OverviewPage::OverviewPage(QWidget *parent) :
     if(GetBoolArg("-chart", true))
     {
         // setup Plot
-        // create graph
-        ui->diffplot->addGraph();
-
-        // Argh can't get the background to work.
-        //QPixmap background = QPixmap(":/images/splash_testnet");
-        //ui->diffplot->setBackground(background);
-        //ui->diffplot->setBackground(QBrush(QWidget::palette().color(this->backgroundRole())));
 
         // give the axes some labels:
-        ui->diffplot->xAxis->setLabel("Blocks");
-        ui->diffplot->yAxis->setLabel("Difficulty");
-
-        // set the pens
-        ui->diffplot->graph(0)->setPen(QPen(QColor(255, 165, 18)));
-        ui->diffplot->graph(0)->setLineStyle(QCPGraph::lsNone);
-        ui->diffplot->graph(0)->setScatterStyle(QCPScatterStyle(QCPScatterStyle::ssDisc, QColor(255, 165, 18), 1));
+        ui->workplot->xAxis->setLabel("Last 7 days (2650 blocks)");
+        ui->workplot->yAxis->setLabel("Difficulty");
+        ui->workplot->yAxis2->setLabel("Hash rate");
+        ui->workplot->yAxis2->setVisible(true);
 
         // set axes label fonts:
         QFont label = font();
-        ui->diffplot->xAxis->setTickLabels(false);
-        // ui->diffplot->xAxis->setLabelFont(label);
-        // ui->diffplot->xAxis->setTickLabelFont(label);
-        // ui->diffplot->xAxis->setTickLabelRotation(15);
-        ui->diffplot->yAxis->setLabelFont(label);
-        ui->diffplot->yAxis->setTickLabelFont(label);
+        ui->workplot->yAxis->setLabelFont(label);
+        ui->workplot->yAxis->setTickLabelFont(label);
+        ui->workplot->yAxis2->setTickLabelFont(label);
+
+        ui->workplot->xAxis->setTickLabels(false);
+        /* If block height is rendered ... */
+        // ui->workplot->xAxis->setLabelFont(label);
+        // ui->workplot->xAxis->setTickLabelFont(label);
+        // ui->workplot->xAxis->setTickLabelRotation(15);
+        // ui->workplot->xAxis->setNumberFormat("f");
+
+        ui->workplot->xAxis->setAutoSubTicks(false);
+        ui->workplot->yAxis->setAutoSubTicks(false);
+        ui->workplot->yAxis2->setAutoSubTicks(false);
+        ui->workplot->xAxis->setSubTickCount(0);
+        ui->workplot->yAxis->setSubTickCount(0);
+        ui->workplot->yAxis2->setSubTickCount(0);
+
+        // create graph
+        ui->workplot->addGraph(ui->workplot->xAxis, ui->workplot->yAxis);
+        // set the pens
+        ui->workplot->graph(0)->setPen(QPen(QColor(255, 165, 18)));
+        ui->workplot->graph(0)->setLineStyle(QCPGraph::lsNone);
+        ui->workplot->graph(0)->setScatterStyle(QCPScatterStyle(QCPScatterStyle::ssDisc, QColor(255, 165, 18), 1));
+
+        // create graph
+        ui->workplot->addGraph(ui->workplot->xAxis, ui->workplot->yAxis2);
+        // set the pens
+        ui->workplot->graph(1)->setPen(QPen(QColor(145, 137, 255)));
+        ui->workplot->graph(1)->setLineStyle(QCPGraph::lsNone);
+        ui->workplot->graph(1)->setScatterStyle(QCPScatterStyle(QCPScatterStyle::ssDisc, QColor(145, 137, 255), 1));
+
     }
     else
     {
-        ui->diffplot->setVisible(false);
+        ui->workplot->setVisible(false);
     }
 }
 
@@ -309,10 +330,9 @@ void OverviewPage::updatePlot(int count)
     // Double Check to make sure we don't try to update the plot when it is disabled
     if (!GetBoolArg("-chart", true)) { return; }
 
-    // if(fDebug) { printf("Plot: Getting Ready: pidnexBest: %p\n", pindexBest); }
-
-    int numLookBack = 2000;
+    int numLookBack = 2650;
     double diffMax = 0;
+    double hashMax = 0;
     CBlockIndex* pindex = pindexBest;
     int height = nBestHeight;
     int xStart = std::max<int>(height-numLookBack, 0) + 1;
@@ -325,44 +345,32 @@ void OverviewPage::updatePlot(int count)
     // This should be a noop if the size is already 2000
     vX.resize(numLookBack);
     vY.resize(numLookBack);
+    vX2.resize(numLookBack);
+    vY2.resize(numLookBack);
 
-    /*
-    if(fDebug) {
-        if(height != pindex->nHeight) {
-            printf("Plot: Warning: nBestHeight and pindexBest->nHeight don't match: %d:%d:\n", height, pindex->nHeight);
-        }
-    }
-
-    if(fDebug) { printf("Plot: Reading blockchain\n"); }
-    */
     CBlockIndex* itr = pindex;
     while(i >= 0 && itr != NULL)
     {
-        // if(fDebug) { printf("Plot: Processing block: %d - pprev: %p\n", itr->nHeight, itr->pprev); }
         vX[i] = itr->nHeight;
         vY[i] = GetDifficulty(itr);
+        vY2[i] = (double)GetNetworkHashPS(120, itr->nHeight)/1000;
         diffMax = std::max<double>(diffMax, vY[i]);
+        hashMax = std::max<double>(hashMax, vY2[i]);
 
         itr = itr->pprev;
         i--;
         x--;
     }
 
-    // if(fDebug) { printf("Plot: Drawing plot\n"); }
-
-    ui->diffplot->graph(0)->setData(vX, vY);
+    ui->workplot->graph(0)->setData(vX, vY);
+    ui->workplot->graph(1)->setData(vX, vY2);
 
     // set axes ranges, so we see all data:
-    ui->diffplot->xAxis->setRange((double)xStart, (double)xEnd);
-    ui->diffplot->yAxis->setRange(0, diffMax+(diffMax/10));
+    ui->workplot->xAxis->setRange((double)xStart, (double)xEnd);
+    ui->workplot->yAxis->setRange(0, diffMax+(diffMax/10));
+    ui->workplot->yAxis2->setRange(0, hashMax+(hashMax/10));
 
-    ui->diffplot->xAxis->setAutoSubTicks(false);
-    ui->diffplot->yAxis->setAutoSubTicks(false);
-    ui->diffplot->xAxis->setSubTickCount(0);
-    ui->diffplot->yAxis->setSubTickCount(0);
+    ui->workplot->replot();
 
-    ui->diffplot->replot();
-
-    // if(fDebug) { printf("Plot: Done!\n"); }
- }
+}
  

@@ -180,6 +180,7 @@ void InscriptionPage::setModel(InscriptionTableModel *model)
     ui->tableView->horizontalHeader()->setSectionResizeMode(InscriptionTableModel::Inscription, QHeaderView::Stretch);
     ui->tableView->horizontalHeader()->setSectionResizeMode(InscriptionTableModel::Date, QHeaderView::ResizeToContents);
     #endif
+    ui->tableView->resizeColumnsToContents();
     connect(ui->tableView->selectionModel(), SIGNAL(selectionChanged(QItemSelection,QItemSelection)), this, SLOT(selectionChanged()));
     connect(ui->tableView, SIGNAL(doubleClicked(QModelIndex)), this, SIGNAL(doubleClicked(QModelIndex)));
     connect(ui->searchButton, SIGNAL(clicked()), this, SLOT(searchButtonClicked()));

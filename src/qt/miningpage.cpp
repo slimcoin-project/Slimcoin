@@ -58,7 +58,7 @@ MiningPage::MiningPage(QWidget *parent) :
     ui->diffplot_difficulty->setBackground(QBrush(QColor(255,255,255,255)));//QWidget::palette().color(this->backgroundRole())));
 
     // give the axes some labels:
-    ui->diffplot_difficulty->xAxis->setLabel(tr("Blocks"));
+    ui->diffplot_difficulty->xAxis->setLabel(tr("Block height"));
     ui->diffplot_difficulty->yAxis->setLabel(tr("Difficulty"));
 
     // set the pens
@@ -74,7 +74,14 @@ MiningPage::MiningPage(QWidget *parent) :
     // set axes label fonts:
     QFont label = font();
     ui->diffplot_difficulty->xAxis->setLabelFont(label);
+    ui->diffplot_difficulty->xAxis->setTickLabelRotation(15);
     ui->diffplot_difficulty->yAxis->setLabelFont(label);
+    ui->diffplot_difficulty->xAxis->setAutoSubTicks(false);
+    ui->diffplot_difficulty->yAxis->setAutoSubTicks(false);
+    ui->diffplot_difficulty->xAxis->setSubTickCount(4);
+    ui->diffplot_difficulty->xAxis->setNumberFormat("f");
+    ui->diffplot_difficulty->xAxis->setNumberPrecision(0);
+    ui->diffplot_difficulty->yAxis->setSubTickCount(0);
 
 
     // setup Plot
@@ -85,7 +92,7 @@ MiningPage::MiningPage(QWidget *parent) :
     ui->diffplot_hashrate->setBackground(QBrush(QColor(255,255,255,255)));//QWidget::palette().color(this->backgroundRole())));
 
     // give the axes some labels:
-    ui->diffplot_hashrate->xAxis->setLabel(tr("Blocks"));
+    ui->diffplot_hashrate->xAxis->setLabel(tr("Block height"));
     ui->diffplot_hashrate->yAxis->setLabel(tr("Hashrate MH/s"));
 
     // set the pens
@@ -102,6 +109,13 @@ MiningPage::MiningPage(QWidget *parent) :
     QFont label2 = font();
     ui->diffplot_hashrate->xAxis->setLabelFont(label2);
     ui->diffplot_hashrate->yAxis->setLabelFont(label2);
+    ui->diffplot_hashrate->xAxis->setTickLabelRotation(15);
+    ui->diffplot_hashrate->xAxis->setAutoSubTicks(false);
+    ui->diffplot_hashrate->yAxis->setAutoSubTicks(false);
+    ui->diffplot_hashrate->xAxis->setSubTickCount(4);
+    ui->diffplot_hashrate->xAxis->setNumberFormat("f");
+    ui->diffplot_hashrate->xAxis->setNumberPrecision(0);
+    ui->diffplot_hashrate->yAxis->setSubTickCount(0);
 
     updateUI();
     startTimer(1500);
@@ -183,7 +197,7 @@ void MiningPage::updatePlot()
     if(!GetBoolArg("-chart", true)) { return; }
     if (GetTime() - lastUpdate < 60) { return; } // This is just so it doesn't redraw rapidly during syncing
 
-    int numLookBack = 4320;
+    int numLookBack = 2650;
     double diffMax = 0;
     CBlockIndex* pindex = pindexBest;
     int height = nBestHeight;
@@ -216,11 +230,6 @@ void MiningPage::updatePlot()
     // set axes ranges, so we see all data:
     ui->diffplot_difficulty->xAxis->setRange((double)xStart, (double)xEnd);
     ui->diffplot_difficulty->yAxis->setRange(0, diffMax+(diffMax/10));
-
-    ui->diffplot_difficulty->xAxis->setAutoSubTicks(false);
-    ui->diffplot_difficulty->yAxis->setAutoSubTicks(false);
-    ui->diffplot_difficulty->xAxis->setSubTickCount(0);
-    ui->diffplot_difficulty->yAxis->setSubTickCount(0);
 
     ui->diffplot_difficulty->replot();
 
@@ -255,11 +264,6 @@ void MiningPage::updatePlot()
     // set axes ranges, so we see all data:
     ui->diffplot_hashrate->xAxis->setRange((double)xStart, (double)xEnd);
     ui->diffplot_hashrate->yAxis->setRange(0, diffMax+(diffMax/10));
-
-    ui->diffplot_hashrate->xAxis->setAutoSubTicks(false);
-    ui->diffplot_hashrate->yAxis->setAutoSubTicks(false);
-    ui->diffplot_hashrate->xAxis->setSubTickCount(0);
-    ui->diffplot_hashrate->yAxis->setSubTickCount(0);
 
     ui->diffplot_hashrate->replot();
 
