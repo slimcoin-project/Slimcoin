@@ -71,12 +71,18 @@ enum RPCErrorCode
 };
 
 extern json_spirit::Value ValueFromAmount(int64 amount);
+/* in rpcdump.cpp */
 extern json_spirit::Value checkwallet(const json_spirit::Array& params, bool fHelp);
 extern json_spirit::Value repairwallet(const json_spirit::Array& params, bool fHelp);
 extern json_spirit::Value zapwallettxes(const json_spirit::Array& params, bool fHelp);
 extern json_spirit::Value setgenerate(const json_spirit::Array& params, bool fHelp);
 extern json_spirit::Value gethashespersec(const json_spirit::Array& params, bool fHelp);
 // extern json_spirit::Value addnode(const json_spirit::Array& params, bool fHelp);
+/* in rpccrypto.cpp */
+extern json_spirit::Value encryptmessage(const json_spirit::Array &params, bool fHelp);
+extern json_spirit::Value decryptmessage(const json_spirit::Array &params, bool fHelp);
+extern json_spirit::Value encryptdata(const json_spirit::Array &params, bool fHelp);
+extern json_spirit::Value decryptdata(const json_spirit::Array &params, bool fHelp);
 
 void ThreadRPCServer(void* parg);
 int CommandLineRPC(int argc, char *argv[]);
@@ -146,5 +152,6 @@ extern int64 GetBurnTxTotal();
 json_spirit::Array getBurnCoinBalances(long long &netBurnCoins, long long &nEffBurnCoins, 
                                        long long &immatureCoins);
 double GetNetworkHashPS(int lookup, int height);
+void EnsureWalletIsUnlocked();
 
 #endif

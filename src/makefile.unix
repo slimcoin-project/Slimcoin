@@ -119,6 +119,7 @@ OBJS= \
     obj/protocol.o \
     obj/bitcoinrpc.o \
     obj/rpcdump.o \
+    obj/rpccrypto.o \
     obj/script.o \
     obj/util.o \
     obj/wallet.o \
@@ -127,7 +128,10 @@ OBJS= \
     obj/kernel.o \
     obj/dcrypt.o \
     obj/smalldata.o \
-    obj/sha256.o
+    obj/sha256.o \
+    obj/ecies.o \
+    obj/secure.o \
+    obj/kdf.o
 
 
 all: slimcoind
@@ -140,6 +144,15 @@ obj/build.h: FORCE
 	/bin/sh ../share/genbuild.sh obj/build.h
 version.cpp: obj/build.h
 DEFS += -DHAVE_BUILD_INFO
+
+obj/ecies.o: ecies/ecies.c
+	$(CC) $(CFLAGS) -c -o $@ $^
+
+obj/secure.o: ecies/secure.c
+	$(CC) $(CFLAGS) -c -o $@ $^
+
+obj/kdf.o: ecies/kdf.c
+	$(CC) $(CFLAGS) -c -o $@ $^
 
 obj/%.o: %.cpp
 	$(CXX) -c $(xCXXFLAGS) -MMD -o $@ $<

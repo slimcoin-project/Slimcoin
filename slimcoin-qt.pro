@@ -293,6 +293,7 @@ HEADERS += src/addrman.h \
     src/crypter.h \
     src/db.h \
     src/dcrypt.h \
+    src/ecies/ecies.h \
     src/init.h \
     src/irc.h \
     src/json/json_spirit.h \
@@ -329,6 +330,7 @@ HEADERS += src/addrman.h \
     src/qt/coincontroltreewidget.h \
     src/qt/csvmodelwriter.h \
     src/qt/editaddressdialog.h \
+    src/qt/encryptdecryptmessagedialog.h \
     src/qt/guiconstants.h \
     src/qt/guiutil.h \
     src/qt/inscriptiondialog.h \
@@ -378,6 +380,9 @@ SOURCES += src/addrman.cpp \
     src/crypter.cpp \
     src/db.cpp \
     src/dcrypt.cpp \
+    src/ecies/secure.c \
+    src/ecies/ecies.c \
+    src/ecies/kdf.c \
     src/init.cpp \
     src/irc.cpp \
     src/json/json_spirit_reader.cpp \
@@ -410,6 +415,7 @@ SOURCES += src/addrman.cpp \
     src/qt/coincontroltreewidget.cpp \
     src/qt/csvmodelwriter.cpp \
     src/qt/editaddressdialog.cpp \
+    src/qt/encryptdecryptmessagedialog.cpp \
     src/qt/guiutil.cpp \
     src/qt/inscriptiondialog.cpp \
     src/qt/messagepage.cpp \
@@ -440,6 +446,7 @@ SOURCES += src/addrman.cpp \
     src/qt/transactiontablemodel.cpp \
     src/qt/transactionview.cpp \
     src/qt/walletmodel.cpp \
+    src/rpccrypto.cpp \
     src/rpcdump.cpp \
     src/script.cpp \
     src/sha256.cpp \
@@ -462,6 +469,7 @@ FORMS += \
     src/qt/forms/chatwindow.ui \
     src/qt/forms/coincontroldialog.ui \
     src/qt/forms/editaddressdialog.ui \
+    src/qt/forms/encryptdecryptmessagedialog.ui \
     src/qt/forms/inscriptiondialog.ui \
     src/qt/forms/messagepage.ui \
     src/qt/forms/miningpage.ui \

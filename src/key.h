@@ -102,6 +102,8 @@ public:
 
     bool RecoverCompact(const uint256 &hash, const std::vector<unsigned char>& vchSig);
     bool IsFullyValid() const;
+
+    void EncryptData(const std::vector<unsigned char> &plaindata, std::vector<unsigned char> &encdata);
 };
 
 
@@ -163,6 +165,10 @@ public:
     bool VerifyCompact(uint256 hash, const std::vector<unsigned char>& vchSig);
 
     bool IsValid();
+
+    void EncryptData(const std::vector<unsigned char> &plaindata, std::vector<unsigned char> &encdata);
+
+    void DecryptData(const std::vector<unsigned char> &encdata, std::vector<unsigned char> &plaindata);
 };
 
 #endif
