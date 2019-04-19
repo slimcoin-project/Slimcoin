@@ -10,6 +10,7 @@
 #include "addressbookpage.h"
 #include "sendcoinsdialog.h"
 #include "signverifymessagedialog.h"
+#include "encryptdecryptmessagedialog.h"
 #include "burncoinsdialog.h"
 #include "messagepage.h"
 #include "multisigdialog.h"
@@ -145,6 +146,8 @@ BitcoinGUI::BitcoinGUI(QWidget *parent):
     multisigPage = new MultisigDialog(this);
 
     messagePage = new SignVerifyMessageDialog(this);
+
+    dataPage = new EncryptDecryptMessageDialog(this);
 
     chatPage = new ChatWindow(this);
 
@@ -293,7 +296,7 @@ void BitcoinGUI::createActions()
     connect(miningAction, SIGNAL(triggered()), this, SLOT(gotoMiningPage()));
 
     // Dialog items
-    blockAction = new QAction(QIcon(":/icons/bex"), tr("&Explorer"), this);
+    blockAction = new QAction(QIcon(":/icons/bex"), tr("Block/Tx &Explorer"), this);
     blockAction->setStatusTip(tr("Explore the blockchain and transactions"));
     blockAction->setToolTip(blockAction->statusTip());
 
@@ -301,24 +304,28 @@ void BitcoinGUI::createActions()
     burnCoinsAction->setStatusTip(tr("Burn coins from a Slimcoin address"));
     burnCoinsAction->setToolTip(burnCoinsAction->statusTip());
  
-    inscribeAction = new QAction(QIcon(":/icons/inscribe"), tr("&Inscribe"), this);
+    inscribeAction = new QAction(QIcon(":/icons/inscribe"), tr("&Inscribe block"), this);
     inscribeAction->setStatusTip(tr("Inscribe a record"));
     inscribeAction->setToolTip(inscribeAction->statusTip());
 
-    messageAction = new QAction(QIcon(":/icons/edit"), tr("&Messages"), this);
+    messageAction = new QAction(QIcon(":/icons/edit"), tr("&Sign/Verify"), this);
     messageAction->setStatusTip(tr("Sign/verify messages, prove you control an address"));
     messageAction->setToolTip(messageAction->statusTip());
 
-    multisigAction = new QAction(QIcon(":/icons/send"), tr("Multisig"), this);
-    multisigAction->setStatusTip(tr("Sign/verify messages, prove you control an address"));
+    dataAction = new QAction(QIcon(":/icons/key"), tr("&Encrypt/Decrypt"), this);
+    dataAction->setStatusTip(tr("Encrypt/decrypt data with your Slimcoin addresses"));
+    dataAction->setToolTip(dataAction->statusTip());
+
+    multisigAction = new QAction(QIcon(":/icons/send"), tr("&Multisig tools"), this);
+    multisigAction->setStatusTip(tr("Multi-signature addresses and transactions."));
     multisigAction->setToolTip(multisigAction->statusTip());
 
-    inscriptionsPageAction = new QAction(QIcon(":/icons/inscriptions"), tr("&Inscriptions"), this);
-    inscriptionsPageAction->setToolTip(tr("View inscriptions"));
+    inscriptionsPageAction = new QAction(QIcon(":/icons/inscriptions"), tr("&List inscriptions"), this);
+    inscriptionsPageAction->setToolTip(tr("View your inscriptions"));
     inscriptionsPageAction->setToolTip(inscriptionsPageAction->statusTip());
 
-    chatPageAction = new QAction(QIcon(":/icons/chat"), tr("&Social"), this);
-    chatPageAction->setToolTip(tr("View chat"));
+    chatPageAction = new QAction(QIcon(":/icons/chat"), tr("&Chat/Social"), this);
+    chatPageAction->setToolTip(tr("IRC Chat tab"));
     chatPageAction->setToolTip(chatPageAction->statusTip());
 
     checkWalletAction = new QAction(QIcon(":/icons/inspect"), tr("&Check Wallet..."), this);
@@ -334,6 +341,8 @@ void BitcoinGUI::createActions()
     connect(blockAction, SIGNAL(triggered()), this, SLOT(gotoBlockBrowser()));
     connect(messageAction, SIGNAL(triggered()), this, SLOT(showNormalIfMinimized()));
     connect(messageAction, SIGNAL(triggered()), this, SLOT(gotoMessagePage()));
+    connect(dataAction, SIGNAL(triggered()), this, SLOT(showNormalIfMinimized()));
+    connect(dataAction, SIGNAL(triggered()), this, SLOT(gotoDataPage()));
     connect(multisigAction, SIGNAL(triggered()), this, SLOT(showNormalIfMinimized()));
     connect(multisigAction, SIGNAL(triggered()), this, SLOT(gotoMultisigPage()));
     connect(inscriptionsPageAction, SIGNAL(triggered()), this, SLOT(showNormalIfMinimized()));
@@ -421,6 +430,7 @@ void BitcoinGUI::createMenuBar()
     tools->addAction(burnCoinsAction);
     tools->addAction(inscribeAction);
     tools->addAction(messageAction);
+    tools->addAction(dataAction);
     tools->addAction(multisigAction);
     tools->addAction(inscriptionsPageAction);
     tools->addAction(chatPageAction);
@@ -521,6 +531,7 @@ void BitcoinGUI::setWalletModel(WalletModel *walletModel)
         burnCoinsPage->setModel(walletModel);
         accountReportPage->setModel(walletModel);
         messagePage->setModel(walletModel);
+        dataPage->setModel(walletModel);
         inscriptionPage->setWalletModel(walletModel);
         inscriptionsPage->setModel(walletModel->getInscriptionTableModel());
         multisigPage->setModel(walletModel);
@@ -560,6 +571,7 @@ void BitcoinGUI::createTrayIcon()
     trayIconMenu->addAction(toggleHideAction);
     trayIconMenu->addSeparator();
     trayIconMenu->addAction(messageAction);
+    trayIconMenu->addAction(dataAction);
 //#ifndef FIRST_CLASS_MESSAGING
     trayIconMenu->addSeparator();
 //#endif
@@ -961,6 +973,18 @@ void BitcoinGUI::gotoMessagePage(QString addr)
 {
     gotoMessagePage();
     messagePage->setAddress_SM(addr);
+}
+
+void BitcoinGUI::gotoDataPage()
+{
+    dataPage->show();
+    dataPage->setFocus();
+}
+
+void BitcoinGUI::gotoDataPage(QString addr)
+{
+    gotoDataPage();
+    dataPage->setAddress_ED(addr);
 }
 
 void BitcoinGUI::gotoMultisigPage()
