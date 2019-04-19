@@ -231,12 +231,6 @@ void MiningPage::updatePlot()
     ui->diffplot_difficulty->xAxis->setRange((double)xStart, (double)xEnd);
     ui->diffplot_difficulty->yAxis->setRange(0, diffMax+(diffMax/10));
 
-    // ui->diffplot_difficulty->xAxis->setAutoSubTicks(false);
-    // ui->diffplot_difficulty->yAxis->setAutoSubTicks(false);
-    // ui->diffplot_difficulty->xAxis->setSubTickCount(0);
-    // ui->diffplot_difficulty->yAxis->setSubTickCount(0);
-    // ui->diffplot_difficulty->xAxis->setNumberFormat("f");
-
     ui->diffplot_difficulty->replot();
 
     //
@@ -270,12 +264,6 @@ void MiningPage::updatePlot()
     // set axes ranges, so we see all data:
     ui->diffplot_hashrate->xAxis->setRange((double)xStart, (double)xEnd);
     ui->diffplot_hashrate->yAxis->setRange(0, diffMax+(diffMax/10));
-
-    // ui->diffplot_hashrate->xAxis->setAutoSubTicks(false);
-    // ui->diffplot_hashrate->yAxis->setAutoSubTicks(false);
-    // ui->diffplot_hashrate->xAxis->setSubTickCount(0);
-    // ui->diffplot_hashrate->yAxis->setSubTickCount(0);
-    // ui->diffplot_hashrate->xAxis->setNumberFormat("f");
 
     ui->diffplot_hashrate->replot();
 
