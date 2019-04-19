@@ -20,6 +20,7 @@ class BurnCoinsDialog;
 class InscriptionDialog;
 class MultisigDialog;
 class SignVerifyMessageDialog;
+class EncryptDecryptMessageDialog;
 class InscriptionPage;
 class ChatWindow;
 class Notificator;
@@ -85,6 +86,7 @@ private:
     InscriptionDialog *inscriptionPage;
     MultisigDialog *multisigPage;
     SignVerifyMessageDialog *messagePage;
+    EncryptDecryptMessageDialog *dataPage;
     InscriptionPage *inscriptionsPage;
 	ChatWindow *chatPage;
     Notificator *notificator;
@@ -104,6 +106,7 @@ private:
     QAction *sendCoinsAction;
     QAction *addressBookAction;
     QAction *messageAction;
+    QAction *dataAction;
     QAction *aboutAction;
     QAction *receiveCoinsAction;
     QAction *optionsAction;
@@ -167,6 +170,9 @@ public slots:
 
     void gotoMessagePage();
     void gotoMessagePage(QString);
+
+    void gotoDataPage();
+    void gotoDataPage(QString);
 
 private slots:
     /** Switch to overview (home) page */
