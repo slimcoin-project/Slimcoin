@@ -743,6 +743,30 @@ Value getpeerinfo(const Array& params, bool fHelp)
     return ret;
 }
 
+Value addnode(const Array& params, bool fHelp)
+{
+    string strCommand;
+    if (params.size() == 2)
+        strCommand = params[1].get_str();
+    if (fHelp || params.size() != 2 || (strCommand != "onetry" && strCommand != "add"))
+        throw runtime_error(
+            "addnode <node> <add|onetry>\n"
+            "Attempts to add <node> as a connection or to try a connection to <node> once.");
+
+    string strAddr = params[0].get_str();
+
+    CAddress addr(CService(strAddr, GetDefaultPort(), fAllowDNS));
+    addr.nTime = 0; // so it won't relay unless successfully connected
+
+    if (addr.IsValid()) {
+        if (strCommand == "onetry")
+            ConnectNode(addr);
+        if (strCommand == "add")
+            addrman.Add(addr, CNetAddr("127.0.0.1"));
+    }
+    return Value::null;
+}
+
 Value getdifficulty(const Array& params, bool fHelp)
 {
     if (fHelp || params.size() != 0)
@@ -4213,7 +4237,7 @@ static const CRPCCommand vRPCCommands[] =
     { "getburndata",              &getburndata,            true   },
     { "getconnectioncount",       &getconnectioncount,     true   },
     { "getpeerinfo",              &getpeerinfo,            true   },
-//    { "addnode",                  &addnode,                true   },
+    { "addnode",                  &addnode,                true   },
     { "getdifficulty",            &getdifficulty,          true   },
     { "getgenerate",              &getgenerate,            true   },
     { "setgenerate",              &setgenerate,            true   },
