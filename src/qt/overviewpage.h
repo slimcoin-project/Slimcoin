@@ -52,6 +52,8 @@ private:
     qint64 currentDecayedBurnCoins;
     QVector<double> vX;
     QVector<double> vY;
+    QVector<double> vX2;
+    QVector<double> vY2;
 
 
     TxViewDelegate *txdelegate;
