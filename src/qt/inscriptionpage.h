@@ -1,8 +1,7 @@
-#ifndef InscriptionPage_H
-#define InscriptionPage_H
+#ifndef INSCRIPTIONPAGE_H
+#define INSCRIPTIONPAGE_H
 
 #include <QDialog>
-// #include <QtSql>
 #include <QThread>
 
 namespace Ui {
@@ -34,7 +33,6 @@ public:
     void setClientModel(ClientModel *model);
 
     const QString &getReturnValue() const { return returnValue; }
-    void startExecutor();
 
 public Q_SLOTS:
     void refreshInscriptionTable();
@@ -51,7 +49,6 @@ private:
 Q_SIGNALS:
     void doubleClicked(const QModelIndex&);
     void updateRequest();
-    void stopExecutor();
 
 private slots:
     void searchButtonClicked();
@@ -62,4 +59,4 @@ private:
 
 };
 
-#endif // InscriptionPage_H
+#endif // INSCRIPTIONPAGE_H

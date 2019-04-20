@@ -10,18 +10,11 @@
 #include <QColor>
 #include <QDateTime>
 
-/*
-#include "json/json_spirit_reader_template.h"
-#include "json/json_spirit_writer_template.h"
-#include "json/json_spirit_utils.h"
-*/
-
 #include <boost/algorithm/string.hpp>
 
 #include <stdlib.h>
 
 using namespace boost;
-// using namespace json_spirit;
 
 struct InscriptionTableEntry
 {

@@ -496,7 +496,6 @@ void BitcoinGUI::setClientModel(ClientModel *clientModel)
 
         setNumBlocks(clientModel->getNumBlocks(), clientModel->getNumBlocksOfPeers());
         connect(clientModel, SIGNAL(numBlocksChanged(int, int)), this, SLOT(setNumBlocks(int, int)));
-        // connect(clientModel, SIGNAL(numBlocksChanged(int, int)), this, SLOT(updateInscription(int, int)));
 
         setMining(false, 0);
         connect(clientModel, SIGNAL(miningChanged(bool,int)), this, SLOT(setMining(bool,int)));
