@@ -760,7 +760,7 @@ Value addnode(const Array& params, bool fHelp)
 
     if (addr.IsValid()) {
         ConnectNode(addr);
-        return Value::true;
+        return "done";
     }
     return Value::null;
 }
