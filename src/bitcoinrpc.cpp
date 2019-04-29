@@ -748,10 +748,10 @@ Value addnode(const Array& params, bool fHelp)
     string strCommand;
     if (params.size() == 2)
         strCommand = params[1].get_str();
-    if (fHelp || params.size() != 2 || (strCommand != "onetry" && strCommand != "add"))
+    if (fHelp || params.size() > 1)
         throw runtime_error(
-            "addnode <node> <add|onetry>\n"
-            "Attempts to add <node> as a connection or to try a connection to <node> once.");
+            "addnode <node>\n"
+            "Attempts to try a connection to <node> once.");
 
     string strAddr = params[0].get_str();
 
@@ -759,10 +759,8 @@ Value addnode(const Array& params, bool fHelp)
     addr.nTime = 0; // so it won't relay unless successfully connected
 
     if (addr.IsValid()) {
-        if (strCommand == "onetry")
-            ConnectNode(addr);
-        if (strCommand == "add")
-            addrman.Add(addr, CNetAddr("127.0.0.1"));
+        ConnectNode(addr);
+        return Value::true;
     }
     return Value::null;
 }
