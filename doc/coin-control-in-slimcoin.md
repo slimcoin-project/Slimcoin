@@ -16,23 +16,20 @@ The first version of coin control was called "Patching The Bitcoin Client To Mak
 
 ## Changes to the GUI
 
-Screenshots
-- ![Coincontrol preferences](https://github.com/gjhiggins/Slimcoin/raw/master/doc/coincontrol-01.png)
-- ![Send coins dialog enable coin control panel](https://github.com/gjhiggins/Slimcoin/raw/master/doc/coincontrol-02.png)
-- ![Coin control tree mode](https://github.com/gjhiggins/Slimcoin/raw/master/doc/coincontrol-03.png)
-- ![Coin control list mode](https://github.com/gjhiggins/Slimcoin/raw/master/doc/coincontrol-04.png)
-- ![Send coins dialog, fully populated](https://github.com/gjhiggins/Slimcoin/raw/master/doc/coincontrol-05.png)
-
 ## Main
+
+![Coincontrol preferences](https://github.com/gjhiggins/Slimcoin/raw/master/doc/coincontrol-01.png)
 
 Settings checkbox "Display coin control features (experts only!)" (default=no)
 
+
 ## Tab Send coins
 
-Button Inputs
-click on this button opens actual coin control dialog. If no Inputs are selected "automatically selected" is shown.
-Change Checkbox
-checked -> provide custom change address
+![Send coins dialog enable coin control panel](https://github.com/gjhiggins/Slimcoin/raw/master/doc/coincontrol-02.png)
+
+Button Inputs: click on this button to open the coin control dialog. If no Inputs are selected "automatically selected" is shown.
+
+Change Checkbox checked -> provide custom change address
 
 ## Coin Control Dialog
 
@@ -40,7 +37,12 @@ Shows a list of all unspent outputs with two view modes:
 
 -  tree mode: outputs including change are grouped by wallet address
      tree can be opened showing the actual outputs for this wallet address including change if change, the change address is shown in column "address", otherwise the column "address" is empty because it's a direct output of the wallet address having the address already shown in the parent node (same with label)
+
+![Coin control tree mode](https://github.com/gjhiggins/Slimcoin/raw/master/doc/coincontrol-03.png)
+
 - list mode: simple list of all unspent outputs
+
+![Coin control list mode](https://github.com/gjhiggins/Slimcoin/raw/master/doc/coincontrol-04.png)
 
 Select outputs by checkbox - only the checked outputs are used when sending a transaction. If none are selected then coin control is inactive (just as normal). Check/uncheck all by clicking on "(Un)select all"
 
@@ -56,6 +58,8 @@ Labels at the top
 - Priority: priority = coinage / transactionsize. coinage = value * confirmations.  miners order transactions by priority when selecting which go into a block
 - Low Output: "yes" if any recipient receives an amount < 0.01BTC
 - Change: shows the change you get back
+
+![Send coins dialog, fully populated](https://github.com/gjhiggins/Slimcoin/raw/master/doc/coincontrol-05.png)
 
 Right click the labels for copy amount to clipboard
    
