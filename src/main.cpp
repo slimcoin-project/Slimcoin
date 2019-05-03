@@ -2975,17 +2975,7 @@ FILE* OpenBlockFile(unsigned int nFile, unsigned int nBlockPos, const char* pszM
     if (nFile == (unsigned int) -1)
         return NULL;
     filesystem::path fpath = GetDataDir();
-    filesystem::path pathBootstrap = GetDataDir() / "bootstrap.dat";
-    filesystem::path pathBootstrapOld = GetDataDir() / "bootstrap.dat.old";
-    if (filesystem::exists(pathBootstrap)) {
-        // fpath = GetDataDir() / "bootstrap.dat";
-        fpath = pathBootstrap;
-    }
-    else
-    {
-        // FILE *file = fopen().string().c_str(), pszMode);
-        fpath = GetDataDir() / strprintf("blk%04d.dat", nFile);
-    }
+    fpath = GetDataDir() / strprintf("blk%04d.dat", nFile);
     FILE *file = fopen(fpath.string().c_str(), pszMode);
     if (!file)
         return NULL;
@@ -2996,9 +2986,6 @@ FILE* OpenBlockFile(unsigned int nFile, unsigned int nBlockPos, const char* pszM
             fclose(file);
             return NULL;
         }
-    }
-    if (filesystem::exists(pathBootstrap)) {
-        RenameOver(pathBootstrap, pathBootstrapOld);
     }
     return file;
 }
