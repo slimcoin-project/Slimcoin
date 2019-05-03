@@ -276,7 +276,7 @@ The cross-compilation product is saved in the `release` directory under the name
   - Proof-of-Work blocks: max 50 coins
 - Block rewards decrease in value as the difficulty increases
 - No hard supply limit, but comparatively low inflation rate. A "250 million coins maximum" is coded into the client, but probability is extremely low this amount will be reached in the next 100 years.
-- Proof of Stake minimum coin age: ~1 week
+- Proof of Stake minimum coin age: \~1 week
 
 pszTimestamp: "RT: 2 southeast Ukranian regions to hold referendum May 11 as 
 planned";
