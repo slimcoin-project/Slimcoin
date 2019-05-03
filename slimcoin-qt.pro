@@ -363,6 +363,7 @@ HEADERS += src/addrman.h \
     src/qt/transactionview.h \
     src/qt/walletmodel.h \
     src/script.h \
+    src/script_error.h \
     src/serialize.h \
     src/sha256.h \
     src/smalldata.h \
@@ -449,6 +450,7 @@ SOURCES += src/addrman.cpp \
     src/rpccrypto.cpp \
     src/rpcdump.cpp \
     src/script.cpp \
+    src/script_error.cpp \
     src/sha256.cpp \
     src/smalldata.cpp \
     src/util.cpp \

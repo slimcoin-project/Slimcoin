@@ -131,8 +131,8 @@ OBJS= \
     obj/sha256.o \
     obj/ecies.o \
     obj/secure.o \
-    obj/kdf.o
-
+    obj/kdf.o \
+    obj/script_error.o
 
 all: slimcoind
 

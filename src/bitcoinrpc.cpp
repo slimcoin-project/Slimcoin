@@ -3530,7 +3530,7 @@ Value linearizehashes(const Array& params, bool fHelp)
             CBlock block;
             CBlockIndex* pblockindex = FindBlockByHeight(nHeight);
             block.ReadFromDisk(pblockindex, true);
-            std::string blockhash = block.GetHash().ToString();
+            std::string blockhash = block.GetHash().ToString().c_str();
             fileout << blockhash.append("\n");
         }
     } catch(const boost::filesystem::filesystem_error &e) {
@@ -4008,7 +4008,7 @@ Value signrawtransaction(const Array& params, bool fHelp)
         {
             txin.scriptSig = CombineSignatures(prevPubKey, mergedTx, i, txin.scriptSig, txv.vin[i].scriptSig);
         }
-        if (!VerifyScript(txin.scriptSig, prevPubKey, mergedTx, i, true, SCRIPT_VERIFY_P2SH | SCRIPT_VERIFY_STRICTENC | SCRIPT_VERIFY_CHECKLOCKTIMEVERIFY, 0))
+        if (!VerifyScript(txin.scriptSig, prevPubKey, mergedTx, i, true, SCRIPT_VERIFY_P2SH | SCRIPT_VERIFY_STRICTENC | SCRIPT_VERIFY_CHECKLOCKTIMEVERIFY, 0, nullptr))
             fComplete = false;
     }
 
@@ -4975,6 +4975,7 @@ Array RPCConvertValues(const std::string &strMethod, const std::vector<std::stri
     FORMAT_PARAM("setgenerate", 0, bool);
     FORMAT_PARAM("setgenerate", 1, boost::int64_t);
     FORMAT_PARAM("makekeypair", 1, boost::int64_t);
+    FORMAT_PARAM("importprivkey", 2, bool);
     if (strMethod == "sendtoaddress"          && n > 1) ConvertTo<double>(params[1]);
     if (strMethod == "settxfee"               && n > 0) ConvertTo<double>(params[0]);
     if (strMethod == "getreceivedbyaddress"   && n > 1) ConvertTo<boost::int64_t>(params[1]);
@@ -5002,6 +5003,8 @@ Array RPCConvertValues(const std::string &strMethod, const std::vector<std::stri
     if (strMethod == "walletpassphrase"       && n > 1) ConvertTo<boost::int64_t>(params[1]);
     if (strMethod == "walletpassphrase"       && n > 2) ConvertTo<bool>(params[2]);
     if (strMethod == "getblocktemplate"       && n > 0) ConvertTo<Object>(params[0]);
+    if (strMethod == "dumpbootstrap"          && n > 1) ConvertTo<boost::int64_t>(params[1]);
+    if (strMethod == "dumpbootstrap"          && n > 2) ConvertTo<boost::int64_t>(params[2]);
     if (strMethod == "listsinceblock"         && n > 1) ConvertTo<boost::int64_t>(params[1]);
     if (strMethod == "sendalert"              && n > 2) ConvertTo<boost::int64_t>(params[2]);
     if (strMethod == "sendalert"              && n > 3) ConvertTo<boost::int64_t>(params[3]);
