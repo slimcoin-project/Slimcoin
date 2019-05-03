@@ -2,13 +2,15 @@
 
 ## What is coin control?
 
-When you send Slimcoins to someone else, the client makes a pseudo-random which address will used as the source of the coins. With coin control you can pecisely choose which address(es) will be the sending address(es) and which of the unspent outputs will be the sending inputs.
+When you send Slimcoins to someone else, the client makes a pseudo-random choice which address is to be used as the source of the coins. With coin control you can choose pecisely which address(es) will be the sending address(es) and which of the unspent outputs will be the sending inputs.
   
 ## What is an unspent output?
 
 Lets say your Slimcoin address is 111. Suppose someone sends 1 SLM to this address. Now address 111 has one unspent output. Now suppose someone else sends 2 SLM to this address. Address 111 now has two unspent outputs and a balance of 3 BTC in total. Let’s say you want to send someone 0.1 BTC.
 
-Ideally, one could say "Okay, simply subtract 0.1 BTC from the first unspent output and send it". But this is not possible because the bitcoin protocol (upon which SLimcoin is based) works differently. You always have to spent the whole output. This means in this case the Slimcoin client would take the first unspent output, send 0.1 BTC to the other person and 0.9 BTC back to yourself. For this, the client creates a new change address in the background and adds this address to your wallet. This “change address” would then have one unspent output of 0.9 BTC. This means every wallet has kinda “hidden” change addresses. For example if you now would lose your wallet but still know the private key of 111, you would be only able to get the 2 BTC back. The 0.9 BTC from the change address would be inaccessible because you would have to know the private key of the change address.
+Ideally, one could say "Okay, simply subtract 0.1 BTC from the first unspent output and send it". But this is not possible because the bitcoin protocol (upon which SLimcoin is based) works differently. You always have to spent the whole output. This means in this case the Slimcoin client would take the first unspent output, send 0.1 BTC to the other person and 0.9 BTC back to yourself. For this, the client creates a new change address in the background and adds this address to your wallet.
+
+This “change address” would then have one unspent output of 0.9 BTC. This means every wallet has “hidden” change addresses. For example, if you now lose your wallet but still know the private key of 111, you would be only able to get the 2 BTC back. The 0.9 BTC from the change address would be inaccessible because you would have to know the private key of the change address.
   
 ## Why coin control?
 

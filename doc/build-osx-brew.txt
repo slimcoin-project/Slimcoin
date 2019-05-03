@@ -1,86 +1,41 @@
-Copyright (c) 2012-2013 PPCoin Developers
-Copyright (c) 2009-2012 Bitcoin Developers
-Distributed under the MIT/X11 software license, see the accompanying file
-license.txt or http://www.opensource.org/licenses/mit-license.php. This
-product includes software developed by the OpenSSL Project for use in the
-OpenSSL Toolkit (http://www.openssl.org/). This product includes cryptographic
-software written by Eric Young (eay@cryptsoft.com) and UPnP software written by
-Thomas Bernard.
+## Build on OS X
 
+### Install Homebrew
 
-Mac OS X Mountain Lion build instructions
-How to build ppcoind and Slimcoin-Qt on 10.8
+The [recommended way of installing the Homebrew OS X package manager](http://brew.sh/) is via Terminal command:
 
+    ruby -e "$(curl -fsSL https://raw.githubusercontent.com/Homebrew/install/master/install)"
 
-Prerequisites
+#### About Homebrew
 
-Install Xcode from the App Store and launch it
+Homebrew is tractable. The standard script installs Homebrew to `/usr/local` so that sudo is not required for `brew install`. It is a careful script, it can be run even if other packages have already been installed to `/usr/local`. It informs the user exactly what it will do before it does it, enabling the user to confirm the details before permitting brew to execute the action.
 
-All of the commands should be executed in Terminal.app
+#### How do I uninstall Homebrew?
 
-1.  Install the Command Line Tools from the Xcode Preferences under Downloads
+To uninstall Homebrew, paste the command below in a terminal prompt.
+     
+     ruby -e "$(curl -fsSL https://raw.githubusercontent.com/Homebrew/install/master/uninstall)"
 
-2.  Install Homebrew from http://brew.sh
+By default, this command will uninstall homebrew and remove its footprint, i.e. will remove brew and restore `/usr/local` to its prior state.
 
-3.  Install dependencies from Homebrew
+### Install SLIMCoin dependencies
 
-brew doctor
-brew install boost berkeley-db4 openssl miniupnpc
-brew link berkeley-db4 --force
-brew link openssl --force
-sudo mkdir -p /opt/local/lib
-sudo ln -s /usr/local/lib /opt/local/lib/db48
+    brew install autoconf automake libtool miniupnpc openssl pkg-config
+    brew install boost protobuf libevent libqrencode
+    brew install berkeley-db4
+    brew install berkeley-db
+    brew install qt5 --with-dbus
+    brew link qt5 --force --overwrite
 
-4.  Clone the github tree to get the source code
+## Compile OSX app
 
-git clone https://github.com/slimcoin-project/Slimcoin.git slimcoin
+In a new Terminal window:
 
+    $ git clone https://github.com/slimcoin-project/slimcoin.git
+    $ cd slimcoin
+    $ /usr/local/opt/qt/bin/qmake RELEASE=1 USE_UPNP=1 USE_QRCODE=1 slimcoin-qt.pro
+    $ make
+    $ export QTDIR=/usr/local/opt/qt5
+    $ T=$(contrib/qt_translations.py $QTDIR/translations src/qt/locale)
+    $ python2.7 contrib/macdeploy/macdeployqtplus  -add-qt-tr $T -dmg -fancy contrib/macdeploy/fancy.plist SLIMCoin-Qt.app
 
-Building ppcoind
-
-1.  Run the makefile
-
-cd slimcoin/src/
-make -f makefile.osx RELEASE=true 64BIT=true CXX=g++
-
-
-Building Slimcoin-Qt.app
-
-You cannot use Qt 4.8.6 if you want to deploy to other systems
-http://qt-project.org/forums/viewthread/41925
-
-1.  Download and install Qt 4.8.5 from
-http://download.qt-project.org/archive/qt/4.8/4.8.5/qt-mac-opensource-4.8.5.dmg
-
-2.  Download and install Qt Creator from http://qt-project.org/downloads
-
-3.  Use Qt Creator to build the project
-
-Double-click slimcoin/slimcoin-qt.pro to open Qt-Creator
-Click the Configure Project button
-Click on the monitor icon on the left bar above Debug and change it to Release
-On the top menu, click Build and Build Project "slimcoin-qt"
-
-
-Deploying Slimcoin-Qt.app
-
-Deploying your app is needed to run it on non-development systems
-
-1.  Sym-link key libraries
-
-sudo ln -s /opt/local/lib /opt/local/lib/lib
-sudo ln -s /opt/local/lib/db48/libdb_cxx-4.8.dylib /opt/local/lib/libdb_cxx-4.8.dylib
-
-2.  Copy Slimcoin-Qt.app and run macdeployqt to bundle required libraries
-
-mkdir deploy
-cp -r build-bitcoin-qt-Desktop-Release/Slimcoin-Qt.app/ deploy/Slimcoin-Qt.app/
-sudo macdeployqt deploy/Slimcoin-Qt.app/
-
-3.  Fix a dependency path
-
-install_name_tool -change "/opt/local/lib/db48/libdb_cxx-4.8.dylib" "@executable_path/../Frameworks/libdb_cxx-4.8.dylib" deploy/Slimcoin-Qt.app/Contents/MacOS/Slimcoin-Qt
-
-4.  Compress Slimcoin-Qt.app into a zip
-
-Right-click on Slimcoin-Qt.app and click Compress
