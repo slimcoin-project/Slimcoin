@@ -14,7 +14,9 @@
 #include <boost/algorithm/string/replace.hpp>
 #include <boost/filesystem.hpp>
 #include <boost/filesystem/fstream.hpp>
+#if BOOST_VERSION > 105600
 #include <boost/move/unique_ptr.hpp>
+#endif
 #include <math.h>       /* pow */
 #include <cstdlib>      /* std::rand() */
 
@@ -4946,7 +4948,11 @@ CBlock *CreateNewBlock(CWallet* pwallet, bool fProofOfStake, const CWalletTx *bu
     CReserveKey *reservekey = resKey ? resKey : &tmpResKey;
 
     // Create new block
+#if BOOST_VERSION > 105600
     boost::movelib::unique_ptr<CBlock> pblock(new CBlock());
+#else
+    std::unique_ptr<CBlock> pblock(new CBlock());
+#endif
     if (!pblock.get())
         return NULL;
 
@@ -5388,7 +5394,11 @@ void SlimCoinMiner(CWallet *pwallet, bool fProofOfStake)
         //
         unsigned int nTransactionsUpdatedLast = nTransactionsUpdated;
         CBlockIndex* pindexPrev = pindexBest;
+#if BOOST_VERSION > 105600
         boost::movelib::unique_ptr<CBlock> pblock(CreateNewBlock(pwallet, fProofOfStake));
+#else
+    std::unique_ptr<CBlock> pblock(new CBlock());
+#endif
         if (!pblock.get())
             return;
 
@@ -5575,7 +5585,11 @@ void SlimCoinAfterBurner(CWallet *pwallet)
             //
             // Create new block
             //
+#if BOOST_VERSION > 105600
             boost::movelib::unique_ptr<CBlock> pblock(CreateNewBlock(pwallet, false, &smallestWTx));
+#else
+            std::unique_ptr<CBlock> pblock(new CBlock());
+#endif
             if (!pblock.get())
                 continue;
 

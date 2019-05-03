@@ -3,8 +3,9 @@
 
 #include <QWidget>
 #include <memory>
+#if BOOST_VERSION > 105600
 #include <boost/move/unique_ptr.hpp>
-
+#endif
 #include "walletmodel.h"
 
 namespace Ui {
@@ -30,7 +31,11 @@ private:
     Ui::MiningPage *ui;
     ClientModel *clientModel;
     WalletModel *model;
+#if BOOST_VERSION > 105600
     boost::movelib::unique_ptr<WalletModel::UnlockContext> unlockContext;
+#else
+    std::unique_ptr<WalletModel::UnlockContext> unlockContext;
+#endif
     bool hasMiningprivkey;
 
     QVector<double> vX;
