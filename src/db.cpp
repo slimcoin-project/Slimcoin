@@ -585,6 +585,7 @@ bool CTxDB::LoadBlockIndex()
             pindexNew->nHeight        = diskindex.nHeight;
             pindexNew->nMint          = diskindex.nMint;
             pindexNew->nMoneySupply   = diskindex.nMoneySupply;
+            pindexNew->burnt          = diskindex.burnt;
             pindexNew->nFlags         = diskindex.nFlags;
             pindexNew->nStakeModifier = diskindex.nStakeModifier;
             pindexNew->prevoutStake   = diskindex.prevoutStake;
@@ -604,7 +605,6 @@ bool CTxDB::LoadBlockIndex()
             pindexNew->burnCTxOut     = diskindex.burnCTxOut;
             pindexNew->nEffectiveBurnCoins = diskindex.nEffectiveBurnCoins;
             pindexNew->nBurnBits      = diskindex.nBurnBits;
-            pindexNew->burnt          = diskindex.burnt;
 
             // Watch for genesis block
             if (pindexGenesisBlock == NULL && blockHash == hashGenesisBlock)

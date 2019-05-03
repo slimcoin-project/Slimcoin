@@ -1476,6 +1476,7 @@ public:
         bnChainTrust = 0;
         nMint = 0;
         nMoneySupply = 0;
+        burnt = 0;
         nFlags = 0;
         nStakeModifier = 0;
         nStakeModifierChecksum = 0;
@@ -1497,7 +1498,6 @@ public:
         burnCTxOut     = -1;
         nEffectiveBurnCoins = 0;
         nBurnBits      = 0;
-        burnt = 0;
     }
 
     CBlockIndex(unsigned int nFileIn, unsigned int nBlockPosIn, CBlock& block)
@@ -1511,6 +1511,7 @@ public:
         bnChainTrust = 0;
         nMint = 0;
         nMoneySupply = 0;
+        burnt = 0;
         nFlags = 0;
         nStakeModifier = 0;
         nStakeModifierChecksum = 0;
@@ -1532,8 +1533,6 @@ public:
         nTime          = block.nTime;
         nBits          = block.nBits;
         nNonce         = block.nNonce;
-
-        burnt          = 0;
 
         //PoB
         fProofOfBurn   = block.fProofOfBurn;
@@ -1694,16 +1693,16 @@ public:
 
     std::string ToString() const
     {
-        return strprintf("CBlockIndex(nprev=%08x, pnext=%08x, nFile=%d, nBlockPos=%-6d nHeight=%d, nMint=%s, nMoneySupply=%s, nFlags=(%s)(%d)(%s), nStakeModifier=%016llx, nStakeModifierChecksum=%08x, hashProofOfStake=%s, prevoutStake=(%s), nStakeTime=%d merkle=%s, hashBlock=%s, nBurnBits=%08x nEffectiveBurnCoins=%llu (formatted %s) burnt %s)",
+        return strprintf("CBlockIndex(nprev=%08x, pnext=%08x, nFile=%d, nBlockPos=%-6d nHeight=%d, nMint=%s, nMoneySupply=%s,  burnt %s, nFlags=(%s)(%d)(%s), nStakeModifier=%016llx, nStakeModifierChecksum=%08x, hashProofOfStake=%s, prevoutStake=(%s), nStakeTime=%d merkle=%s, hashBlock=%s, nBurnBits=%08x nEffectiveBurnCoins=%llu (formatted %s))",
             pprev, pnext, nFile, nBlockPos, nHeight,
-            FormatMoney(nMint).c_str(), FormatMoney(nMoneySupply).c_str(),
+            FormatMoney(nMint).c_str(), FormatMoney(nMoneySupply).c_str(), FormatMoney(burnt).c_str(),
             GeneratedStakeModifier() ? "MOD" : "-", GetStakeEntropyBit(), IsProofOfStake()? "PoS" : "PoW",
             nStakeModifier, nStakeModifierChecksum, 
             hashProofOfStake.ToString().c_str(),
             prevoutStake.ToString().c_str(), nStakeTime,
             hashMerkleRoot.ToString().substr(0,10).c_str(),
             GetBlockHash().ToString().substr(0,20).c_str(),
-            nBurnBits, nEffectiveBurnCoins, FormatMoney(nEffectiveBurnCoins).c_str(), FormatMoney(burnt).c_str());
+            nBurnBits, nEffectiveBurnCoins, FormatMoney(nEffectiveBurnCoins).c_str());
     }
 
     void print() const
@@ -1749,6 +1748,7 @@ public:
         READWRITE(nHeight);
         READWRITE(nMint);
         READWRITE(nMoneySupply);
+        READWRITE(burnt);
         READWRITE(nFlags);
         READWRITE(nStakeModifier);
         if (IsProofOfStake())

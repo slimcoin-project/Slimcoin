@@ -1928,6 +1928,7 @@ bool CBlock::ConnectBlock(CTxDB& txdb, CBlockIndex* pindex)
     int64 nFees = 0;
     int64 nValueIn = 0;
     int64 nValueOut = 0;
+    int64 nBurned = 0;
     unsigned int nSigOps = 0;
     BOOST_FOREACH(CTransaction& tx, vtx)
     {
@@ -1964,6 +1965,12 @@ bool CBlock::ConnectBlock(CTxDB& txdb, CBlockIndex* pindex)
             if (!tx.IsCoinStake())
                 nFees += nTxValueIn - nTxValueOut;
 
+            // If BurnTx, add nValue to running total, persistence is via the index
+            if (tx.IsBurnTx()) {
+                CTxOut btxo = tx.GetBurnOutTx();
+                nBurned += btxo.nValue;
+            }
+
             if (!tx.ConnectInputs(txdb, mapInputs, mapQueuedChanges, posThisTx, pindex, true, false, fStrictPayToScriptHash))
                 return false;
         }
@@ -1974,6 +1981,7 @@ bool CBlock::ConnectBlock(CTxDB& txdb, CBlockIndex* pindex)
     // ppcoin: track money supply and mint amount info
     pindex->nMint = nValueOut - nValueIn + nFees;
     pindex->nMoneySupply = (pindex->pprev? pindex->pprev->nMoneySupply : 0) + nValueOut - nValueIn;
+    pindex->burnt = (pindex->pprev? pindex->pprev->burnt : 0) + nBurned;
     if (!txdb.WriteBlockIndex(CDiskBlockIndex(pindex)))
         return error("Connect() : WriteBlockIndex for pindex failed");
 
