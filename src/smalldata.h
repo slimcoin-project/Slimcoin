@@ -23,6 +23,6 @@ enum{
 
 const unsigned char *GetSmallDataHeader(int type);
 
-bool GetTxMessage(CTransaction &tx, std::string &msg, bool &isBroadcast);
+bool GetTxMessage(CTransaction &tx, std::string &msg, std::string &addr, bool &isBroadcast);
 
 #endif // H_SMALL_DATA_FUSIONCOIN

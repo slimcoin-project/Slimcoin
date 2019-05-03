@@ -183,7 +183,14 @@ WalletModel::SendCoinsReturn WalletModel::sendCoins(const QList<SendCoinsRecipie
             for ( i = 0; i < std::strlen(msg); ++ i )
                 vMsg.push_back(msg[i]);
 
-            scriptMsg << OP_RETURN << vMsg;
+            std::string address = recipients[0].address.toStdString();
+            const char *addressstr = address.c_str();
+            std::vector<unsigned char> vAdd;
+
+            for ( i = 0; i < std::strlen(addressstr); ++ i )
+                vAdd.push_back(addressstr[i]);
+
+            scriptMsg << OP_RETURN << vMsg << OP_RETURN << vAdd;
             vecSend.push_back(make_pair(scriptMsg, CENT));
         }
 

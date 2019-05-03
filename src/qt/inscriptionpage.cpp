@@ -94,7 +94,10 @@ void InscriptionPage::setClientModel(ClientModel *model)
 
 void InscriptionPage::refreshInscriptionTable()
 {
+    static int64_t lastUpdate = 0;
+    if (GetTime() - lastUpdate < 60) { return; } // This is just so it doesn't redraw rapidly during syncing
     model->refreshInscriptionTable();
+    lastUpdate = GetTime();
 }
 
 void InscriptionPage::showDetails()

@@ -925,9 +925,10 @@ void CWallet::SearchOPRETURNTransactions(uint256 hash, std::vector<std::pair<std
         BOOST_FOREACH (const CTransaction& tx, block.vtx)
         {
             std::string txmsg;
+            std::string addr;
             bool isBroadcast;
             CTransaction ctx = tx;
-            if ( GetTxMessage(ctx, txmsg, isBroadcast) ) {
+            if ( GetTxMessage(ctx, txmsg, addr, isBroadcast) ) {
                 if (txmsg == matchingHash) {
                     vTxResults.push_back( std::make_pair(tx.GetHash().GetHex(), tx.nTime/*pindexFirst->nHeight*/) );
                 }
@@ -953,9 +954,10 @@ void CWallet::GetTxMessages(std::vector<std::pair<std::string, int> >& vTxResult
         BOOST_FOREACH (const CTransaction& tx, block.vtx)
         {
             std::string txmsg;
+            std::string addr;
             bool isBroadcast;
             CTransaction ctx = tx;
-            if ( GetTxMessage(ctx, txmsg, isBroadcast) ) {
+            if ( GetTxMessage(ctx, txmsg, addr, isBroadcast) ) {
                 vTxResults.push_back( std::make_pair(txmsg, tx.nTime) );
             }
         }
@@ -980,9 +982,10 @@ void CWallet::GetMyTxMessages(std::vector<std::pair<std::string, int> >& vTxResu
             continue;
 
         std::string txmsg;
+        std::string addr;
         bool isBroadcast;
         CTransaction ctx = tx;
-        if ( GetTxMessage(ctx, txmsg, isBroadcast) ) {
+        if ( GetTxMessage(ctx, txmsg, addr, isBroadcast) ) {
             vTxResults.push_back( std::make_pair(txmsg, pindex->nTime) );
         }
     }
