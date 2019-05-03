@@ -35,7 +35,7 @@ unsigned int nWalletDBUpdated;
 CCriticalSection cs_db;
 static bool fDbEnvInit = false;
 bool fDetachDB = false;
-DbEnv dbenv(0);
+DbEnv dbenv((u_int32_t)0);
 map<string, int> mapFileUseCount;
 static map<string, Db*> mapDb;
 
@@ -53,7 +53,7 @@ static void EnvShutdown()
     {
         printf("EnvShutdown exception: %s (%d)\n", e.what(), e.get_errno());
     }
-    DbEnv(0).remove(GetDataDir().string().c_str(), 0);
+    DbEnv((u_int32_t)0).remove(GetDataDir().string().c_str(), 0);
 }
 
 class CDBInit
