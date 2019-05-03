@@ -1,51 +1,440 @@
+#include <map>
+#include <string>
+//#include <iostreamp>
+#include <fstream>
+#include <vector>
+#include <boost/algorithm/string/classification.hpp>
+#include <boost/algorithm/string/predicate.hpp>
+#include <boost/algorithm/string/replace.hpp>
+#include <boost/algorithm/string/split.hpp>
+#include <boost/assign/list_of.hpp>
+#include <boost/foreach.hpp>
+#include <boost/preprocessor/stringize.hpp>
 #include <boost/test/unit_test.hpp>
+#include "json/json_spirit_reader_template.h"
+#include "json/json_spirit_writer_template.h"
+#include "json/json_spirit_utils.h"
 
 #include "main.h"
 #include "wallet.h"
 #include "script.h"
+#include "script_error.h"
 
 using namespace std;
+using namespace boost;
+using namespace json_spirit;
+// using namespace boost::algorithm;
 
-BOOST_AUTO_TEST_SUITE(transaction_tests)
+struct F {
+    F() : i( 0 ) { 
+                    // BOOST_TEST_MESSAGE( "Tx fixture setup" );
+                }
+    ~F()         {
+                    // BOOST_TEST_MESSAGE( "Tx fixture teardown" );
+                }
+    void setup() {
+        static map<string, unsigned int> mapFlagNames = boost::assign::map_list_of
+            (string("NONE"),(unsigned int)SCRIPT_VERIFY_NONE)
+            (string("P2SH"),(unsigned int)SCRIPT_VERIFY_P2SH)
+            (string("STRICTENC"),(unsigned int)SCRIPT_VERIFY_STRICTENC)
+            (string("DISCOURAGE_UPGRADABLE_NOPS"),(unsigned int)SCRIPT_VERIFY_DISCOURAGE_UPGRADABLE_NOPS)
+            (string("CHECKLOCKTIMEVERIFY"),(unsigned int)SCRIPT_VERIFY_CHECKLOCKTIMEVERIFY);
+    };
+    int i;
+};
+
+// In script_tests.cpp
+extern Array read_json(const string& filename);
+extern CScript ParseScript(string s);
+
+BOOST_FIXTURE_TEST_SUITE(transaction_tests, F)
+
+static map<string, unsigned int> mapFlagNames = boost::assign::map_list_of
+    (string("NONE"), (unsigned int)SCRIPT_VERIFY_NONE)
+    (string("P2SH"), (unsigned int)SCRIPT_VERIFY_P2SH)
+    (string("STRICTENC"), (unsigned int)SCRIPT_VERIFY_STRICTENC)
+    (string("DISCOURAGE_UPGRADABLE_NOPS"), (unsigned int)SCRIPT_VERIFY_DISCOURAGE_UPGRADABLE_NOPS)
+    (string("CHECKLOCKTIMEVERIFY"), (unsigned int)SCRIPT_VERIFY_CHECKLOCKTIMEVERIFY);
+
+
+unsigned int ParseScriptFlags(string strFlags)
+{
+    if (strFlags.empty()) {
+        return 0;
+    }
+    unsigned int flags = 0;
+    vector<string> words;
+    boost::algorithm::split(words, strFlags, boost::algorithm::is_any_of(","));
+
+    BOOST_FOREACH(string word, words)
+    {
+        if (!mapFlagNames.count(word))
+            BOOST_ERROR("Bad test: unknown verification flag '" << word << "'");
+        flags |= mapFlagNames[word];
+    }
+
+    return flags;
+}
+
+string FormatScriptFlags(unsigned int flags)
+{
+    if (flags == 0) {
+        return "";
+    }
+    string ret;
+    std::map<string, unsigned int>::const_iterator it = mapFlagNames.begin();
+    while (it != mapFlagNames.end()) {
+        if (flags & it->second) {
+            ret += it->first + ",";
+        }
+        it++;
+    }
+    return ret.substr(0, ret.size() - 1);
+}
+
+// BOOST_AUTO_TEST_SUITE(transaction_tests)
+
+BOOST_AUTO_TEST_CASE(tx_valid)
+{
+    // Read tests from test/data/tx_valid.json
+    // Format is an array of arrays
+    // Inner arrays are either [ "comment" ]
+    // or [[[prevout hash, prevout index, prevout scriptPubKey], [input 2], ...],"], serializedTransaction, enforceP2SH
+    // ... where all scripts are stringified scripts.
+    Array tests = read_json("tx_valid.json");
+
+    ScriptError err;
+    BOOST_FOREACH(Value& tv, tests)
+    {
+        Array test = tv.get_array();
+        string strTest = write_string(tv, false);
+        if (test[0].type() == array_type)
+        {
+            if (test.size() != 3 || test[1].type() != str_type || test[2].type() != bool_type)
+            {
+                BOOST_ERROR("Bad test: " << strTest);
+                continue;
+            }
+
+            map<COutPoint, CScript> mapprevOutScriptPubKeys;
+            Array inputs = test[0].get_array();
+            bool fValid = true;
+            BOOST_FOREACH(Value& input, inputs)
+            {
+                if (input.type() != array_type)
+                {
+                    fValid = false;
+                    break;
+                }
+                Array vinput = input.get_array();
+                if (vinput.size() != 3)
+                {
+                    fValid = false;
+                    break;
+                }
+
+                mapprevOutScriptPubKeys[COutPoint(uint256(vinput[0].get_str()), vinput[1].get_int())] = ParseScript(vinput[2].get_str());
+            }
+            if (!fValid)
+            {
+                BOOST_ERROR("Bad test: " << strTest);
+                continue;
+            }
+
+            string transaction = test[1].get_str();
+            CDataStream stream(ParseHex(transaction), SER_NETWORK, PROTOCOL_VERSION);
+            CTransaction tx;
+            stream >> tx;
+
+            // CValidationState state;
+            strTest = "Simple deserialized transaction should be valid but isn't.";
+            BOOST_CHECK_MESSAGE(tx.CheckTransaction(), strTest);
+
+            for (unsigned int i = 0; i < tx.vin.size(); i++)
+            {
+                if (!mapprevOutScriptPubKeys.count(tx.vin[i].prevout))
+                {
+                    BOOST_ERROR("Bad test: " << strTest);
+                    break;
+                }
+
+                unsigned int verify_flags = ParseScriptFlags(test[2].get_str());
+                BOOST_CHECK_MESSAGE(VerifyScript(tx.vin[i].scriptSig, mapprevOutScriptPubKeys[tx.vin[i].prevout], tx, i, true, verify_flags, 0, &err), strTest);
+                BOOST_CHECK_MESSAGE(err == SCRIPT_ERR_OK, ScriptErrorString(err));
+            }
+        }
+    }
+}
+
+BOOST_AUTO_TEST_CASE(tx_invalid)
+{
+    // Read tests from test/data/tx_invalid.json
+    // Format is an array of arrays
+    // Inner arrays are either [ "comment" ]
+    // or [[[prevout hash, prevout index, prevout scriptPubKey], [input 2], ...],"], serializedTransaction, enforceP2SH
+    // ... where all scripts are stringified scripts.
+    Array tests = read_json("tx_invalid.json");
+
+    // Initialize to SCRIPT_ERR_OK. The tests expect err to be changed to a
+    // value other than SCRIPT_ERR_OK.
+    ScriptError err = SCRIPT_ERR_OK;
+
+    BOOST_FOREACH(Value& tv, tests)
+    {
+        Array test = tv.get_array();
+        string strTest = write_string(tv, false);
+        if (test[0].type() == array_type)
+        {
+            if (test.size() != 3 || test[1].type() != str_type || test[2].type() != bool_type)
+            {
+                BOOST_ERROR("Bad test: " << strTest);
+                continue;
+            }
+
+            map<COutPoint, CScript> mapprevOutScriptPubKeys;
+            Array inputs = test[0].get_array();
+            bool fValid = true;
+            BOOST_FOREACH(Value& input, inputs)
+            {
+                if (input.type() != array_type)
+                {
+                    fValid = false;
+                    break;
+                }
+                Array vinput = input.get_array();
+                if (vinput.size() != 3)
+                {
+                    fValid = false;
+                    break;
+                }
+
+                mapprevOutScriptPubKeys[COutPoint(uint256(vinput[0].get_str()), vinput[1].get_int())] = ParseScript(vinput[2].get_str());
+            }
+            if (!fValid)
+            {
+                BOOST_ERROR("Bad test: " << strTest);
+                continue;
+            }
+
+            string transaction = test[1].get_str();
+            CDataStream stream(ParseHex(transaction), SER_NETWORK, PROTOCOL_VERSION);
+            CTransaction tx;
+            stream >> tx;
+
+            // CValidationState state;
+            // fValid = tx.CheckTransaction(state) && state.IsValid();
+            fValid = tx.CheckTransaction();
+
+            for (unsigned int i = 0; i < tx.vin.size() && fValid; i++)
+            {
+                if (!mapprevOutScriptPubKeys.count(tx.vin[i].prevout))
+                {
+                    BOOST_ERROR("Bad test: " << strTest);
+                    break;
+                }
+
+                unsigned int verify_flags = ParseScriptFlags(test[2].get_str());
+                // fValid = VerifyScript(tx.vin[i].scriptSig, mapprevOutScriptPubKeys[tx.vin[i].prevout], verify_flags, TransactionSignatureChecker(&tx, i), &err);
+                fValid = VerifyScript(tx.vin[i].scriptSig, mapprevOutScriptPubKeys[tx.vin[i].prevout], tx, i, true, verify_flags, 0, &err);
+                strTest = "Unverified script";
+            }
+
+            BOOST_CHECK_MESSAGE(!fValid, strTest);
+            BOOST_CHECK_MESSAGE(err != SCRIPT_ERR_OK, ScriptErrorString(err));
+        }
+    }
+}
+BOOST_AUTO_TEST_CASE(tx_valid_cltv)
+{
+    // Read tests from test/data/tx_valid.json
+    // Format is an array of arrays
+    // Inner arrays are either [ "comment" ]
+    // or [[[prevout hash, prevout index, prevout scriptPubKey], [input 2], ...],"], serializedTransaction, verifyFlags
+    // ... where all scripts are stringified scripts.
+    //
+    // verifyFlags is a comma separated list of script verification flags to apply, or "NONE"
+    // json_spirit::Array tests = read_json(std::string(json_tests::tx_valid, json_tests::tx_valid + sizeof(json_tests::tx_valid)));
+    Array tests = read_json("tx_cltv_valid.json");
+
+    ScriptError err;
+    BOOST_FOREACH(Value& tv, tests)
+    {
+        Array test = tv.get_array();
+        string strTest = write_string(tv, false);
+        if (test[0].type() == array_type)
+        {
+            if (test.size() != 3 || test[1].type() != str_type || test[2].type() != str_type)
+            {
+                BOOST_ERROR("Bad test: " << strTest);
+                continue;
+            }
+            map<COutPoint, CScript> mapprevOutScriptPubKeys;
+            Array inputs = test[0].get_array();
+            bool fValid = true;
+            BOOST_FOREACH(Value& input, inputs)
+            {
+                if (input.type() != array_type)
+                {
+                    fValid = false;
+                    break;
+                }
+                Array vinput = input.get_array();
+                if (vinput.size() != 3)
+                {
+                    fValid = false;
+                    break;
+                }
+
+                mapprevOutScriptPubKeys[COutPoint(uint256(vinput[0].get_str()), vinput[1].get_int())] = ParseScript(vinput[2].get_str());
+            }
+            if (!fValid)
+            {
+                BOOST_ERROR("Bad test: " << strTest);
+                continue;
+            }
+            // BOOST_TEST_MESSAGE("Parsed transaction: " << strTest << " should be valid.");
+            try
+            {
+                string transaction = test[1].get_str();
+                CDataStream stream(ParseHex(transaction), SER_NETWORK, PROTOCOL_VERSION);
+                CTransaction tx;
+                stream >> tx;
+
+                // CValidationState state;
+                // strTest = "Simple deserialized transaction should be valid but isn't.";
+                // BOOST_CHECK_MESSAGE(tx.CheckTransaction(), strTest);
+
+                for (unsigned int i = 0; i < tx.vin.size(); i++)
+                {
+                    if (!mapprevOutScriptPubKeys.count(tx.vin[i].prevout))
+                    {
+                        BOOST_ERROR("Bad test: " << strTest);
+                        break;
+                    }
+
+                    unsigned int verify_flags = ParseScriptFlags(test[2].get_str());
+                    BOOST_CHECK_MESSAGE(VerifyScript(tx.vin[i].scriptSig, mapprevOutScriptPubKeys[tx.vin[i].prevout], tx, i, true, verify_flags, 0, &err), strTest);
+                    // BOOST_CHECK_MESSAGE(VerifyScript(tx.vin[i].scriptSig, mapprevOutScriptPubKeys[tx.vin[i].prevout],verify_flags, TransactionSignatureChecker(&tx, i), &err), strTest);
+                    BOOST_CHECK_MESSAGE(err == SCRIPT_ERR_OK, ScriptErrorString(err));
+                }
+            }
+              catch (std::exception& e) {
+                  BOOST_ERROR("iostream error, bad parse of: " << test[1].get_str());
+                  break;
+            } catch (...) {
+                  BOOST_ERROR("Bad parse of: " << strTest);
+                  break;
+            }
+        }
+    }
+}
+
+BOOST_AUTO_TEST_CASE(tx_invalid_cltv)
+{
+    // Read tests from test/data/tx_invalid.json
+    // Format is an array of arrays
+    // Inner arrays are either [ "comment" ]
+    // or [[[prevout hash, prevout index, prevout scriptPubKey], [input 2], ...],"], serializedTransaction, verifyFlags
+    // ... where all scripts are stringified scripts.
+    //
+    // verifyFlags is a comma separated list of script verification flags to apply, or "NONE"
+    Array tests = read_json("tx_cltv_invalid.json");
+
+    // Initialize to SCRIPT_ERR_OK. The tests expect err to be changed to a
+    // value other than SCRIPT_ERR_OK.
+    ScriptError err = SCRIPT_ERR_OK;
+    BOOST_FOREACH(Value& tv, tests)
+    {
+        Array test = tv.get_array();
+        string strTest = write_string(tv, false);
+        if (test[0].type() == array_type)
+        {
+            if (test.size() != 3 || test[1].type() != str_type || test[2].type() != str_type)
+            {
+                BOOST_TEST_MESSAGE("Bad format");
+                BOOST_ERROR("Bad test: " << strTest);
+                continue;
+            }
+
+            map<COutPoint, CScript> mapprevOutScriptPubKeys;
+            Array inputs = test[0].get_array();
+            bool fValid = true;
+            BOOST_FOREACH(Value& input, inputs)
+            {
+                if (input.type() != array_type)
+                {
+                    BOOST_TEST_MESSAGE("input != array_type");
+                    fValid = false;
+                    break;
+                }
+                Array vinput = input.get_array();
+                if (vinput.size() != 3)
+                {
+                    BOOST_TEST_MESSAGE("vinput size != 3");
+                    fValid = false;
+                    break;
+                }
+
+                BOOST_TEST_MESSAGE("mapprevOutScriptPubKeys");
+                mapprevOutScriptPubKeys[COutPoint(uint256(vinput[0].get_str()), vinput[1].get_int())] = ParseScript(vinput[2].get_str());
+            }
+            if (!fValid)
+            {
+                BOOST_TEST_MESSAGE("Bad test format");
+                BOOST_ERROR("Bad test: " << strTest);
+                continue;
+            }
+            try
+            {
+                string transaction = test[1].get_str();
+                CDataStream stream(ParseHex(transaction), SER_DISK, PROTOCOL_VERSION);
+                CTransaction tx;
+                stream >> tx;
+
+                // CValidationState state;
+                // fValid = tx.CheckTransaction(state) && state.IsValid();
+                fValid = tx.CheckTransaction();
+
+                for (unsigned int i = 0; i < tx.vin.size() && fValid; i++)
+                {
+                    if (!mapprevOutScriptPubKeys.count(tx.vin[i].prevout))
+                    {
+                        BOOST_TEST_MESSAGE("CheckTransaction result");
+                        BOOST_ERROR("Bad test: " << strTest);
+                        break;
+                    }
+
+                    unsigned int verify_flags = ParseScriptFlags(test[2].get_str());
+                    // fValid = VerifyScript(tx.vin[i].scriptSig, mapprevOutScriptPubKeys[tx.vin[i].prevout], verify_flags, TransactionSignatureChecker(&tx, i), &err);
+                    fValid = VerifyScript(tx.vin[i].scriptSig, mapprevOutScriptPubKeys[tx.vin[i].prevout], tx, i, true, verify_flags, 0, &err);
+                }
+
+                BOOST_CHECK_MESSAGE(!fValid, strTest);
+                // BOOST_CHECK_MESSAGE(err != SCRIPT_ERR_OK, ScriptErrorString(err));
+            }
+              catch (std::exception& e) {
+                  BOOST_ERROR("iostream error, bad parse of: " << test[1].get_str());
+                  break;
+            } catch (...) {
+                  BOOST_ERROR("Bad parse of: " << strTest);
+                  break;
+            }
+        }
+    }
+}
 
 BOOST_AUTO_TEST_CASE(basic_transaction_tests)
 {
-
-  // Original SLIMCoin transaction_test.cpp, inherited from bitcoin 6 years ago
-  // Random real transaction (e2769b09e784f32f62ef849763d4f45b98e07ba658647343b915ff832b110436)
-  /*
-  {
-    "result": "01000000016bff7fcd4f8565ef406dd5d63d4ff94f318fe82027fd4dc451b04474019f74b4000000008c493046022100da0dc6aecefe1e06efdf05773757deb168820930e3b0d03f46f5fcf150bf990c022100d25b5c87040076e4f253f8262e763e2dd51e7ff0be157727c4bc42807f17bd39014104e6c26ef67dc610d2cd192484789a6cf9aea9930b944b7e2db5342b9d9e5b9ff79aff9a2ee1978dd7fd01dfc522ee02283d3b06a9d03acf8096968d7dbb0f9178ffffffff028ba7940e000000001976a914badeecfdef0507247fc8f74241d73bc039972d7b88ac4094a802000000001976a914c10932483fec93ed51f5fe95e72559f2cc7043f988ac00000000",
-    "error": null,
-    "id": null
-  }
-  */
-  // unsigned char ch[] = {0x01, 0x00, 0x00, 0x00, 0x01, 0x6b, 0xff, 0x7f, 0xcd, 0x4f, 0x85, 0x65, 0xef, 0x40, 0x6d, 0xd5, 0xd6, 0x3d, 0x4f, 0xf9, 0x4f, 0x31, 0x8f, 0xe8, 0x20, 0x27, 0xfd, 0x4d, 0xc4, 0x51, 0xb0, 0x44, 0x74, 0x01, 0x9f, 0x74, 0xb4, 0x00, 0x00, 0x00, 0x00, 0x8c, 0x49, 0x30, 0x46, 0x02, 0x21, 0x00, 0xda, 0x0d, 0xc6, 0xae, 0xce, 0xfe, 0x1e, 0x06, 0xef, 0xdf, 0x05, 0x77, 0x37, 0x57, 0xde, 0xb1, 0x68, 0x82, 0x09, 0x30, 0xe3, 0xb0, 0xd0, 0x3f, 0x46, 0xf5, 0xfc, 0xf1, 0x50, 0xbf, 0x99, 0x0c, 0x02, 0x21, 0x00, 0xd2, 0x5b, 0x5c, 0x87, 0x04, 0x00, 0x76, 0xe4, 0xf2, 0x53, 0xf8, 0x26, 0x2e, 0x76, 0x3e, 0x2d, 0xd5, 0x1e, 0x7f, 0xf0, 0xbe, 0x15, 0x77, 0x27, 0xc4, 0xbc, 0x42, 0x80, 0x7f, 0x17, 0xbd, 0x39, 0x01, 0x41, 0x04, 0xe6, 0xc2, 0x6e, 0xf6, 0x7d, 0xc6, 0x10, 0xd2, 0xcd, 0x19, 0x24, 0x84, 0x78, 0x9a, 0x6c, 0xf9, 0xae, 0xa9, 0x93, 0x0b, 0x94, 0x4b, 0x7e, 0x2d, 0xb5, 0x34, 0x2b, 0x9d, 0x9e, 0x5b, 0x9f, 0xf7, 0x9a, 0xff, 0x9a, 0x2e, 0xe1, 0x97, 0x8d, 0xd7, 0xfd, 0x01, 0xdf, 0xc5, 0x22, 0xee, 0x02, 0x28, 0x3d, 0x3b, 0x06, 0xa9, 0xd0, 0x3a, 0xcf, 0x80, 0x96, 0x96, 0x8d, 0x7d, 0xbb, 0x0f, 0x91, 0x78, 0xff, 0xff, 0xff, 0xff, 0x02, 0x8b, 0xa7, 0x94, 0x0e, 0x00, 0x00, 0x00, 0x00, 0x19, 0x76, 0xa9, 0x14, 0xba, 0xde, 0xec, 0xfd, 0xef, 0x05, 0x07, 0x24, 0x7f, 0xc8, 0xf7, 0x42, 0x41, 0xd7, 0x3b, 0xc0, 0x39, 0x97, 0x2d, 0x7b, 0x88, 0xac, 0x40, 0x94, 0xa8, 0x02, 0x00, 0x00, 0x00, 0x00, 0x19, 0x76, 0xa9, 0x14, 0xc1, 0x09, 0x32, 0x48, 0x3f, 0xec, 0x93, 0xed, 0x51, 0xf5, 0xfe, 0x95, 0xe7, 0x25, 0x59, 0xf2, 0xcc, 0x70, 0x43, 0xf9, 0x88, 0xac, 0x00, 0x00, 0x00, 0x00, 0x00};
-
-  // Real Slimcoin tx (f505d79e4a87a1d891975a62562aa6666b0ef0488f95fa7b2a97f2b27286df61)
-  // unsigned char ch[] = {0x01, 0x00, 0x00, 0x00, 0xf1, 0x36, 0xc2, 0x58, 0x01, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0xff, 0xff, 0xff, 0xff, 0x0e, 0x04, 0xf1, 0x36, 0xc2, 0x58, 0x01, 0x01, 0x06, 0x2f, 0x50, 0x32, 0x53, 0x48, 0x2f, 0xff, 0xff, 0xff, 0xff, 0x01, 0xf0, 0xc7, 0xe7, 0x00, 0x00, 0x00, 0x00, 0x00, 0x23, 0x21, 0x03, 0xfa, 0xd5, 0x97, 0xf3, 0xea, 0x9b, 0x03, 0xa4, 0x3e, 0x48, 0xb8, 0xf8, 0x04, 0xfa, 0xce, 0x48, 0xca, 0x78, 0xf5, 0x77, 0x77, 0xfe, 0x41, 0xb9, 0xf3, 0x5e, 0x62, 0x3d, 0xbc, 0x52, 0x1b, 0x28, 0xac, 0x00, 0x00, 0x00, 0x00};
-  /*
-  unsigned char ch[] = {1, 0, 0, 0, 241, 54, 194, 88, 1, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 255, 255, 255, 255, 14, 4, 241, 54, 194, 88, 1, 1, 6, 47, 80, 50, 83, 72, 47, 255, 255, 255, 255, 1, 240, 199, 231, 0, 0, 0, 0, 0, 35, 33, 3, 250, 213, 151, 243, 234, 155, 3, 164, 62, 72, 184, 248, 4, 250, 206, 72, 202, 120, 245, 119, 119, 254, 65, 185, 243, 94, 98, 61, 188, 82, 27, 40, 172, 0, 0, 0, 0};
-
-  vector<unsigned char> vch(ch, ch + sizeof(ch) - 1);
-  try
-  {
-    CDataStream stream(vch, SER_DISK, CLIENT_VERSION);
+    // Random real transaction (f505d79e4a87a1d891975a62562aa6666b0ef0488f95fa7b2a97f2b27286df61)
+    string transaction = "01000000f136c258010000000000000000000000000000000000000000000000000000000000000000ffffffff0e04f136c2580101062f503253482fffffffff01f0c7e70000000000232103fad597f3ea9b03a43e48b8f804face48ca78f57777fe41b9f35e623dbc521b28ac00000000";
+    CDataStream stream(ParseHex(transaction), SER_DISK, PROTOCOL_VERSION);
     CTransaction tx;
-    // fatal error in "basic_transaction_tests": std::runtime_error: CDataStream::read() : end of data: iostream error
     stream >> tx;
-    BOOST_CHECK_MESSAGE(tx.CheckTransaction(), "Simple deserialized transaction should be valid.");
+    BOOST_CHECK_MESSAGE(tx.CheckTransaction(), "A simple deserialized real transaction should be valid.");
 
     // Check that duplicate txins fail
     tx.vin.push_back(tx.vin[0]);
     BOOST_CHECK_MESSAGE(!tx.CheckTransaction(), "Transaction with duplicate txins should be invalid.");
-  }
-  catch (std::exception& e) {
-      PrintException(&e, "basic_transaction_tests");
-  } catch (...) {
-      PrintException(NULL, "basic_transaction_tests");
-  }
-  */
 }
 
 //

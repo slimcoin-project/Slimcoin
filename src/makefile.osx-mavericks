@@ -6,6 +6,7 @@
 
 # Mac OS X makefile for ppcoin
 # Originally by Laszlo Hanyecz (solar@heliacal.net)
+# Adapted for use with Slimcoin by Graham Higgins (gjh@bel-epa.com)
 
 CXX=llvm-g++
 BREWDIR=/usr/local
@@ -91,12 +92,20 @@ OBJS= \
     obj/protocol.o \
     obj/bitcoinrpc.o \
     obj/rpcdump.o \
+    obj/rpccrypto.o \
     obj/script.o \
     obj/util.o \
     obj/wallet.o \
     obj/walletdb.o \
     obj/noui.o \
-    obj/kernel.o
+    obj/kernel.o \
+    obj/dcrypt.o \
+    obj/smalldata.o \
+    obj/sha256.o \
+    obj/ecies.o \
+    obj/secure.o \
+    obj/kdf.o \
+    obj/script_error.o
 
 ifdef USE_UPNP
 	DEFS += -DUSE_UPNP=$(USE_UPNP)
@@ -107,7 +116,7 @@ else
 endif
 endif
 
-all: ppcoind
+all: slimcoind
 
 # auto-generated dependencies:
 -include obj/*.P
@@ -118,6 +127,15 @@ obj/build.h: FORCE
 version.cpp: obj/build.h
 DEFS += -DHAVE_BUILD_INFO
 
+obj/ecies.o: ecies/ecies.c
+	$(CC) $(CFLAGS) -c -o $@ $^
+
+obj/secure.o: ecies/secure.c
+	$(CC) $(CFLAGS) -c -o $@ $^
+
+obj/kdf.o: ecies/kdf.c
+	$(CC) $(CFLAGS) -c -o $@ $^
+
 obj/%.o: %.cpp
 	$(CXX) -c $(CFLAGS) -MMD -o $@ $<
 # $(CXX) -c $(CFLAGS) -o $@ $<
@@ -126,7 +144,7 @@ obj/%.o: %.cpp
 #       -e '/^$$/ d' -e 's/$$/ :/' < $(@:%.o=%.d) >> $(@:%.o=%.P); \
 #   rm -f $(@:%.o=%.d)
 
-ppcoind: $(OBJS:obj/%=obj/%)
+slimcoind: $(OBJS:obj/%=obj/%)
 	$(CXX) $(CFLAGS) -o $@ $(LIBPATHS) $^ $(LIBS)
 
 TESTOBJS := $(patsubst test/%.cpp,obj-test/%.o,$(wildcard test/*.cpp))
@@ -138,11 +156,11 @@ obj-test/%.o: test/%.cpp
 	      -e '/^$$/ d' -e 's/$$/ :/' < $(@:%.o=%.d) >> $(@:%.o=%.P); \
 	  rm -f $(@:%.o=%.d)
 
-test_ppcoin: $(TESTOBJS) $(filter-out obj/init.o,$(OBJS:obj/%=obj/%))
+test_slimcoin: $(TESTOBJS) $(filter-out obj/init.o,$(OBJS:obj/%=obj/%))
 	$(CXX) $(CFLAGS) -o $@ $(LIBPATHS) $^ $(LIBS) $(TESTLIBS)
 
 clean:
-	-rm -f ppcoind test_ppcoin
+	-rm -f slimcoind test_slimcoin
 	-rm -f obj/*.o
 	-rm -f obj-test/*.o
 	-rm -f obj/*.P

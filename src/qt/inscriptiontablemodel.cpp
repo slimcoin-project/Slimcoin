@@ -10,18 +10,11 @@
 #include <QColor>
 #include <QDateTime>
 
-/*
-#include "json/json_spirit_reader_template.h"
-#include "json/json_spirit_writer_template.h"
-#include "json/json_spirit_utils.h"
-*/
-
 #include <boost/algorithm/string.hpp>
 
 #include <stdlib.h>
 
 using namespace boost;
-// using namespace json_spirit;
 
 struct InscriptionTableEntry
 {
@@ -177,13 +170,12 @@ int InscriptionTableModel::columnCount(const QModelIndex &parent) const
 
 void InscriptionTableModel::refreshInscriptionTable()
 {
-    /* FIXME: Use explicit check for NULL */
     if (this) {
-        printf("Refreshing inscription table");
+        printf("Refreshing inscription table.\n");
         priv->refreshTable();
         Q_EMIT layoutChanged();
     } else {
-        printf("Inscriptiontable uninitialised.");
+        printf("Inscriptiontable uninitialised.\n");
     }
 }
 

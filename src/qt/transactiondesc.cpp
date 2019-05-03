@@ -228,8 +228,9 @@ QString TransactionDesc::toHTML(CWallet *wallet, CWalletTx &wtx)
         strHTML += QString("<b>") + tr("Transaction ID:") + "</b> " + wtx.GetHash().ToString().c_str() + "<br>";
 
         std::string txmsg;
+        std::string addr;
         bool isBroadcast;
-        if ( GetTxMessage(wtx, txmsg, isBroadcast) )
+        if ( GetTxMessage(wtx, txmsg, addr, isBroadcast) )
             strHTML += "<b>" + tr("Message") + ":</b> " + txmsg.c_str() + "<br>";
 
         if(wtx.IsCoinBase())

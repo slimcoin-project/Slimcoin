@@ -7,7 +7,7 @@
  */
 bool TransactionRecord::showTransaction(const CWalletTx &wtx)
 {
-  if(wtx.IsCoinBase())
+  if(wtx.IsCoinBase() || wtx.IsCoinStake())
   {
     // Don't show generated coin until confirmed by at least one block after it
     // so we don't get the user's hopes up until it looks like it's probably accepted.

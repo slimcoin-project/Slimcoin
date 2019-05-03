@@ -4,11 +4,11 @@
 
 # Changing to be in line with the Gitian build locations
 ifndef DEPSDIR
-  DEPSDIR=/mnt/xcomp
+  DEPSDIR=/usr/lib/mxe/usr/i686-w64-mingw32.static
 endif
 
 ifndef HOST
-  HOST=x86_64-w64-mingw32
+  HOST=i686-w64-mingw32
 endif
 
 GPP=$(HOST)-g++
@@ -16,28 +16,21 @@ GPP=$(HOST)-g++
 
 USE_UPNP:=0
 
-INCLUDEPATHS= \
- -I"/usr/i686-w64-mingw32/sys-root/mingw/include" \
- -I"$(DEPSDIR)/include/boost" \
- -I"$(DEPSDIR)/libpng16/include" \
- -I"$(DEPSDIR)/miniupnpc/include" \
- -I"$(DEPSDIR)/qrencode/include" \
- -I"$(DEPSDIR)/openssl/include" \
- -I"obj"  # required to find 'build.h'
+INCLUDEPATHS= -I. -I$(DEPSDIR)/include -I./obj  # required to find 'build.h'
 
-LIBPATHS= -L"$(DEPSDIR)/lib"
-# -L"$(DEPSDIR)/boost_1_47_0/stage/lib" \
-# -L"$(DEPSDIR)/db-4.8.30.NC/build_unix" \
-# -L"$(DEPSDIR)/openssl-1.0.1g"
+LIBPATHS= -L$(DEPSDIR)/lib
 
 LIBS= \
- -l boost_system-mt-s \
- -l boost_filesystem-mt-s \
- -l boost_program_options-mt-s \
- -l boost_thread_win32-mt-s \
+ -l boost_system-mt \
+ -l boost_filesystem-mt \
+ -l boost_program_options-mt \
+ -l boost_thread_win32-mt \
+ -l boost_chrono-mt \
+ -l pthread \
  -l db_cxx \
  -l ssl \
- -l crypto
+ -l crypto \
+ -l z
 
 DEFS=-D_MT -DWIN32 -D_WINDOWS -DBOOST_THREAD_USE_LIB -DBOOST_SPIRIT_THREADSAFE
 DEBUGFLAGS=-g
@@ -46,13 +39,13 @@ CFLAGS=-O2 -w -Wno-invalid-offsetof -Wformat $(DEBUGFLAGS) $(DEFS) $(INCLUDEPATH
 TESTDEFS = -DTEST_DATA_DIR=$(abspath test/data)
 
 ifdef USE_UPNP
-    INCLUDEPATHS += -I"$(DEPSDIR)/miniupnpc" 
-	LIBPATHS += -L"$(DEPSDIR)/miniupnpc"
+    INCLUDEPATHS += -I$(DEPSDIR)/include/miniupnpc 
+	LIBPATHS += -L$(DEPSDIR)/lib
 	LIBS += -l miniupnpc -l iphlpapi
 	DEFS += -DSTATICLIB -DUSE_UPNP=$(USE_UPNP)
 endif
 
-LIBS += -l mingwthrd -l kernel32 -l user32 -l gdi32 -l comdlg32 -l winspool -l winmm -l shell32 -l comctl32 -l ole32 -l oleaut32 -l uuid -l rpcrt4 -l advapi32 -l ws2_32 -l shlwapi
+LIBS += -l mingwthrd -l kernel32 -l user32 -l gdi32 -l comdlg32 -l winspool -l winmm -l shell32 -l comctl32 -l ole32 -l oleaut32 -l uuid -l rpcrt4 -l advapi32 -l ws2_32 -l shlwapi -l pthread
 
 # TODO: make the mingw builds smarter about dependencies, like the linux/osx builds are
 HEADERS = $(wildcard *.h)
@@ -73,6 +66,7 @@ OBJS= \
     obj/protocol.o \
     obj/bitcoinrpc.o \
     obj/rpcdump.o \
+    obj/rpccrypto.o \
     obj/script.o \
     obj/util.o \
     obj/wallet.o \
@@ -92,7 +86,12 @@ DEFS += -DHAVE_BUILD_INFO
 obj/%.o: %.cpp $(HEADERS)
 	$(GPP) -c $(CFLAGS) -o $@ $<
 
-slimcoind.exe: $(OBJS:obj/%=obj/%)
+ECIESOBJS := $(patsubst ecies/%.c,obj-ecies/%.o,$(wildcard ecies/*.c))
+
+obj-ecies/%.o: ecies/%.c $(HEADERS)
+	$(GPP) -c $(CFLAGS) -o $@ $<
+
+slimcoind.exe: $(OBJS:obj/%=obj/%) $(ECIESOBJS)
 	$(GPP) $(CFLAGS) -o $@ $(LIBPATHS) $^ $(LIBS)
 
 TESTOBJS := $(patsubst test/%.cpp,obj-test/%.o,$(wildcard test/*.cpp))
@@ -100,15 +99,16 @@ TESTOBJS := $(patsubst test/%.cpp,obj-test/%.o,$(wildcard test/*.cpp))
 obj-test/%.o: test/%.cpp $(HEADERS)
 	$(GPP) -c $(TESTDEFS) $(CFLAGS) -o $@ $<
 
-test_slimcoin.exe: $(TESTOBJS) $(filter-out obj/init.o,$(OBJS:obj/%=obj/%))
-	$(GPP) $(CFLAGS) -o $@ $(LIBPATHS) $^ -lboost_unit_test_framework $(LIBS)
+test_slimcoin.exe: $(TESTOBJS) $(ECIESOBJS) $(filter-out obj/init.o,$(OBJS:obj/%=obj/%))
+	$(GPP) $(CFLAGS) -o $@ $(LIBPATHS) $^ -lboost_unit_test_framework-mt $(LIBS)
 
 
 clean:
 	-rm -f obj/*.o
 	-rm -f slimcoind.exe
 	-rm -f obj-test/*.o
-	-rm -f test_bitcoin.exe
+	-rm -f obj-ecies/*.o
+	-rm -f test_slimcoin.exe
 	-rm -f obj/build.h
 
 FORCE:

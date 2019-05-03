@@ -14,6 +14,7 @@
 #include <boost/algorithm/string/replace.hpp>
 #include <boost/filesystem.hpp>
 #include <boost/filesystem/fstream.hpp>
+#include <boost/move/unique_ptr.hpp>
 #include <math.h>       /* pow */
 #include <cstdlib>      /* std::rand() */
 
@@ -501,7 +502,7 @@ bool CTransaction::AreInputsStandard(const MapPrevTx& mapInputs) const
         // beside "push data" in the scriptSig the
         // IsStandard() call returns false
         vector<vector<unsigned char> > stack;
-        if (!EvalScript(stack, vin[i].scriptSig, *this, i, 0))
+        if (!EvalScript(stack, vin[i].scriptSig, *this, i, false, 0))
             return false;
 
         if (whichType == TX_SCRIPTHASH)
@@ -1760,11 +1761,11 @@ bool CTransaction::ConnectInputs(CTxDB& txdb, MapPrevTx inputs,
             if (!(fBlock && (nBestHeight < Checkpoints::GetTotalBlocksEstimate())))
             {
                 // Verify signature
-                if (!VerifySignature(txPrev, *this, i, fStrictPayToScriptHash, 0))
+                if (!VerifySignature(txPrev, *this, i, fStrictPayToScriptHash,  SCRIPT_VERIFY_P2SH | SCRIPT_VERIFY_STRICTENC | SCRIPT_VERIFY_CHECKLOCKTIMEVERIFY, 0))
                 {
                     // only during transition phase for P2SH: do not invoke anti-DoS code for
                     // potentially old clients relaying bad P2SH transactions
-                    if (fStrictPayToScriptHash && VerifySignature(txPrev, *this, i, false, 0))
+                    if (fStrictPayToScriptHash && VerifySignature(txPrev, *this, i, false, SCRIPT_VERIFY_P2SH | SCRIPT_VERIFY_STRICTENC | SCRIPT_VERIFY_CHECKLOCKTIMEVERIFY, 0))
                         return error("ConnectInputs() : %s P2SH VerifySignature failed", GetHash().ToString().substr(0,10).c_str());
 
                     return DoS(100,error("ConnectInputs() : %s VerifySignature failed", GetHash().ToString().substr(0,10).c_str()));
@@ -1834,7 +1835,7 @@ bool CTransaction::ClientConnectInputs()
                 return false;
 
             // Verify signature
-            if (!VerifySignature(txPrev, *this, i, true, 0))
+            if (!VerifySignature(txPrev, *this, i, true, SCRIPT_VERIFY_P2SH | SCRIPT_VERIFY_STRICTENC | SCRIPT_VERIFY_CHECKLOCKTIMEVERIFY, 0))
                 return error("ConnectInputs() : VerifySignature failed");
 
             ///// this is redundant with the mempool.mapNextTx stuff,
@@ -1927,6 +1928,7 @@ bool CBlock::ConnectBlock(CTxDB& txdb, CBlockIndex* pindex)
     int64 nFees = 0;
     int64 nValueIn = 0;
     int64 nValueOut = 0;
+    int64 nBurned = 0;
     unsigned int nSigOps = 0;
     BOOST_FOREACH(CTransaction& tx, vtx)
     {
@@ -1963,6 +1965,12 @@ bool CBlock::ConnectBlock(CTxDB& txdb, CBlockIndex* pindex)
             if (!tx.IsCoinStake())
                 nFees += nTxValueIn - nTxValueOut;
 
+            // If BurnTx, add nValue to running total, persistence is via the index
+            if (tx.IsBurnTx()) {
+                CTxOut btxo = tx.GetBurnOutTx();
+                nBurned += btxo.nValue;
+            }
+
             if (!tx.ConnectInputs(txdb, mapInputs, mapQueuedChanges, posThisTx, pindex, true, false, fStrictPayToScriptHash))
                 return false;
         }
@@ -1973,6 +1981,7 @@ bool CBlock::ConnectBlock(CTxDB& txdb, CBlockIndex* pindex)
     // ppcoin: track money supply and mint amount info
     pindex->nMint = nValueOut - nValueIn + nFees;
     pindex->nMoneySupply = (pindex->pprev? pindex->pprev->nMoneySupply : 0) + nValueOut - nValueIn;
+    pindex->burnt = (pindex->pprev? pindex->pprev->burnt : 0) + nBurned;
     if (!txdb.WriteBlockIndex(CDiskBlockIndex(pindex)))
         return error("Connect() : WriteBlockIndex for pindex failed");
 
@@ -2966,17 +2975,7 @@ FILE* OpenBlockFile(unsigned int nFile, unsigned int nBlockPos, const char* pszM
     if (nFile == (unsigned int) -1)
         return NULL;
     filesystem::path fpath = GetDataDir();
-    filesystem::path pathBootstrap = GetDataDir() / "bootstrap.dat";
-    filesystem::path pathBootstrapOld = GetDataDir() / "bootstrap.dat.old";
-    if (filesystem::exists(pathBootstrap)) {
-        // fpath = GetDataDir() / "bootstrap.dat";
-        fpath = pathBootstrap;
-    }
-    else
-    {
-        // FILE *file = fopen().string().c_str(), pszMode);
-        fpath = GetDataDir() / strprintf("blk%04d.dat", nFile);
-    }
+    fpath = GetDataDir() / strprintf("blk%04d.dat", nFile);
     FILE *file = fopen(fpath.string().c_str(), pszMode);
     if (!file)
         return NULL;
@@ -2987,9 +2986,6 @@ FILE* OpenBlockFile(unsigned int nFile, unsigned int nBlockPos, const char* pszM
             fclose(file);
             return NULL;
         }
-    }
-    if (filesystem::exists(pathBootstrap)) {
-        RenameOver(pathBootstrap, pathBootstrapOld);
     }
     return file;
 }
@@ -4950,8 +4946,7 @@ CBlock *CreateNewBlock(CWallet* pwallet, bool fProofOfStake, const CWalletTx *bu
     CReserveKey *reservekey = resKey ? resKey : &tmpResKey;
 
     // Create new block
-    /* FIXME: boost::movelib::unique_ptr<CBlock> pblock(new CBlock()); */
-    unique_ptr<CBlock> pblock(new CBlock());
+    boost::movelib::unique_ptr<CBlock> pblock(new CBlock());
     if (!pblock.get())
         return NULL;
 
@@ -5372,7 +5367,7 @@ void SlimCoinMiner(CWallet *pwallet, bool fProofOfStake)
         if (fShutdown)
             return;
 
-        while (vNodes.empty() /*|| vNodes.size() < 3 */ /* (undocumented change) */ || IsInitialBlockDownload())
+        while (vNodes.empty() || (!fTestNet && vNodes.size() < 3) || IsInitialBlockDownload())
         {
             Sleep(1000);
             if (fShutdown)
@@ -5393,8 +5388,7 @@ void SlimCoinMiner(CWallet *pwallet, bool fProofOfStake)
         //
         unsigned int nTransactionsUpdatedLast = nTransactionsUpdated;
         CBlockIndex* pindexPrev = pindexBest;
-        /* FIXME: boost::movelib::unique_ptr<CBlock> pblock(CreateNewBlock(pwallet, fProofOfStake)); */
-        unique_ptr<CBlock> pblock(CreateNewBlock(pwallet, fProofOfStake));
+        boost::movelib::unique_ptr<CBlock> pblock(CreateNewBlock(pwallet, fProofOfStake));
         if (!pblock.get())
             return;
 
@@ -5581,8 +5575,7 @@ void SlimCoinAfterBurner(CWallet *pwallet)
             //
             // Create new block
             //
-            /* FIXME: boost::movelib::unique_ptr<CBlock> pblock(CreateNewBlock(pwallet, false, &smallestWTx)); */
-            unique_ptr<CBlock> pblock(CreateNewBlock(pwallet, false, &smallestWTx));
+            boost::movelib::unique_ptr<CBlock> pblock(CreateNewBlock(pwallet, false, &smallestWTx));
             if (!pblock.get())
                 continue;
 

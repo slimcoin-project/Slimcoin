@@ -8,17 +8,18 @@
 #include "../main.h"
 #include "../script.h"
 #include "../wallet.h"
+#include "../script_error.h"
 
 using namespace std;
 
 /** Script verification flags */
-enum
-{
-    SCRIPT_VERIFY_NONE      = 0,
-    SCRIPT_VERIFY_P2SH      = (1U << 0),
-    SCRIPT_VERIFY_STRICTENC = (1U << 1),
-    SCRIPT_VERIFY_NOCACHE   = (1U << 2),
-};
+// enum
+// {
+//     SCRIPT_VERIFY_NONE      = 0,
+//     SCRIPT_VERIFY_P2SH      = (1U << 0),
+//     SCRIPT_VERIFY_STRICTENC = (1U << 1),
+//     SCRIPT_VERIFY_NOCACHE   = (1U << 2),
+// };
 
 
 // Test routines internal to script.cpp:
@@ -48,7 +49,7 @@ Verify(const CScript& scriptSig, const CScript& scriptPubKey, bool fStrict)
     txTo.vin[0].scriptSig = scriptSig;
     txTo.vout[0].nValue = 1;
 
-    return VerifyScript(scriptSig, scriptPubKey, txTo, 0, fStrict ? SCRIPT_VERIFY_P2SH : SCRIPT_VERIFY_NONE, 0);
+    return VerifyScript(scriptSig, scriptPubKey, txTo, 0, fStrict ? SCRIPT_VERIFY_P2SH : SCRIPT_VERIFY_NONE, SCRIPT_VERIFY_P2SH | SCRIPT_VERIFY_STRICTENC | SCRIPT_VERIFY_CHECKLOCKTIMEVERIFY, 0, nullptr);
 }
 
 
@@ -115,7 +116,7 @@ BOOST_AUTO_TEST_CASE(sign)
         {
             CScript sigSave = txTo[i].vin[0].scriptSig;
             txTo[i].vin[0].scriptSig = txTo[j].vin[0].scriptSig;
-            bool sigOK = VerifySignature(txFrom, txTo[i], 0, SCRIPT_VERIFY_P2SH | SCRIPT_VERIFY_STRICTENC, 0);
+            bool sigOK = VerifySignature(txFrom, txTo[i], 0, SCRIPT_VERIFY_P2SH | SCRIPT_VERIFY_STRICTENC, SCRIPT_VERIFY_P2SH | SCRIPT_VERIFY_STRICTENC | SCRIPT_VERIFY_CHECKLOCKTIMEVERIFY, 0);
             if (i == j)
                 BOOST_CHECK_MESSAGE(sigOK, strprintf("VerifySignature %d %d", i, j));
             else

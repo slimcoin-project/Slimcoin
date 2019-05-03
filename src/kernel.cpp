@@ -466,7 +466,8 @@ bool CheckProofOfStake(const CTransaction& tx, unsigned int nBits, uint256& hash
     txdb.Close();
 
     // Verify signature
-    if (!VerifySignature(txPrev, tx, 0, true, 0))
+    unsigned int flags = SCRIPT_VERIFY_P2SH | SCRIPT_VERIFY_STRICTENC | SCRIPT_VERIFY_CHECKLOCKTIMEVERIFY;
+    if (!VerifySignature(txPrev, tx, 0, true, flags, 0))
         return tx.DoS(100, error("CheckProofOfStake() : VerifySignature failed on coinstake %s", tx.GetHash().ToString().c_str()));
 
     // Read block header

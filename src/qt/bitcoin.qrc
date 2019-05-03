@@ -23,6 +23,8 @@
         <file alias="lock_closed">res/icons/lock_closed.png</file>
         <file alias="lock_open">res/icons/lock_open.png</file>
         <file alias="mining">res/icons/mining.png</file>
+        <file alias="mining_active">res/icons/mining_active.png</file>
+        <file alias="mining_inactive">res/icons/mining_inactive.png</file>
         <file alias="options">res/icons/configure.png</file>
         <file alias="overview">res/icons/overview.png</file>
         <file alias="qt">res/icons/qt.png</file>

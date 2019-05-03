@@ -133,6 +133,41 @@ double GetDifficulty(const CBlockIndex* blockindex = NULL)
     return dDiff;
 }
 
+double GetNetworkGhps(const CBlockIndex* blockindex = NULL)
+{
+    // Floating point number that is a multiple of the minimum difficulty,
+    // minimum difficulty = 1.0.
+    if (blockindex == NULL)
+    {
+        if (pindexBest == NULL)
+            return 1.0;
+        else
+            blockindex = GetLastBlockIndex(pindexBest, false);
+    }
+
+    int64 nTargetSpacingWorkMin = 30;
+    int64 nTargetSpacingWork = nTargetSpacingWorkMin;
+    int64 nInterval = 72;
+    CBlockIndex* pindex = pindexGenesisBlock;
+    CBlockIndex* pindexPrevWork = pindexGenesisBlock;
+    while (pindex)
+    {
+        // Exponential moving average of recent proof-of-work block spacing
+        if (pindex->IsProofOfWork())
+        {
+            //obtain the time between the blocks
+            int64 nActualSpacingWork = pindex->GetBlockTime() - pindexPrevWork->GetBlockTime();
+            nTargetSpacingWork = ((nInterval - 1) * nTargetSpacingWork + nActualSpacingWork + nActualSpacingWork) / (nInterval + 1);
+            nTargetSpacingWork = max(nTargetSpacingWork, nTargetSpacingWorkMin);
+            pindexPrevWork = pindex;
+        }
+        pindex = pindex->pnext;
+    }
+    double dNetworkGhps = GetDifficulty() * 4.294967296 / nTargetSpacingWork; 
+    return dNetworkGhps;
+}
+
+
 int64 GetBurnTxTotal()
 {
     int blockstogoback = pindexBest->nHeight;
@@ -706,6 +741,28 @@ Value getpeerinfo(const Array& params, bool fHelp)
     }
     
     return ret;
+}
+
+Value addnode(const Array& params, bool fHelp)
+{
+    string strCommand;
+    if (params.size() == 2)
+        strCommand = params[1].get_str();
+    if (fHelp || params.size() > 1)
+        throw runtime_error(
+            "addnode <node>\n"
+            "Attempts to try a connection to <node> once.");
+
+    string strAddr = params[0].get_str();
+
+    CAddress addr(CService(strAddr, GetDefaultPort(), fAllowDNS));
+    addr.nTime = 0; // so it won't relay unless successfully connected
+
+    if (addr.IsValid()) {
+        ConnectNode(addr);
+        return "done";
+    }
+    return Value::null;
 }
 
 Value getdifficulty(const Array& params, bool fHelp)
@@ -3473,7 +3530,7 @@ Value linearizehashes(const Array& params, bool fHelp)
             CBlock block;
             CBlockIndex* pblockindex = FindBlockByHeight(nHeight);
             block.ReadFromDisk(pblockindex, true);
-            std::string blockhash = block.GetHash().ToString();
+            std::string blockhash = block.GetHash().ToString().c_str();
             fileout << blockhash.append("\n");
         }
     } catch(const boost::filesystem::filesystem_error &e) {
@@ -3951,7 +4008,7 @@ Value signrawtransaction(const Array& params, bool fHelp)
         {
             txin.scriptSig = CombineSignatures(prevPubKey, mergedTx, i, txin.scriptSig, txv.vin[i].scriptSig);
         }
-        if (!VerifyScript(txin.scriptSig, prevPubKey, mergedTx, i, true, 0))
+        if (!VerifyScript(txin.scriptSig, prevPubKey, mergedTx, i, true, SCRIPT_VERIFY_P2SH | SCRIPT_VERIFY_STRICTENC | SCRIPT_VERIFY_CHECKLOCKTIMEVERIFY, 0, nullptr))
             fComplete = false;
     }
 
@@ -4178,6 +4235,7 @@ static const CRPCCommand vRPCCommands[] =
     { "getburndata",              &getburndata,            true   },
     { "getconnectioncount",       &getconnectioncount,     true   },
     { "getpeerinfo",              &getpeerinfo,            true   },
+    { "addnode",                  &addnode,                true   },
     { "getdifficulty",            &getdifficulty,          true   },
     { "getgenerate",              &getgenerate,            true   },
     { "setgenerate",              &setgenerate,            true   },
@@ -4228,6 +4286,10 @@ static const CRPCCommand vRPCCommands[] =
     { "dumpbootstrap",            &dumpbootstrap,          false  },
     { "linearizehashes",          &linearizehashes,        false  },
     { "makekeypair",              &makekeypair,            false  },
+    { "encryptmessage",           &encryptmessage,         false  },
+    { "decryptmessage",           &decryptmessage,         false  },
+    { "encryptdata",              &encryptdata,            false  },
+    { "decryptdata",              &decryptdata,            false  },
     { "sendalert",                &sendalert,              false  },
     { "listunspent",              &listunspent,            false  },
     { "getrawtransaction",        &getrawtransaction,      false  },
@@ -4913,6 +4975,7 @@ Array RPCConvertValues(const std::string &strMethod, const std::vector<std::stri
     FORMAT_PARAM("setgenerate", 0, bool);
     FORMAT_PARAM("setgenerate", 1, boost::int64_t);
     FORMAT_PARAM("makekeypair", 1, boost::int64_t);
+    FORMAT_PARAM("importprivkey", 2, bool);
     if (strMethod == "sendtoaddress"          && n > 1) ConvertTo<double>(params[1]);
     if (strMethod == "settxfee"               && n > 0) ConvertTo<double>(params[0]);
     if (strMethod == "getreceivedbyaddress"   && n > 1) ConvertTo<boost::int64_t>(params[1]);
@@ -4940,6 +5003,8 @@ Array RPCConvertValues(const std::string &strMethod, const std::vector<std::stri
     if (strMethod == "walletpassphrase"       && n > 1) ConvertTo<boost::int64_t>(params[1]);
     if (strMethod == "walletpassphrase"       && n > 2) ConvertTo<bool>(params[2]);
     if (strMethod == "getblocktemplate"       && n > 0) ConvertTo<Object>(params[0]);
+    if (strMethod == "dumpbootstrap"          && n > 1) ConvertTo<boost::int64_t>(params[1]);
+    if (strMethod == "dumpbootstrap"          && n > 2) ConvertTo<boost::int64_t>(params[2]);
     if (strMethod == "listsinceblock"         && n > 1) ConvertTo<boost::int64_t>(params[1]);
     if (strMethod == "sendalert"              && n > 2) ConvertTo<boost::int64_t>(params[2]);
     if (strMethod == "sendalert"              && n > 3) ConvertTo<boost::int64_t>(params[3]);
@@ -5080,3 +5145,57 @@ int main(int argc, char *argv[])
 #endif
 
 const CRPCTable tableRPC;
+
+// Return average network hashes per second based on the last 'lookup' blocks,
+// or from the last difficulty change if 'lookup' is nonpositive.
+// If 'height' is nonnegative, compute the estimate at the time when a given block was found.
+
+double GetNetworkHashPS(int lookup, int height) {
+    CBlockIndex *pb = pindexBest;
+
+    if (height >= 0 && height < nBestHeight)
+        pb = FindBlockByHeight(height);
+
+    if (pb == NULL || !pb->nHeight)
+        return 0;
+
+    // If lookup is -1, then use blocks since last difficulty change.
+    if (lookup <= 0)
+        lookup = pb->nHeight % 2016 + 1;
+
+    // If lookup is larger than chain, then set it to chain length.
+    if (lookup > pb->nHeight)
+        lookup = pb->nHeight;
+
+    CBlockIndex *pb0 = pb;
+    int64 minTime = pb0->GetBlockTime();
+    int64 maxTime = minTime;
+    for (int i = 0; i < lookup; i++) {
+        pb0 = pb0->pprev;
+        int64 time = pb0->GetBlockTime();
+        minTime = std::min(time, minTime);
+        maxTime = std::max(time, maxTime);
+    }
+
+    // In case there's a situation where minTime == maxTime, we don't want a divide by zero exception.
+    if (minTime == maxTime)
+        return 0;
+
+    // uint256 workDiff = pb->nChainWork - pb0->nChainWork;
+    CBigNum workDiff = pb->bnChainTrust - pb0->bnChainTrust;
+    int64 timeDiff = maxTime - minTime;
+
+    return (boost::int64_t)(workDiff.getuint64() / timeDiff);
+}
+
+Value getnetworkhashps(const Array& params, bool fHelp)
+{
+    if (fHelp || params.size() > 2)
+        throw runtime_error(
+            "getnetworkhashps [blocks] [height]\n"
+            "Returns the estimated network hashes per second based on the last 120 blocks.\n"
+            "Pass in [blocks] to override # of blocks, -1 specifies since last difficulty change.\n"
+            "Pass in [height] to estimate the network speed at the time when a certain block was found.");
+
+    return GetNetworkHashPS(params.size() > 0 ? params[0].get_int() : 120, params.size() > 1 ? params[1].get_int() : -1);
+}

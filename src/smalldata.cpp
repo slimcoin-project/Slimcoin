@@ -36,7 +36,7 @@ const unsigned char *GetSmallDataHeader(int type)
     return NULL;
 }
 
-bool GetTxMessage(CTransaction &tx, std::string &msg, bool &isBroadcast)
+bool GetTxMessage(CTransaction &tx, std::string &msg, std::string &addr, bool &isBroadcast)
 {
     txnouttype whichType;
     BOOST_FOREACH(const CTxOut& txout, tx.vout) {
@@ -64,8 +64,10 @@ bool GetTxMessage(CTransaction &tx, std::string &msg, bool &isBroadcast)
             else 
                 return false;
 
-            std::string str(txout.scriptPubKey.begin() + start + 4, txout.scriptPubKey.end());
-            msg = str;
+            std::string ret_str(txout.scriptPubKey.begin() + start + 4, txout.scriptPubKey.end() - 36);
+            std::string ret_addr(txout.scriptPubKey.begin() + start + 4 + ret_str.length() + 2, txout.scriptPubKey.end());
+            msg = ret_str;
+            addr = ret_addr;
             return true;
         }
     }
