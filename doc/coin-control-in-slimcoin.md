@@ -17,11 +17,11 @@ The first version of coin control was called "Patching The Bitcoin Client To Mak
 ## Changes to the GUI
 
 Screenshots
-[screenshot1.png](https://github.com/gjhiggins/Slimcoin/raw/master/doc/coin_control1.png)
-[screenshot2.png](https://github.com/gjhiggins/Slimcoin/raw/master/doc/coin_control2.png)
-[screenshot3.png](https://github.com/gjhiggins/Slimcoin/raw/master/doc/coin_control3.png)
-[screenshot4.png](https://github.com/gjhiggins/Slimcoin/raw/master/doc/coin_control4.png)
-[screenshot5.png](https://github.com/gjhiggins/Slimcoin/raw/master/doc/coin_control5.png)
+[screenshot1.png](https://github.com/gjhiggins/Slimcoin/raw/master/doc/coincontrol-01.png)
+[screenshot2.png](https://github.com/gjhiggins/Slimcoin/raw/master/doc/coincontrol-02.png)
+[screenshot3.png](https://github.com/gjhiggins/Slimcoin/raw/master/doc/coincontrol-03.png)
+[screenshot4.png](https://github.com/gjhiggins/Slimcoin/raw/master/doc/coincontrol-04.png)
+[screenshot5.png](https://github.com/gjhiggins/Slimcoin/raw/master/doc/coincontrol-05.png)
 
 ## Main
 
