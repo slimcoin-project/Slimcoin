@@ -5,6 +5,7 @@
 #include <boost/algorithm/string/predicate.hpp>
 #include <boost/algorithm/string/replace.hpp>
 #include <boost/algorithm/string/split.hpp>
+#include <boost/assign/list_of.hpp>
 #include <boost/foreach.hpp>
 #include <boost/preprocessor/stringize.hpp>
 #include <boost/test/unit_test.hpp>
@@ -93,6 +94,50 @@ ScriptError_t ParseScriptError(const std::string &name)
     BOOST_ERROR("Unknown scripterror \"" << name << "\" in test description");
     return SCRIPT_ERR_UNKNOWN_ERROR;
 }
+
+static map<string, unsigned int> mapFlagNames = boost::assign::map_list_of
+    (string("NONE"), (unsigned int)SCRIPT_VERIFY_NONE)
+    (string("P2SH"), (unsigned int)SCRIPT_VERIFY_P2SH)
+    (string("STRICTENC"), (unsigned int)SCRIPT_VERIFY_STRICTENC)
+    (string("DISCOURAGE_UPGRADABLE_NOPS"), (unsigned int)SCRIPT_VERIFY_DISCOURAGE_UPGRADABLE_NOPS)
+    (string("CHECKLOCKTIMEVERIFY"), (unsigned int)SCRIPT_VERIFY_CHECKLOCKTIMEVERIFY);
+
+
+unsigned int ParseScriptFlags(string strFlags)
+{
+    if (strFlags.empty()) {
+        return 0;
+    }
+    unsigned int flags = 0;
+    vector<string> words;
+    boost::algorithm::split(words, strFlags, boost::algorithm::is_any_of(","));
+
+    BOOST_FOREACH(string word, words)
+    {
+        if (!mapFlagNames.count(word))
+            BOOST_ERROR("Bad test: unknown verification flag '" << word << "'");
+        flags |= mapFlagNames[word];
+    }
+
+    return flags;
+}
+
+string FormatScriptFlags(unsigned int flags)
+{
+    if (flags == 0) {
+        return "";
+    }
+    string ret;
+    std::map<string, unsigned int>::const_iterator it = mapFlagNames.begin();
+    while (it != mapFlagNames.end()) {
+        if (flags & it->second) {
+            ret += it->first + ",";
+        }
+        it++;
+    }
+    return ret.substr(0, ret.size() - 1);
+}
+
 
 CScript
 ParseScript(string s)
@@ -225,6 +270,8 @@ BOOST_AUTO_TEST_CASE(script_valid)
 
         CTransaction tx;
         BOOST_CHECK_MESSAGE(VerifyScript(scriptSig, scriptPubKey, tx, 0, true, xflags, SIGHASH_NONE, &err), strTest);
+        if (err > 0)
+            BOOST_TEST_MESSAGE("err " << err << " -- " << ScriptErrorString(err));
     }
 }
 
