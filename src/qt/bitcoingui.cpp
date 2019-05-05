@@ -669,11 +669,6 @@ void BitcoinGUI::setNumBlocks(int count, int nTotalBlocks)
         return;
     }
 
-    if (GetBoolArg("-chart", true) && count > 0 && nTotalBlocks > 0)
-    {
-        miningPage->updatePlot();
-    }
-
     QString strStatusBarWarnings = clientModel->getStatusBarWarnings();
     QString tooltip;
 
@@ -763,11 +758,16 @@ void BitcoinGUI::setNumBlocks(int count, int nTotalBlocks)
     labelBlocksIcon->setToolTip(tooltip);
     progressBarLabel->setToolTip(tooltip);
     progressBar->setToolTip(tooltip);
-    if(GetBoolArg("-chart", true) && count > 0 && nTotalBlocks > 0)
+
+    if(count > 0 && nTotalBlocks > 0 && count == nTotalBlocks)
     {
-        overviewPage->updatePlot(count);
-    }
+        if(GetBoolArg("-chart", true))
+        {
+            miningPage->updatePlot();
+            overviewPage->updatePlot(count);
+        }
     inscriptionsPage->refreshInscriptionTable();
+    }
 }
 
 void BitcoinGUI::setMining(bool mining, int hashrate)

@@ -14,6 +14,12 @@
    <string>Form</string>
   </property>
   <layout class="QHBoxLayout" name="horizontalLayout" stretch="1,1">
+   <property name="topMargin">
+    <number>4</number>
+   </property>
+   <property name="bottomMargin">
+    <number>4</number>
+   </property>
    <item>
     <layout class="QVBoxLayout" name="verticalLayout_2">
      <item>
@@ -32,7 +38,7 @@
          <number>12</number>
         </property>
         <property name="verticalSpacing">
-         <number>12</number>
+         <number>6</number>
         </property>
         <item row="1" column="0">
          <widget class="QLabel" name="label_5">
@@ -109,9 +115,6 @@
           </property>
           <property name="text">
            <string notr="true">0 SLM</string>
-          </property>
-          <property name="textInteractionFlags">
-           <set>Qt::LinksAccessibleByMouse|Qt::TextSelectableByKeyboard|Qt::TextSelectableByMouse</set>
           </property>
          </widget>
         </item>
@@ -254,7 +257,7 @@
        <property name="sizeHint" stdset="0">
         <size>
          <width>20</width>
-         <height>40</height>
+         <height>10</height>
         </size>
        </property>
       </spacer>
