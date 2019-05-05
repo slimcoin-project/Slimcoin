@@ -11,6 +11,7 @@ class ClientModel;
 class WalletModel;
 class TransactionView;
 class OverviewPage;
+class MiningPage;
 class AddressBookPage;
 class ReportView;
 class SendCoinsDialog;
@@ -19,6 +20,7 @@ class BurnCoinsDialog;
 class InscriptionDialog;
 class MultisigDialog;
 class SignVerifyMessageDialog;
+class EncryptDecryptMessageDialog;
 class InscriptionPage;
 class ChatWindow;
 class Notificator;
@@ -73,6 +75,7 @@ private:
     RPCConsole *rpcConsole;
 
     OverviewPage *overviewPage;
+    MiningPage *miningPage;
     QWidget *transactionsPage;
     AddressBookPage *addressBookPage;
     AddressBookPage *receiveCoinsPage;
@@ -83,6 +86,7 @@ private:
     InscriptionDialog *inscriptionPage;
     MultisigDialog *multisigPage;
     SignVerifyMessageDialog *messagePage;
+    EncryptDecryptMessageDialog *dataPage;
     InscriptionPage *inscriptionsPage;
 	ChatWindow *chatPage;
     Notificator *notificator;
@@ -96,11 +100,13 @@ private:
 
     QMenuBar *appMenuBar;
     QAction *overviewAction;
+    QAction *miningAction;
     QAction *historyAction;
     QAction *quitAction;
     QAction *sendCoinsAction;
     QAction *addressBookAction;
     QAction *messageAction;
+    QAction *dataAction;
     QAction *aboutAction;
     QAction *receiveCoinsAction;
     QAction *optionsAction;
@@ -165,9 +171,14 @@ public slots:
     void gotoMessagePage();
     void gotoMessagePage(QString);
 
+    void gotoDataPage();
+    void gotoDataPage(QString);
+
 private slots:
     /** Switch to overview (home) page */
     void gotoOverviewPage();
+    /** Switch to mining page */
+    void gotoMiningPage();
     /** Switch to history (transactions) page */
     void gotoHistoryPage();
     /** Switch to address book page */

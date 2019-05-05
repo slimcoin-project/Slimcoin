@@ -10,6 +10,7 @@ import unittest
 import json
 import base64
 import requests
+import os
 from datetime import datetime
 
 
@@ -20,7 +21,7 @@ testnet_port = 41684
 testnet_rpc_port = 41685
 username = os.environ["USER"]       # or near offer
 password = os.environ["PASSWORD"]   # ditto
-oldmaxcheckpointblockheight = 121300
+oldmaxcheckpointblockheight = 904630
 
 
 class BitcoinRPC:
@@ -97,9 +98,9 @@ class AcmeTests(unittest.TestCase):
 
     # @unittest.skip("Passed, skipping")
     def test01(self):
-        # height = rpc.getblockcount()
-        s = int(((940000 - oldmaxcheckpointblockheight) + oldmaxcheckpointblockheight) / 12)
-        for height in range(oldmaxcheckpointblockheight, 940000, s):
+        current_height = self.rpc.getblockcount()
+        s = int(((current_height - oldmaxcheckpointblockheight) + oldmaxcheckpointblockheight) / 12)
+        for height in range(oldmaxcheckpointblockheight, current_height, s):
             bprev = height - 1
             bnext = height + 1
             blockhash, blockdata, dt = self.get_candidate(height)

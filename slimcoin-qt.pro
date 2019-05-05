@@ -5,7 +5,7 @@ INCLUDEPATH += src src/json src/qt
 DEFINES += QT_GUI BOOST_THREAD_USE_LIB BOOST_SPIRIT_THREADSAFE QT_NO_PRINTER BOOST_NO_CXX11_SCOPED_ENUMS ENABLE_PRECOMPILED_HEADERS=OFF
 CONFIG += no_include_pwd
 CONFIG += thread
-CONFIG += debug # release
+CONFIG += release
 CONFIG += qt_framework
 QT += core gui network testlib
 CONFIG += link_pkgconfig
@@ -185,7 +185,7 @@ contains(USE_UPNP, -) {
     }
     isEmpty(MINIUPNPC_INCLUDE_PATH) {
         contains(CONFIG, brew) {
-            macx:MINIUPNPC_INCLUDE_PATH=/usr/local/Cellar/miniupnpc/2.0/include
+            macx:MINIUPNPC_INCLUDE_PATH=/usr/local/Cellar/miniupnpc/2.1/include
         }else{
             macx:MINIUPNPC_INCLUDE_PATH=/opt/local/include
         }
@@ -194,7 +194,7 @@ contains(USE_UPNP, -) {
     }
     isEmpty(MINIUPNPC_LIB_PATH) {
         contains(CONFIG, brew) {
-            macx:MINIUPNPC_LIB_PATH=/usr/local/Cellar/miniupnpc/2.0/lib
+            macx:MINIUPNPC_LIB_PATH=/usr/local/Cellar/miniupnpc/2.1/lib
         }else{
             macx:MINIUPNPC_LIB_PATH=/opt/local/lib
         }
@@ -293,6 +293,7 @@ HEADERS += src/addrman.h \
     src/crypter.h \
     src/db.h \
     src/dcrypt.h \
+    src/ecies/ecies.h \
     src/init.h \
     src/irc.h \
     src/json/json_spirit.h \
@@ -329,10 +330,12 @@ HEADERS += src/addrman.h \
     src/qt/coincontroltreewidget.h \
     src/qt/csvmodelwriter.h \
     src/qt/editaddressdialog.h \
+    src/qt/encryptdecryptmessagedialog.h \
     src/qt/guiconstants.h \
     src/qt/guiutil.h \
     src/qt/inscriptiondialog.h \
     src/qt/messagepage.h \
+    src/qt/miningpage.h \
     src/qt/monitoreddatamapper.h \
     src/qt/multisigaddressentry.h \
     src/qt/multisiginputentry.h \
@@ -360,6 +363,7 @@ HEADERS += src/addrman.h \
     src/qt/transactionview.h \
     src/qt/walletmodel.h \
     src/script.h \
+    src/script_error.h \
     src/serialize.h \
     src/sha256.h \
     src/smalldata.h \
@@ -377,6 +381,9 @@ SOURCES += src/addrman.cpp \
     src/crypter.cpp \
     src/db.cpp \
     src/dcrypt.cpp \
+    src/ecies/secure.c \
+    src/ecies/ecies.c \
+    src/ecies/kdf.c \
     src/init.cpp \
     src/irc.cpp \
     src/json/json_spirit_reader.cpp \
@@ -409,9 +416,11 @@ SOURCES += src/addrman.cpp \
     src/qt/coincontroltreewidget.cpp \
     src/qt/csvmodelwriter.cpp \
     src/qt/editaddressdialog.cpp \
+    src/qt/encryptdecryptmessagedialog.cpp \
     src/qt/guiutil.cpp \
     src/qt/inscriptiondialog.cpp \
     src/qt/messagepage.cpp \
+    src/qt/miningpage.cpp \
     src/qt/monitoreddatamapper.cpp \
     src/qt/multisigaddressentry.cpp \
     src/qt/multisiginputentry.cpp \
@@ -438,8 +447,10 @@ SOURCES += src/addrman.cpp \
     src/qt/transactiontablemodel.cpp \
     src/qt/transactionview.cpp \
     src/qt/walletmodel.cpp \
+    src/rpccrypto.cpp \
     src/rpcdump.cpp \
     src/script.cpp \
+    src/script_error.cpp \
     src/sha256.cpp \
     src/smalldata.cpp \
     src/util.cpp \
@@ -460,8 +471,10 @@ FORMS += \
     src/qt/forms/chatwindow.ui \
     src/qt/forms/coincontroldialog.ui \
     src/qt/forms/editaddressdialog.ui \
+    src/qt/forms/encryptdecryptmessagedialog.ui \
     src/qt/forms/inscriptiondialog.ui \
     src/qt/forms/messagepage.ui \
+    src/qt/forms/miningpage.ui \
     src/qt/forms/multisigaddressentry.ui \
     src/qt/forms/multisiginputentry.ui \
     src/qt/forms/multisigdialog.ui \
@@ -703,6 +716,7 @@ windows:QMAKE_LFLAGS *= -Wl,--dynamicbase -Wl,--nxcompat
 # on Windows: enable GCC large address aware linker flag
 # hack: when compiling 64-bit, pass 64BIT=1 to qmake to avoid incompatible large-address flag
 windows:!contains(64BIT, 1) QMAKE_LFLAGS *= -Wl,--large-address-aware
+windows:contains(MXE, 1) LIBS += -lpthread
 
 macx:{
     QMAKE_RPATHDIR += @executable_path/../Frameworks

@@ -925,11 +925,12 @@ void CWallet::SearchOPRETURNTransactions(uint256 hash, std::vector<std::pair<std
         BOOST_FOREACH (const CTransaction& tx, block.vtx)
         {
             std::string txmsg;
+            std::string addr;
             bool isBroadcast;
             CTransaction ctx = tx;
-            if ( GetTxMessage(ctx, txmsg, isBroadcast) ) {
+            if ( GetTxMessage(ctx, txmsg, addr, isBroadcast) ) {
                 if (txmsg == matchingHash) {
-                    vTxResults.push_back( std::make_pair(tx.GetHash().GetHex(), pindexFirst->nHeight) );
+                    vTxResults.push_back( std::make_pair(tx.GetHash().GetHex(), tx.nTime/*pindexFirst->nHeight*/) );
                 }
             }
         }
@@ -941,7 +942,8 @@ void CWallet::SearchOPRETURNTransactions(uint256 hash, std::vector<std::pair<std
 
 void CWallet::GetTxMessages(std::vector<std::pair<std::string, int> >& vTxResults)
 {
-    int blockstogoback = pindexBest->nHeight - 2500;
+    // int blockstogoback = pindexBest->nHeight - /*36*/2500;
+    int blockstogoback = pindexBest->nHeight - 362500;
 
     const CBlockIndex* pindexFirst = pindexBest;
     for (int i = 0; pindexFirst && i < blockstogoback; i++) {
@@ -952,9 +954,10 @@ void CWallet::GetTxMessages(std::vector<std::pair<std::string, int> >& vTxResult
         BOOST_FOREACH (const CTransaction& tx, block.vtx)
         {
             std::string txmsg;
+            std::string addr;
             bool isBroadcast;
             CTransaction ctx = tx;
-            if ( GetTxMessage(ctx, txmsg, isBroadcast) ) {
+            if ( GetTxMessage(ctx, txmsg, addr, isBroadcast) ) {
                 vTxResults.push_back( std::make_pair(txmsg, tx.nTime) );
             }
         }
@@ -979,10 +982,11 @@ void CWallet::GetMyTxMessages(std::vector<std::pair<std::string, int> >& vTxResu
             continue;
 
         std::string txmsg;
+        std::string addr;
         bool isBroadcast;
         CTransaction ctx = tx;
-        if ( GetTxMessage(ctx, txmsg, isBroadcast) ) {
-            vTxResults.push_back( std::make_pair(txmsg, tx.nTime) );
+        if ( GetTxMessage(ctx, txmsg, addr, isBroadcast) ) {
+            vTxResults.push_back( std::make_pair(txmsg, pindex->nTime) );
         }
     }
 }
@@ -1251,7 +1255,7 @@ bool CWallet::SelectCoins(int64 nTargetValue, unsigned int nSpendTime, set<pair<
         }
         return (nValueRet >= nTargetValue);
 
-     }
+    }
     return (SelectCoinsMinConf(nTargetValue, 1, 6, vCoins, setCoinsRet, nValueRet) ||
             SelectCoinsMinConf(nTargetValue, 1, 1, vCoins, setCoinsRet, nValueRet) ||
             SelectCoinsMinConf(nTargetValue, 0, 1, vCoins, setCoinsRet, nValueRet));
@@ -2195,4 +2199,25 @@ void CWallet::Fix_SpentCoins(int& nMismatchFound, int64& nBalanceInQuestion, int
            printf("FixSpentCoins %s orphaned generation tx %s\n", fCheckOnly ? "found" : "removed", hash.ToString().c_str());
         }
      }
+}
+
+void CWallet::ClearOrphans()
+{
+    list<uint256> orphans;
+
+    LOCK(cs_wallet);
+    for(map<uint256, CWalletTx>::const_iterator it = mapWallet.begin(); it != mapWallet.end(); ++it)
+    {
+        const CWalletTx *wtx = &(*it).second;
+        if((wtx->IsCoinBase() || wtx->IsCoinStake()) && !wtx->IsInMainChain())
+        {
+          orphans.push_back(wtx->GetHash());
+        }
+    }
+
+    for(list<uint256>::const_iterator it = orphans.begin(); it != orphans.end(); ++it)
+    {
+        EraseFromWallet(*it);
+        UpdatedTransaction(*it);
+    }
 }

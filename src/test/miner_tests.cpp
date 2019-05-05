@@ -27,7 +27,7 @@ BOOST_AUTO_TEST_CASE(sha256transform_equality)
 
   SHA256Transform(&hash, pinput, pSHA256InitState);
 
-  BOOST_TEST_MESSAGE(hash.GetHex());
+  // BOOST_TEST_MESSAGE(hash.GetHex()); 2df5e1c65ef9f8cde240d23cae2ec036d31a15ec64bc68f64be242b1da6631f3
 
   uint256 hash_reference("0x2df5e1c65ef9f8cde240d23cae2ec036d31a15ec64bc68f64be242b1da6631f3");
 

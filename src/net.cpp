@@ -1174,7 +1174,8 @@ void ThreadOpenConnections2(void* parg)
 
         // Add seed nodes if IRC isn't working
         bool fTOR = (fUseProxy && addrProxy.GetPort() == 9050);
-        if (addrman.size()==0 && (GetTime() - nStart > 60 || fTOR) && !fTestNet)
+        // slimcoin: do not wait 60s because IRC is disabled
+        if (addrman.size()==0 && (GetTime() - nStart > /*6*/0 || fTOR) && !fTestNet)
         {
             std::vector<CAddress> vAdd;
             for (unsigned int i = 0; i < ARRAYLEN(pnSeed); i++)

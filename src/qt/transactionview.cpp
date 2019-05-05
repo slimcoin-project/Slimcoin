@@ -129,6 +129,7 @@ TransactionView::TransactionView(QWidget *parent) :
     QAction *copyAmountAction = new QAction(tr("Copy amount"), this);
     QAction *editLabelAction = new QAction(tr("Edit label"), this);
     QAction *showDetailsAction = new QAction(tr("Show details..."), this);
+    QAction *clearOrphansAction = new QAction(tr("Clear orphans"), this);
 
     contextMenu = new QMenu();
     contextMenu->addAction(copyAddressAction);
@@ -136,6 +137,8 @@ TransactionView::TransactionView(QWidget *parent) :
     contextMenu->addAction(copyAmountAction);
     contextMenu->addAction(editLabelAction);
     contextMenu->addAction(showDetailsAction);
+    contextMenu->addSeparator();
+    contextMenu->addAction(clearOrphansAction);
 
     // Connect actions
     connect(dateWidget, SIGNAL(activated(int)), this, SLOT(chooseDate(int)));
@@ -377,6 +380,19 @@ void TransactionView::showDetails()
         TransactionDescDialog dlg(selection.at(0));
         dlg.exec();
     }
+}
+
+void TransactionView::clearOrphans()
+{
+    if(!model)
+        return;
+
+    model->clearOrphans();
+    model->getTransactionTableModel()->refresh();
+    delete transactionProxyModel;
+    setModel(model);
+    transactionView->sortByColumn(TransactionTableModel::Status, Qt::DescendingOrder);
+    transactionView->sortByColumn(TransactionTableModel::Date, Qt::DescendingOrder);
 }
 
 QWidget *TransactionView::createDateRangeWidget()

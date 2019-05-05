@@ -78,6 +78,7 @@ bool fNoListen = false;
 bool fLogTimestamps = false;
 bool fUseFastIndex = true;
 CMedianFilter<int64> vTimeOffsets(200,0);
+CClientUIInterface uiInterface;
 
 // Init openssl library multithreading support
 static boost::interprocess::interprocess_mutex** ppmutexOpenSSL;

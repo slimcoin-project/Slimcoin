@@ -1,0 +1,390 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<ui version="4.0">
+ <class>EncryptDecryptMessageDialog</class>
+ <widget class="QDialog" name="EncryptDecryptMessageDialog">
+  <property name="geometry">
+   <rect>
+    <x>0</x>
+    <y>0</y>
+    <width>752</width>
+    <height>380</height>
+   </rect>
+  </property>
+  <property name="windowTitle">
+   <string>Encryption - Encrypt / Decrypt message</string>
+  </property>
+  <property name="modal">
+   <bool>true</bool>
+  </property>
+  <layout class="QVBoxLayout" name="verticalLayout">
+   <item>
+    <widget class="QTabWidget" name="tabWidget">
+     <property name="currentIndex">
+      <number>0</number>
+     </property>
+     <widget class="QWidget" name="tabEncryptMessage">
+      <attribute name="title">
+       <string>&amp;Encrypt Message</string>
+      </attribute>
+      <layout class="QVBoxLayout" name="verticalLayout_ED">
+       <item>
+        <widget class="QLabel" name="infoLabel_ED">
+         <property name="text">
+          <string>You can encrypt a message using a Slimcoin address so that only the owner of the address can decrypt it.</string>
+         </property>
+         <property name="textFormat">
+          <enum>Qt::PlainText</enum>
+         </property>
+         <property name="wordWrap">
+          <bool>true</bool>
+         </property>
+        </widget>
+       </item>
+       <item>
+        <layout class="QHBoxLayout" name="horizontalLayout_1_ED">
+         <property name="spacing">
+          <number>0</number>
+         </property>
+         <item>
+          <widget class="QValidatedLineEdit" name="addressIn_ED">
+           <property name="toolTip">
+            <string>The address to encrypt the message with</string>
+           </property>
+          </widget>
+         </item>
+         <item>
+          <widget class="QPushButton" name="addressBookButton_ED">
+           <property name="toolTip">
+            <string>Choose previously used address</string>
+           </property>
+           <property name="text">
+            <string/>
+           </property>
+           <property name="icon">
+            <iconset resource="../bitcoin.qrc">
+             <normaloff>:/icons/address-book</normaloff>:/icons/address-book</iconset>
+           </property>
+           <property name="shortcut">
+            <string>Alt+A</string>
+           </property>
+           <property name="autoDefault">
+            <bool>false</bool>
+           </property>
+          </widget>
+         </item>
+         <item>
+          <widget class="QPushButton" name="pasteButton_ED">
+           <property name="toolTip">
+            <string>Paste address from clipboard</string>
+           </property>
+           <property name="text">
+            <string/>
+           </property>
+           <property name="icon">
+            <iconset resource="../bitcoin.qrc">
+             <normaloff>:/icons/editpaste</normaloff>:/icons/editpaste</iconset>
+           </property>
+           <property name="shortcut">
+            <string>Alt+P</string>
+           </property>
+           <property name="autoDefault">
+            <bool>false</bool>
+           </property>
+          </widget>
+         </item>
+        </layout>
+       </item>
+       <item>
+        <widget class="QPlainTextEdit" name="messageIn_ED">
+         <property name="toolTip">
+          <string>Enter the message you want to encrypt here</string>
+         </property>
+        </widget>
+       </item>
+       <item>
+        <widget class="QLabel" name="signatureLabel_ED">
+         <property name="text">
+          <string>Encrypted message.</string>
+         </property>
+         <property name="textFormat">
+          <enum>Qt::PlainText</enum>
+         </property>
+        </widget>
+       </item>
+       <item>
+        <layout class="QHBoxLayout" name="horizontalLayout_2_ED">
+         <property name="spacing">
+          <number>0</number>
+         </property>
+         <item>
+          <widget class="QLineEdit" name="signatureOut_ED">
+           <property name="font">
+            <font>
+             <italic>true</italic>
+            </font>
+           </property>
+           <property name="readOnly">
+            <bool>true</bool>
+           </property>
+          </widget>
+         </item>
+         <item>
+          <widget class="QPushButton" name="copyEncryptedDataButton_ED">
+           <property name="toolTip">
+            <string>Copy the encrypted message to the system clipboard</string>
+           </property>
+           <property name="text">
+            <string/>
+           </property>
+           <property name="icon">
+            <iconset resource="../bitcoin.qrc">
+             <normaloff>:/icons/editcopy</normaloff>:/icons/editcopy</iconset>
+           </property>
+           <property name="autoDefault">
+            <bool>false</bool>
+           </property>
+          </widget>
+         </item>
+        </layout>
+       </item>
+       <item>
+        <layout class="QHBoxLayout" name="horizontalLayout_3_ED">
+         <item>
+          <widget class="QPushButton" name="encryptMessageButton_ED">
+           <property name="toolTip">
+            <string>Encrypt the message with your Slimcoin address</string>
+           </property>
+           <property name="text">
+            <string>Encrypt &amp;Message</string>
+           </property>
+           <property name="icon">
+            <iconset resource="../bitcoin.qrc">
+             <normaloff>:/icons/edit</normaloff>:/icons/edit</iconset>
+           </property>
+           <property name="autoDefault">
+            <bool>false</bool>
+           </property>
+          </widget>
+         </item>
+         <item>
+          <widget class="QPushButton" name="clearButton_ED">
+           <property name="toolTip">
+            <string>Reset all encrypt message fields</string>
+           </property>
+           <property name="text">
+            <string>Clear &amp;All</string>
+           </property>
+           <property name="icon">
+            <iconset resource="../bitcoin.qrc">
+             <normaloff>:/icons/remove</normaloff>:/icons/remove</iconset>
+           </property>
+           <property name="autoDefault">
+            <bool>false</bool>
+           </property>
+          </widget>
+         </item>
+         <item>
+          <spacer name="horizontalSpacer_1_ED">
+           <property name="orientation">
+            <enum>Qt::Horizontal</enum>
+           </property>
+           <property name="sizeHint" stdset="0">
+            <size>
+             <width>40</width>
+             <height>48</height>
+            </size>
+           </property>
+          </spacer>
+         </item>
+         <item>
+          <widget class="QLabel" name="statusLabel_ED">
+           <property name="font">
+            <font>
+             <weight>75</weight>
+             <bold>true</bold>
+            </font>
+           </property>
+           <property name="text">
+            <string/>
+           </property>
+           <property name="wordWrap">
+            <bool>true</bool>
+           </property>
+          </widget>
+         </item>
+         <item>
+          <spacer name="horizontalSpacer_2_ED">
+           <property name="orientation">
+            <enum>Qt::Horizontal</enum>
+           </property>
+           <property name="sizeHint" stdset="0">
+            <size>
+             <width>40</width>
+             <height>48</height>
+            </size>
+           </property>
+          </spacer>
+         </item>
+        </layout>
+       </item>
+      </layout>
+     </widget>
+     <widget class="QWidget" name="tabVerifyMessage">
+      <attribute name="title">
+       <string>&amp;Decrypt Message</string>
+      </attribute>
+      <layout class="QVBoxLayout" name="verticalLayout_DD">
+       <item>
+        <widget class="QLabel" name="infoLabel_DD">
+         <property name="text">
+          <string>Enter the Slimcoin address and the message (ensure you copy line breaks, spaces, tabs, etc. exactly) below to decrypt the message.</string>
+         </property>
+         <property name="textFormat">
+          <enum>Qt::PlainText</enum>
+         </property>
+         <property name="alignment">
+          <set>Qt::AlignLeading|Qt::AlignLeft|Qt::AlignTop</set>
+         </property>
+         <property name="wordWrap">
+          <bool>true</bool>
+         </property>
+        </widget>
+       </item>
+       <item>
+        <layout class="QHBoxLayout" name="horizontalLayout_1_DD">
+         <property name="spacing">
+          <number>0</number>
+         </property>
+         <item>
+          <widget class="QValidatedLineEdit" name="addressIn_DD">
+           <property name="toolTip">
+            <string>The address the message was encrypted with</string>
+           </property>
+          </widget>
+         </item>
+         <item>
+          <widget class="QPushButton" name="addressBookButton_DD">
+           <property name="toolTip">
+            <string>Choose previously used address</string>
+           </property>
+           <property name="text">
+            <string/>
+           </property>
+           <property name="icon">
+            <iconset resource="../bitcoin.qrc">
+             <normaloff>:/icons/address-book</normaloff>:/icons/address-book</iconset>
+           </property>
+           <property name="shortcut">
+            <string>Alt+A</string>
+           </property>
+           <property name="autoDefault">
+            <bool>false</bool>
+           </property>
+          </widget>
+         </item>
+        </layout>
+       </item>
+       <item>
+        <widget class="QPlainTextEdit" name="messageIn_DD"/>
+       </item>
+       <item>
+        <widget class="QValidatedLineEdit" name="signatureIn_DD"/>
+       </item>
+       <item>
+        <layout class="QHBoxLayout" name="horizontalLayout_2_DD">
+         <item>
+          <widget class="QPushButton" name="decryptMessageButton_DD">
+           <property name="toolTip">
+            <string>Decrypt the message encrypted with the specified Slimcoin address</string>
+           </property>
+           <property name="text">
+            <string>Decrypt &amp;Message</string>
+           </property>
+           <property name="icon">
+            <iconset resource="../bitcoin.qrc">
+             <normaloff>:/icons/transaction_0</normaloff>:/icons/transaction_0</iconset>
+           </property>
+           <property name="autoDefault">
+            <bool>false</bool>
+           </property>
+          </widget>
+         </item>
+         <item>
+          <widget class="QPushButton" name="clearButton_DD">
+           <property name="toolTip">
+            <string>Reset all decrypt message fields</string>
+           </property>
+           <property name="text">
+            <string>Clear &amp;All</string>
+           </property>
+           <property name="icon">
+            <iconset resource="../bitcoin.qrc">
+             <normaloff>:/icons/remove</normaloff>:/icons/remove</iconset>
+           </property>
+           <property name="autoDefault">
+            <bool>false</bool>
+           </property>
+          </widget>
+         </item>
+         <item>
+          <spacer name="horizontalSpacer_1_DD">
+           <property name="orientation">
+            <enum>Qt::Horizontal</enum>
+           </property>
+           <property name="sizeHint" stdset="0">
+            <size>
+             <width>40</width>
+             <height>48</height>
+            </size>
+           </property>
+          </spacer>
+         </item>
+         <item>
+          <widget class="QLabel" name="statusLabel_DD">
+           <property name="font">
+            <font>
+             <weight>75</weight>
+             <bold>true</bold>
+            </font>
+           </property>
+           <property name="text">
+            <string/>
+           </property>
+           <property name="wordWrap">
+            <bool>true</bool>
+           </property>
+          </widget>
+         </item>
+         <item>
+          <spacer name="horizontalSpacer_2_DD">
+           <property name="orientation">
+            <enum>Qt::Horizontal</enum>
+           </property>
+           <property name="sizeHint" stdset="0">
+            <size>
+             <width>40</width>
+             <height>48</height>
+            </size>
+           </property>
+          </spacer>
+         </item>
+        </layout>
+       </item>
+      </layout>
+     </widget>
+    </widget>
+   </item>
+  </layout>
+ </widget>
+ <customwidgets>
+  <customwidget>
+   <class>QValidatedLineEdit</class>
+   <extends>QLineEdit</extends>
+   <header>qvalidatedlineedit.h</header>
+  </customwidget>
+ </customwidgets>
+ <resources>
+  <include location="../bitcoin.qrc"/>
+ </resources>
+ <connections/>
+</ui>

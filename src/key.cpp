@@ -10,9 +10,11 @@
 #endif
 
 #include <openssl/obj_mac.h>
+#include <openssl/ecdh.h>
 
 #include "key.h"
 #include "util.h"
+#include "ecies/ecies.h"
 
 // Generate a private key from just the secret parameter
 int EC_KEY_regenerate_key(EC_KEY *eckey, BIGNUM *priv_key)
@@ -611,3 +613,71 @@ bool CPubKey::IsFullyValid() const {
     return true;
 }
 
+void CPubKey::EncryptData(const std::vector<unsigned char> &plaindata, std::vector<unsigned char> &encdata) {
+    CKey key;
+
+    key.SetPubKey(*this);
+    key.EncryptData(plaindata, encdata);
+}
+
+void CKey::EncryptData(const std::vector<unsigned char> &plaindata, std::vector<unsigned char> &encdata) {
+    ecies_ctx_t *ctx = new ecies_ctx_t;
+    char error[256] = "Unknown error";
+    secure_t *cryptex;
+
+    ctx->cipher = EVP_aes_128_cbc();
+    ctx->md = EVP_ripemd160();
+    ctx->kdf_md = EVP_ripemd160();
+    ctx->stored_key_length = 33;
+    ctx->user_key = pkey;
+
+    if(!EC_KEY_get0_public_key(ctx->user_key))
+      throw(key_error("Invalid public key"));
+
+    cryptex = ecies_encrypt(ctx, (unsigned char *) &plaindata[0], plaindata.size(), error);
+
+    if(!cryptex) {
+        free(ctx);
+        throw(key_error(std::string("Error in encryption: ") + error));
+    }
+
+    encdata.resize(secure_data_sum_length(cryptex));
+    memcpy(&encdata[0], secure_key_data(cryptex), encdata.size());
+    secure_free(cryptex);
+    free(ctx);
+}
+
+void CKey::DecryptData(const std::vector<unsigned char> &encdata, std::vector<unsigned char> &plaindata) {
+    ecies_ctx_t *ctx = new ecies_ctx_t;
+    char error[256] = "Unknown error";
+    secure_t *cryptex;
+    unsigned char *decrypted;
+    size_t length;
+
+    ctx->cipher = EVP_aes_128_cbc();
+    ctx->md = EVP_ripemd160();
+    ctx->kdf_md = EVP_ripemd160();
+    ctx->stored_key_length = 33;
+    ctx->user_key = pkey;
+
+    if(!EC_KEY_get0_private_key(ctx->user_key))
+      throw(key_error("Invalid private key"));
+
+    size_t key_length = ctx->stored_key_length;
+    size_t mac_length = EVP_MD_size(ctx->md);
+
+    cryptex = secure_alloc(key_length, mac_length, encdata.size() - key_length - mac_length);
+    memcpy(secure_key_data(cryptex), &encdata[0], encdata.size());
+    decrypted = ecies_decrypt(ctx, cryptex, &length, error);
+
+    secure_free(cryptex);
+    free(ctx);
+
+    if(!decrypted) {
+      throw(key_error(std::string("Error in decryption: ") + error));
+    }
+
+    plaindata.resize(length);
+    memcpy(&plaindata[0], decrypted, length);
+    free(decrypted);
+}

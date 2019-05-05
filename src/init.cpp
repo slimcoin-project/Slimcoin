@@ -407,18 +407,18 @@ bool AppInit2(int argc, char *argv[])
             if (file != NULL)
                 LoadExternalBlockFile(file);
         }
-    }
-
-    filesystem::path pathBootstrap = GetDataDir() / "bootstrap.dat";
-    if (filesystem::exists(pathBootstrap)) {
-        InitMessage(_("Importing bootstrap blockchain data file."));
-
-        /* FIXME: debugger reports file == 0x0 */
-        FILE *file = fopen(pathBootstrap.string().c_str(), "rb");
-        if (file != NULL) {
-            filesystem::path pathBootstrapOld = GetDataDir() / "bootstrap.dat.old";
-            LoadExternalBlockFile(file);
-            RenameOver(pathBootstrap, pathBootstrapOld);
+    } else {
+        filesystem::path pathBootstrap = GetDataDir() / "bootstrap.dat";
+        if (filesystem::exists(pathBootstrap)) {
+            InitMessage(_("Loading from bootstrap.dat."));
+            FILE *file = fopen(pathBootstrap.string().c_str(), "rb");
+            if (file != NULL) {
+                filesystem::path pathBootstrapOld = GetDataDir() / "bootstrap.dat.old";
+                LoadExternalBlockFile(file);
+                RenameOver(pathBootstrap, pathBootstrapOld);
+            } else {
+                printf("Loading failed for bootstrap file %s, reverting to sync from network.\n", pathBootstrap.string().c_str());
+            }
         }
     }
 
