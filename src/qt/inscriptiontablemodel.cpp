@@ -170,13 +170,9 @@ int InscriptionTableModel::columnCount(const QModelIndex &parent) const
 
 void InscriptionTableModel::refreshInscriptionTable()
 {
-    if (this->priv) {
-        printf("Refreshing inscription table.\n");
-        priv->refreshTable();
-        Q_EMIT layoutChanged();
-    } else {
-        printf("Inscriptiontable uninitialised.\n");
-    }
+    printf("Refreshing inscription table.\n");
+    priv->refreshTable();
+    Q_EMIT layoutChanged();
 }
 
 QVariant InscriptionTableModel::data(const QModelIndex &index, int role) const
