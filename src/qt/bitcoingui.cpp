@@ -759,7 +759,7 @@ void BitcoinGUI::setNumBlocks(int count, int nTotalBlocks)
     progressBarLabel->setToolTip(tooltip);
     progressBar->setToolTip(tooltip);
 
-    if(count > 0 && nTotalBlocks > 0 && count == nTotalBlocks)
+    if(count > 0 && nTotalBlocks > 0 && count >= nTotalBlocks)
     {
         if(GetBoolArg("-chart", true))
         {
