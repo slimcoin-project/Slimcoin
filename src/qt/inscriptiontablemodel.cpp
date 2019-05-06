@@ -170,7 +170,7 @@ int InscriptionTableModel::columnCount(const QModelIndex &parent) const
 
 void InscriptionTableModel::refreshInscriptionTable()
 {
-    if (this) {
+    if (this->priv) {
         printf("Refreshing inscription table.\n");
         priv->refreshTable();
         Q_EMIT layoutChanged();
