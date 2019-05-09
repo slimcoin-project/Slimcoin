@@ -21,7 +21,6 @@ class InscriptionDialog;
 class MultisigDialog;
 class SignVerifyMessageDialog;
 class EncryptDecryptMessageDialog;
-class InscriptionPage;
 class ChatWindow;
 class Notificator;
 class RPCConsole;
@@ -83,12 +82,11 @@ private:
     BlockBrowser *blockBrowser;
     ReportView *accountReportPage;
     BurnCoinsDialog *burnCoinsPage;
-    InscriptionDialog *inscriptionPage;
+    InscriptionDialog *inscriptionDialog;
     MultisigDialog *multisigPage;
     SignVerifyMessageDialog *messagePage;
     EncryptDecryptMessageDialog *dataPage;
-    InscriptionPage *inscriptionsPage;
-	ChatWindow *chatPage;
+    ChatWindow *chatPage;
     Notificator *notificator;
 
     QLabel *labelEncryptionIcon;
@@ -125,7 +123,6 @@ private:
     QAction *burnCoinsAction;
     QAction *inscribeAction;
     QAction *multisigAction;
-    QAction *inscriptionsPageAction;
     QAction *chatPageAction;
     QAction *accountReportAction;
 
@@ -195,10 +192,8 @@ private slots:
     void gotoAccountReportPage();
     /** switch to multisig page*/
     void gotoMultisigPage();
-    /** switch to inscription page*/
-    void gotoInscriptionPage();
-    /** Switch to inscription page */
-    void gotoInscriptionsPage();
+    /** switch to inscription dialog*/
+    void gotoInscriptionDialog();
     /** Switch to chat page */
     void gotoChatPage();
     /** Show configuration dialog */

@@ -27,7 +27,6 @@
 #include "chatwindow.h"
 #include "reportview.h"
 #include "inscriptiondialog.h"
-#include "inscriptionpage.h"
 #include "miningpage.h"
 #include "bitcoinunits.h"
 #include "guiconstants.h"
@@ -84,7 +83,6 @@ BitcoinGUI::BitcoinGUI(QWidget *parent):
     walletModel(0),
     trayIcon(0),
     rpcConsole(0),
-    inscriptionPage(0),
     notificator(0),
     encryptWalletAction(0),
     changePassphraseAction(0),
@@ -140,8 +138,8 @@ BitcoinGUI::BitcoinGUI(QWidget *parent):
     burnCoinsPage = new BurnCoinsDialog(this);
     connect(burnCoinsAction, SIGNAL(triggered()), burnCoinsPage, SLOT(show()));
 
-    inscriptionPage = new InscriptionDialog(this);
-    connect(inscribeAction, SIGNAL(triggered()), inscriptionPage, SLOT(show()));
+    inscriptionDialog = new InscriptionDialog(this);
+    connect(inscribeAction, SIGNAL(triggered()), inscriptionDialog, SLOT(show()));
 
     multisigPage = new MultisigDialog(this);
 
@@ -150,8 +148,6 @@ BitcoinGUI::BitcoinGUI(QWidget *parent):
     dataPage = new EncryptDecryptMessageDialog(this);
 
     chatPage = new ChatWindow(this);
-
-    inscriptionsPage = new InscriptionPage(this);
 
     centralWidget = new QStackedWidget(this);
     centralWidget->addWidget(overviewPage);
@@ -320,10 +316,6 @@ void BitcoinGUI::createActions()
     multisigAction->setStatusTip(tr("Multi-signature addresses and transactions."));
     multisigAction->setToolTip(multisigAction->statusTip());
 
-    inscriptionsPageAction = new QAction(QIcon(":/icons/inscriptions"), tr("&List inscriptions"), this);
-    inscriptionsPageAction->setToolTip(tr("View your inscriptions"));
-    inscriptionsPageAction->setToolTip(inscriptionsPageAction->statusTip());
-
     chatPageAction = new QAction(QIcon(":/icons/chat"), tr("&Chat/Social"), this);
     chatPageAction->setToolTip(tr("IRC Chat tab"));
     chatPageAction->setToolTip(chatPageAction->statusTip());
@@ -345,8 +337,6 @@ void BitcoinGUI::createActions()
     connect(dataAction, SIGNAL(triggered()), this, SLOT(gotoDataPage()));
     connect(multisigAction, SIGNAL(triggered()), this, SLOT(showNormalIfMinimized()));
     connect(multisigAction, SIGNAL(triggered()), this, SLOT(gotoMultisigPage()));
-    connect(inscriptionsPageAction, SIGNAL(triggered()), this, SLOT(showNormalIfMinimized()));
-    connect(inscriptionsPageAction, SIGNAL(triggered()), this, SLOT(gotoInscriptionsPage()));
     connect(chatPageAction, SIGNAL(triggered()), this, SLOT(showNormalIfMinimized()));
     connect(chatPageAction, SIGNAL(triggered()), this, SLOT(gotoChatPage()));
 
@@ -432,7 +422,6 @@ void BitcoinGUI::createMenuBar()
     tools->addAction(messageAction);
     tools->addAction(dataAction);
     tools->addAction(multisigAction);
-    tools->addAction(inscriptionsPageAction);
     tools->addAction(chatPageAction);
     tools->addSeparator();
     tools->addAction(checkWalletAction);
@@ -506,8 +495,7 @@ void BitcoinGUI::setClientModel(ClientModel *clientModel)
         overviewPage->setClientModel(clientModel);
         rpcConsole->setClientModel(clientModel);
         accountReportPage->setClientModel(clientModel);
-        inscriptionPage->setClientModel(clientModel);
-        inscriptionsPage->setClientModel(clientModel);
+        inscriptionDialog->setClientModel(clientModel);
         chatPage->setModel(clientModel);
     }
 }
@@ -531,8 +519,7 @@ void BitcoinGUI::setWalletModel(WalletModel *walletModel)
         accountReportPage->setModel(walletModel);
         messagePage->setModel(walletModel);
         dataPage->setModel(walletModel);
-        inscriptionPage->setWalletModel(walletModel);
-        inscriptionsPage->setModel(walletModel->getInscriptionTableModel());
+        inscriptionDialog->setWalletModel(walletModel);
         multisigPage->setModel(walletModel);
         miningPage->setClientModel(clientModel);
 
@@ -581,7 +568,6 @@ void BitcoinGUI::createTrayIcon()
     trayIconMenu->addAction(multisigAction);
     trayIconMenu->addAction(inscribeAction);
     trayIconMenu->addAction(blockAction);
-    trayIconMenu->addAction(inscriptionsPageAction);
     trayIconMenu->addAction(chatPageAction);
     trayIconMenu->addSeparator();
     trayIconMenu->addAction(optionsAction);
@@ -766,7 +752,6 @@ void BitcoinGUI::setNumBlocks(int count, int nTotalBlocks)
             miningPage->updatePlot();
             overviewPage->updatePlot(count);
         }
-    inscriptionsPage->refreshInscriptionTable();
     }
 }
 
@@ -956,10 +941,10 @@ void BitcoinGUI::gotoBurnCoinsPage()
   burnCoinsPage->setFocus();
 }
 
-void BitcoinGUI::gotoInscriptionPage()
+void BitcoinGUI::gotoInscriptionDialog()
 {
-    inscriptionPage->show();
-    inscriptionPage->setFocus();
+    inscriptionDialog->show();
+    inscriptionDialog->setFocus();
 }
 
 void BitcoinGUI::gotoMessagePage()
@@ -990,12 +975,6 @@ void BitcoinGUI::gotoMultisigPage()
 {
     multisigPage->show();
     multisigPage->setFocus();
-}
-
-void BitcoinGUI::gotoInscriptionsPage()
-{
-  inscriptionsPage->show();
-  inscriptionsPage->setFocus();
 }
 
 void BitcoinGUI::gotoChatPage()
