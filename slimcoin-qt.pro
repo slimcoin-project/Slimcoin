@@ -5,7 +5,7 @@ INCLUDEPATH += src src/json src/qt
 DEFINES += QT_GUI BOOST_THREAD_USE_LIB BOOST_SPIRIT_THREADSAFE QT_NO_PRINTER BOOST_NO_CXX11_SCOPED_ENUMS ENABLE_PRECOMPILED_HEADERS=OFF
 CONFIG += no_include_pwd
 CONFIG += thread
-CONFIG += release
+CONFIG += debug # release
 CONFIG += qt_framework
 QT += core gui network testlib
 CONFIG += link_pkgconfig
