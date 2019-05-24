@@ -3,7 +3,6 @@
 #include "optionsmodel.h"
 #include "addresstablemodel.h"
 #include "transactiontablemodel.h"
-#include "inscriptiontablemodel.h"
 
 #include "ui_interface.h"
 #include "util.h"
@@ -25,7 +24,6 @@ WalletModel::WalletModel(CWallet *wallet, OptionsModel *optionsModel, QObject *p
 {
     addressTableModel = new AddressTableModel(wallet, this);
     transactionTableModel = new TransactionTableModel(wallet, this);
-    inscriptionTableModel = new InscriptionTableModel(wallet, this);
 }
 
 qint64 WalletModel::getBalance() const
@@ -259,11 +257,6 @@ AddressTableModel *WalletModel::getAddressTableModel()
 TransactionTableModel *WalletModel::getTransactionTableModel()
 {
     return transactionTableModel;
-}
-
-InscriptionTableModel *WalletModel::getInscriptionTableModel()
-{
-    return inscriptionTableModel;
 }
 
 WalletModel::EncryptionStatus WalletModel::getEncryptionStatus() const

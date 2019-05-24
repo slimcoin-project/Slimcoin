@@ -18,7 +18,6 @@ class COutput;
 class COutPoint;
 class uint256;
 class CCoinControl;
-class InscriptionTableModel;
 
 class BurnCoinsBalances
 {
@@ -95,7 +94,6 @@ public:
   OptionsModel *getOptionsModel();
   AddressTableModel *getAddressTableModel();
   TransactionTableModel *getTransactionTableModel();
-  InscriptionTableModel *getInscriptionTableModel();
 
   qint64 getBalance() const;
   qint64 getReserveBalance() const;
@@ -173,7 +171,6 @@ private:
 
   AddressTableModel *addressTableModel;
   TransactionTableModel *transactionTableModel;
-  InscriptionTableModel *inscriptionTableModel;
 
   // Cache some values to be able to detect changes
   qint64 cachedBalance;

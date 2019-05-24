@@ -5,7 +5,7 @@ INCLUDEPATH += src src/json src/qt
 DEFINES += QT_GUI BOOST_THREAD_USE_LIB BOOST_SPIRIT_THREADSAFE QT_NO_PRINTER BOOST_NO_CXX11_SCOPED_ENUMS ENABLE_PRECOMPILED_HEADERS=OFF
 CONFIG += no_include_pwd
 CONFIG += thread
-CONFIG += release
+CONFIG += debug # release
 CONFIG += qt_framework
 QT += core gui network testlib
 CONFIG += link_pkgconfig
@@ -106,7 +106,6 @@ UI_DIR = build
 #    src/qt/optionsdialog.moc \
 #    src/qt/overviewpage.moc \
 #    src/qt/rpcconsole.moc \
-#    src/qt/inscriptionpage.moc
 
 # use: qmake "RELEASE=1"
 contains(RELEASE, 1) {
@@ -353,8 +352,6 @@ HEADERS += src/addrman.h \
     src/qt/sendcoinsdialog.h \
     src/qt/sendcoinsentry.h \
     src/qt/signverifymessagedialog.h \
-    src/qt/inscriptionpage.h \
-    src/qt/inscriptiontablemodel.h \
     src/qt/transactiondesc.h \
     src/qt/transactiondescdialog.h \
     src/qt/transactionfilterproxy.h \
@@ -438,8 +435,6 @@ SOURCES += src/addrman.cpp \
     src/qt/sendcoinsdialog.cpp \
     src/qt/sendcoinsentry.cpp \
     src/qt/signverifymessagedialog.cpp \
-    src/qt/inscriptionpage.cpp \
-    src/qt/inscriptiontablemodel.cpp \
     src/qt/transactiondesc.cpp \
     src/qt/transactiondescdialog.cpp \
     src/qt/transactionfilterproxy.cpp \
@@ -483,7 +478,6 @@ FORMS += \
     src/qt/forms/sendcoinsdialog.ui \
     src/qt/forms/sendcoinsentry.ui \
     src/qt/forms/signverifymessagedialog.ui \
-    src/qt/forms/inscriptionpage.ui \
     src/qt/forms/transactiondescdialog.ui
 
 contains(USE_QRCODE, 1) {
