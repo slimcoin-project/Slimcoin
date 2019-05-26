@@ -341,9 +341,7 @@ void CWallet::WalletUpdateSpent(const CTransaction &tx)
                     wtx.MarkSpent(txin.prevout.n);
                     wtx.WriteToDisk();
                     vWalletUpdated.push_back(txin.prevout.hash);
-                    /* FIXME: implement function
                     NotifyTransactionChanged(this, txin.prevout.hash, CT_UPDATED);
-                    */
                 }
             }
         }
@@ -430,10 +428,8 @@ bool CWallet::AddToWallet(const CWalletTx &wtxIn, bool fBurnTx)
         // since AddToWallet is called directly for self-originating transactions, check for consumption of own coins
         WalletUpdateSpent(wtx);
 
-        /* FIXME: implement function
         // Notify UI of new or updated transaction
         NotifyTransactionChanged(this, hash, fInsertedNew ? CT_NEW : CT_UPDATED);
-        */
 
         // notify an external script when a wallet transaction comes in or is updated
         std::string strCmd = GetArg("-walletnotify", "");
