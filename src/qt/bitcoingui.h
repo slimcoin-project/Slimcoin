@@ -125,6 +125,8 @@ private:
     QAction *multisigAction;
     QAction *chatPageAction;
     QAction *accountReportAction;
+    QAction *dumpWalletAction;
+
 
     QMovie *syncIconMovie;
 
@@ -218,6 +220,9 @@ private slots:
     void repairWallet();
     /** zap the wallet */
     void zapWallet();
+
+    /** Exports all private keys */
+    void dumpWallet();
 
     /** Backup the wallet */
     void backupWallet();

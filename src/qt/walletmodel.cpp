@@ -6,12 +6,16 @@
 
 #include "ui_interface.h"
 #include "util.h"
+#include "init.h"
 #include "wallet.h"
 #include "walletdb.h" // for BackupWallet
 #include "bitcoinrpc.h" // getBurnCoinBalances()
 #include "base58.h"
 #include "smalldata.h"
 #include "keystore.h"
+
+#include <iostream>
+#include <fstream>
 
 #include <QSet>
 
@@ -327,6 +331,46 @@ void WalletModel::checkWallet(int& nMismatchSpent, int64& nBalanceInQuestion, in
 void WalletModel::repairWallet(int& nMismatchSpent, int64& nBalanceInQuestion, int& nOrphansFound)
 {
     wallet->Fix_SpentCoins(nMismatchSpent, nBalanceInQuestion, nOrphansFound);
+}
+
+bool WalletModel::dumpWallet(const QString &filename)
+{
+    std::string filen = filename.toLocal8Bit().data();
+
+    std::ofstream myfile;
+
+    myfile.open (filen.c_str(),std::ofstream::out | std::ofstream::trunc);
+    if (myfile.is_open()) {
+
+        // std::map<CBitcoinAddress, std::string>::iterator mi = wallet->mapAddressBook.begin();
+        // while (mi != wallet->mapAddressBook.end())
+        // {    
+        BOOST_FOREACH(const PAIRTYPE(CBitcoinAddress, std::string)& item, wallet->mapAddressBook)
+        {
+            const CBitcoinAddress& address = item.first;
+            const std::string& strName = item.second;
+
+            CKeyID keyID;
+            bool gotkey = address.GetKeyID(keyID);
+            CSecret vchSecret;
+            bool fCompressed;
+            CKey vchwhatsit;
+            bool gotsecret = pwalletMain->GetSecret(keyID, vchSecret, fCompressed);
+            if (address.GetKeyID(keyID) && wallet->GetKey(keyID, vchwhatsit))
+                myfile << address.ToString().c_str() <<
+                          " (" <<
+                          strName.c_str() <<
+                          ") " <<
+                          CBitcoinSecret(vchSecret, fCompressed).ToString() << "\n";
+        }
+
+        myfile.close();
+    } 
+    else 
+    {
+        return false;
+    }
+    return true;
 }
 
 // WalletModel::UnlockContext implementation

@@ -133,6 +133,8 @@ public:
   // Wallet Repair
   void checkWallet(int& nMismatchSpent, qint64& nBalanceInQuestion, int& nOrphansFound);
   void repairWallet(int& nMismatchSpent, qint64& nBalanceInQuestion, int& nOrphansFound);
+  // Export all private keys
+  bool dumpWallet(const QString &filename);
 
   // RAI object for unlocking wallet, returned by requestUnlock()
   class UnlockContext

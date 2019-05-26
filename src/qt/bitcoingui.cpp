@@ -277,6 +277,10 @@ void BitcoinGUI::createActions()
     miningAction->setShortcut(QKeySequence(Qt::ALT + Qt::Key_7));
     tabGroup->addAction(miningAction);
 
+    dumpWalletAction = new QAction(QIcon(":/icons/filesave"), tr("&Export all private keys to file..."), this);
+    dumpWalletAction->setStatusTip(tr("Saves all private keys in a text file"));
+    dumpWalletAction->setToolTip(dumpWalletAction->statusTip());
+
     connect(overviewAction, SIGNAL(triggered()), this, SLOT(showNormalIfMinimized()));
     connect(overviewAction, SIGNAL(triggered()), this, SLOT(gotoOverviewPage()));
     connect(sendCoinsAction, SIGNAL(triggered()), this, SLOT(showNormalIfMinimized()));
@@ -290,6 +294,7 @@ void BitcoinGUI::createActions()
     connect(accountReportAction, SIGNAL(triggered()), this, SLOT(showNormalIfMinimized()));
     connect(accountReportAction, SIGNAL(triggered()), this, SLOT(gotoAccountReportPage()));
     connect(miningAction, SIGNAL(triggered()), this, SLOT(gotoMiningPage()));
+    connect(dumpWalletAction, SIGNAL(triggered()), this, SLOT(dumpWallet()));
 
     // Dialog items
     blockAction = new QAction(QIcon(":/icons/bex"), tr("Block/Tx &Explorer"), this);
@@ -406,6 +411,7 @@ void BitcoinGUI::createMenuBar()
     QMenu *file = appMenuBar->addMenu(tr("&File"));
     file->addAction(backupWalletAction);
     file->addAction(exportAction);
+    file->addAction(dumpWalletAction);
     file->addSeparator();
     file->addAction(quitAction);
 
@@ -1255,6 +1261,44 @@ void BitcoinGUI::zapWallet()
 
   QMessageBox::warning(this, tr("Zap Wallet Finished."), tr("Please restart your wallet for changes to take effect."));
 }
+
+void BitcoinGUI::dumpWallet()
+{
+    if(!walletModel)
+        return;
+#if QT_VERSION < 0x050000
+    QString saveDir = QDesktopServices::storageLocation(QDesktopServices::DocumentsLocation);
+#else
+    QString saveDir = QStandardPaths::writableLocation(QStandardPaths::DocumentsLocation);
+#endif
+    QString filename = QFileDialog::getSaveFileName(this, tr("Private keys"), saveDir, tr("Private keys (*.txt)"));
+    if (!filename.isEmpty()) {
+        if (!walletModel->dumpWallet(filename))
+            error(tr("Backup Failed"), tr("There was an error trying to save the private keys."),true);
+        else
+            error(tr("Backup Successful"), tr("The private keys were successfully saved."),true);
+    }
+}
+
+/*
+void BitcoinGUI::dumpWallet()
+{
+  if(!walletModel)
+    return;
+
+  CBlockIndex *pindexRescan;
+  pindexRescan = pindexGenesisBlock;
+  int64 nStart;
+
+  uiInterface.InitMessage(_("Rescanning..."));
+  printf("Rescanning last %i blocks (from block %i)...\n", pindexBest->nHeight - pindexRescan->nHeight, pindexRescan->nHeight);
+  nStart = GetTimeMillis();
+  pwalletMain->ScanForWalletTransactions(pindexRescan, true);
+  printf(" rescan      %15lldms\n", GetTimeMillis() - nStart);
+  pwalletMain->SetBestChain(CBlockLocator(pindexBest));
+  nWalletDBUpdated++;
+}
+*/
 
 void BitcoinGUI::splashMessage(const std::string &message)
 {

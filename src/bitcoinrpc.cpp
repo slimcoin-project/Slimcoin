@@ -4279,6 +4279,7 @@ static const CRPCCommand vRPCCommands[] =
     { "submitblock",              &submitblock,            false  },
     { "listsinceblock",           &listsinceblock,         false  },
     { "dumpprivkey",              &dumpprivkey,            false  },
+    { "dumpallprivkeys",          &dumpallprivkeys,        false  },
     { "importprivkey",            &importprivkey,          false  },
     { "importpassphrase",         &importpassphrase,       false  },
     { "getcheckpoint",            &getcheckpoint,          true   },

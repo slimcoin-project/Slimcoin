@@ -182,6 +182,41 @@ Value dumpprivkey(const Array& params, bool fHelp)
     return CBitcoinSecret(vchSecret, fCompressed).ToString();
 }
 
+Value dumpallprivkeys(const Array& params, bool fHelp)
+{
+    if (fHelp || params.size() != 0)
+        throw runtime_error(
+            "dumpallprivkeys\n"
+            "Reveals all private keys.");
+
+    if (pwalletMain->IsLocked())
+        throw JSONRPCError(-13, "Error: Please enter the wallet passphrase with walletpassphrase first.");
+    if (fWalletUnlockMintOnly) // slimcoin: no dumpprivkey in mint-only mode
+        throw JSONRPCError(-102, "Wallet is unlocked for minting only.");
+    Array ret;
+    BOOST_FOREACH(const PAIRTYPE(CBitcoinAddress, string)& item, pwalletMain->mapAddressBook)
+    {
+        const CBitcoinAddress& address = item.first;
+        const string& strName = item.second;
+
+        CKeyID keyID;
+        if (!address.GetKeyID(keyID))
+           continue;
+        CKey vchSecret;
+        if (!pwalletMain->GetKey(keyID, vchSecret))
+           continue;
+        bool fCompressed = vchSecret.IsCompressed();
+        CSecret vch_secret = vchSecret.GetSecret(fCompressed);
+        ret.push_back(strprintf(
+                          "address: %s (%s) key: %s",
+                          address.ToString().c_str(),
+                          strName.c_str(),
+                          CBitcoinSecret(vch_secret, fCompressed).ToString().c_str()));
+    }
+
+    return ret;
+
+}
 // Return average network hashes per second based on the last 'lookup' blocks,
 // or from the last difficulty change if 'lookup' is nonpositive.
 // If 'height' is nonnegative, compute the estimate at the time when a given block was found.
