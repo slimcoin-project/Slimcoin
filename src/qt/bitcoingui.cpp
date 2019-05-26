@@ -708,6 +708,13 @@ void BitcoinGUI::setNumBlocks(int count, int nTotalBlocks)
     else if(secs < 60)
     {
         text = tr("%n second(s) ago","",secs);
+        /* FIXME: choose which approach to take (see below)
+        if(GetBoolArg("-chart", true))
+        {
+            miningPage->updatePlot();
+            overviewPage->updatePlot(count);
+        }
+        */
     }
     else if(secs < 60*60)
     {
@@ -745,6 +752,7 @@ void BitcoinGUI::setNumBlocks(int count, int nTotalBlocks)
     progressBarLabel->setToolTip(tooltip);
     progressBar->setToolTip(tooltip);
 
+    /* FIXME: choose which approach to take (see above) */
     if(count > 0 && nTotalBlocks > 0 && count >= nTotalBlocks)
     {
         if(GetBoolArg("-chart", true))
