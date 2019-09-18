@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2018 John Doering <ghostlander@slimcoin.org>
+ * Copyright (c) 2018 John Doering <ghostlander@orbitcoin.org>
  * All rights reserved.
  *
  * Redistribution and use in source and binary forms, with or without

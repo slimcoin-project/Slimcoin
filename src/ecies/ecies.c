@@ -12,7 +12,7 @@
  * As such it comes without any warranty regarding its merchantability or
  * fitness for a particular purpose. Please use it at your own risk.
  *
- * Optimised by John Doering <ghostlander@slimcoin.org>
+ * Optimised by John Doering <ghostlander@orbitcoin.org>
  *
  */
 
