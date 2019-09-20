@@ -3689,7 +3689,7 @@ Value listunspent(const Array& params, bool fHelp)
         {
             CBitcoinAddress address(input.get_str());
             if (!address.IsValid())
-                throw JSONRPCError(-5, string("Invalid Bitcoin address: ")+input.get_str());
+                throw JSONRPCError(-5, string("Invalid Slimcoin address: ")+input.get_str());
             if (setAddress.count(address))
                 throw JSONRPCError(-8, string("Invalid parameter, duplicated address: ")+input.get_str());
            setAddress.insert(address);

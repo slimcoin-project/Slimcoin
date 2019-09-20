@@ -91,10 +91,10 @@ struct StakeCandidate
 
 
 
-struct StakePrecomputedCanddiate
+struct StakePrecomputedCandidate
 {
-    StakePrecomputedCanddiate() :transaction(NULL), nOutput(0) {}
-    StakePrecomputedCanddiate(CWalletTx* transaction, unsigned int nOutput)
+    StakePrecomputedCandidate() :transaction(NULL), nOutput(0) {}
+    StakePrecomputedCandidate(CWalletTx* transaction, unsigned int nOutput)
         :transaction(transaction), nOutput(nOutput) {}
     CWalletTx* transaction;
     unsigned int nOutput;
@@ -123,7 +123,7 @@ private:
     std::map<uint256, StakeModifierCacheEntry> mapStakeModifierCacheV03;
 
     // Precomputed candidates for PoS minting (nTime -> candidate)
-    //std::map<unsigned int, StakePrecomputedCanddiate> mapStakePrecomputedCandidates;
+    //std::map<unsigned int, StakePrecomputedCandidate> mapStakePrecomputedCandidates;
 
     unsigned int nPrecomputedCandidateTime = 0; // Highest timestamp we have precomputed candidates for.
     std::map<std::pair<uint256, unsigned int>, StakeCandidate > mapStakeCandidates;
