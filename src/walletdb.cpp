@@ -26,318 +26,320 @@ extern void CloseDb(const string& strFile);
 
 bool CWalletDB::WriteName(const string& strAddress, const string& strName)
 {
-  nWalletDBUpdated++;
-  return Write(make_pair(string("name"), strAddress), strName);
+    nWalletDBUpdated++;
+    return Write(make_pair(string("name"), strAddress), strName);
 }
 
 bool CWalletDB::EraseName(const string& strAddress)
 {
-  // This should only be used for sending addresses, never for receiving addresses,
-  // receiving addresses must always have an address book entry if they're not change return.
-  nWalletDBUpdated++;
-  return Erase(make_pair(string("name"), strAddress));
+    // This should only be used for sending addresses, never for receiving addresses,
+    // receiving addresses must always have an address book entry if they're not change return.
+    nWalletDBUpdated++;
+    return Erase(make_pair(string("name"), strAddress));
 }
 
 bool CWalletDB::ReadAccount(const string& strAccount, CAccount& account)
 {
-  account.SetNull();
-  return Read(make_pair(string("acc"), strAccount), account);
+    account.SetNull();
+    return Read(make_pair(string("acc"), strAccount), account);
 }
 
 bool CWalletDB::WriteAccount(const string& strAccount, const CAccount& account)
 {
-  return Write(make_pair(string("acc"), strAccount), account);
+    return Write(make_pair(string("acc"), strAccount), account);
 }
 
 bool CWalletDB::WriteAccountingEntry(const CAccountingEntry& acentry)
 {
-  return Write(boost::make_tuple(string("acentry"), acentry.strAccount, ++nAccountingEntryNumber), acentry);
+    return Write(boost::make_tuple(string("acentry"), acentry.strAccount, ++nAccountingEntryNumber), acentry);
 }
 
 int64 CWalletDB::GetAccountCreditDebit(const string& strAccount)
 {
-  list<CAccountingEntry> entries;
-  ListAccountCreditDebit(strAccount, entries);
+    list<CAccountingEntry> entries;
+    ListAccountCreditDebit(strAccount, entries);
 
-  int64 nCreditDebit = 0;
-  BOOST_FOREACH (const CAccountingEntry& entry, entries)
-    nCreditDebit += entry.nCreditDebit;
+    int64 nCreditDebit = 0;
+    BOOST_FOREACH (const CAccountingEntry& entry, entries)
+        nCreditDebit += entry.nCreditDebit;
 
-  return nCreditDebit;
+    return nCreditDebit;
 }
 
 void CWalletDB::ListAccountCreditDebit(const string& strAccount, list<CAccountingEntry>& entries)
 {
-  bool fAllAccounts = (strAccount == "*");
+    bool fAllAccounts = (strAccount == "*");
 
-  Dbc* pcursor = GetCursor();
-  if(!pcursor)
-    throw runtime_error("CWalletDB::ListAccountCreditDebit() : cannot create DB cursor");
-  unsigned int fFlags = DB_SET_RANGE;
-  while (true) 
-  {
-    // Read next record
-    CDataStream ssKey(SER_DISK, CLIENT_VERSION);
-    if(fFlags == DB_SET_RANGE)
-      ssKey << boost::make_tuple(string("acentry"), (fAllAccounts? string("") : strAccount), uint64(0));
-    CDataStream ssValue(SER_DISK, CLIENT_VERSION);
-    int ret = ReadAtCursor(pcursor, ssKey, ssValue, fFlags);
-    fFlags = DB_NEXT;
-    if(ret == DB_NOTFOUND)
-      break;
-    else if(ret != 0)
+    Dbc* pcursor = GetCursor();
+    if (!pcursor)
+        throw runtime_error("CWalletDB::ListAccountCreditDebit() : cannot create DB cursor");
+    unsigned int fFlags = DB_SET_RANGE;
+    while (true) 
     {
-      pcursor->close();
-      throw runtime_error("CWalletDB::ListAccountCreditDebit() : error scanning DB");
+        // Read next record
+        CDataStream ssKey(SER_DISK, CLIENT_VERSION);
+        if (fFlags == DB_SET_RANGE)
+            ssKey << boost::make_tuple(string("acentry"), (fAllAccounts? string("") : strAccount), uint64(0));
+        CDataStream ssValue(SER_DISK, CLIENT_VERSION);
+        int ret = ReadAtCursor(pcursor, ssKey, ssValue, fFlags);
+        fFlags = DB_NEXT;
+        if (ret == DB_NOTFOUND)
+            break;
+        else if (ret != 0)
+        {
+            pcursor->close();
+            throw runtime_error("CWalletDB::ListAccountCreditDebit() : error scanning DB");
+        }
+
+        // Unserialize
+        string strType;
+        ssKey >> strType;
+        if (strType != "acentry")
+            break;
+        CAccountingEntry acentry;
+        ssKey >> acentry.strAccount;
+        if (!fAllAccounts && acentry.strAccount != strAccount)
+            break;
+
+        ssValue >> acentry;
+        entries.push_back(acentry);
     }
 
-    // Unserialize
-    string strType;
-    ssKey >> strType;
-    if(strType != "acentry")
-      break;
-    CAccountingEntry acentry;
-    ssKey >> acentry.strAccount;
-    if(!fAllAccounts && acentry.strAccount != strAccount)
-      break;
-
-    ssValue >> acentry;
-    entries.push_back(acentry);
-  }
-
-  pcursor->close();
+    pcursor->close();
 }
 
 
 int CWalletDB::LoadWallet(CWallet* pwallet)
 {
-  pwallet->vchDefaultKey = CPubKey();
-  int nFileVersion = 0;
-  vector<uint256> vWalletUpgrade;
-  bool fIsEncrypted = false;
+    pwallet->vchDefaultKey = CPubKey();
+    int nFileVersion = 0;
+    vector<uint256> vWalletUpgrade;
+    bool fIsEncrypted = false;
 
-  //// todo: shouldn't we catch exceptions and try to recover and continue?
-  {
-    LOCK(pwallet->cs_wallet);
-    int nMinVersion = 0;
-    if(Read((string)"minversion", nMinVersion))
+    //// todo: shouldn't we catch exceptions and try to recover and continue?
     {
-      if(nMinVersion > CLIENT_VERSION)
-        return 4;
-      pwallet->LoadMinVersion(nMinVersion);
+        LOCK(pwallet->cs_wallet);
+        int nMinVersion = 0;
+        if (Read((string)"minversion", nMinVersion))
+        {
+            if (nMinVersion > CLIENT_VERSION)
+                return 4;
+            pwallet->LoadMinVersion(nMinVersion);
+        }
+
+        // Get cursor
+        Dbc* pcursor = GetCursor();
+        if (!pcursor)
+        {
+            printf("Error getting wallet database cursor\n");
+            return 2;
+        }
+
+        while (true)
+        {
+            // Read next record
+            CDataStream ssKey(SER_DISK, CLIENT_VERSION);
+            CDataStream ssValue(SER_DISK, CLIENT_VERSION);
+            int ret = ReadAtCursor(pcursor, ssKey, ssValue);
+            if (ret == DB_NOTFOUND)
+                break;
+            else if (ret != 0)
+            {
+                printf("Error reading next record from wallet database\n");
+                return DB_CORRUPT;
+            }
+
+            // Unserialize
+            // Taking advantage of the fact that pair serialization
+            // is just the two items serialized one after the other
+            string strType;
+            ssKey >> strType;
+            if (strType == "name")
+            {
+                string strAddress;
+                ssKey >> strAddress;
+                ssValue >> pwallet->mapAddressBook[CBitcoinAddress(strAddress).Get()];
+            }
+            else if (strType == "tx")
+            {
+                uint256 hash;
+                ssKey >> hash;
+                CWalletTx& wtx = pwallet->mapWallet[hash];
+                ssValue >> wtx;
+                wtx.BindWallet(pwallet);
+
+                if (wtx.GetHash() != hash)
+                    printf("Error in wallet.dat, hash mismatch\n");
+
+                // Undo serialize changes in 31600
+                if (31404 <= wtx.fTimeReceivedIsTxTime && wtx.fTimeReceivedIsTxTime <= 31703)
+                {
+                    if (!ssValue.empty())
+                    {
+                        char fTmp;
+                        char fUnused;
+                        ssValue >> fTmp >> fUnused >> wtx.strFromAccount;
+                        printf("LoadWallet() upgrading tx ver=%d %d '%s' %s\n", wtx.fTimeReceivedIsTxTime, fTmp, wtx.strFromAccount.c_str(), hash.ToString().c_str());
+                        wtx.fTimeReceivedIsTxTime = fTmp;
+                    }
+                    else
+                    {
+                        printf("LoadWallet() repairing tx ver=%d %s\n", wtx.fTimeReceivedIsTxTime, hash.ToString().c_str());
+                        wtx.fTimeReceivedIsTxTime = 0;
+                    }
+                    vWalletUpgrade.push_back(hash);
+                }
+
+                //// debug print
+                //printf("LoadWallet  %s\n", wtx.GetHash().ToString().c_str());
+                //printf(" %12d  %s  %s  %s\n",
+                //    wtx.vout[0].nValue,
+                //    DateTimeStrFormat(wtx.GetBlockTime()).c_str(),
+                //    wtx.hashBlock.ToString().substr(0,20).c_str(),
+                //    wtx.mapValue["message"].c_str());
+            }
+            else if (strType == "burnHash")
+            {
+                uint256 hash;
+                ssKey >> hash;
+                pwallet->setBurnHashes.insert(hash);
+
+                CWalletTx wtx;
+                //check if the hash matches a transaction and is not fake
+                ssValue >> wtx;
+                wtx.BindWallet(pwallet);
+
+                if (wtx.GetHash() != hash)
+                printf("Error in wallet.dat, hash mismatch\n");
+
+            }else if (strType == "acentry")
+                {
+                string strAccount;
+                ssKey >> strAccount;
+                uint64 nNumber;
+                ssKey >> nNumber;
+                if (nNumber > nAccountingEntryNumber)
+                    nAccountingEntryNumber = nNumber;
+            }
+            else if (strType == "key" || strType == "wkey")
+            {
+                vector<unsigned char> vchPubKey;
+                ssKey >> vchPubKey;
+                CKey key;
+                if (strType == "key")
+                {
+                    CPrivKey pkey;
+                    ssValue >> pkey;
+                    key.SetPubKey(vchPubKey);
+                    key.SetPrivKey(pkey);
+                    if (key.GetPubKey() != vchPubKey)
+                    {
+                        printf("Error reading wallet database: CPrivKey pubkey inconsistency\n");
+                        return 2;
+                    }
+                    if (!key.IsValid())
+                    {
+                        printf("Error reading wallet database: invalid CPrivKey\n");
+                        return 2;
+                    }
+                }
+                else
+                {
+                    CWalletKey wkey;
+                    ssValue >> wkey;
+                    key.SetPubKey(vchPubKey);
+                    key.SetPrivKey(wkey.vchPrivKey);
+                    if (key.GetPubKey() != vchPubKey)
+                    {
+                        printf("Error reading wallet database: CWalletKey pubkey inconsistency\n");
+                        return 2;
+                    }
+                    if (!key.IsValid())
+                    {
+                        printf("Error reading wallet database: invalid CWalletKey\n");
+                        return 2;
+                    }
+                }
+                if (!pwallet->LoadKey(key))
+                {
+                    printf("Error reading wallet database: LoadKey failed\n");
+                    return 2;
+                }
+            }
+            else if (strType == "mkey")
+            {
+                unsigned int nID;
+                ssKey >> nID;
+                CMasterKey kMasterKey;
+                ssValue >> kMasterKey;
+                if(pwallet->mapMasterKeys.count(nID) != 0)
+                {
+                    printf("Error reading wallet database: duplicate CMasterKey id %u\n", nID);
+                    return 2;
+                }
+                pwallet->mapMasterKeys[nID] = kMasterKey;
+                if (pwallet->nMasterKeyMaxID < nID)
+                    pwallet->nMasterKeyMaxID = nID;
+            }
+            else if (strType == "ckey")
+            {
+                vector<unsigned char> vchPubKey;
+                ssKey >> vchPubKey;
+                vector<unsigned char> vchPrivKey;
+                ssValue >> vchPrivKey;
+                if (!pwallet->LoadCryptedKey(vchPubKey, vchPrivKey))
+                {
+                    printf("Error reading wallet database: LoadCryptedKey failed\n");
+                    return 2;
+                }
+                fIsEncrypted = true;
+            }
+            else if (strType == "defaultkey")
+            {
+                ssValue >> pwallet->vchDefaultKey;
+            }
+            else if (strType == "pool")
+            {
+                int64 nIndex;
+                ssKey >> nIndex;
+                pwallet->setKeyPool.insert(nIndex);
+            }
+            else if (strType == "version")
+            {
+                ssValue >> nFileVersion;
+                if (nFileVersion == 10300)
+                    nFileVersion = 300;
+            }
+            else if (strType == "cscript")
+            {
+                uint160 hash;
+                ssKey >> hash;
+                CScript script;
+                ssValue >> script;
+                if (!pwallet->LoadCScript(script))
+                {
+                    printf("Error reading wallet database: LoadCScript failed\n");
+                    return 2;
+                }
+            }
+        }
+        pcursor->close();
     }
 
-    // Get cursor
-    Dbc* pcursor = GetCursor();
-    if(!pcursor)
-    {
-      printf("Error getting wallet database cursor\n");
-      return 2;
-    }
+    BOOST_FOREACH(uint256 hash, vWalletUpgrade)
+        WriteTx(hash, pwallet->mapWallet[hash]);
 
-    while (true)
-    {
-      // Read next record
-      CDataStream ssKey(SER_DISK, CLIENT_VERSION);
-      CDataStream ssValue(SER_DISK, CLIENT_VERSION);
-      int ret = ReadAtCursor(pcursor, ssKey, ssValue);
-      if (ret == DB_NOTFOUND)
-        break;
-      else if (ret != 0)
-      {
-        printf("Error reading next record from wallet database\n");
-        return DB_CORRUPT;
-      }
-
-      // Unserialize
-      // Taking advantage of the fact that pair serialization
-      // is just the two items serialized one after the other
-      string strType;
-      ssKey >> strType;
-      if (strType == "name")
-      {
-        string strAddress;
-        ssKey >> strAddress;
-        ssValue >> pwallet->mapAddressBook[CBitcoinAddress(strAddress).Get()];
-      }
-      else if (strType == "tx")
-      {
-        uint256 hash;
-        ssKey >> hash;
-        CWalletTx& wtx = pwallet->mapWallet[hash];
-        ssValue >> wtx;
-        wtx.BindWallet(pwallet);
-
-        if (wtx.GetHash() != hash)
-          printf("Error in wallet.dat, hash mismatch\n");
-
-        // Undo serialize changes in 31600
-        if (31404 <= wtx.fTimeReceivedIsTxTime && wtx.fTimeReceivedIsTxTime <= 31703)
-        {
-          if (!ssValue.empty())
-          {
-            char fTmp;
-            char fUnused;
-            ssValue >> fTmp >> fUnused >> wtx.strFromAccount;
-            printf("LoadWallet() upgrading tx ver=%d %d '%s' %s\n",
-                   wtx.fTimeReceivedIsTxTime, fTmp, wtx.strFromAccount.c_str(), hash.ToString().c_str());
-            wtx.fTimeReceivedIsTxTime = fTmp;
-          }else{
-            printf("LoadWallet() repairing tx ver=%d %s\n", wtx.fTimeReceivedIsTxTime, hash.ToString().c_str());
-            wtx.fTimeReceivedIsTxTime = 0;
-          }
-          vWalletUpgrade.push_back(hash);
-        }
-
-        //// debug print
-        //printf("LoadWallet  %s\n", wtx.GetHash().ToString().c_str());
-        //printf(" %12d  %s  %s  %s\n",
-        //    wtx.vout[0].nValue,
-        //    DateTimeStrFormat(wtx.GetBlockTime()).c_str(),
-        //    wtx.hashBlock.ToString().substr(0,20).c_str(),
-        //    wtx.mapValue["message"].c_str());
-      }else if(strType == "burnHash")
-      {
-        uint256 hash;
-        ssKey >> hash;
-        pwallet->setBurnHashes.insert(hash);
-
-        CWalletTx wtx;
-        //check if the hash matches a transaction and is not fake
-        ssValue >> wtx;
-        wtx.BindWallet(pwallet);
-
-        if(wtx.GetHash() != hash)
-        printf("Error in wallet.dat, hash mismatch\n");
-
-      }else if (strType == "acentry")
-        {
-        string strAccount;
-        ssKey >> strAccount;
-        uint64 nNumber;
-        ssKey >> nNumber;
-        if (nNumber > nAccountingEntryNumber)
-          nAccountingEntryNumber = nNumber;
-      }
-      else if (strType == "key" || strType == "wkey")
-      {
-        vector<unsigned char> vchPubKey;
-        ssKey >> vchPubKey;
-        CKey key;
-        if (strType == "key")
-        {
-          CPrivKey pkey;
-          ssValue >> pkey;
-          key.SetPubKey(vchPubKey);
-          key.SetPrivKey(pkey);
-          if (key.GetPubKey() != vchPubKey)
-          {
-            printf("Error reading wallet database: CPrivKey pubkey inconsistency\n");
-            return 2;
-          }
-          if (!key.IsValid())
-          {
-            printf("Error reading wallet database: invalid CPrivKey\n");
-          return 2;
-        }
-      }
-        else
-        {
-          CWalletKey wkey;
-          ssValue >> wkey;
-          key.SetPubKey(vchPubKey);
-          key.SetPrivKey(wkey.vchPrivKey);
-          if (key.GetPubKey() != vchPubKey)
-          {
-            printf("Error reading wallet database: CWalletKey pubkey inconsistency\n");
-            return 2;
-          }
-          if (!key.IsValid())
-          {
-            printf("Error reading wallet database: invalid CWalletKey\n");
-            return 2;
-          }
-        }
-        if (!pwallet->LoadKey(key))
-        {
-          printf("Error reading wallet database: LoadKey failed\n");
-          return 2;
-        }
-      }
-      else if (strType == "mkey")
-      {
-        unsigned int nID;
-        ssKey >> nID;
-        CMasterKey kMasterKey;
-        ssValue >> kMasterKey;
-        if(pwallet->mapMasterKeys.count(nID) != 0)
-        {
-          printf("Error reading wallet database: duplicate CMasterKey id %u\n", nID);
-          return 2;
-        }
-        pwallet->mapMasterKeys[nID] = kMasterKey;
-        if (pwallet->nMasterKeyMaxID < nID)
-          pwallet->nMasterKeyMaxID = nID;
-      }
-      else if (strType == "ckey")
-      {
-        vector<unsigned char> vchPubKey;
-        ssKey >> vchPubKey;
-        vector<unsigned char> vchPrivKey;
-        ssValue >> vchPrivKey;
-        if (!pwallet->LoadCryptedKey(vchPubKey, vchPrivKey))
-        {
-          printf("Error reading wallet database: LoadCryptedKey failed\n");
-          return 2;
-        }
-        fIsEncrypted = true;
-      }
-      else if (strType == "defaultkey")
-      {
-        ssValue >> pwallet->vchDefaultKey;
-      }
-      else if (strType == "pool")
-      {
-        int64 nIndex;
-        ssKey >> nIndex;
-        pwallet->setKeyPool.insert(nIndex);
-      }
-      else if (strType == "version")
-      {
-        ssValue >> nFileVersion;
-        if (nFileVersion == 10300)
-          nFileVersion = 300;
-      }
-      else if (strType == "cscript")
-      {
-        uint160 hash;
-        ssKey >> hash;
-        CScript script;
-        ssValue >> script;
-        if (!pwallet->LoadCScript(script))
-        {
-          printf("Error reading wallet database: LoadCScript failed\n");
-            return 2;
-          }
-        }
-    }
-    pcursor->close();
-  }
-
-  BOOST_FOREACH(uint256 hash, vWalletUpgrade)
-    WriteTx(hash, pwallet->mapWallet[hash]);
-
-  printf("nFileVersion = %d\n", nFileVersion);
+    printf("nFileVersion = %d\n", nFileVersion);
 
 
-  // Rewrite encrypted wallets of versions 0.4.0 and 0.5.0rc:
-  if(fIsEncrypted && (nFileVersion == 40000 || nFileVersion == 50000))
-    return 6;
+    // Rewrite encrypted wallets of versions 0.4.0 and 0.5.0rc:
+    if (fIsEncrypted && (nFileVersion == 40000 || nFileVersion == 50000))
+        return 6;
 
-  if(nFileVersion < CLIENT_VERSION) // Update
-    WriteVersion(CLIENT_VERSION);
+    if (nFileVersion < CLIENT_VERSION) // Update
+        WriteVersion(CLIENT_VERSION);
 
-  return 0;
+    return 0;
 }
 
 int CWalletDB::FindWalletTx(CWallet* pwallet, vector<uint256>& vTxHash, vector<CWalletTx>& vWtx)
@@ -425,104 +427,104 @@ int CWalletDB::ZapWalletTx(CWallet* pwallet, vector<CWalletTx>& vWtx)
 
 void ThreadFlushWalletDB(void* parg)
 {
-  const string& strFile = ((const string*)parg)[0];
-  static bool fOneThread;
-  if(fOneThread)
-    return;
-  fOneThread = true;
-  if(!GetBoolArg("-flushwallet", true))
-    return;
+    const string& strFile = ((const string*)parg)[0];
+    static bool fOneThread;
+    if (fOneThread)
+        return;
+    fOneThread = true;
+    if (!GetBoolArg("-flushwallet", true))
+        return;
 
-  unsigned int nLastSeen = nWalletDBUpdated;
-  unsigned int nLastFlushed = nWalletDBUpdated;
-  int64 nLastWalletUpdate = GetTime();
-  while(!fShutdown)
-  {
-    Sleep(500);
-
-    if(nLastSeen != nWalletDBUpdated)
+    unsigned int nLastSeen = nWalletDBUpdated;
+    unsigned int nLastFlushed = nWalletDBUpdated;
+    int64 nLastWalletUpdate = GetTime();
+    while (!fShutdown)
     {
-      nLastSeen = nWalletDBUpdated;
-      nLastWalletUpdate = GetTime();
-    }
+        Sleep(500);
 
-    if(nLastFlushed != nWalletDBUpdated && GetTime() - nLastWalletUpdate >= 2)
-    {
-      TRY_LOCK(cs_db,lockDb);
-      if(lockDb)
-      {
-        // Don't do this if any databases are in use
-        int nRefCount = 0;
-        map<string, int>::iterator mi = mapFileUseCount.begin();
-        while(mi != mapFileUseCount.end())
+        if (nLastSeen != nWalletDBUpdated)
         {
-          nRefCount += (*mi).second;
-          mi++;
+            nLastSeen = nWalletDBUpdated;
+            nLastWalletUpdate = GetTime();
         }
 
-        if(nRefCount == 0 && !fShutdown)
+        if (nLastFlushed != nWalletDBUpdated && GetTime() - nLastWalletUpdate >= 2)
         {
-          map<string, int>::iterator mi = mapFileUseCount.find(strFile);
-          if(mi != mapFileUseCount.end())
-          {
-            printf("%s ", DateTimeStrFormat(GetTime()).c_str());
-            printf("Flushing wallet.dat\n");
-            nLastFlushed = nWalletDBUpdated;
-            int64 nStart = GetTimeMillis();
+            TRY_LOCK(cs_db,lockDb);
+            if (lockDb)
+            {
+                // Don't do this if any databases are in use
+                int nRefCount = 0;
+                map<string, int>::iterator mi = mapFileUseCount.begin();
+                while (mi != mapFileUseCount.end())
+                {
+                    nRefCount += (*mi).second;
+                    mi++;
+                }
 
-            // Flush wallet.dat so it's self contained
-            CloseDb(strFile);
-            dbenv.txn_checkpoint(0, 0, 0);
-            dbenv.lsn_reset(strFile.c_str(), 0);
+                if (nRefCount == 0 && !fShutdown)
+                {
+                    map<string, int>::iterator mi = mapFileUseCount.find(strFile);
+                    if (mi != mapFileUseCount.end())
+                    {
+                        printf("%s ", DateTimeStrFormat(GetTime()).c_str());
+                        printf("Flushing wallet.dat\n");
+                        nLastFlushed = nWalletDBUpdated;
+                        int64 nStart = GetTimeMillis();
 
-            mapFileUseCount.erase(mi++);
-            printf("Flushed wallet.dat %lldms\n", GetTimeMillis() - nStart);
-          }
+                        // Flush wallet.dat so it's self contained
+                        CloseDb(strFile);
+                        dbenv.txn_checkpoint(0, 0, 0);
+                        dbenv.lsn_reset(strFile.c_str(), 0);
+
+                        mapFileUseCount.erase(mi++);
+                        printf("Flushed wallet.dat %lldms\n", GetTimeMillis() - nStart);
+                    }
+                }
+            }
         }
-      }
     }
-  }
 }
 
 bool BackupWallet(const CWallet& wallet, const string& strDest)
 {
-  if(!wallet.fFileBacked)
-    return false;
-  while(!fShutdown)
-  {
+    if (!wallet.fFileBacked)
+        return false;
+    while (!fShutdown)
     {
-      LOCK(cs_db);
-      if(!mapFileUseCount.count(wallet.strWalletFile) || mapFileUseCount[wallet.strWalletFile] == 0)
-      {
-        // Flush log data to the dat file
-        CloseDb(wallet.strWalletFile);
-        dbenv.txn_checkpoint(0, 0, 0);
-        dbenv.lsn_reset(wallet.strWalletFile.c_str(), 0);
-        mapFileUseCount.erase(wallet.strWalletFile);
+        {
+            LOCK(cs_db);
+            if (!mapFileUseCount.count(wallet.strWalletFile) || mapFileUseCount[wallet.strWalletFile] == 0)
+            {
+                // Flush log data to the dat file
+                CloseDb(wallet.strWalletFile);
+                dbenv.txn_checkpoint(0, 0, 0);
+                dbenv.lsn_reset(wallet.strWalletFile.c_str(), 0);
+                mapFileUseCount.erase(wallet.strWalletFile);
 
-        // Copy wallet.dat
-        filesystem::path pathSrc = GetDataDir() / wallet.strWalletFile;
-        filesystem::path pathDest(strDest);
-        if(filesystem::is_directory(pathDest))
-          pathDest /= wallet.strWalletFile;
+                // Copy wallet.dat
+                filesystem::path pathSrc = GetDataDir() / wallet.strWalletFile;
+                filesystem::path pathDest(strDest);
+                if (filesystem::is_directory(pathDest))
+                    pathDest /= wallet.strWalletFile;
 
-        try {
+                try {
 #if BOOST_VERSION >= 105800
-          filesystem::copy_file(pathSrc, pathDest, filesystem::copy_option::overwrite_if_exists);
+                    filesystem::copy_file(pathSrc, pathDest, filesystem::copy_option::overwrite_if_exists);
 #else
-          std::ifstream  src(pathSrc.string(), std::ios::binary);
-          std::ofstream  dst(pathDest.string(),   std::ios::binary);
-          dst << src.rdbuf();
+                    std::ifstream  src(pathSrc.string(), std::ios::binary);
+                    std::ofstream  dst(pathDest.string(),   std::ios::binary);
+                    dst << src.rdbuf();
 #endif
-          printf("copied wallet.dat to %s\n", pathDest.string().c_str());
-          return true;
-        } catch(const filesystem::filesystem_error &e) {
-          printf("error copying wallet.dat to %s - %s\n", pathDest.string().c_str(), e.what());
-          return false;
+                    printf("copied wallet.dat to %s\n", pathDest.string().c_str());
+                    return true;
+                } catch(const filesystem::filesystem_error &e) {
+                    printf("error copying wallet.dat to %s - %s\n", pathDest.string().c_str(), e.what());
+                    return false;
+                }
+            }
         }
-      }
+        Sleep(100);
     }
-    Sleep(100);
-  }
-  return false;
+    return false;
 }

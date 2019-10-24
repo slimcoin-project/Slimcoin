@@ -19,7 +19,7 @@ class CScript;
 class CKeyStore
 {
 protected:
-  mutable CCriticalSection cs_KeyStore;
+    mutable CCriticalSection cs_KeyStore;
 
 public:
     virtual ~CKeyStore() {}
@@ -55,8 +55,8 @@ typedef std::map<CScriptID, CScript > ScriptMap;
 class CBasicKeyStore : public CKeyStore
 {
 protected:
-  KeyMap mapKeys;
-  ScriptMap mapScripts;
+    KeyMap mapKeys;
+    ScriptMap mapScripts;
 
 public:
     bool AddKey(const CKey& key);
@@ -64,23 +64,23 @@ public:
     {
         bool result;
         {
-      LOCK(cs_KeyStore);
-      result = (mapKeys.count(address) > 0);
-    }
+            LOCK(cs_KeyStore);
+            result = (mapKeys.count(address) > 0);
+        }
         return result;
     }
     void GetKeys(std::set<CKeyID> &setAddress) const
     {
         setAddress.clear();
-    {
-      LOCK(cs_KeyStore);
-      KeyMap::const_iterator mi = mapKeys.begin();
-      while (mi != mapKeys.end())
-      {
-        setAddress.insert((*mi).first);
-        mi++;
-      }
-    }
+        {
+            LOCK(cs_KeyStore);
+            KeyMap::const_iterator mi = mapKeys.begin();
+            while (mi != mapKeys.end())
+            {
+                setAddress.insert((*mi).first);
+                mi++;
+            }
+        }
     }
     bool GetKey(const CKeyID &address, CKey &keyOut) const
     {
@@ -123,48 +123,48 @@ typedef std::map<CKeyID, std::pair<CPubKey, std::vector<unsigned char> > > Crypt
 class CCryptoKeyStore : public CBasicKeyStore
 {
 private:
-  // if fUseCrypto is true, mapKeys must be empty
-  // if fUseCrypto is false, vMasterKey must be empty
-  bool fUseCrypto;
+    // if fUseCrypto is true, mapKeys must be empty
+    // if fUseCrypto is false, vMasterKey must be empty
+    bool fUseCrypto;
 
 protected:
-  CryptedKeyMap mapCryptedKeys;
-  CKeyingMaterial vMasterKey;
-    
-  bool SetCrypted();
+    CryptedKeyMap mapCryptedKeys;
+    CKeyingMaterial vMasterKey;
 
-  // will encrypt previously unencrypted keys
-  bool EncryptKeys(CKeyingMaterial& vMasterKeyIn);
+    bool SetCrypted();
 
-  bool Unlock(const CKeyingMaterial& vMasterKeyIn);
+    // will encrypt previously unencrypted keys
+    bool EncryptKeys(CKeyingMaterial& vMasterKeyIn);
+
+    bool Unlock(const CKeyingMaterial& vMasterKeyIn);
 
 public:
-CCryptoKeyStore() : fUseCrypto(false)
-  {
-  }
-
-  bool IsCrypted() const
-  {
-    return fUseCrypto;
-  }
-
-  bool IsLocked() const
-  {
-    if (!IsCrypted())
-      return false;
-    bool result;
+    CCryptoKeyStore() : fUseCrypto(false)
     {
-      LOCK(cs_KeyStore);
-      result = vMasterKey.empty();
     }
-    return result;
-  }
 
-  bool LockKeyStore();
+    bool IsCrypted() const
+    {
+        return fUseCrypto;
+    }
 
-  virtual bool AddCryptedKey(const CPubKey &vchPubKey, const std::vector<unsigned char> &vchCryptedSecret);
-  bool AddKey(const CKey& key);
-  bool HaveKey(const CKeyID &address) const
+    bool IsLocked() const
+    {
+        if (!IsCrypted())
+            return false;
+        bool result;
+        {
+            LOCK(cs_KeyStore);
+            result = vMasterKey.empty();
+        }
+        return result;
+    }
+
+    bool LockKeyStore();
+
+    virtual bool AddCryptedKey(const CPubKey &vchPubKey, const std::vector<unsigned char> &vchCryptedSecret);
+    bool AddKey(const CKey& key);
+    bool HaveKey(const CKeyID &address) const
     {
         {
             LOCK(cs_KeyStore);

@@ -127,7 +127,7 @@ T* alignup(T* p)
 inline void Sleep(int64 n)
 {
     /*Boost has a year 2038 problem— if the request sleep time is past epoch+2^31 seconds the sleep returns instantly.
-        So we clamp our sleeps here to 10 years and hope that boost is fixed by 2028.*/
+      So we clamp our sleeps here to 10 years and hope that boost is fixed by 2028.*/
     boost::thread::sleep(boost::get_system_time() + boost::posix_time::milliseconds(n>315576000000LL?315576000000LL:n));
 }
 #endif
@@ -176,8 +176,8 @@ int OutputDebugStringF(const char* pszFormat, ...);
 int my_snprintf(char* buffer, size_t limit, const char* format, ...);
 
 /* It is not allowed to use va_start with a pass-by-reference argument.
-     (C++ standard, 18.7, paragraph 3). Use a dummy argument to work around this, and use a
-     macro to keep similar semantics.
+   (C++ standard, 18.7, paragraph 3). Use a dummy argument to work around this, and use a
+   macro to keep similar semantics.
 */
 std::string real_strprintf(const std::string &format, int dummy, ...);
 #define strprintf(format, ...) real_strprintf(format, 0, __VA_ARGS__)
@@ -264,7 +264,7 @@ public:
                 printf("LOCKCONTENTION: %s\n", pszName);
                 printf("Locker: %s:%d\n", pszFile, nLine);
 #endif
-                lock.lock();
+            lock.lock();
 #ifdef DEBUG_LOCKCONTENTION
             }
 #endif
@@ -292,7 +292,7 @@ public:
         return lock.owns();
     }
 
-CMutexLock(Mutex& mutexIn, const char* pszName, const char* pszFile, int nLine, bool fTry = false) : lock(mutexIn, boost::interprocess::defer_lock)
+    CMutexLock(Mutex& mutexIn, const char* pszName, const char* pszFile, int nLine, bool fTry = false) : lock(mutexIn, boost::interprocess::defer_lock)
     {
         if (fTry)
             TryEnter(pszName, pszFile, nLine);
@@ -323,16 +323,16 @@ typedef CMutexLock<CCriticalSection> CCriticalBlock;
 #define LOCK2(cs1,cs2) CCriticalBlock criticalblock1(cs1, #cs1, __FILE__, __LINE__),criticalblock2(cs2, #cs2, __FILE__, __LINE__)
 #define TRY_LOCK(cs,name) CCriticalBlock name(cs, #cs, __FILE__, __LINE__, true)
 
-#define ENTER_CRITICAL_SECTION(cs)                          \
-    {                                                         \
-        EnterCritical(#cs, __FILE__, __LINE__, (void*)(&cs));   \
-        (cs).lock();                                            \
+#define ENTER_CRITICAL_SECTION(cs) \
+    { \
+        EnterCritical(#cs, __FILE__, __LINE__, (void*)(&cs)); \
+        (cs).lock(); \
     }
 
-#define LEAVE_CRITICAL_SECTION(cs)              \
-    {                                             \
-        (cs).unlock();                              \
-        LeaveCritical();                            \
+#define LEAVE_CRITICAL_SECTION(cs) \
+    { \
+        (cs).unlock(); \
+        LeaveCritical(); \
     }
 
 #ifdef MAC_OSX
@@ -344,7 +344,7 @@ private:
     int val;
 
 public:
-CSemaphore(int init) : val(init) {}
+    CSemaphore(int init) : val(init) {}
 
     void wait() {
         do {
@@ -430,7 +430,7 @@ std::string HexStr(const T itbegin, const T itend, bool fSpaces=false)
 {
     std::vector<char> rv;
     static char hexmap[16] = { '0', '1', '2', '3', '4', '5', '6', '7',
-                                                         '8', '9', 'a', 'b', 'c', 'd', 'e', 'f' };
+                               '8', '9', 'a', 'b', 'c', 'd', 'e', 'f' };
     rv.reserve((itend-itbegin)*3);
     for(T it = itbegin; it < itend; ++it)
     {
@@ -743,8 +743,8 @@ private:
     std::vector<T> vSorted;
     unsigned int nSize;
 public:
-CMedianFilter(unsigned int size, T initial_value):
-    nSize(size)
+    CMedianFilter(unsigned int size, T initial_value):
+        nSize(size)
     {
         vValues.reserve(size);
         vValues.push_back(initial_value);
@@ -877,8 +877,8 @@ inline void ExitThread(size_t nExitCode)
 
 inline uint32_t ByteReverse(uint32_t value)
 {
-	value = ((value & 0xFF00FF00) >> 8) | ((value & 0x00FF00FF) << 8);
-	return (value<<16) | (value>>16);
+    value = ((value & 0xFF00FF00) >> 8) | ((value & 0x00FF00FF) << 8);
+    return (value<<16) | (value>>16);
 }
 
 #endif

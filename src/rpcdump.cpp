@@ -33,78 +33,78 @@ extern Object JSONRPCError(int code, const string& message);
 class CTxDump
 {
 public:
-  CBlockIndex *pindex;
-  int64 nValue;
-  bool fSpent;
-  CWalletTx* ptx;
-  int nOut;
-  CTxDump(CWalletTx* ptx = NULL, int nOut = -1)
-  {
-    pindex = NULL;
-    nValue = 0;
-    fSpent = false;
-    this->ptx = ptx;
-    this->nOut = nOut;
-  }
+    CBlockIndex *pindex;
+    int64 nValue;
+    bool fSpent;
+    CWalletTx* ptx;
+    int nOut;
+    CTxDump(CWalletTx* ptx = NULL, int nOut = -1)
+    {
+        pindex = NULL;
+        nValue = 0;
+        fSpent = false;
+        this->ptx = ptx;
+        this->nOut = nOut;
+    }
 };
 
 Value importpassphrase(const Array& params, bool fHelp)
 {
-  if(fHelp || params.size() < 1 || params.size() > 2)
-    throw runtime_error(
-      "importpassphrase \"<passphrase>\" [label]\n"
-      "Adds a private key into your wallet.");
-  string strSecret = params[0].get_str();
-  uint256 pass = sha256((const u8int*)strSecret.c_str(), strSecret.length());
-  CSecret passSecret;
-  passSecret.resize(32);
-  for (int i = 0; i < 32; i++) {
-   passSecret[i] = (pass.begin())[i];
-  }
+    if (fHelp || params.size() < 1 || params.size() > 2)
+        throw runtime_error(
+            "importpassphrase \"<passphrase>\" [label]\n"
+            "Adds a private key into your wallet.");
+    string strSecret = params[0].get_str();
+    uint256 pass = sha256((const u8int*)strSecret.c_str(), strSecret.length());
+    CSecret passSecret;
+    passSecret.resize(32);
+    for (int i = 0; i < 32; i++) {
+        passSecret[i] = (pass.begin())[i];
+    }
   
-  string strLabel = "";
-  if(params.size() > 1)
-    strLabel = params[1].get_str();
+    string strLabel = "";
+    if(params.size() > 1)
+        strLabel = params[1].get_str();
 
-  CBitcoinSecret vchSecret;
-  bool fCompressed = true;
-  vchSecret.SetSecret( passSecret , fCompressed );
+    CBitcoinSecret vchSecret;
+    bool fCompressed = true;
+    vchSecret.SetSecret( passSecret , fCompressed );
   
 
-  //if(!fGood) throw JSONRPCError(-5, "Invalid private key");
-  if(pwalletMain->IsLocked())
-    throw JSONRPCError(-13, "Error: Please enter the wallet passphrase with walletpassphrase first.");
-  if(fWalletUnlockMintOnly) // slimcoin: no importprivkey in mint-only mode
-    throw JSONRPCError(-102, "Wallet is unlocked for minting only.");
+    //if (!fGood) throw JSONRPCError(-5, "Invalid private key");
+    if (pwalletMain->IsLocked())
+        throw JSONRPCError(-13, "Error: Please enter the wallet passphrase with walletpassphrase first.");
+    if (fWalletUnlockMintOnly) // slimcoin: no importprivkey in mint-only mode
+        throw JSONRPCError(-102, "Wallet is unlocked for minting only.");
 
-  CKey key;
-  CSecret secret = vchSecret.GetSecret(fCompressed);
-  key.SetSecret(secret, fCompressed);
-  /* FIXME: sanity check required */
-  CBitcoinAddress vchAddress = CBitcoinAddress(key.GetPubKey().GetID());
+    CKey key;
+    CSecret secret = vchSecret.GetSecret(fCompressed);
+    key.SetSecret(secret, fCompressed);
+    /* FIXME: sanity check required */
+    CBitcoinAddress vchAddress = CBitcoinAddress(key.GetPubKey().GetID());
 
-  {
-    LOCK2(cs_main, pwalletMain->cs_wallet);
+    {
+        LOCK2(cs_main, pwalletMain->cs_wallet);
 
-    pwalletMain->MarkDirty();
-    pwalletMain->SetAddressBookName(CTxDestination(vchAddress.Get()), strLabel);
+        pwalletMain->MarkDirty();
+        pwalletMain->SetAddressBookName(CTxDestination(vchAddress.Get()), strLabel);
 
-    if(!pwalletMain->AddKey(key))
-      throw JSONRPCError(-4,"Error adding key to wallet");
+        if (!pwalletMain->AddKey(key))
+            throw JSONRPCError(-4,"Error adding key to wallet");
 
-    pwalletMain->ScanForWalletTransactions(pindexGenesisBlock, true);
-    pwalletMain->ReacceptWalletTransactions();
-  }
+        pwalletMain->ScanForWalletTransactions(pindexGenesisBlock, true);
+        pwalletMain->ReacceptWalletTransactions();
+    }
 
-  MainFrameRepaint();
-  Object obj;
-  obj.push_back(Pair("Secret",        CBitcoinSecret( passSecret, fCompressed ).ToString() ));
-  obj.push_back(Pair("Address",       vchAddress.ToString()));
-  obj.push_back(Pair("Hash",          pass.GetHex()));
-  obj.push_back(Pair("Phrase",        strSecret));
-  obj.push_back(Pair("Length",   (int)strSecret.length()));
-  return obj;
-  // return Value::null;
+    MainFrameRepaint();
+    Object obj;
+    obj.push_back(Pair("Secret",        CBitcoinSecret( passSecret, fCompressed ).ToString() ));
+    obj.push_back(Pair("Address",       vchAddress.ToString()));
+    obj.push_back(Pair("Hash",          pass.GetHex()));
+    obj.push_back(Pair("Phrase",        strSecret));
+    obj.push_back(Pair("Length",   (int)strSecret.length()));
+    return obj;
+    // return Value::null;
 }
 
 Value importprivkey(const Array& params, bool fHelp)

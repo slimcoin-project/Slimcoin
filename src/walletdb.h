@@ -16,24 +16,24 @@ class CAccountingEntry;
 /** Error statuses for the wallet database */
 enum DBErrors
 {
-  DB_LOAD_OK,
-  DB_CORRUPT,
-  DB_NONCRITICAL_ERROR,
-  DB_TOO_NEW,
-  DB_LOAD_FAIL,
-  DB_NEED_REWRITE
+    DB_LOAD_OK,
+    DB_CORRUPT,
+    DB_NONCRITICAL_ERROR,
+    DB_TOO_NEW,
+    DB_LOAD_FAIL,
+    DB_NEED_REWRITE
 };
 
 /** Access to the wallet database (wallet.dat) */
 class CWalletDB : public CDB
 {
 public:
-CWalletDB(std::string strFilename, const char* pszMode="r+") : CDB(strFilename.c_str(), pszMode)
-  {
-  }
+    CWalletDB(std::string strFilename, const char* pszMode="r+") : CDB(strFilename.c_str(), pszMode)
+    {
+    }
 private:
-  CWalletDB(const CWalletDB&);
-  void operator=(const CWalletDB&);
+    CWalletDB(const CWalletDB&);
+    void operator=(const CWalletDB&);
 public:
     bool ReadName(const std::string& strAddress, std::string& strName)
     {
@@ -168,35 +168,35 @@ public:
     // used only for backwards compatibility:
     template<typename T>
     bool ReadSetting(const std::string& strKey, T& value)
-  {
-    return Read(std::make_pair(std::string("setting"), strKey), value);
-  }
-  template<typename T>
+    {
+        return Read(std::make_pair(std::string("setting"), strKey), value);
+    }
+    template<typename T>
     bool WriteSetting(const std::string& strKey, const T& value)
-  {
-    nWalletDBUpdated++;
-    return Write(std::make_pair(std::string("setting"), strKey), value);
-  }
-  bool EraseSetting(const std::string& strKey)
-  {
-    nWalletDBUpdated++;
-    return Erase(std::make_pair(std::string("setting"), strKey));
-  }
+    {
+        nWalletDBUpdated++;
+        return Write(std::make_pair(std::string("setting"), strKey), value);
+    }
+    bool EraseSetting(const std::string& strKey)
+    {
+        nWalletDBUpdated++;
+        return Erase(std::make_pair(std::string("setting"), strKey));
+    }
 
-  bool WriteMinVersion(int nVersion)
-  {
-    return Write(std::string("minversion"), nVersion);
-  }
+    bool WriteMinVersion(int nVersion)
+    {
+        return Write(std::string("minversion"), nVersion);
+    }
 
-  bool ReadAccount(const std::string& strAccount, CAccount& account);
-  bool WriteAccount(const std::string& strAccount, const CAccount& account);
-  bool WriteAccountingEntry(const CAccountingEntry& acentry);
-  int64 GetAccountCreditDebit(const std::string& strAccount);
-  void ListAccountCreditDebit(const std::string& strAccount, std::list<CAccountingEntry>& acentries);
+    bool ReadAccount(const std::string& strAccount, CAccount& account);
+    bool WriteAccount(const std::string& strAccount, const CAccount& account);
+    bool WriteAccountingEntry(const CAccountingEntry& acentry);
+    int64 GetAccountCreditDebit(const std::string& strAccount);
+    void ListAccountCreditDebit(const std::string& strAccount, std::list<CAccountingEntry>& acentries);
 
-  int LoadWallet(CWallet* pwallet);
-  int FindWalletTx(CWallet* pwallet, std::vector<uint256>& vTxHash, std::vector<CWalletTx>& vWtx);
-  int ZapWalletTx(CWallet* pwallet, std::vector<CWalletTx>& vWtx);
+    int LoadWallet(CWallet* pwallet);
+    int FindWalletTx(CWallet* pwallet, std::vector<uint256>& vTxHash, std::vector<CWalletTx>& vWtx);
+    int ZapWalletTx(CWallet* pwallet, std::vector<CWalletTx>& vWtx);
 };
 
 #endif // BITCOIN_WALLETDB_H

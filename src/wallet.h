@@ -60,13 +60,13 @@ public:
     }
 
     IMPLEMENT_SERIALIZE
-        (
-            if (!(nType & SER_GETHASH))
-                READWRITE(nVersion);
-            READWRITE(nTime);
-            READWRITE(vchPubKey);
-            )
-        };
+    (
+        if (!(nType & SER_GETHASH))
+            READWRITE(nVersion);
+        READWRITE(nTime);
+        READWRITE(vchPubKey);
+    )
+};
 
 /** A CWallet is an extension of a keystore, which also maintains a set of transactions and balances,
  * and provides the ability to create new transactions.
@@ -182,7 +182,7 @@ public:
     bool CommitTransaction(CWalletTx& wtxNew, CReserveKey& reservekey, bool fBurnTx=false);
     std::string SendMoney(CScript scriptPubKey, int64 nValue, CWalletTx& wtxNew, bool fAskFee=false, bool fBurnTx=false);
     std::string SendMoneyToDestination(const CTxDestination &address, int64 nValue, CWalletTx& wtxNew, bool fAskFee=false, bool fBurnTx=false);
-    
+
     bool NewKeyPool();
     bool TopUpKeyPool();
     int64 AddReserveKey(const CKeyPool& keypool);
@@ -386,12 +386,12 @@ public:
         Init(pwalletIn);
     }
 
-CWalletTx(const CWallet* pwalletIn, const CMerkleTx& txIn) : CMerkleTx(txIn)
+    CWalletTx(const CWallet* pwalletIn, const CMerkleTx& txIn) : CMerkleTx(txIn)
     {
         Init(pwalletIn);
     }
 
-CWalletTx(const CWallet* pwalletIn, const CTransaction& txIn) : CMerkleTx(txIn)
+    CWalletTx(const CWallet* pwalletIn, const CTransaction& txIn) : CMerkleTx(txIn)
     {
         Init(pwalletIn);
     }
