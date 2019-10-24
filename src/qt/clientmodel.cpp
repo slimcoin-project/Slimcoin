@@ -14,13 +14,13 @@
 static const int64 nClientStartupTime = GetTime();
 
 ClientModel::ClientModel(OptionsModel *optionsModel, QObject *parent) :
-  QObject(parent), optionsModel(optionsModel),
-  /* FIXME: upgrade?
-  cachedNumConnections(0), cachedNumBlocks(0)
-  */
-  cachedNumBlocks(0), cachedNumBlocksOfPeers(0), cachedHashrate(0), pollTimer(0)
+    QObject(parent), optionsModel(optionsModel),
+    /* FIXME: upgrade?
+    cachedNumConnections(0), cachedNumBlocks(0)
+    */
+    cachedNumBlocks(0), cachedNumBlocksOfPeers(0), cachedHashrate(0), pollTimer(0)
 {
-  numBlocksAtStartup = -1;
+    numBlocksAtStartup = -1;
 
     pollTimer = new QTimer(this);
     // Read our specific settings from the wallet db
@@ -66,18 +66,18 @@ ClientModel::~ClientModel()
 
 int ClientModel::getNumConnections() const
 {
-  return vNodes.size();
+    return vNodes.size();
 }
 
 int ClientModel::getNumBlocks() const
 {
-  return nBestHeight;
+    return nBestHeight;
 }
 
 int ClientModel::getNumBlocksAtStartup()
 {
-  if(numBlocksAtStartup == -1) numBlocksAtStartup = getNumBlocks();
-  return numBlocksAtStartup;
+    if (numBlocksAtStartup == -1) numBlocksAtStartup = getNumBlocks();
+    return numBlocksAtStartup;
 }
 
 ClientModel::MiningType ClientModel::getMiningType() const
@@ -197,32 +197,32 @@ double ClientModel::GetDifficulty() const
 
 QDateTime ClientModel::getLastBlockDate() const
 {
-  return QDateTime::fromTime_t(pindexBest->GetBlockTime());
+    return QDateTime::fromTime_t(pindexBest->GetBlockTime());
 }
 
 void ClientModel::update()
 {
-  int newNumConnections = getNumConnections();
-  int newNumBlocks = getNumBlocks();
-  int newNumBlocksOfPeers = getNumBlocksOfPeers();
-  QString newStatusBar = getStatusBarWarnings();
+    int newNumConnections = getNumConnections();
+    int newNumBlocks = getNumBlocks();
+    int newNumBlocksOfPeers = getNumBlocksOfPeers();
+    QString newStatusBar = getStatusBarWarnings();
 
-  if(cachedNumConnections != newNumConnections)
-    emit numConnectionsChanged(newNumConnections);
-  if(cachedNumBlocks != newNumBlocks || cachedStatusBar != newStatusBar || cachedNumBlocksOfPeers != newNumBlocksOfPeers)
-  {
+    if(cachedNumConnections != newNumConnections)
+        emit numConnectionsChanged(newNumConnections);
+    if(cachedNumBlocks != newNumBlocks || cachedStatusBar != newStatusBar || cachedNumBlocksOfPeers != newNumBlocksOfPeers)
+    {
 
-    cachedNumConnections = newNumConnections;
-    cachedNumBlocks = newNumBlocks;
-    cachedNumBlocksOfPeers = newNumBlocksOfPeers;
-    cachedStatusBar = newStatusBar;
+        cachedNumConnections = newNumConnections;
+        cachedNumBlocks = newNumBlocks;
+        cachedNumBlocksOfPeers = newNumBlocksOfPeers;
+        cachedStatusBar = newStatusBar;
 
-    // Simply emit a numBlocksChanged for now in case the status message changes,
-    // so that the view updates the status bar.
-    // TODO: It should send a notification.
-    //    (However, this might generate looped notifications and needs to be thought through and tested carefully)
-    //    error(tr("Network Alert"), newStatusBar);
-    emit numBlocksChanged(newNumBlocks, std::max(newNumBlocksOfPeers, newNumBlocks));
+        // Simply emit a numBlocksChanged for now in case the status message changes,
+        // so that the view updates the status bar.
+        // TODO: It should send a notification.
+        //    (However, this might generate looped notifications and needs to be thought through and tested carefully)
+        //    error(tr("Network Alert"), newStatusBar);
+        emit numBlocksChanged(newNumBlocks, std::max(newNumBlocksOfPeers, newNumBlocks));
     }
 }
 
@@ -263,17 +263,17 @@ void ClientModel::updateAlert(const QString &hash, int status)
 
 bool ClientModel::isTestNet() const
 {
-  return fTestNet;
+    return fTestNet;
 }
 
 bool ClientModel::inInitialBlockDownload() const
 {
-  return IsInitialBlockDownload();
+    return IsInitialBlockDownload();
 }
 
 int ClientModel::getNumBlocksOfPeers() const
 {
-  return GetNumBlocksOfPeers();
+    return GetNumBlocksOfPeers();
 }
 
 void ClientModel::setMining(MiningType type, bool mining, int threads, int hashrate)
@@ -292,37 +292,37 @@ void ClientModel::setMining(MiningType type, bool mining, int threads, int hashr
 
 QString ClientModel::getStatusBarWarnings() const
 {
-  return QString::fromStdString(GetWarnings("statusbar"));
+    return QString::fromStdString(GetWarnings("statusbar"));
 }
 
 OptionsModel *ClientModel::getOptionsModel()
 {
-  return optionsModel;
+    return optionsModel;
 }
 
 QString ClientModel::formatFullVersion() const
 {
-  return QString::fromStdString(FormatFullVersion());
+    return QString::fromStdString(FormatFullVersion());
 }
 
 QString ClientModel::formatBuildDate() const
 {
-  return QString::fromStdString(CLIENT_DATE);
+    return QString::fromStdString(CLIENT_DATE);
 }
 
 bool ClientModel::isReleaseVersion() const
 {
-  return CLIENT_VERSION_IS_RELEASE;
+    return CLIENT_VERSION_IS_RELEASE;
 }
 
 QString ClientModel::clientName() const
 {
-  return QString::fromStdString(CLIENT_NAME);
+    return QString::fromStdString(CLIENT_NAME);
 }
 
 QString ClientModel::formatClientStartupTime() const
 {
-  return QDateTime::fromTime_t(nClientStartupTime).toString();
+    return QDateTime::fromTime_t(nClientStartupTime).toString();
 }
 
 // Handlers for core signals

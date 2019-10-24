@@ -1,6 +1,7 @@
 /*
  * W.J. van der Laan 2011-2012
- * The SLIMCoin Developers 2013
+* The PPCoin Developers 2013
+ * The SLIMCoin Developers 2014
  */
 #include "bitcoingui.h"
 #include "clientmodel.h"
@@ -44,95 +45,94 @@ static ClientModel *clientmodel;
 
 int ThreadSafeMessageBox(const std::string& message, const std::string& caption, int style)
 {
-  // Message from network thread
-  if(guiref)
-  {
-    bool modal = (style & wxMODAL);
-    // in case of modal message, use blocking connection to wait for user to click OK
-    QMetaObject::invokeMethod(guiref, "error",
-                              modal ? GUIUtil::blockingGUIThreadConnection() : Qt::QueuedConnection,
-                              Q_ARG(QString, QString::fromStdString(caption)),
-                              Q_ARG(QString, QString::fromStdString(message)),
-                              Q_ARG(bool, modal));
-  }
-  else
-  {
-    printf("%s: %s\n", caption.c_str(), message.c_str());
-    fprintf(stderr, "%s: %s\n", caption.c_str(), message.c_str());
-  }
-  return 4;
+    // Message from network thread
+    if(guiref)
+    {
+        bool modal = (style & wxMODAL);
+        // in case of modal message, use blocking connection to wait for user to click OK
+        QMetaObject::invokeMethod(guiref, "error",
+                                   modal ? GUIUtil::blockingGUIThreadConnection() : Qt::QueuedConnection,
+                                   Q_ARG(QString, QString::fromStdString(caption)),
+                                   Q_ARG(QString, QString::fromStdString(message)),
+                                   Q_ARG(bool, modal));
+    }
+    else
+    {
+        printf("%s: %s\n", caption.c_str(), message.c_str());
+        fprintf(stderr, "%s: %s\n", caption.c_str(), message.c_str());
+    }
+    return 4;
 }
 
 bool ThreadSafeAskFee(int64 nFeeRequired, const std::string& strCaption)
 {
-  if(!guiref)
-    return false;
-  if(nFeeRequired < MIN_TX_FEE || nFeeRequired <= nTransactionFee || fDaemon)
-    return true;
-  bool payFee = false;
+    if(!guiref)
+        return false;
+    if(nFeeRequired < MIN_TX_FEE || nFeeRequired <= nTransactionFee || fDaemon)
+        return true;
+    bool payFee = false;
 
-  QMetaObject::invokeMethod(guiref, "askFee", GUIUtil::blockingGUIThreadConnection(),
-                            Q_ARG(qint64, nFeeRequired),
-                            Q_ARG(bool*, &payFee));
+    QMetaObject::invokeMethod(guiref, "askFee", GUIUtil::blockingGUIThreadConnection(),
+                               Q_ARG(qint64, nFeeRequired),
+                               Q_ARG(bool*, &payFee));
 
-  return payFee;
+    return payFee;
 }
 
 void ThreadSafeHandleURI(const std::string& strURI)
 {
-  if(!guiref)
-    return;
+    if(!guiref)
+        return;
 
-  QMetaObject::invokeMethod(guiref, "handleURI", GUIUtil::blockingGUIThreadConnection(),
-                            Q_ARG(QString, QString::fromStdString(strURI)));
+    QMetaObject::invokeMethod(guiref, "handleURI", GUIUtil::blockingGUIThreadConnection(),
+                               Q_ARG(QString, QString::fromStdString(strURI)));
 }
 
 void MainFrameRepaint()
 {
-  if(clientmodel)
-    QMetaObject::invokeMethod(clientmodel, "update", Qt::QueuedConnection);
-  if(walletmodel)
-    QMetaObject::invokeMethod(walletmodel, "update", Qt::QueuedConnection);
+    if(clientmodel)
+        QMetaObject::invokeMethod(clientmodel, "update", Qt::QueuedConnection);
+    if(walletmodel)
+        QMetaObject::invokeMethod(walletmodel, "update", Qt::QueuedConnection);
 }
 
 void AddressBookRepaint()
 {
-  if(walletmodel)
-    QMetaObject::invokeMethod(walletmodel, "updateAddressList", Qt::QueuedConnection);
+    if(walletmodel)
+        QMetaObject::invokeMethod(walletmodel, "updateAddressList", Qt::QueuedConnection);
 }
 
 void InitMessage(const std::string &message)
 {
-  if(splashref)
-  {
-    //the addition of the newline is there to bump the text up so it fully fits in the coin's picture
-    // splashref->showMessage(QString::fromStdString(message + "\n"), Qt::AlignBottom | Qt::AlignHCenter, QColor(55,55,55));
-    splashref->showMessage(QString::fromStdString(message+"\n\n") + QString::fromStdString(FormatFullVersion().c_str()), Qt::AlignBottom|Qt::AlignHCenter, QColor(55,55,55));
-    QApplication::instance()->processEvents();
-
-  }
+    if(splashref)
+    {
+        //the addition of the newline is there to bump the text up so it fully fits in the coin's picture
+        // splashref->showMessage(QString::fromStdString(message + "\n"), Qt::AlignBottom | Qt::AlignHCenter, QColor(55,55,55));
+        splashref->showMessage(QString::fromStdString(message+"\n\n") + QString::fromStdString(FormatFullVersion().c_str()), Qt::AlignBottom|Qt::AlignHCenter, QColor(55,55,55));
+        QApplication::instance()->processEvents();
+    }
 }
 
 void QueueShutdown()
 {
-  QMetaObject::invokeMethod(QCoreApplication::instance(), "quit", Qt::QueuedConnection);
+    QMetaObject::invokeMethod(QCoreApplication::instance(), "quit", Qt::QueuedConnection);
 }
 
 /*
-  Translate string to current locale using Qt.
-*/
+   Translate string to current locale using Qt.
+ */
 std::string _(const char* psz)
 {
-  return QCoreApplication::translate("bitcoin-core", psz).toStdString();
+    return QCoreApplication::translate("bitcoin-core", psz).toStdString();
 }
 
 /* Handle runaway exceptions. Shows a message box with the problem and quits the program.
  */
 static void handleRunawayException(std::exception *e)
 {
-  PrintExceptionContinue(e, "Runaway exception");
-  QMessageBox::critical(0, "Runaway exception", BitcoinGUI::tr("A fatal error occured. Slimcoin can no longer continue safely and will quit.") + QString("\n\n") + QString::fromStdString(strMiscWarning));
-  exit(1);
+    PrintExceptionContinue(e, "Runaway exception");
+    QMessageBox::critical(0, "Runaway exception", BitcoinGUI::tr("A fatal error occured. Slimcoin can no longer continue safely and will quit.") + QString("\n\n") + QString::fromStdString(strMiscWarning));
+    exit(1);
 }
 
 #ifdef WIN32
@@ -144,37 +144,37 @@ int main(int argc, char *argv[])
 #if !defined(MAC_OSX) && !defined(WIN32)
 // TODO: implement qtipcserver.cpp for Mac and Windows
 
-  // Do this early as we don't want to bother initializing if we are just calling IPC
-  for(int i = 1; i < argc; i++)
-  {
-    if(strlen(argv[i]) >= 8 && strncasecmp(argv[i], "slimcoin:", 9) == 0)
+    // Do this early as we don't want to bother initializing if we are just calling IPC
+    for (int i = 1; i < argc; i++)
     {
-      const char *strURI = argv[i];
-      try {
-        boost::interprocess::message_queue mq(boost::interprocess::open_only, BITCOINURI_QUEUE_NAME);
-        if(mq.try_send(strURI, strlen(strURI), 0))
-          exit(0);
-        else
-          break;
-      }
-      catch (boost::interprocess::interprocess_exception &ex) {
-        break;
-      }
+        if (strlen(argv[i]) >= 8 && strncasecmp(argv[i], "slimcoin:", 9) == 0)
+        {
+            const char *strURI = argv[i];
+            try {
+                boost::interprocess::message_queue mq(boost::interprocess::open_only, BITCOINURI_QUEUE_NAME);
+                if(mq.try_send(strURI, strlen(strURI), 0))
+                    exit(0);
+                else
+                    break;
+            }
+            catch (boost::interprocess::interprocess_exception &ex) {
+                break;
+            }
+        }
     }
-  }
 #endif
 
-  Q_INIT_RESOURCE(bitcoin);
-  QApplication app(argc, argv);
+    Q_INIT_RESOURCE(bitcoin);
+    QApplication app(argc, argv);
 
-  // Command-line options take precedence:
-  ParseParameters(argc, argv);
+    // Command-line options take precedence:
+    ParseParameters(argc, argv);
 
-  // Basic Qt initialization (not dependent on parameters or configuration)
+    // Basic Qt initialization (not dependent on parameters or configuration)
 #if QT_VERSION < 0x050000
-  // Internal string conversion is all UTF-8
-  QTextCodec::setCodecForTr(QTextCodec::codecForName("UTF-8"));
-  QTextCodec::setCodecForCStrings(QTextCodec::codecForTr());
+    // Internal string conversion is all UTF-8
+    QTextCodec::setCodecForTr(QTextCodec::codecForName("UTF-8"));
+    QTextCodec::setCodecForCStrings(QTextCodec::codecForTr());
 #endif
 
 #if QT_VERSION > 0x050100
@@ -190,6 +190,7 @@ int main(int argc, char *argv[])
 #ifdef MAC_OSX
     QApplication::setAttribute(Qt::AA_DontShowIconsInMenus);
 #endif
+
 /* FIXME: refactor to Qt5.6+
 #if QT_VERSION >= 0x050500
     // Because of the POODLE attack it is recommended to disable SSLv3 (https://disablessl3.com/),
@@ -200,144 +201,144 @@ int main(int argc, char *argv[])
 #endif
 */
 
-  // TODO: Do not refer to data directory yet, this can be overridden by Intro::pickDataDirectory
+    // TODO: Do not refer to data directory yet, this can be overridden by Intro::pickDataDirectory
 
-  // ... then bitcoin.conf:
-  if(!boost::filesystem::is_directory(GetDataDir(false)))
-  {
-    fprintf(stderr, "Error: Specified directory does not exist\n");
-    return 1;
-  }
-  ReadConfigFile(mapArgs, mapMultiArgs);
-
-  // Application identification (must be set before OptionsModel is initialized,
-  // as it is used to locate QSettings)
-  app.setOrganizationName("Slimcoin");
-  app.setOrganizationDomain("slimcoin.org");
-  if(GetBoolArg("-testnet")) // Separate UI settings for testnet
-    app.setApplicationName("Slimcoin-Qt-testnet");
-  else
-    app.setApplicationName("Slimcoin-Qt");
-
-  // ... then GUI settings:
-  OptionsModel optionsModel;
-
-  // Get desired locale ("en_US") from command line or system locale
-  QString lang_territory = QString::fromStdString(GetArg("-lang", QLocale::system().name().toStdString()));
-  // Load language files for configured locale:
-  // - First load the translator for the base language, without territory
-  // - Then load the more specific locale translator
-  QString lang = lang_territory;
-
-  lang.truncate(lang_territory.lastIndexOf('_')); // "en"
-  QTranslator qtTranslatorBase, qtTranslator, translatorBase, translator;
-
-  qtTranslatorBase.load(QLibraryInfo::location(QLibraryInfo::TranslationsPath) + "/qt_" + lang);
-  if(!qtTranslatorBase.isEmpty())
-    app.installTranslator(&qtTranslatorBase);
-
-  qtTranslator.load(QLibraryInfo::location(QLibraryInfo::TranslationsPath) + "/qt_" + lang_territory);
-  if(!qtTranslator.isEmpty())
-    app.installTranslator(&qtTranslator);
-
-  translatorBase.load(":/translations/"+lang);
-  if(!translatorBase.isEmpty())
-    app.installTranslator(&translatorBase);
-
-  translator.load(":/translations/"+lang_territory);
-  if(!translator.isEmpty())
-    app.installTranslator(&translator);
-
-  QPixmap testnet_splash_pixmap = QPixmap(":/images/splash_testnet");
-  QSplashScreen splash(QPixmap(":/images/splash"), Qt::Window);
-  if(GetBoolArg("-splash", true) && !GetBoolArg("-min"))
-  {
-    if(GetBoolArg("-testnet", false))
-      splash.setPixmap(testnet_splash_pixmap);
-    splash.show();
-    splash.setAutoFillBackground(true);
-    splashref = &splash;
-  }
-
-  app.processEvents();
-
-  app.setQuitOnLastWindowClosed(false);
-
-  try
-  {
-    BitcoinGUI window;
-    guiref = &window;
-    if(AppInit2(argc, argv))
+    // ... then bitcoin.conf:
+    if (!boost::filesystem::is_directory(GetDataDir(false)))
     {
-      {
-        // Put this in a block, so that the Model objects are cleaned up before
-        // calling Shutdown().
+        fprintf(stderr, "Error: Specified directory does not exist\n");
+        return 1;
+    }
+    ReadConfigFile(mapArgs, mapMultiArgs);
 
-        optionsModel.Upgrade(); // Must be done after AppInit2
+    // Application identification (must be set before OptionsModel is initialized,
+    // as it is used to locate QSettings)
+    app.setOrganizationName("Slimcoin");
+    app.setOrganizationDomain("slimcoin.org");
+    if(GetBoolArg("-testnet")) // Separate UI settings for testnet
+        app.setApplicationName("Slimcoin-Qt-testnet");
+    else
+        app.setApplicationName("Slimcoin-Qt");
 
-        if(splashref)
-          splash.finish(&window);
+    // ... then GUI settings:
+    OptionsModel optionsModel;
 
-        ClientModel clientModel(&optionsModel);
-        clientmodel = &clientModel;
-        WalletModel walletModel(pwalletMain, &optionsModel);
-        walletmodel = &walletModel;
+    // Get desired locale ("en_US") from command line or system locale
+    QString lang_territory = QString::fromStdString(GetArg("-lang", QLocale::system().name().toStdString()));
+    // Load language files for configured locale:
+    // - First load the translator for the base language, without territory
+    // - Then load the more specific locale translator
+    QString lang = lang_territory;
 
-        window.setClientModel(&clientModel);
-        window.setWalletModel(&walletModel);
+    lang.truncate(lang_territory.lastIndexOf('_')); // "en"
+    QTranslator qtTranslatorBase, qtTranslator, translatorBase, translator;
 
-        // If -min option passed, start window minimized.
-        if(GetBoolArg("-min"))
+    qtTranslatorBase.load(QLibraryInfo::location(QLibraryInfo::TranslationsPath) + "/qt_" + lang);
+    if (!qtTranslatorBase.isEmpty())
+        app.installTranslator(&qtTranslatorBase);
+
+    qtTranslator.load(QLibraryInfo::location(QLibraryInfo::TranslationsPath) + "/qt_" + lang_territory);
+    if (!qtTranslator.isEmpty())
+        app.installTranslator(&qtTranslator);
+
+    translatorBase.load(":/translations/"+lang);
+    if (!translatorBase.isEmpty())
+        app.installTranslator(&translatorBase);
+
+    translator.load(":/translations/"+lang_territory);
+    if (!translator.isEmpty())
+        app.installTranslator(&translator);
+
+    QPixmap testnet_splash_pixmap = QPixmap(":/images/splash_testnet");
+    QSplashScreen splash(QPixmap(":/images/splash"), Qt::Window);
+    if (GetBoolArg("-splash", true) && !GetBoolArg("-min"))
+    {
+        if (GetBoolArg("-testnet", false))
+            splash.setPixmap(testnet_splash_pixmap);
+        splash.show();
+        splash.setAutoFillBackground(true);
+        splashref = &splash;
+    }
+
+    app.processEvents();
+
+    app.setQuitOnLastWindowClosed(false);
+
+    try
+    {
+        BitcoinGUI window;
+        guiref = &window;
+        if(AppInit2(argc, argv))
+        {
+            {
+                // Put this in a block, so that the Model objects are cleaned up before
+                // calling Shutdown().
+
+                optionsModel.Upgrade(); // Must be done after AppInit2
+
+                if (splashref)
+                    splash.finish(&window);
+
+                ClientModel clientModel(&optionsModel);
+                clientmodel = &clientModel;
+                WalletModel walletModel(pwalletMain, &optionsModel);
+                walletmodel = &walletModel;
+
+                window.setClientModel(&clientModel);
+                window.setWalletModel(&walletModel);
+
+                // If -min option passed, start window minimized.
+                if(GetBoolArg("-min"))
                 {
-          window.showMinimized();
+                    window.showMinimized();
                 }
-        else
+                else
                 {
-          window.show();
+                    window.show();
                 }
 
-        // Place this here as guiref has to be defined if we dont want to lose URIs
-        ipcInit();
+                // Place this here as guiref has to be defined if we dont want to lose URIs
+                ipcInit();
 
 #if !defined(MAC_OSX) && !defined(WIN32)
 // TODO: implement qtipcserver.cpp for Mac and Windows
 
-        // Check for URI in argv
-        for(int i = 1; i < argc; i++)
-        {
-          if(strlen(argv[i]) > 8 && strncasecmp(argv[i], "slimcoin:", 9) == 0)
-          {
-            const char *strURI = argv[i];
-            try {
-              boost::interprocess::message_queue mq(boost::interprocess::open_only, BITCOINURI_QUEUE_NAME);
-              mq.try_send(strURI, strlen(strURI), 0);
-            }
-            catch (boost::interprocess::interprocess_exception &ex) {
-            }
-          }
-        }
+                // Check for URI in argv
+                for (int i = 1; i < argc; i++)
+                {
+                    if (strlen(argv[i]) > 8 && strncasecmp(argv[i], "slimcoin:", 9) == 0)
+                    {
+                        const char *strURI = argv[i];
+                        try {
+                            boost::interprocess::message_queue mq(boost::interprocess::open_only, BITCOINURI_QUEUE_NAME);
+                            mq.try_send(strURI, strlen(strURI), 0);
+                        }
+                        catch (boost::interprocess::interprocess_exception &ex) {
+                        }
+                    }
+                }
 #endif
-        app.exec();
+                app.exec();
 
-        window.hide();
-        window.setClientModel(0);
-        window.setWalletModel(0);
-        guiref = 0;
-        clientmodel = 0;
-        walletmodel = 0;
-      }
-      // Shutdown the core and it's threads, but don't exit Bitcoin-Qt here
-      Shutdown(NULL);
+                window.hide();
+                window.setClientModel(0);
+                window.setWalletModel(0);
+                guiref = 0;
+                clientmodel = 0;
+                walletmodel = 0;
+            }
+            // Shutdown the core and it's threads, but don't exit Bitcoin-Qt here
+            Shutdown(NULL);
+        }
+        else
+        {
+            return 1;
+        }
+    } catch (std::exception& e) {
+        handleRunawayException(&e);
+    } catch (...) {
+        handleRunawayException(NULL);
     }
-    else
-    {
-      return 1;
-    }
-  } catch (std::exception& e) {
-    handleRunawayException(&e);
-  } catch (...) {
-    handleRunawayException(NULL);
-  }
-  return 0;
+    return 0;
 }
 #endif // BITCOIN_QT_TEST

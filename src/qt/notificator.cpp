@@ -241,11 +241,11 @@ void Notificator::notifyGrowl(Class cls, const QString &title, const QString &te
     );
 
     QString notificationApp(QApplication::applicationName());
-    if(notificationApp.isEmpty())
+    if (notificationApp.isEmpty())
         notificationApp = "Application";
 
     QPixmap notificationIconPixmap;
-    if(icon.isNull()) { // If no icon specified, set icon based on class
+    if (icon.isNull()) { // If no icon specified, set icon based on class
         QStyle::StandardPixmap sicon = QStyle::SP_MessageBoxQuestion;
         switch (cls)
         {
@@ -262,9 +262,9 @@ void Notificator::notifyGrowl(Class cls, const QString &title, const QString &te
 
     QString notificationIcon;
     QTemporaryFile notificationIconFile;
-    if(!notificationIconPixmap.isNull() && notificationIconFile.open()) {
+    if (!notificationIconPixmap.isNull() && notificationIconFile.open()) {
         QImageWriter writer(&notificationIconFile, "PNG");
-        if(writer.write(notificationIconPixmap.toImage()))
+        if (writer.write(notificationIconPixmap.toImage()))
             notificationIcon = QString(" image from location \"file://%1\"").arg(notificationIconFile.fileName());
     }
 

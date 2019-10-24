@@ -51,11 +51,12 @@ public:
     AddressTableModel *parent;
 
     AddressTablePriv(CWallet *wallet, AddressTableModel *parent):
-        wallet(wallet), parent(parent) {}
+            wallet(wallet), parent(parent) {}
 
     void refreshAddressTable()
     {
         cachedAddressTable.clear();
+
         {
             LOCK(wallet->cs_wallet);
             BOOST_FOREACH(const PAIRTYPE(CTxDestination, std::string)& item, wallet->mapAddressBook)
@@ -188,7 +189,7 @@ QVariant AddressTableModel::data(const QModelIndex &index, int role) const
             return rec->address;
         }
     }
-    else if(role == Qt::FontRole)
+    else if (role == Qt::FontRole)
     {
         QFont font;
         if(index.column() == Address)
@@ -197,7 +198,7 @@ QVariant AddressTableModel::data(const QModelIndex &index, int role) const
         }
         return font;
     }
-    else if(role == TypeRole)
+    else if (role == TypeRole)
     {
         switch(rec->type)
         {
@@ -363,7 +364,7 @@ QString AddressTableModel::addRow(const QString &type, const QString &label, con
         // Check for duplicate addresses
         {
             LOCK(wallet->cs_wallet);
-            if (wallet->mapAddressBook.count(CBitcoinAddress(strAddress).Get()))
+            if(wallet->mapAddressBook.count(CBitcoinAddress(strAddress).Get()))
             {
                 editStatus = DUPLICATE_ADDRESS;
                 return QString();
@@ -427,11 +428,11 @@ QString AddressTableModel::labelForAddress(const QString &address) const
         std::string sAddr = address.toStdString();
         CBitcoinAddress address_parsed(sAddr);
         std::map<CTxDestination, std::string>::iterator mi = wallet->mapAddressBook.find(address_parsed.Get());
-        if(mi != wallet->mapAddressBook.end())
+        if (mi != wallet->mapAddressBook.end())
         {
             return QString::fromStdString(mi->second);
-         }
-     }
+        }
+    }
     return QString();
 }
 

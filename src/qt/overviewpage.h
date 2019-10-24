@@ -18,7 +18,7 @@ class TxViewDelegate;
 /** Overview ("home") page widget */
 class OverviewPage : public QWidget
 {
-  Q_OBJECT
+    Q_OBJECT
 
 public:
     explicit OverviewPage(QWidget *parent = 0);
@@ -27,11 +27,11 @@ public:
     void setModel(WalletModel *model);
     void setClientModel(ClientModel *model);
     void updatePlot(int count);
-    
-    public slots:
-        void setBalance(qint64 balance, qint64 stake, qint64 unconfirmedBalance, qint64 immatureBalance, qint64 reserveBalance, BurnCoinsBalances burnBalances);
-        void setNumTransactions(int count);
-        void setReserveBalance(qint64 nreserveBalance);
+
+public slots:
+    void setBalance(qint64 balance, qint64 stake, qint64 unconfirmedBalance, qint64 immatureBalance, qint64 reserveBalance, BurnCoinsBalances burnBalances);
+    void setNumTransactions(int count);
+    void setReserveBalance(qint64 nreserveBalance);
 
 signals:
     void transactionClicked(const QModelIndex &index);
@@ -58,9 +58,9 @@ private:
 
     TxViewDelegate *txdelegate;
 
-    private slots:
-        void displayUnitChanged();
-        void reserveBalanceChanged();
+private slots:
+    void displayUnitChanged();
+    void reserveBalanceChanged();
 };
 
 #endif // OVERVIEWPAGE_H

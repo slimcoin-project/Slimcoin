@@ -29,7 +29,7 @@ public:
     }
 
     inline void paint(QPainter *painter, const QStyleOptionViewItem &option,
-                                        const QModelIndex &index ) const
+                      const QModelIndex &index ) const
     {
         painter->save();
 
@@ -54,6 +54,7 @@ public:
             QBrush brush = qvariant_cast<QBrush>(value);
             foreground = brush.color();
         }
+
         painter->setPen(foreground);
         painter->drawText(addressRect, Qt::AlignLeft|Qt::AlignVCenter, address);
 
@@ -110,7 +111,7 @@ OverviewPage::OverviewPage(QWidget *parent) :
     ui->labelBalance->setToolTip(tr("Your current balance"));
     ui->labelBalance->setTextInteractionFlags(Qt::TextSelectableByMouse|Qt::TextSelectableByKeyboard);
 
-    // slimcoin: stake: <stake>
+    // ppcoin: stake: <stake>
     ui->labelStake->setFont(QFont("Monospace", -1, QFont::Bold));
     ui->labelStake->setToolTip(tr("Your current stake"));
     ui->labelStake->setTextInteractionFlags(Qt::TextSelectableByMouse|Qt::TextSelectableByKeyboard);

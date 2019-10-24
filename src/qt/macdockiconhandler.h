@@ -39,6 +39,8 @@ public:
 signals:
     void dockIconClicked();
 
+public slots:
+
 private:
     MacDockIconHandler();
 

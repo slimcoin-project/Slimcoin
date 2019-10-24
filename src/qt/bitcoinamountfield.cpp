@@ -47,7 +47,7 @@ BitcoinAmountField::BitcoinAmountField(QWidget *parent):
 
 void BitcoinAmountField::setText(const QString &text)
 {
-    if(text.isEmpty())
+    if (text.isEmpty())
         amount->clear();
     else
         amount->setValue(text.toDouble());
@@ -62,9 +62,9 @@ void BitcoinAmountField::clear()
 bool BitcoinAmountField::validate()
 {
     bool valid = true;
-    if(amount->value() == 0.0)
+    if (amount->value() == 0.0)
         valid = false;
-    if(valid && !BitcoinUnits::parse(currentUnit, text(), 0))
+    if (valid && !BitcoinUnits::parse(currentUnit, text(), 0))
         valid = false;
 
     setValid(valid);
@@ -74,7 +74,7 @@ bool BitcoinAmountField::validate()
 
 void BitcoinAmountField::setValid(bool valid)
 {
-    if(valid)
+    if (valid)
         amount->setStyleSheet("");
     else
         amount->setStyleSheet(STYLE_INVALID);
@@ -82,7 +82,7 @@ void BitcoinAmountField::setValid(bool valid)
 
 QString BitcoinAmountField::text() const
 {
-    if(amount->text().isEmpty())
+    if (amount->text().isEmpty())
         return QString();
     else
         return amount->text();
@@ -90,15 +90,15 @@ QString BitcoinAmountField::text() const
 
 bool BitcoinAmountField::eventFilter(QObject *object, QEvent *event)
 {
-    if(event->type() == QEvent::FocusIn)
+    if (event->type() == QEvent::FocusIn)
     {
         // Clear invalid flag on focus
         setValid(true);
     }
-    else if(event->type() == QEvent::KeyPress || event->type() == QEvent::KeyRelease)
+    else if (event->type() == QEvent::KeyPress || event->type() == QEvent::KeyRelease)
     {
         QKeyEvent *keyEvent = static_cast<QKeyEvent *>(event);
-        if(keyEvent->key() == Qt::Key_Comma)
+        if (keyEvent->key() == Qt::Key_Comma)
         {
             // Translate a comma into a period
             QKeyEvent periodKeyEvent(event->type(), Qt::Key_Period, keyEvent->modifiers(), ".", keyEvent->isAutoRepeat(), keyEvent->count());

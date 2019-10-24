@@ -18,8 +18,7 @@
 WalletModel::WalletModel(CWallet *wallet, OptionsModel *optionsModel, QObject *parent) :
     QObject(parent), wallet(wallet), optionsModel(optionsModel), addressTableModel(0),
     transactionTableModel(0),
-    cachedBalance(0), cachedReserveBalance(0), cachedUnconfirmedBalance(0), cachedImmatureBalance(0),
-    cachedNumTransactions(0),
+    cachedBalance(0), cachedReserveBalance(0), cachedUnconfirmedBalance(0), cachedImmatureBalance(0), cachedNumTransactions(0),
     cachedEncryptionStatus(Unencrypted)
 {
     addressTableModel = new AddressTableModel(wallet, this);
@@ -149,7 +148,6 @@ WalletModel::SendCoinsReturn WalletModel::sendCoins(const QList<SendCoinsRecipie
     {
         return AmountExceedsBalance;
     }
-	
 
     if((total + nTransactionFee) > nBalance)
     {
@@ -205,7 +203,6 @@ WalletModel::SendCoinsReturn WalletModel::sendCoins(const QList<SendCoinsRecipie
             }
             return TransactionCreationFailed;
         }
-
         if(!ThreadSafeAskFee(nFeeRequired, tr("Sending...").toStdString()))
         {
             return Aborted;

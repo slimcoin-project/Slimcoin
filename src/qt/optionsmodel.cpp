@@ -56,7 +56,7 @@ bool OptionsModel::Upgrade()
 {
     QSettings settings;
 
-    if(settings.contains("bImportFinished"))
+    if (settings.contains("bImportFinished"))
         return false; // Already upgraded
 
     settings.setValue("bImportFinished", true);
@@ -69,7 +69,7 @@ bool OptionsModel::Upgrade()
     foreach(QString key, intOptions)
     {
         int value = 0;
-        if(walletdb.ReadSetting(key.toStdString(), value))
+        if (walletdb.ReadSetting(key.toStdString(), value))
         {
             settings.setValue(key, value);
             walletdb.EraseSetting(key.toStdString());
@@ -80,7 +80,7 @@ bool OptionsModel::Upgrade()
     foreach(QString key, boolOptions)
     {
         bool value = false;
-        if(walletdb.ReadSetting(key.toStdString(), value))
+        if (walletdb.ReadSetting(key.toStdString(), value))
         {
             settings.setValue(key, value);
             walletdb.EraseSetting(key.toStdString());
@@ -89,7 +89,7 @@ bool OptionsModel::Upgrade()
     try
     {
         CAddress addrProxyAddress;
-        if(walletdb.ReadSetting("addrProxy", addrProxyAddress))
+        if (walletdb.ReadSetting("addrProxy", addrProxyAddress))
         {
             addrProxy = addrProxyAddress;
             settings.setValue("addrProxy", addrProxy.ToStringIPPort().c_str());
@@ -99,7 +99,7 @@ bool OptionsModel::Upgrade()
     catch (std::ios_base::failure &e)
     {
         // 0.6.0rc1 saved this as a CService, which causes failure when parsing as a CAddress
-        if(walletdb.ReadSetting("addrProxy", addrProxy))
+        if (walletdb.ReadSetting("addrProxy", addrProxy))
         {
             settings.setValue("addrProxy", addrProxy.ToStringIPPort().c_str());
             walletdb.EraseSetting("addrProxy");
@@ -190,7 +190,7 @@ bool OptionsModel::setData(const QModelIndex & index, const QVariant & value, in
             {
                 // Use CAddress to parse and check IP
                 CNetAddr addr(value.toString().toStdString());
-                if(addr.IsValid())
+                if (addr.IsValid())
                 {
                     addrProxy.SetIP(addr);
                     settings.setValue("addrProxy", addrProxy.ToStringIPPort().c_str());
@@ -205,7 +205,7 @@ bool OptionsModel::setData(const QModelIndex & index, const QVariant & value, in
             {
                 int nPort = atoi(value.toString().toLatin1().data());
 
-                if(nPort > 0 && nPort < std::numeric_limits<unsigned short>::max())
+                if (nPort > 0 && nPort < std::numeric_limits<unsigned short>::max())
                 {
                     addrProxy.SetPort(nPort);
                     settings.setValue("addrProxy", addrProxy.ToStringIPPort().c_str());
@@ -273,7 +273,7 @@ qint64 OptionsModel::getReserveBalance()
 
 bool OptionsModel::getCoinControlFeatures()
 {
-        return fCoinControlFeatures;
+    return fCoinControlFeatures;
 }
 
 bool OptionsModel::getMinimizeToTray()

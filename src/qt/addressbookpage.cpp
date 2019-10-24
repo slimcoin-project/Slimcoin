@@ -116,9 +116,9 @@ void AddressBookPage::setModel(AddressTableModel *model)
 
     // Set column widths
 #if QT_VERSION < 0x050000
-     ui->tableView->horizontalHeader()->setResizeMode(
+    ui->tableView->horizontalHeader()->setResizeMode(
             AddressTableModel::Label, QHeaderView::Stretch);
-     ui->tableView->horizontalHeader()->setResizeMode(
+    ui->tableView->horizontalHeader()->setResizeMode(
             AddressTableModel::Address, QHeaderView::ResizeToContents);
 #else
     ui->tableView->horizontalHeader()->setSectionResizeMode(
@@ -126,7 +126,7 @@ void AddressBookPage::setModel(AddressTableModel *model)
     ui->tableView->horizontalHeader()->setSectionResizeMode(
             AddressTableModel::Address, QHeaderView::ResizeToContents);
 #endif
- 
+
     selectionChanged();
 }
 
@@ -172,7 +172,7 @@ void AddressBookPage::on_signMessage_clicked()
 
     QObject *qoGUI = parent()->parent();
     BitcoinGUI *gui = qobject_cast<BitcoinGUI *>(qoGUI);
-    if(gui)
+    if (gui)
         gui->gotoMessagePage(addr);
 }
 
@@ -294,7 +294,7 @@ void AddressBookPage::exportClicked()
             tr("Export Address Book Data"), QString(),
             tr("Comma separated file (*.csv)"));
 
-    if(filename.isNull()) return;
+    if (filename.isNull()) return;
 
     CSVModelWriter writer(filename);
 
