@@ -47,6 +47,11 @@ signals:
 
 #include "rpcconsole.moc"
 
+void RPCExecutor::start()
+{
+   // Nothing to do
+}
+
 /**
  * Split shell command line into a list of arguments. Aims to emulate \c bash and friends.
  *
