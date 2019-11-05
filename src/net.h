@@ -168,6 +168,8 @@ public:
     uint256 hashContinue;
     CBlockIndex* pindexLastGetBlocksBegin;
     uint256 hashLastGetBlocksEnd;
+    int64 nLastGetBlocksTime;
+    int nLastGetBlocksHeight;
     int nStartingHeight;
 
     // flood relay
@@ -208,6 +210,8 @@ public:
         hashContinue = 0;
         pindexLastGetBlocksBegin = 0;
         hashLastGetBlocksEnd = 0;
+        nLastGetBlocksTime = 0;
+        nLastGetBlocksHeight = -1;
         nStartingHeight = -1;
         fGetAddr = false;
         nMisbehavior = 0;
