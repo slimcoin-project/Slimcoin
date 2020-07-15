@@ -87,7 +87,7 @@ Slimcoin is a P2P project - there is no “official dev”, nor it is managed by
 * Other Sites and Links
     - [Travis CI continuous integration](https://api.travis-ci.org/gjhiggins/Slimcoin) [![Build Status](https://api.travis-ci.org/gjhiggins/Slimcoin.png?branch=master)](https://travis-ci.org/gjhiggins/Slimcoin),
 
-* Project website [slimco.in](https://slimco.in)
+* Project website [slimcoin.info](https://slimco.in)
     - Github Project Site [github.com/slimcoin-project](https://github.com/slimcoin-project)
     - Discussion forum (Reddit)** [reddit.com/r/slimcoin](https://reddit.com/r/slimcoin)
     - Other Resources
