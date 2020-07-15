@@ -1,7 +1,7 @@
 ## SlimCoin Official Development Repo
 
 ### What is SlimCoin?
-[Slimcoin](http://www.slimcoin.club/whitepaper.pdf) (abbreviated SLM), is the first known
+[Slimcoin](https://slimcoin.info/whitepaperSLM.pdf) (abbreviated SLM), is the first known
 [cryptocurrency](https://en.wikipedia.org/wiki/Cryptocurrency) designed as
 a combined [proof-of-burn](http://en.bitcoin.it/wiki/Proof_of_burn)/[proof-of-stake](https://en.wikipedia.org/wiki/Proof-of-stake)/[proof-of-work](https://en.wikipedia.org/wiki/Proof-of-work_system)
 system. It can be mined using a special “Dcrypt” algorithm. 
@@ -67,7 +67,7 @@ Slimcoin is a P2P project - there is no “official dev”, nor it is managed by
 
 - Developers work in their own forks, then submit pull requests when they think their feature or bug fix is ready.
 - If it is a simple/trivial/non-controversial change, then one of the development team members simply pulls it.
-- If it is a more complicated or potentially controversial change, then the change may be discussed in the pull request, or the requester may be asked to start a discussion [SlimCoin Talk](<forum link>) for a broader community discussion. 
+- If it is a more complicated or potentially controversial change, then the change may be discussed in the pull request, or the requester may be asked to start a discussion [Discord](https://discord.gg/ffeDjmV) for a broader community discussion. 
 - The patch will be accepted if there is broad consensus that it is a good thing. Developers should expect to rework and resubmit patches if they don't match the project's coding conventions (see coding.txt) or are controversial.
 - From time to time a pull request will become outdated. If this occurs, and the pull is no longer automatically mergeable; a comment on the pull will be used to issue a warning of closure.  Pull requests closed in this manner will have their corresponding issue labeled 'stagnant'.
 
@@ -77,7 +77,7 @@ Slimcoin is a P2P project - there is no “official dev”, nor it is managed by
   - [Client Binaries](#tbd)
   - [Source Code](https://github.com/slimcoin-project/Slimcoin)
 * Documentation: <add documentation link to slim website>
-  - [SlimCoin Whitepaper](http://www.slimcoin.club/whitepaper.pdf), 
+  - [SlimCoin Whitepaper](https://slimcoin.info/whitepaperSLM.pdf), 
   - [SlimCoin Wiki](https://github.com/slimcoin-project/Slimcoin/wiki)
 * Help:
   - [Slimcoin Reddit](https://www.reddit.com/r/slimcoin/), 
@@ -86,15 +86,13 @@ Slimcoin is a P2P project - there is no “official dev”, nor it is managed by
 
 * Other Sites and Links
     - [Travis CI continuous integration](https://api.travis-ci.org/gjhiggins/Slimcoin) [![Build Status](https://api.travis-ci.org/gjhiggins/Slimcoin.png?branch=master)](https://travis-ci.org/gjhiggins/Slimcoin),
-    - [Slimcoin Club](https://www.slimcoin.club) (Block explorer, Brain wallet and other informations)
 
 * Project website [slimco.in](https://slimco.in)
     - Github Project Site [github.com/slimcoin-project](https://github.com/slimcoin-project)
     - Discussion forum (Reddit)** [reddit.com/r/slimcoin](https://reddit.com/r/slimcoin)
     - Other Resources
       - [Telegram](https://t.me/SlimcoinGroup)
-      - [Slack](https://join.slack.com/t/slimcoinproject/invite/MjQzMDU0NTg4MTAyLTE1MDU1NTA4MjAtZmU0Nzc0MDQ0OQ?x=x-239398136118-243256178055)
-      - [Discord](https://discord.gg/crMHFRJ)
+      - [Discord](https://discord.gg/ffeDjmV)
       - [YouTube](https://www.youtube.com/channel/UCUXx5ksHhkq6CQwZdlckaeQ/featured)
       - [Facebook](https://www.facebook.com/slimcoin.community/)
 
@@ -106,7 +104,6 @@ Slimcoin is a P2P project - there is no “official dev”, nor it is managed by
 * Original announcement [The Historic Slimcoin ANN thread](https://bitcointalk.org/index.php?topic=613213.0) (outdated)*
 
 * Exchanges
-    - [Novaexchange](https://novaexchange.com/market/BTC_SLM/)
     - [FreiExchange](https://freiexchange.com/market/SLM/BTC)
 
 * Blockchain explorer
@@ -176,7 +173,7 @@ Quoting the original Slimcoin developer:
 
 In summary: when one burns coins, that transaction can be used to calculate burn hashes. There is also a multiplier that is multiplied to the raw burn hash to calculate the final burn hash. The greater amount of coins burnt by a user, the smaller the multiplier will be and the smaller the burn hashes will be. The smaller the burn hash is, the more likely the hash will meet the difficulty target (be accepted by the network as valid). Over time, the multiplier of a single burn transaction increases slowly, lowering the effectiveness of those burn hashes, acting like "decaying burnt coins". Per transaction, only 1 burn hashes is needed to be calculated per ~90 seconds. The reason low power can mine this is because basically almost any machine can hash a few SHA256 hashes in ~90 seconds.
 
-In short: The more coins you destroy by burning, the higher the chances you find Proof-of-Burn blocks. It's not necessary to burn all the coins together: your "score" (probability to find a block) will also rise when you burn coins periodically. See the [Proof of Burn ELI5](http://slimco.in/proof-of-burn-eli5/)
+In short: The more coins you destroy by burning, the higher the chances you find Proof-of-Burn blocks. It's not necessary to burn all the coins together: your "score" (probability to find a block) will also rise when you burn coins periodically. See the [Proof of Burn ELI5](http://slimcoin.info/proof-of-burn-eli5/)
 
 Proof of burn is explained in detail by its original author in [the Proof of Burn Wiki article.](http://en.bitcoin.it/wiki/Proof_of_burn)
 
@@ -192,11 +189,11 @@ View the PoB statistics of the wallet:
 
     slimcoind getburndata
 
-For further details see the [Proof of Burn minting guide!](http://slimco.in/proof-of-burn-guide/)
+For further details see the [Proof of Burn minting guide!](http://slimcoin.info/proof-of-burn-guide/)
 
 #### How many coins have been burned by Slimcoin users?
 
-Check the balance of the burn address [SfSLMCoinMainNetworkBurnAddr1DeTK5](https://bchain.info/SLM/addr/SfSLMCoinMainNetworkBurnAddr1DeTK5)
+Check the balance of the burn address [SfSLMCoinMainNetworkBurnAddr1DeTK5](https://chainz.cryptoid.info/slm/address.dws?SfSLMCoinMainNetworkBurnAddr1DeTK5.htm)
 
 This amount differs from `nEffectiveBurnCoins` because it returns all coins that had been burnt at that time.
 
