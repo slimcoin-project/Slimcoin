@@ -12,7 +12,7 @@ SlimCoin is unique for using the [Proof of Burn](http://en.bitcoin.it/wiki/Proof
 
 The Dcrypt algorithm is extremely anti-ASIC and currently can only be mined with a CPU. It is made so mining with hardware will be inefficient in the future, given the intensity of this algorithm, thus forcing the users to mine through the proof-of-stake and proof-of-burn. Thus, with SlimCoin energy consumption would decrease over time as proof-of-work blocks become less rewarding and coin generation becomes increasingly based on proof-of-stake block generation.
 
-Slimcoin's codebase is built upon [Bitcoin](http://bitcoin.org/en/) and [Peercoin](http://peercoin.net/).
+Slimcoin's codebase is built upon [Bitcoin](http://bitcoin.org/en/) and [Peercoin](https://peercoin.net/).
 
 Slimcoin is a P2P project - there is no “official dev”, nor it is managed by any centralized entity or organization. There was no premine at the start. You can contribute with coding, testing, providing Slimcoin-based products & services, use it for trading of virtual or real-world goods or simply “hodling” it.
 
