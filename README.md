@@ -76,9 +76,11 @@ Slimcoin is a P2P project - there is no “official dev”, nor it is managed by
 * Client and Source:
   - [Client Binaries](#tbd)
   - [Source Code](https://github.com/slimcoin-project/Slimcoin)
+
 * Documentation: <add documentation link to slim website>
   - [SlimCoin Whitepaper](https://slimcoin.info/whitepaperSLM.pdf), 
   - [SlimCoin Wiki](https://github.com/slimcoin-project/Slimcoin/wiki)
+
 * Help:
   - [Discord](https://discord.gg/ffeDjmV),
   - [Bitcointalk official thread](https://bitcointalk.org/index.php?topic=1141676), 
@@ -88,9 +90,12 @@ Slimcoin is a P2P project - there is no “official dev”, nor it is managed by
 
 * Exchanges
     - [FreiExchange](https://freiexchange.com/market/SLM/BTC)
+
 * Project website [slimcoin.info](https://slimco.in)
     - Github Project Site [github.com/slimcoin-project](https://github.com/slimcoin-project)
-    - Discussion forum (Reddit)** [reddit.com/r/slimcoin](https://reddit.com/r/slimcoin)
+    
+    [//]: # (- Discussion forum Reddit** reddit.com/r/slimcoin https://reddit.com/r/slimcoin)
+    
     - Other Resources
       - [YouTube](https://www.youtube.com/channel/UCUXx5ksHhkq6CQwZdlckaeQ/featured)
       
