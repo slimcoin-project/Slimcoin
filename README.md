@@ -74,7 +74,7 @@ Slimcoin is a P2P project - there is no “official dev”, nor it is managed by
 ## SlimCoin Resources
 
 * Client and Source:
-  - [Client Binaries](#tbd)
+  - [Client Binaries](https://github.com/slimcoin-project/Slimcoin/releases) (see the Assets section of desired version)
   - [Source Code](https://github.com/slimcoin-project/Slimcoin)
 
 * Documentation: <add documentation link to slim website>
