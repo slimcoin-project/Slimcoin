@@ -92,12 +92,13 @@ Slimcoin is a P2P project - there is no “official dev”, nor it is managed by
     - [FreiExchange](https://freiexchange.com/market/SLM/BTC)
 
 * Project website [slimcoin.info](https://slimco.in)
-    - Github Project Site [github.com/slimcoin-project](https://github.com/slimcoin-project)
+
+* Github Project Site [github.com/slimcoin-project](https://github.com/slimcoin-project)
     
     [//]: # (- Discussion forum Reddit** reddit.com/r/slimcoin https://reddit.com/r/slimcoin)
     
-    - Other Resources
-      - [YouTube](https://www.youtube.com/channel/UCUXx5ksHhkq6CQwZdlckaeQ/featured)
+ * Other Resources
+    - [YouTube](https://www.youtube.com/channel/UCUXx5ksHhkq6CQwZdlckaeQ/featured)
       
       [//]: # (- Telegram https://t.me/SlimcoinGroup)
       [//]: # (- Facebook https://www.facebook.com/slimcoin.community/)
@@ -110,17 +111,18 @@ Slimcoin is a P2P project - there is no “official dev”, nor it is managed by
 * Price tracking
     - [Coinpaprika](https://coinpaprika.com/coin/slm-slimcoin/)
     - [Coingecko](https://www.coingecko.com/en/coins/slimcoin)
+
 * Other Sites and Links
     - [Travis CI continuous integration](https://api.travis-ci.org/gjhiggins/Slimcoin) [![Build Status](https://api.travis-ci.org/gjhiggins/Slimcoin.png?branch=master)](https://travis-ci.org/gjhiggins/Slimcoin),
 
 
 * Marketplace [Bitcointalk SLM Marketplace thread](https://bitcointalk.org/index.php?topic=2063259.new#new)
+
 * Bitcointalk threads in other languages
     - [German / Deutsch](https://bitcointalk.org/index.php?topic=2040975.0)
     - [Spanish / Español](https://bitcointalk.org/index.php?topic=628902.0)
 
 * Original announcement [The Historic Slimcoin ANN thread](https://bitcointalk.org/index.php?topic=613213.0) (outdated)*
-
 
 [//]: # (* Mining Pool Bazcoin http://slimcoin.bazco.in/ currently inactive)
 
