@@ -82,9 +82,9 @@ Slimcoin is a P2P project - there is no “official dev”, nor it is managed by
   - [SlimCoin Wiki](https://github.com/slimcoin-project/Slimcoin/wiki)
 
 * Help:
-  - [Discord](https://discord.gg/ffeDjmV),
-  - [Bitcointalk official thread](https://bitcointalk.org/index.php?topic=1141676), 
-  - [Slimcoin Reddit](https://www.reddit.com/r/slimcoin/). 
+  - [Discord](https://discord.gg/ffeDjmV)
+  - [Bitcointalk official thread](https://bitcointalk.org/index.php?topic=1141676) 
+  - [Slimcoin Reddit](https://www.reddit.com/r/slimcoin/)
 
 [//]: # (- Old Bitcointalk announcement https://bitcointalk.org/index.php?topic=613213)
 
