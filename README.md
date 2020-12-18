@@ -113,7 +113,7 @@ Slimcoin is a P2P project - there is no “official dev”, nor it is managed by
     - [Spanish / Español](https://bitcointalk.org/index.php?topic=628902.0)
 
 * Other Resources
-    - [YouTube](https://www.youtube.com/channel/UCUXx5ksHhkq6CQwZdlckaeQ/featured)
+    - [YouTube](https://www.youtube.com/channel/UCUXx5ksHhkq6CQwZdlckaeQ/videos)
       
       [//]: # (- Telegram https://t.me/SlimcoinGroup)
       [//]: # (- Facebook https://www.facebook.com/slimcoin.community/)
