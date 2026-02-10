@@ -1,7 +1,7 @@
 ## SlimCoin Official Development Repo
 
 ### What is SlimCoin?
-[Slimcoin](https://slimcoin.info/whitepaperSLM.pdf) (abbreviated SLM), is the first known
+[Slimcoin](https://slimcoin-project.github.io/whitepaperSLM.pdf) (abbreviated SLM), is the first known
 [cryptocurrency](https://en.wikipedia.org/wiki/Cryptocurrency) designed as
 a combined [proof-of-burn](http://en.bitcoin.it/wiki/Proof_of_burn)/[proof-of-stake](https://en.wikipedia.org/wiki/Proof-of-stake)/[proof-of-work](https://en.wikipedia.org/wiki/Proof-of-work_system)
 system. It can be mined using a special “Dcrypt” algorithm. 
@@ -74,7 +74,7 @@ Slimcoin is a P2P project - there is no “official dev”, nor it is managed by
 ## SlimCoin Resources
 
 * Project website 
-  - [slimcoin.info](https://slimcoin.info)
+  - [https://slimcoin-project.github.io](https://slimcoin-project.github.io)
 
 * Github Project Site 
   - [github.com/slimcoin-project](https://github.com/slimcoin-project)
@@ -84,7 +84,7 @@ Slimcoin is a P2P project - there is no “official dev”, nor it is managed by
   - [Source Code](https://github.com/slimcoin-project/Slimcoin)
 
 * Documentation: <add documentation link to slim website>
-  - [SlimCoin Whitepaper](https://slimcoin.info/whitepaperSLM.pdf), 
+  - [SlimCoin Whitepaper](https://slimcoin-project.github.io/whitepaperSLM.pdf), 
   - [SlimCoin Wiki](https://github.com/slimcoin-project/Slimcoin/wiki)
 
 * Help:
@@ -100,8 +100,8 @@ Slimcoin is a P2P project - there is no “official dev”, nor it is managed by
     [//]: # (- Discussion forum Reddit** reddit.com/r/slimcoin https://reddit.com/r/slimcoin)
     
 * Blockchain explorer
-    - [CryptoID](https://chainz.cryptoid.info/slm/)
-    
+    - [https://slimcoin-explorer.dynv6.net/](https://slimcoin-explorer.dynv6.net/)
+    - [alternative link to the same block explorer](https://slimcoinexplorer.duckdns.org/)
     [//]: # (- ACME http://tessier.bel-epa.com:5064/ experimental metadata explorer, currently being upgraded)
 
 * Price tracking
@@ -188,7 +188,7 @@ Quoting the original Slimcoin developer:
 
 In summary: when one burns coins, that transaction can be used to calculate burn hashes. There is also a multiplier that is multiplied to the raw burn hash to calculate the final burn hash. The greater amount of coins burnt by a user, the smaller the multiplier will be and the smaller the burn hashes will be. The smaller the burn hash is, the more likely the hash will meet the difficulty target (be accepted by the network as valid). Over time, the multiplier of a single burn transaction increases slowly, lowering the effectiveness of those burn hashes, acting like "decaying burnt coins". Per transaction, only 1 burn hashes is needed to be calculated per ~90 seconds. The reason low power can mine this is because basically almost any machine can hash a few SHA256 hashes in ~90 seconds.
 
-In short: The more coins you destroy by burning, the higher the chances you find Proof-of-Burn blocks. It's not necessary to burn all the coins together: your "score" (probability to find a block) will also rise when you burn coins periodically. See the [Proof of Burn ELI5](http://slimcoin.info/proof-of-burn-eli5/)
+In short: The more coins you destroy by burning, the higher the chances you find Proof-of-Burn blocks. It's not necessary to burn all the coins together: your "score" (probability to find a block) will also rise when you burn coins periodically. See the [Proof of Burn ELI5](https://slimcoin-project.github.io/proof-of-burn-eli5/)
 
 Proof of burn is explained in detail by its original author in [the Proof of Burn Wiki article.](http://en.bitcoin.it/wiki/Proof_of_burn)
 
@@ -204,11 +204,11 @@ View the PoB statistics of the wallet:
 
     slimcoind getburndata
 
-For further details see the [Proof of Burn minting guide!](http://slimcoin.info/proof-of-burn-guide/)
+For further details see the [Proof of Burn minting guide!](https://slimcoin-project.github.io/proof-of-burn-guide/)
 
 #### How many coins have been burned by Slimcoin users?
 
-Check the balance of the burn address [SfSLMCoinMainNetworkBurnAddr1DeTK5](https://chainz.cryptoid.info/slm/address.dws?SfSLMCoinMainNetworkBurnAddr1DeTK5.htm)
+Using [the block explorer](https://slimcoin-explorer.dynv6.net/) check the balance of the burn address SfSLMCoinMainNetworkBurnAddr1DeTK5.
 
 This amount differs from `nEffectiveBurnCoins` because it returns all coins that had been burnt at that time.
 
