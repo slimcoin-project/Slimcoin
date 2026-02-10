@@ -102,6 +102,7 @@ Slimcoin is a P2P project - there is no “official dev”, nor it is managed by
 * Blockchain explorer
     - [https://slimcoin-explorer.dynv6.net/](https://slimcoin-explorer.dynv6.net/)
     - [alternative link to the same block explorer](https://slimcoinexplorer.duckdns.org/)
+    
     [//]: # (- ACME http://tessier.bel-epa.com:5064/ experimental metadata explorer, currently being upgraded)
 
 * Price tracking
