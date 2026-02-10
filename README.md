@@ -107,7 +107,8 @@ Slimcoin is a P2P project - there is no “official dev”, nor it is managed by
 
 * Price tracking
     - [Coinpaprika](https://coinpaprika.com/coin/slm-slimcoin/)
-    - [Coingecko](https://www.coingecko.com/en/coins/slimcoin)
+  
+    [//]: # (- Coingecko https://www.coingecko.com/en/coins/slimcoin)
 
 * Bitcointalk threads in other languages
     - [German / Deutsch](https://bitcointalk.org/index.php?topic=2040975.0)
